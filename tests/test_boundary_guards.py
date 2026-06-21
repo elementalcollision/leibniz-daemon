@@ -62,3 +62,44 @@ def test_promulgated_is_set_only_in_policy_routed_paths():
         ("pipeline.py", "run"),
         ("gates/verification.py", "finalize"),
     }
+
+
+class _ProofEdgeConstructorFinder(ast.NodeVisitor):
+    """Record every function that constructs ``EdgeEvidence(edge=PROOF_EDGE, ...)``
+    (literal PROOF_EDGE, positional or keyword)."""
+
+    def __init__(self) -> None:
+        self._funcs: list[str] = []
+        self.hits: list[str] = []
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        self._funcs.append(node.name)
+        self.generic_visit(node)
+        self._funcs.pop()
+
+    visit_AsyncFunctionDef = visit_FunctionDef  # type: ignore[assignment]
+
+    def visit_Call(self, node: ast.Call):
+        if isinstance(node.func, ast.Name) and node.func.id == "EdgeEvidence":
+            edge_val = node.args[0] if node.args else None
+            for kw in node.keywords:
+                if kw.arg == "edge":
+                    edge_val = kw.value
+            if isinstance(edge_val, ast.Name) and edge_val.id == "PROOF_EDGE":
+                self.hits.append(self._funcs[-1] if self._funcs else "<module>")
+        self.generic_visit(node)
+
+
+def test_proof_edge_is_constructed_only_in_kernel_paths():
+    # ADR 0013 §3: bound WHO may mint a proof edge. Only LeanVerifier.discharge
+    # (the kernel) and ProofConsensus.prove (which copies discharge's edge) may
+    # construct an EdgeEvidence on PROOF_EDGE. Any other construction site would let
+    # a non-kernel verdict masquerade as a proof — caught here structurally, closing
+    # the producer=None gap that the runtime provenance check alone cannot.
+    found: set[tuple[str, str]] = set()
+    for path in _PKG.rglob("*.py"):
+        finder = _ProofEdgeConstructorFinder()
+        finder.visit(ast.parse(path.read_text()))
+        for func in finder.hits:
+            found.add((str(path.relative_to(_PKG)), func))
+    assert found == {("verifiers.py", "discharge"), ("consensus.py", "prove")}

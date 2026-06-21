@@ -1,6 +1,10 @@
 # ADR 0013 — Trust-Edge Provenance Hardening (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21 — proof-edge provenance: runtime
+  producer check + the load-bearing construction-site AST-guard. The §2 general
+  MECHANICAL-vs-judge-producer stamping on faithfulness/novelty edges is an explicit
+  Open Question, not yet built. EdgeEvidence.producer is append-only so the 11
+  invariant tests stay byte-identical.)
 - Date: 2026-06-21
 - Related: ADR 0001 (trust tiers), the original plan review (tier-mislabel risk);
   `types.py` (`EdgeEvidence`), `trust.py`, `tests/`. **Touches the guarded core**
@@ -22,12 +26,20 @@ plan review flagged.
    tests rely on (`EdgeEvidence(edge, tier, verdict)`) is unchanged. Verifiers/gates
    stamp who produced the verdict (`"LeanVerifier.discharge"`, `"Z3Backend"`,
    `"FaithfulnessJudge"`).
-2. **Provenance assertions in `validate_edge`.** A proof edge must originate from
-   `discharge`; a MECHANICAL tier must not carry a judge producer. Mislabels raise
-   `TrustViolation` structurally, not by trust.
-3. **Mutation/property test.** Flipping any single edge's tier in an otherwise-passing
-   path must make `validate_path` raise; a CI AST-guard that `EdgeEvidence(edge=PROOF_EDGE,
-   tier=MECHANICAL, …)` is constructed only inside `discharge`.
+2. **Runtime provenance check in `validate_edge` (proof edge).** A proof edge that
+   *names* a producer must name the kernel (`KERNEL_PRODUCER`); a foreign producer
+   raises `TrustViolation`. This is an *advisory* belt — a `producer=None` edge is
+   not rejected (so the invariant tests stay byte-identical), and the string itself
+   is spoofable — so it is **not** the load-bearing defense. (Generalizing this to
+   reject a *judge* producer on a MECHANICAL faithfulness/novelty edge needs those
+   gates to stamp producers; that is an Open Question, not yet built.)
+3. **Construction-site AST-guard (the load-bearing defense).** A pure-AST test
+   (`test_boundary_guards.py::test_proof_edge_is_constructed_only_in_kernel_paths`)
+   asserts `EdgeEvidence(edge=PROOF_EDGE, …)` is constructed **only** in
+   `LeanVerifier.discharge` and `ProofConsensus.prove` (which copies discharge's
+   edge). This bounds *who* may mint a proof edge — which a runtime string can never
+   do — and is what actually closes the `producer=None` gap. Plus the existing tier
+   mutation property (flipping a proof edge to JUDGED makes `validate_path` raise).
 
 ## Options considered
 
@@ -38,11 +50,25 @@ plan review flagged.
 
 ## Consequences
 
-- A mislabeled tier is caught by construction, closing the last "honest-tagging"
-  assumption. Guarded: `types.py`/`trust.py` changes need operator sign-off and must
-  keep the 11 invariant tests byte-identical and green.
+- **What is caught:** a proof edge stamped with a non-kernel producer is rejected
+  at the policy (runtime); and — the real guarantee — *no code path outside
+  `discharge`/`ProofConsensus.prove` may construct a proof edge at all* (AST-guard).
+  Together these close the `producer=None` mislabel for the **proof edge**: a rogue
+  function minting `EdgeEvidence(edge=PROOF_EDGE, …)` fails the AST-guard regardless
+  of producer.
+- **What is NOT yet caught:** a JUDGED *faithfulness/novelty* check mislabeled
+  MECHANICAL is still not blocked structurally (those gates don't stamp producers
+  and validate_edge's producer rule is proof-edge-only). That is the §2 follow-up.
+  The runtime producer string is advisory, not cryptographic.
+- Strictly additive / monotone-tightening: no existing check removed;
+  `test_invariants.py` stays byte-identical and green (the adversarial review of
+  this change confirmed it does not weaken the boundary).
 
 ## Open questions
 
-- Whether to make `producer` required at the gates (stricter) once all producers
-  stamp it, vs leaving it optional for backward compatibility.
+- **§2 generalization (follow-up):** have `gates/faithfulness.py` and
+  `gates/novelty.py` stamp producers and extend `validate_edge` to reject a
+  MECHANICAL faithfulness/novelty edge carrying a known judge/adversarial producer.
+- Whether to make `producer` *required* (reject proof `producer=None`) — currently
+  impossible without editing the byte-identical invariant tests; revisit if those
+  are ever revised.
