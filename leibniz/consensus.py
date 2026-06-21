@@ -88,3 +88,30 @@ class ProofConsensus:
             count=count, required=self.min_consensus, attempts=attempts,
             edge=edge, proof=first_proof if reached else None,
         )
+
+
+@dataclass
+class NoOpDerive:
+    """Production DERIVE stage. Proof drafting moves into ConsensusDemonstrate's
+    ensemble, so this only advances the survivor (its Expressio is already set)."""
+
+    def run(self, prop):
+        return prop
+
+
+@dataclass
+class ConsensusDemonstrate:
+    """Production DEMONSTRATE stage: run the cascade/witness ensemble under N+1
+    consensus, record the resulting PROOF_EDGE, and attach a kernel-verified proof
+    when consensus is reached (else an unverified Demonstratio for the record)."""
+
+    consensus: ProofConsensus
+
+    def run(self, prop):
+        assert prop.expressio is not None
+        result = self.consensus.prove(prop.expressio)
+        prop.demonstratio = result.proof or Demonstratio(
+            proof_obligation=self.consensus.obligation, proof_src=None
+        )
+        prop.record(result.edge)
+        return prop
