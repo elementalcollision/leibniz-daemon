@@ -81,7 +81,7 @@ class Formalize:
         if not self.lean.validate_statement(expr):
             prop.quarantine(FinishReason.MALFORMED)
             return None
-        expr.normalized_hash = normalize_statement(expr.theorem_src)
+        expr.normalized_hash = _normalized_hash(self.lean, expr)
         prop.expressio = expr
         prop.signature = _signature(prop)
 
@@ -149,6 +149,18 @@ class Promulgate:
 
 
 # --- tiny parsers/derivers; real versions use structured LLM output -----------
+
+def _normalized_hash(lean, expr: Expressio) -> str:
+    """Prefer the backend's elaborator-canonical structural hash (R1c) so that
+    alpha-renamed / notation-different statements of the same theorem collide;
+    fall back to the textual hash for fakes or statements that don't elaborate."""
+    norm = getattr(getattr(lean, "backend", None), "normalize_statement", None)
+    if norm is not None:
+        h = norm(expr)
+        if h:
+            return h
+    return normalize_statement(expr.theorem_src)
+
 
 def _parse_enuntiatio(draft: str, seed: str) -> Enuntiatio:
     return Enuntiatio(
