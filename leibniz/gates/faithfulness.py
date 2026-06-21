@@ -33,7 +33,7 @@ from typing import Optional, Protocol
 
 from leibniz.propositio import Propositio
 from leibniz.types import ClaimType, EdgeEvidence, FinishReason, TrustTier, Verdict
-from leibniz.trust import FAITHFULNESS_EDGE
+from leibniz.trust import FAITHFULNESS_EDGE, JUDGE_PRODUCER
 from leibniz.verifiers import SMTVerifier
 
 
@@ -88,6 +88,7 @@ class FaithfulnessGate:
                 verdict=Verdict.FAIL,
                 detail={"gaming_witness": witness},
                 cost_units=2.0,
+                producer="SMTVerifier.gaming_witness",  # ADR 0013 §2
             )
 
         # 2. Mechanical fast path, dispatched by claim type.
@@ -103,6 +104,7 @@ class FaithfulnessGate:
                     verdict=Verdict.PASS if result else Verdict.FAIL,
                     detail={"probe": en.claim_type.value},
                     cost_units=2.0,
+                    producer="ClaimProbe",  # ADR 0013 §2 (mechanical, never a judge)
                 )
 
         # 3. Judged fallback. Only legitimate for open-form claims. Logged.
@@ -115,6 +117,7 @@ class FaithfulnessGate:
                 verdict=Verdict.DEFER,
                 detail={"reason": "no decisive probe for measurable claim"},
                 cost_units=2.0,
+                producer="FaithfulnessGate",  # ADR 0013 §2 (a refusal, not a judge)
             )
 
         confidence = self.judge.round_trip_agrees(prop)
@@ -127,6 +130,7 @@ class FaithfulnessGate:
             verdict=Verdict.PASS if passed else Verdict.FAIL,
             detail={"round_trip_confidence": confidence, "residual": True},
             cost_units=3.0,
+            producer=JUDGE_PRODUCER,  # ADR 0013 §2: the one bounded judged edge
         )
 
 
