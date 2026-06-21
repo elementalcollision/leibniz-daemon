@@ -72,11 +72,17 @@ run_cmd do
 
 
 def _join_proof(theorem_src: str, proof_src: str) -> str:
-    """Assemble a complete Lean declaration from a statement header + a proof."""
+    """Assemble a complete Lean declaration from a statement header + a proof.
+
+    Autoformalizers often emit theorem_src already carrying a proof body
+    (``... := by sorry``). Strip any existing ``:=`` tail from the header before
+    appending the intended proof, guaranteeing exactly one ``:=`` (binders use
+    ``:``; the first ``:=`` is the proof assignment in a Prop statement)."""
     head = theorem_src.rstrip()
+    cut = head.find(":=")
+    if cut != -1:
+        head = head[:cut].rstrip()
     proof = proof_src.strip()
-    if ":=" in head:
-        return f"{head} {proof}".rstrip() if proof else head
     if not proof:
         return f"{head} := by sorry"
     return f"{head} := {proof}"
