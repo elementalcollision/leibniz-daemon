@@ -16,8 +16,10 @@ not kernel-checked.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 from leibniz.adapters import RuntimeAdapter
+from leibniz.budget import TrustBudget
 from leibniz.gates.verification import VerificationGate
 from leibniz.pipeline import (
     Conjecture,
@@ -56,6 +58,9 @@ class Leibniz:
     verification: VerificationGate
     kfm: KFM
     domain: str = "analysis_of_algorithms"
+    # R2c: the judged-faithfulness budget (ADR 0001 §5). Optional — when absent the
+    # daemon does not bound the residual (the fakes/demo run without it).
+    budget: Optional[TrustBudget] = None
 
     def circadian_cycle(self) -> CycleReport:
         report = CycleReport()
@@ -76,6 +81,12 @@ class Leibniz:
             report.reached_proof += 1
 
             promotable = self.verification.is_promotable(survivor)
+            # R2c: even a promotable candidate is refused if its faithfulness edge
+            # is JUDGED and admitting it would breach the trust budget.
+            if promotable and self.budget is not None:
+                if not self.budget.try_admit(survivor.edges):
+                    survivor.quarantine(FinishReason.OVER_BUDGET)
+                    promotable = False
             self.promulgate.run(survivor, promotable)
             self._settle(survivor, report)
 
