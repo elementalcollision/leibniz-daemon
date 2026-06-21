@@ -67,10 +67,11 @@ class ConservativeJudge:
         return 0.0
 
 
-def prover_ensemble() -> list[OpenRouterProvider]:
-    """The cascade + witnesses from LEIBNIZ_PROVER_MODELS (OpenRouter model ids)."""
+def prover_ensemble(meter: object | None = None) -> list[OpenRouterProvider]:
+    """The cascade + witnesses from LEIBNIZ_PROVER_MODELS (OpenRouter model ids).
+    Each prover meters real token usage into `meter` (ADR 0014)."""
     models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
-    return [OpenRouterProvider(model=m) for m in models]
+    return [OpenRouterProvider(model=m, meter=meter) for m in models]
 
 
 def _proof_verifier(cli_lean: LeanVerifier) -> LeanVerifier:
@@ -94,11 +95,15 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     novelty = NoveltyGate(CorpusBackend.from_json(), lean)
     faithfulness = FaithfulnessGate(smt=smt, probes=default_probes(smt), judge=ConservativeJudge())
 
+    # ADR 0014: one cost meter, wired into every provider so real token usage is
+    # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
+    cost_budget = CostBudget.from_env()
     autoformalizer = AnthropicProvider(
-        model=os.environ.get("LEIBNIZ_CONJECTURE_MODEL", "claude-opus-4-8")
+        model=os.environ.get("LEIBNIZ_CONJECTURE_MODEL", "claude-opus-4-8"),
+        meter=cost_budget,
     )
     consensus = ProofConsensus(
-        provers=prover_ensemble(),
+        provers=prover_ensemble(meter=cost_budget),
         lean=_proof_verifier(lean),  # ADR 0011: REPL (import-cached) when available
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
@@ -114,5 +119,5 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         verification=VerificationGate(policy),
         kfm=KFM(Archive()),
         budget=TrustBudget(policy),
-        cost_budget=CostBudget.from_env(),  # ADR 0011: USD cap for sustained runs
+        cost_budget=cost_budget,  # ADR 0011 cap, ADR 0014 metered by real usage
     )
