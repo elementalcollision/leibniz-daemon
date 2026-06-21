@@ -29,6 +29,12 @@ NOVELTY_EDGE = "novelty"
 # carries any other producer is a mislabel and is rejected structurally.
 KERNEL_PRODUCER = "LeanVerifier.discharge"
 
+# ADR 0013 §2: producers whose output is irreducible LLM judgment. A MECHANICAL or
+# ADVERSARIAL edge that names one of these is a mislabel (a judged verdict dressed
+# as mechanical) and is rejected.
+JUDGE_PRODUCER = "FaithfulnessJudge"
+JUDGE_PRODUCERS = frozenset({JUDGE_PRODUCER})
+
 
 class TrustViolation(Exception):
     """Raised when a promotion path would trust an LLM where it must not."""
@@ -60,6 +66,14 @@ class TrustPolicy:
             raise TrustViolation(
                 f"proof edge produced by {ev.producer!r}; only the Lean kernel "
                 f"({KERNEL_PRODUCER}) may decide a proof"
+            )
+        # ADR 0013 §2: a non-JUDGED edge must not carry a judge producer (a judged
+        # verdict mislabeled mechanical/adversarial). The JUDGED tier is where a
+        # judge legitimately appears (and only on the faithfulness edge, by tier).
+        if ev.tier is not TrustTier.JUDGED and ev.producer in JUDGE_PRODUCERS:
+            raise TrustViolation(
+                f"{ev.tier.value} edge {ev.edge!r} produced by judge "
+                f"{ev.producer!r}; a judged verdict may not be tagged {ev.tier.value}"
             )
 
     def validate_path(self, edges: Iterable[EdgeEvidence]) -> None:

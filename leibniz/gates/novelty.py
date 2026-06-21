@@ -54,6 +54,7 @@ class NoveltyGate:
                 verdict=Verdict.FAIL,
                 detail={"reason": "closed by decision procedure"},
                 cost_units=1.0,
+                producer="LeanVerifier.is_trivial",  # ADR 0013 §2
             )
 
         if self.corpus.contains_equivalent(prop.signature):
@@ -67,6 +68,7 @@ class NoveltyGate:
                     "neighbors": self.corpus.nearest(prop.signature),
                 },
                 cost_units=1.0,
+                producer="CorpusBackend",  # ADR 0013 §2
             )
 
         return EdgeEvidence(
@@ -75,4 +77,5 @@ class NoveltyGate:
             verdict=Verdict.PASS,
             detail={"neighbors": self.corpus.nearest(prop.signature)},
             cost_units=1.0,
+            producer="NoveltyGate",  # ADR 0013 §2
         )
