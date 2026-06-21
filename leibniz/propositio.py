@@ -38,6 +38,11 @@ class Enuntiatio:
     claim_type: ClaimType
     falsifiable_claim: str           # the explicit refutation condition (Popper)
     domain: str = "analysis_of_algorithms"
+    # R2 structured faithfulness contract (ADR 0004): machine-checkable predicates
+    # over input `n`. The Enuntiatio asserts: for all n with claim_domain(n),
+    # claim_property(n). Left None for prose-only / OPEN_FORM claims.
+    claim_domain: Optional[str] = None
+    claim_property: Optional[str] = None
 
 
 @dataclass
@@ -52,6 +57,9 @@ class Expressio:
     imports: tuple[str, ...] = ("Mathlib",)
     normalized_hash: str = ""
     compiles: Optional[bool] = None  # syntactic validity is free: Lean says yes/no
+    # R2 (ADR 0004): the domain over `n` the formal statement actually establishes
+    # the claimed property on. Faithful iff it covers the Enuntiatio's claim_domain.
+    established_domain: Optional[str] = None
 
 
 @dataclass
