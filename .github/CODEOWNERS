@@ -1,0 +1,19 @@
+# Trust-boundary files — operator review required before merge.
+# This is enforcement layer 4 (HANDOFF §4): the live PreToolUse hook
+# (.claude/hooks/guard-trust-files.py) guards the interactive session; CODEOWNERS
+# + branch protection guard the merge path. Both are needed — a hook only covers
+# this agent's session, not a direct git push.
+#
+# TODO(operator): replace @OWNER with your GitHub handle, push to GitHub, and
+# enable branch protection on the default branch requiring CODEOWNERS review +
+# the `ci / invariants` check.
+
+/leibniz/trust.py                @OWNER
+/leibniz/verifiers.py            @OWNER
+/leibniz/types.py                @OWNER
+/leibniz/gates/verification.py   @OWNER
+/leibniz/gates/faithfulness.py   @OWNER
+/leibniz/gates/novelty.py        @OWNER
+/tests/test_invariants.py        @OWNER
+/.claude/hooks/guard-trust-files.py  @OWNER
+/.claude/settings.json           @OWNER
