@@ -65,9 +65,19 @@ class FaithfulnessGate:
         en = prop.enuntiatio
 
         # 1. Adversarial spine. Always run; cheap relative to proof.
+        # When the claim carries a structured contract (ADR 0004), search the real
+        # gaming target: an input the claim covers, the proof leaves unconstrained,
+        # and on which the claimed property fails. Otherwise fall back to the legacy
+        # (prose) call so prose-only claims and the deterministic fakes still work.
+        if en.claim_domain and en.claim_property and prop.expressio.established_domain:
+            statement = f"not ({prop.expressio.established_domain})"
+            negated_claim = f"({en.claim_domain}) and {_negate(en.claim_property)}"
+        else:
+            statement = prop.expressio.theorem_src
+            negated_claim = _negate(en.falsifiable_claim)
         witness = self.smt.backend.find_gaming_witness(
-            statement=prop.expressio.theorem_src,
-            negated_claim=_negate(en.falsifiable_claim),
+            statement=statement,
+            negated_claim=negated_claim,
             bound=self.gaming_bound,
         )
         if witness is not None:
@@ -120,8 +130,11 @@ class FaithfulnessGate:
         )
 
 
-def _negate(falsifiable_claim: str) -> str:
-    """Placeholder for forming the refutation target the gaming-witness must hit.
-    A real version compiles the Enuntiatio's falsifiable_claim into a Lean/SMT
-    predicate and negates it."""
-    return f"NOT({falsifiable_claim})"
+def _negate(predicate: str) -> str:
+    """Boolean negation of a predicate, for the gaming-witness search target.
+
+    For a structured claim (ADR 0004) ``predicate`` is the DSL ``claim_property``
+    and this yields a Z3-searchable ``not (...)``. For a prose ``falsifiable_claim``
+    it yields ``not (...)`` too; the Z3 backend cannot parse prose and degrades to
+    "no witness" (the structured path is what makes the spine real)."""
+    return f"not ({predicate})"
