@@ -9,18 +9,39 @@ sign-off via the PreToolUse hook).
 
 ## The ADRs
 
-| ADR | Decision | Theme | Touches guarded core? |
-|---|---|---|---|
-| **0009** | Close the KFM → SURVEY feedback loop (re-seed from recombined/proven parents; curiosity + difficulty targeting) | Discovery yield | no |
-| **0010** | Expand the faithfulness claim-type probe table (more measurable claims adjudicated mechanically) | Discovery yield / faithfulness | **yes** (gates/faithfulness.py) |
-| **0011** | Proving throughput & cost (persistent Lean + REPL; concurrent prover ensemble; cross-cycle cache; USD budget) | Performance / cost | no |
-| **0012** | Autoformalization robustness (mechanical import-resolver before LLM repair; prover-output normalization) | Robustness | no |
-| **0013** | Trust-edge provenance hardening (EdgeEvidence.producer + mutation tests) | Trust defense-in-depth | **yes** (types.py, trust.py, tests) |
+**Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
+Accepted; two follow-ups remain (see below). The trust boundary held throughout —
+`tests/test_invariants.py` byte-identical across every change.
 
-## Priority & sequencing
+| ADR | Decision | Theme | Guarded? | Status |
+|---|---|---|---|---|
+| **0009** | Close the KFM → SURVEY loop (re-seed from recombined parents; curiosity + difficulty targeting) | Discovery yield | no | ✅ done |
+| **0010** | Expand the faithfulness probe table (OPTIMALITY + INVARIANT adjudicated mechanically) | Faithfulness | no¹ | ✅ done |
+| **0011** | Proving throughput & cost (concurrent ensemble; cross-cycle cache; USD cap) | Performance / cost | no | ✅ done² |
+| **0012** | Autoformalization robustness (mechanical import-resolver before LLM repair; output normalization) | Robustness | no | ✅ done |
+| **0013** | Trust-edge provenance (EdgeEvidence.producer + construction-site AST-guard) | Trust defense-in-depth | **yes** (types/trust/verifiers) | ✅ done³ |
 
-The mission is *novel, tractable, kernel-proven* theorems — so **discovery yield is
-the top priority** (the daemon currently runs but rarely promulgates):
+¹ Turned out **probe-table-only** (`probes.py`) — the gate dispatch is generic, so no guarded edit.
+² Lean REPL + persistent-concurrent compose **deferred** (documented in ADR 0011).
+³ Adversarial-review-hardened: the load-bearing AST-guard landed; the **§2 general
+  judge-producer stamping** on faithfulness/novelty edges is an Open Question follow-up.
+
+## Remaining follow-ups (post-0013)
+
+- **ADR 0013 §2** — generalize trust-edge provenance: have the faithfulness/novelty
+  gates stamp producers and have `validate_edge` reject a MECHANICAL edge carrying a
+  judge/adversarial producer (today only the proof edge is provenance-checked).
+- **ADR 0011 deferred** — a Lean REPL backend (load Mathlib imports once) and a
+  thread-safe persistent+concurrent compose, for throughput at sustained volume.
+- **The open frontier (not an ADR yet)** — autonomous *discovery*: the daemon runs
+  end-to-end but rarely promulgates because conjectures land trivial-or-too-hard.
+  Tuning the conjecturer toward provable-yet-novel statements (over the now-closed
+  KFM loop) is the next mission-level push.
+
+## Sequencing (as built)
+
+The mission is *novel, tractable, kernel-proven* theorems — so **discovery yield was
+the top priority**; implemented in this order:
 
 1. **0009 — discovery loop** (highest leverage; turns "runs end-to-end" into
    "learns and promulgates"). No guarded edits.
