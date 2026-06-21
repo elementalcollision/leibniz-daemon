@@ -34,6 +34,5 @@ jobs:
       - name: Demo turns one cycle (BLOCKING)
         run: python demo.py
 
-      - name: Lint (ADVISORY until the R0 unused-import cleanup lands; then flip to blocking)
+      - name: Lint (BLOCKING — repo is ruff-clean as of R0 cleanup)
         run: ruff check .
-        continue-on-error: true

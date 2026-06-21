@@ -29,7 +29,7 @@ gate tries, strongest first:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Optional, Protocol
+from typing import Optional, Protocol
 
 from leibniz.propositio import Propositio
 from leibniz.types import ClaimType, EdgeEvidence, FinishReason, TrustTier, Verdict

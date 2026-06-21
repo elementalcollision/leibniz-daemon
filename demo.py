@@ -10,7 +10,6 @@ Run:  python demo.py
 
 from __future__ import annotations
 
-from leibniz.adapters import LeonardoAdapter, ProviderAdapter, RuntimeAdapter
 from leibniz.daemon import Leibniz
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate

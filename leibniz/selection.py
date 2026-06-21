@@ -20,7 +20,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from leibniz.propositio import Propositio
 from leibniz.types import FinishReason
