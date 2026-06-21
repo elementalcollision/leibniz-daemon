@@ -32,6 +32,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -123,6 +124,7 @@ class LeanCliBackend:
     _cid: Optional[str] = field(default=None, repr=False)
     _workdir: Optional[str] = field(default=None, repr=False)
     _counter: int = field(default=0, repr=False)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     # --- LeanBackend Protocol -------------------------------------------------
     def compile_statement(self, expr: Expressio) -> bool:
@@ -236,15 +238,24 @@ class LeanCliBackend:
             atexit.register(self.close)
 
     def _run_persistent(self, source: str) -> Optional[LeanResult]:
-        self._ensure_container()
-        if not self._cid or not self._workdir:
+        # Thread-safe (ADR 0011): the lock guards container creation + the unique
+        # filename counter + the scratch write, so persistent mode composes with the
+        # concurrent prover ensemble. The long `docker exec` runs OUTSIDE the lock,
+        # so checks still execute concurrently.
+        with self._lock:
+            self._ensure_container()
+            if not self._cid or not self._workdir:
+                cid = None
+            else:
+                self._counter += 1
+                name = f"Thm{self._counter}.lean"
+                (Path(self._workdir) / name).write_text(source)
+                cid = self._cid
+        if cid is None:
             return self._run_oneshot(source)  # container unavailable -> degrade
-        self._counter += 1
-        name = f"Thm{self._counter}.lean"
-        (Path(self._workdir) / name).write_text(source)
         try:
             proc = subprocess.run(
-                ["docker", "exec", self._cid, "lake", "env", "lean", f"/scratch/{name}"],
+                ["docker", "exec", cid, "lake", "env", "lean", f"/scratch/{name}"],
                 capture_output=True, text=True, timeout=self.timeout_s,
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):

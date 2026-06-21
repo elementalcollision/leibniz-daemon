@@ -1,11 +1,12 @@
 # ADR 0011 — Proving Throughput & Cost Governance (Proposed)
 
-- Status: **Accepted** (implemented 2026-06-21 — concurrency, cost cap, cross-cycle
-  cache landed; the Lean REPL and persistent+concurrent compose are deferred, see
-  Consequences)
+- Status: **Accepted** (fully implemented 2026-06-21 — concurrency, cost cap,
+  cross-cycle cache, thread-safe persistent container, **and the Lean REPL backend**
+  all landed and wired)
 - Date: 2026-06-21
 - Related: ADR 0003 (Lean backend), ADR 0006 (consensus proving);
-  `backends/lean_cli.py`, `consensus.py`, `assembly.py`. Non-guarded. Roadmap #4.
+  `backends/lean_cli.py`, `backends/lean_repl.py`, `docker/lean-repl.Dockerfile`,
+  `consensus.py`, `assembly.py`. Non-guarded. Roadmap #4.
 
 ## Context
 
@@ -17,11 +18,20 @@ the proof stage dominates wall-clock and cost.
 
 ## Decision (proposed)
 
-1. **Persistent Lean container.** Wire `LeanCliBackend(persistent=True)` (built in
-   R1c, unused in `build_daemon`) — removes ~25% per-check container churn.
-2. **Lean REPL backend (the big win).** A long-lived Lean process with the candidate's
-   import set preloaded, so Mathlib isn't reloaded per check. New `LeanReplBackend`
-   behind the same `LeanBackend` protocol; falls back to the CLI backend.
+1. **Persistent Lean container.** `LeanCliBackend(persistent=True)` keeps one
+   container alive and uses `docker exec` per check — removes ~25% per-check
+   container churn. Made thread-safe (a lock guards container creation + the
+   scratch-file counter; the `docker exec` runs outside the lock) so it composes
+   with the concurrent ensemble.
+2. **Lean REPL backend (the big win).** A long-lived `leanprover-community/repl`
+   process (`docker/lean-repl.Dockerfile` → `leibniz-lean-repl:v4.31.0`) with the
+   candidate's import set preloaded into a REPL *environment*, so Mathlib loads
+   ONCE per import-set instead of per check. `LeanReplBackend` implements the same
+   `LeanBackend` protocol (JSON line protocol over stdin/stdout, env cached per
+   import-set, I/O serialized under a lock); the assembly prefers it for the
+   consensus discharge path and falls back to the CLI backend when the image is
+   absent or `LEIBNIZ_LEAN_REPL=0`. **Measured 3x on a 4-check Mathlib batch**
+   (2.0s vs 6.0s), and the gap widens as more checks amortize the single load.
 3. **Concurrent prover ensemble.** Run the consensus provers' drafts + discharges
    concurrently (threads/async) instead of sequentially — N-way speedup on proof.
 4. **Cross-cycle result cache.** Persist the structural-hash-keyed result cache so
@@ -41,9 +51,18 @@ the proof stage dominates wall-clock and cost.
 - Lower `$ / promulgation` and wall-clock; sustained autonomous runs become
   affordable and bounded.
 - Soundness unaffected — these are performance/cost mechanisms; the kernel + N+1
-  consensus still decide (ADR 0001/0006). All non-guarded.
+  consensus still decide (ADR 0001/0006). The REPL backend only *reports* the
+  kernel's verdict (no errors + no `sorry` ⇒ verified); `LeanVerifier.discharge`
+  remains the sole `kernel_verified` writer (CLAUDE.md inv. 1), so the proof edge
+  is `MECHANICAL` regardless of which backend ran the check. All non-guarded.
+- Throughput/serialization trade-off: the REPL is a single stdin/stdout stream, so
+  its checks serialize under a lock. The ensemble's LLM *proposals* still run
+  concurrently (the slow part); only the now-fast kernel checks serialize. Net win
+  because each check no longer reloads Mathlib.
 
 ## Open questions
 
-- REPL crash/restart handling and per-import-set process pooling.
+- REPL crash/restart handling and per-import-set process pooling (current backend
+  degrades to conservative `False` on a dead process; the assembly's CLI fallback
+  covers a missing image, not a mid-run crash).
 - Spend estimation accuracy across Anthropic vs OpenRouter pricing.
