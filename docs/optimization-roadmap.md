@@ -36,8 +36,8 @@ discovery-frontier push.
 | ADR | Decision | Theme | Guarded? | Status |
 |---|---|---|---|---|
 | **0014** | Real (token-based) cost accounting (meter provider usage; price table; exact USD cap) | Cost governance | no | ✅ done |
-| **0015** | Corpus (D4) + domain (D9) expansion | Discovery inputs | no | ⏳ next |
-| **0016** | Chimera runtime — real persistent runtime vs the `SimpleRuntime` stub | Substrate | no | ⏳ planned |
+| **0015** | Corpus (D4: 3→34 known results) + domain (D9: 1→3, round-robin) expansion | Discovery inputs | no | ✅ done |
+| **0016** | Chimera runtime — real persistent runtime vs the `SimpleRuntime` stub | Substrate | no | ⏳ next |
 
 ## Remaining follow-ups
 
