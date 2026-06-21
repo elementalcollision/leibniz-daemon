@@ -56,6 +56,15 @@ class LeonardoForgeAdapter:
     max_analogies: int = 3
     max_seeds: int = 8
 
+    def domains(self) -> list[str]:
+        """All frontier domains (D9 / ADR 0015). Empty if the frontier is unreadable;
+        the daemon then falls back to its single default domain."""
+        try:
+            data = json.loads(self.frontier_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return []
+        return list(data.keys()) if isinstance(data, dict) else []
+
     def survey_frontier(self, domain: str) -> list[str]:
         """Curated open-edge seeds for the domain (Leonardo does not survey these)."""
         try:
