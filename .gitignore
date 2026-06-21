@@ -6,6 +6,9 @@ __pycache__/
 build/
 dist/
 
+# Secrets — provider credentials live here, never committed
+.env
+
 # Editable install / venv
 .venv/
 venv/
