@@ -1,10 +1,10 @@
 # ADR 0013 — Trust-Edge Provenance Hardening (Proposed)
 
 - Status: **Accepted** (implemented 2026-06-21 — proof-edge provenance: runtime
-  producer check + the load-bearing construction-site AST-guard. The §2 general
-  MECHANICAL-vs-judge-producer stamping on faithfulness/novelty edges is an explicit
-  Open Question, not yet built. EdgeEvidence.producer is append-only so the 11
-  invariant tests stay byte-identical.)
+  producer check + the load-bearing construction-site AST-guard; **§2 also done**:
+  the faithfulness/novelty gates stamp producers and validate_edge rejects a
+  non-JUDGED edge carrying a judge producer. EdgeEvidence.producer is append-only so
+  the 11 invariant tests stay byte-identical.)
 - Date: 2026-06-21
 - Related: ADR 0001 (trust tiers), the original plan review (tier-mislabel risk);
   `types.py` (`EdgeEvidence`), `trust.py`, `tests/`. **Touches the guarded core**
@@ -56,19 +56,19 @@ plan review flagged.
   Together these close the `producer=None` mislabel for the **proof edge**: a rogue
   function minting `EdgeEvidence(edge=PROOF_EDGE, …)` fails the AST-guard regardless
   of producer.
-- **What is NOT yet caught:** a JUDGED *faithfulness/novelty* check mislabeled
-  MECHANICAL is still not blocked structurally (those gates don't stamp producers
-  and validate_edge's producer rule is proof-edge-only). That is the §2 follow-up.
-  The runtime producer string is advisory, not cryptographic.
+- **§2 (now done):** the faithfulness/novelty gates stamp producers
+  (`SMTVerifier.gaming_witness`, `ClaimProbe`, `FaithfulnessGate`, `FaithfulnessJudge`;
+  `LeanVerifier.is_trivial`, `CorpusBackend`, `NoveltyGate`), and `validate_edge`
+  rejects any non-JUDGED edge carrying a judge producer (`JUDGE_PRODUCERS`). So a
+  judged faithfulness verdict mislabeled MECHANICAL is now caught structurally too.
+  The runtime producer string is still advisory (a forger can type any name); the
+  AST-guard remains the load-bearing guarantee for the proof edge.
 - Strictly additive / monotone-tightening: no existing check removed;
   `test_invariants.py` stays byte-identical and green (the adversarial review of
   this change confirmed it does not weaken the boundary).
 
 ## Open questions
 
-- **§2 generalization (follow-up):** have `gates/faithfulness.py` and
-  `gates/novelty.py` stamp producers and extend `validate_edge` to reject a
-  MECHANICAL faithfulness/novelty edge carrying a known judge/adversarial producer.
 - Whether to make `producer` *required* (reject proof `producer=None`) — currently
   impossible without editing the byte-identical invariant tests; revisit if those
   are ever revised.
