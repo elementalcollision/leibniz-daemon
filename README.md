@@ -52,7 +52,9 @@ no cycle can promulgate a law whose proof was not kernel-checked.
 ## Run the scaffold
 
 ```bash
-python demo.py
+pip install -e ".[dev]"   # core is stdlib-only; the dev extra adds pytest + ruff
+python demo.py            # turn one circadian cycle (deterministic fakes)
+pytest -q                 # 11 trust-invariant tests must stay green
 ```
 
 The demo wires deterministic fakes and turns one circadian cycle. You should see
@@ -86,5 +88,8 @@ docs/
 ## Status
 
 This is the **R0 scaffold**: interfaces, the loop, the gates, and a passing
-dry-run. The real Lean/Z3/provider backends are marked seams. See
-`docs/capability-ladder.md` for the rung-by-rung build order.
+dry-run — **assembled and green as of 2026-06-21** (`pytest -q` → 11 passed;
+`python demo.py` → one `Q.E.D.` plus one each of refuted/known/trivial/gamed).
+Tracked at `github.com/elementalcollision/leibniz-daemon` with branch protection,
+a PreToolUse trust-edge hook, and CI. The real Lean/Z3/provider backends are
+marked seams. See `docs/capability-ladder.md` for the rung-by-rung build order.
