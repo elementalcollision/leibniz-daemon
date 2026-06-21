@@ -92,7 +92,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         runtime=SimpleRuntime(),
         survey=Survey(LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)),
         conjecture=Conjecture(autoformalizer),
-        formalize=Formalize(autoformalizer, lean, smt, novelty, faithfulness),
+        formalize=Formalize(autoformalizer, lean, smt, novelty, faithfulness, max_repairs=2),
         derive=NoOpDerive(),
         demonstrate=ConsensusDemonstrate(consensus),
         promulgate=Promulgate(),
