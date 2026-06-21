@@ -17,22 +17,19 @@ Accepted; two follow-ups remain (see below). The trust boundary held throughout 
 |---|---|---|---|---|
 | **0009** | Close the KFM → SURVEY loop (re-seed from recombined parents; curiosity + difficulty targeting) | Discovery yield | no | ✅ done |
 | **0010** | Expand the faithfulness probe table (OPTIMALITY + INVARIANT adjudicated mechanically) | Faithfulness | no¹ | ✅ done |
-| **0011** | Proving throughput & cost (concurrent ensemble; cross-cycle cache; USD cap) | Performance / cost | no | ✅ done² |
+| **0011** | Proving throughput & cost (concurrent ensemble; cross-cycle cache; USD cap; **Lean REPL import-caching**) | Performance / cost | no | ✅ done² |
 | **0012** | Autoformalization robustness (mechanical import-resolver before LLM repair; output normalization) | Robustness | no | ✅ done |
-| **0013** | Trust-edge provenance (EdgeEvidence.producer + construction-site AST-guard) | Trust defense-in-depth | **yes** (types/trust/verifiers) | ✅ done³ |
+| **0013** | Trust-edge provenance (EdgeEvidence.producer + construction-site AST-guard + §2 gate stamping) | Trust defense-in-depth | **yes** (types/trust/verifiers) | ✅ done³ |
 
 ¹ Turned out **probe-table-only** (`probes.py`) — the gate dispatch is generic, so no guarded edit.
-² Lean REPL + persistent-concurrent compose **deferred** (documented in ADR 0011).
-³ Adversarial-review-hardened: the load-bearing AST-guard landed; the **§2 general
-  judge-producer stamping** on faithfulness/novelty edges is an Open Question follow-up.
+² **Fully landed** — incl. the Lean REPL backend (`backends/lean_repl.py`,
+  `docker/lean-repl.Dockerfile`): Mathlib loads once per import-set, measured 3x on a
+  4-check Mathlib batch. Thread-safe persistent container also composes with the ensemble.
+³ Adversarial-review-hardened: the load-bearing AST-guard landed, **and §2 general
+  judge-producer stamping** on faithfulness/novelty edges shipped (PR #25).
 
-## Remaining follow-ups (post-0013)
+## Remaining follow-ups
 
-- **ADR 0013 §2** — generalize trust-edge provenance: have the faithfulness/novelty
-  gates stamp producers and have `validate_edge` reject a MECHANICAL edge carrying a
-  judge/adversarial producer (today only the proof edge is provenance-checked).
-- **ADR 0011 deferred** — a Lean REPL backend (load Mathlib imports once) and a
-  thread-safe persistent+concurrent compose, for throughput at sustained volume.
 - **The open frontier (not an ADR yet)** — autonomous *discovery*: the daemon runs
   end-to-end but rarely promulgates because conjectures land trivial-or-too-hard.
   Tuning the conjecturer toward provable-yet-novel statements (over the now-closed

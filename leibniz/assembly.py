@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 
+from leibniz.backends import lean_repl
 from leibniz.backends.lean_cli import LeanCliBackend
 from leibniz.backends.smt_z3 import Z3Backend
 from leibniz.budget import TrustBudget
@@ -72,6 +73,19 @@ def prover_ensemble() -> list[OpenRouterProvider]:
     return [OpenRouterProvider(model=m) for m in models]
 
 
+def _proof_verifier(cli_lean: LeanVerifier) -> LeanVerifier:
+    """The verifier the consensus ensemble discharges through (ADR 0011).
+
+    Prefer the REPL backend — Mathlib loads once per import-set instead of once per
+    check (~3x throughput on Mathlib checks), which matters because the ensemble
+    issues many checks per cycle. Fall back to the CLI verifier when the REPL image
+    is absent, or when the operator pins it off via LEIBNIZ_LEAN_REPL=0. Either way
+    `LeanVerifier.discharge` is the sole kernel_verified writer (CLAUDE.md inv. 1)."""
+    if os.environ.get("LEIBNIZ_LEAN_REPL", "1") != "0" and lean_repl.available():
+        return LeanVerifier(lean_repl.LeanReplBackend())
+    return cli_lean
+
+
 def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     """Assemble the real daemon. Makes no network calls; configure creds via env
     (load_env() first). frontier/analogy limits bound how many seeds a cycle runs."""
@@ -85,7 +99,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     )
     consensus = ProofConsensus(
         provers=prover_ensemble(),
-        lean=lean,
+        lean=_proof_verifier(lean),  # ADR 0011: REPL (import-cached) when available
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
     policy = TrustPolicy()
