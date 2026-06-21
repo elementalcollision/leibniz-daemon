@@ -29,7 +29,7 @@ def _verifier() -> LeanVerifier:
 
 
 def test_true_theorem_is_kernel_verified():
-    expr = Expressio(theorem_src="theorem t : 1 + 1 = 2")
+    expr = Expressio(theorem_src="theorem t : 1 + 1 = 2", imports=())
     demo = Demonstratio(proof_obligation="t", proof_src="by decide")
     ev = _verifier().discharge(expr, demo)
     assert demo.kernel_verified is True
@@ -42,7 +42,7 @@ def test_true_theorem_is_kernel_verified():
 def test_false_theorem_is_unproven_with_a_mechanical_fail_edge():
     """The exit-test 'false -> UNPROVEN'. Assert it fails for the RIGHT reason:
     a present, MECHANICAL, FAIL proof edge (not a missing/absent edge)."""
-    expr = Expressio(theorem_src="theorem f : 1 + 1 = 3")
+    expr = Expressio(theorem_src="theorem f : 1 + 1 = 3", imports=())
     demo = Demonstratio(proof_obligation="f", proof_src="by decide")
     ev = _verifier().discharge(expr, demo)
     assert demo.kernel_verified is False
@@ -54,7 +54,7 @@ def test_false_theorem_is_unproven_with_a_mechanical_fail_edge():
 
 def test_sorry_is_never_a_proof():
     """The axiom of `sorry` must not earn a Q.E.D. — the core soundness property."""
-    expr = Expressio(theorem_src="theorem t : 1 + 1 = 2")
+    expr = Expressio(theorem_src="theorem t : 1 + 1 = 2", imports=())
     demo = Demonstratio(proof_obligation="t", proof_src="by sorry")
     _verifier().discharge(expr, demo)
     assert demo.kernel_verified is False
@@ -63,14 +63,14 @@ def test_sorry_is_never_a_proof():
 
 def test_tautology_is_trivial():
     backend = LeanCliBackend()
-    assert backend.closed_by_decision_procedure(Expressio(theorem_src="theorem taut : True")) is True
+    assert backend.closed_by_decision_procedure(Expressio(theorem_src="theorem taut : True", imports=())) is True
 
 
 def test_malformed_statement_does_not_compile():
     backend = LeanCliBackend()
-    assert backend.compile_statement(Expressio(theorem_src="theorem bad : NoSuchIdent")) is False
+    assert backend.compile_statement(Expressio(theorem_src="theorem bad : NoSuchIdent", imports=())) is False
 
 
 def test_well_formed_statement_compiles():
     backend = LeanCliBackend()
-    assert backend.compile_statement(Expressio(theorem_src="theorem ok : 1 + 1 = 2")) is True
+    assert backend.compile_statement(Expressio(theorem_src="theorem ok : 1 + 1 = 2", imports=())) is True
