@@ -21,7 +21,8 @@ deterministic fakes. No real Lean/Z3/LLM yet.
 - ✅ `demo.py` turns one cycle; every gate fires
 
 **Exit test:** `python demo.py` shows one `Q.E.D.` and one of each quarantine
-reason.
+reason. *(Met 2026-06-21: scaffold assembled into the `leibniz/` package;
+`pytest -q` → 11 passed.)*
 
 ---
 
