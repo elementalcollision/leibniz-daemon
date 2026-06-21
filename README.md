@@ -36,18 +36,27 @@ no cycle can promulgate a law whose proof was not kernel-checked.
 
 ## The organ map (combining the extant code)
 
-- **Chimera → runtime (the body).** Circadian scheduler, SQLite memory, the
-  cross-model *witness* mechanism, drift/trust telemetry. → `leibniz.adapters.RuntimeAdapter`
+- **Chimera → runtime (the body).** Scheduler, memory, cross-model witness, drift.
+  Seam today (`SimpleRuntime` in `leibniz.assembly`); full Chimera wiring pending. →
+  `leibniz.adapters.RuntimeAdapter`
 - **Newton → loop + ledger (the spine).** The six stages and the
   Enuntiatio/Expressio/Demonstratio triad, kept wholesale; only the Demonstratio
   backend flips from execution-gate to kernel proof. → `leibniz.pipeline`, `leibniz.propositio`
 - **KFM → selection.** Kill / recombine / commit as a quality-diversity operator
-  over a MAP-Elites archive of conjectures. → `leibniz.selection`
-- **Leonardo → survey/analogy front-end (the eyes).** *Tentative role, pending
-  confirmation of what Leonardo actually is* — isolated behind one adapter so
-  rewiring is a one-file change. → `leibniz.adapters.LeonardoAdapter`
-- **NEW → verification (the judge).** Lean kernel + LeanDojo, Z3. The organ Newton
-  deliberately omitted. → `leibniz.verifiers`
+  over a MAP-Elites archive; the discovery loop re-seeds SURVEY from recombined
+  parents (ADR 0009). → `leibniz.selection`, `leibniz.daemon.run_cycles`
+- **Leonardo → cross-domain analogy (the eyes).** Confirmed: a live da-Vinci-voice
+  journaling agent, **not** a survey oracle — so it supplies cross-domain analogies
+  from its Forge, with frontier-survey from a curated source (ADR 0007). →
+  `leibniz.leonardo.LeonardoForgeAdapter`
+- **Proposal → the variation operator.** Anthropic (Claude) for CONJECTURE/FORMALIZE
+  (with mechanical import-repair, ADR 0012); an OpenRouter prover ensemble for
+  PROOF_DRAFT under **N+1 kernel-verified consensus** (ADR 0005/0006). →
+  `leibniz.providers`, `leibniz.consensus`
+- **Verification → the judge.** The real Lean 4 kernel (in an OrbStack container,
+  via `lake env lean` — LeanDojo deferred, ADR 0003) + Z3 gaming-witness (ADR 0004) +
+  a structural-hash novelty corpus (ADR 0007 corpus). → `leibniz.verifiers`,
+  `leibniz.backends`, `leibniz.corpus`
 
 ## Run the scaffold
 
@@ -79,30 +88,56 @@ stdlib invariant suite stays the universal gate.
 
 ```
 leibniz/
-  types.py        # trust tiers, claim types, verdicts, finish reasons
-  trust.py        # the enforceable trust policy (the invariant)
-  propositio.py   # Enuntiatio / Expressio / Demonstratio (active proof obligation)
-  pipeline.py     # survey → conjecture → formalize → derive → demonstrate → promulgate
-  gates/
-    faithfulness.py  # the crux: gaming-witness → claim-probe → judge
-    novelty.py       # external dedup + non-triviality
-    verification.py  # deterministic promotion verdict
-  selection.py    # KFM over a MAP-Elites archive
-  verifiers.py    # Lean (the judge) + Z3 (cheap refuter / gaming-witness)
-  adapters.py     # Chimera, provider, Leonardo seams
-  daemon.py       # the circadian loop
-docs/
-  adr/0001-charter-and-trust-hierarchy.md
-  adr/0002-faithfulness-gate.md
-  capability-ladder.md   # R0..R6 build order
-  architecture.md
+  types.py · trust.py · propositio.py        # vocabulary, policy, ledger triad (guarded core)
+  pipeline.py · daemon.py                     # six stages; circadian loop + run_cycles discovery
+  gates/{faithfulness,novelty,verification}.py# the three decision gates (guarded)
+  verifiers.py                                # LeanVerifier (sole kernel writer) + SMTVerifier
+  selection.py                                # KFM + MAP-Elites archive (descriptor, curiosity, recombine)
+  probes.py · imports.py · corpus.py          # faithfulness probes · import-resolver · novelty corpus
+  consensus.py                                # cascaded/witness provers, N+1 kernel consensus
+  budget.py · cost.py                         # judged-faithfulness budget · USD cost cap
+  backends/{lean_cli,smt_z3}.py               # real Lean (container) + Z3
+  providers/{anthropic_provider,openrouter_provider,prover,router}.py  # proposal models
+  leonardo.py · adapters.py                   # Leonardo analogy seam · Protocols
+  assembly.py · calculemus.py                 # build_daemon (real stack) · public ledger + publish tier
+demo.py                                       # one cycle, deterministic fakes
+scripts/{run_live,build_corpus}.py            # live e2e run · corpus index builder
+docs/adr/0001..0013 · docs/{architecture,capability-ladder,optimization-roadmap}.md
+tests/                                        # 11 invariants (byte-frozen) + ~120 more
 ```
+
+## Run it live (autonomous)
+
+The production daemon wires the real backends (Lean kernel + Z3 + novelty corpus +
+Anthropic/OpenRouter providers + consensus + Leonardo). It needs credentials in a
+gitignored `.env` (`ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `LEIBNIZ_PROVER_MODELS`;
+see `.env.example`) and the Lean image:
+
+```bash
+cp .env.example .env && $EDITOR .env          # add your keys
+python scripts/run_live.py 1 1                 # one bounded circadian cycle, real calls
+```
+
+It surveys → conjectures (Claude) → formalizes (with import-repair) → runs the
+mechanical gates → proves under N+1 consensus → promulgates. Promulgation ≠
+publication: a law reaches the public *Calculemus* ledger only after an explicit
+operator publish (`leibniz.calculemus`, ADR 0008).
 
 ## Status
 
-This is the **R0 scaffold**: interfaces, the loop, the gates, and a passing
-dry-run — **assembled and green as of 2026-06-21** (`pytest -q` → 11 passed;
-`python demo.py` → one `Q.E.D.` plus one each of refuted/known/trivial/gamed).
-Tracked at `github.com/elementalcollision/leibniz-daemon` with branch protection,
-a PreToolUse trust-edge hook, and CI. The real Lean/Z3/provider backends are
-marked seams. See `docs/capability-ladder.md` for the rung-by-rung build order.
+The full capability ladder **R0–R6 is built and merged** (`docs/capability-ladder.md`),
+plus the post-R6 optimizations **ADR 0009–0013** (`docs/optimization-roadmap.md`):
+
+- **Trust boundary (R0–R3):** real Lean 4.31 kernel · Z3 gaming-witness + claim
+  probes · enforced 0.15 judged budget · structural-hash novelty corpus.
+- **Intelligence (R4–R5):** Anthropic + OpenRouter proposal models · cascaded/witness
+  proving with N+1 kernel consensus · MAP-Elites selection with a closed discovery loop.
+- **Ledger (R6):** *Calculemus* renderer + operator publish tier.
+- **Hardening:** autoformalization import-resolver · concurrent ensemble + USD cap ·
+  trust-edge provenance (construction-site AST-guard).
+
+The daemon runs end-to-end live; **autonomous *discovery* (reliably promulgating a
+novel theorem) is the open frontier** — a tuning matter, not a trust-boundary one.
+The boundary held throughout: `tests/test_invariants.py` is byte-identical across
+every change (~120 tests green). Tracked at `github.com/elementalcollision/leibniz-daemon`
+with branch protection, a PreToolUse trust-edge hook, CODEOWNERS, and CI.
