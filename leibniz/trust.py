@@ -74,3 +74,15 @@ class TrustPolicy:
             if e.edge == FAITHFULNESS_EDGE:
                 return e.tier is TrustTier.JUDGED
         return False
+
+    def admits_judged_faithfulness(self, judged_count: int, total_count: int) -> bool:
+        """Whether admitting ONE more JUDGED-faithfulness promulgation keeps the
+        residual within budget (ADR 0001 §5): ``(judged+1)/(total+1) <= max``.
+
+        Pure and separate from ``validate_path`` (which must still admit a lone
+        judged edge for invariant 5). Stateful counting lives in
+        ``leibniz.budget.TrustBudget``; this is just the policy arithmetic. The
+        first judged promulgation on an empty ledger is refused (1/1 > 0.15), so
+        judged faithfulness is admitted only once the ledger is large enough to
+        keep it under budget."""
+        return (judged_count + 1) <= self.max_judged_faithfulness_fraction * (total_count + 1)
