@@ -30,7 +30,7 @@ from leibniz.pipeline import (
     Survey,
 )
 from leibniz.propositio import Propositio
-from leibniz.selection import KFM, Disposition
+from leibniz.selection import KFM, Disposition, descriptor
 from leibniz.types import FinishReason
 
 
@@ -100,6 +100,9 @@ class Leibniz:
             report.promulgated += 1
 
         quality = _quality(prop)
+        # R5: place by the real behavior descriptor (computed now that the full
+        # Propositio — statement, proof technique — is available).
+        prop.behavior_descriptor = descriptor(prop)
         self.kfm.archive.consider(prop, quality)
         self.runtime.remember(prop)
 
