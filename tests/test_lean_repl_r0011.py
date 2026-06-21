@@ -1,0 +1,87 @@
+"""ADR 0011: the Lean REPL backend (import-caching for throughput).
+
+These require the REPL container (leibniz-lean-repl:v4.31.0); they skip cleanly
+where it is absent (e.g. CI), so the stdlib invariant tests stay the universal
+gate. Build the image with:
+
+    docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.31.0 .
+
+The REPL backend satisfies the same LeanBackend Protocol as the CLI backend and
+must agree with the kernel on the same true/false/sorry verdicts — only faster,
+because Mathlib loads once per import-set instead of once per check.
+"""
+from __future__ import annotations
+
+import pytest
+
+from leibniz.backends.lean_repl import LeanReplBackend, available
+from leibniz.propositio import Demonstratio, Expressio
+from leibniz.trust import PROOF_EDGE
+from leibniz.types import TrustTier, Verdict
+from leibniz.verifiers import LeanVerifier
+
+pytestmark = [
+    pytest.mark.lean,
+    pytest.mark.skipif(
+        not available(), reason="REPL container leibniz-lean-repl:v4.31.0 not available"
+    ),
+]
+
+
+def test_true_theorem_is_kernel_verified():
+    with LeanReplBackend() as backend:
+        expr = Expressio(theorem_src="theorem t : 1 + 1 = 2", imports=())
+        demo = Demonstratio(proof_obligation="t", proof_src="by decide")
+        ev = LeanVerifier(backend).discharge(expr, demo)
+        assert demo.kernel_verified is True
+        assert demo.qed == "Q.E.D."
+        assert ev.edge == PROOF_EDGE
+        assert ev.tier is TrustTier.MECHANICAL
+        assert ev.verdict is Verdict.PASS
+
+
+def test_false_theorem_is_unproven():
+    with LeanReplBackend() as backend:
+        expr = Expressio(theorem_src="theorem f : 1 + 1 = 3", imports=())
+        demo = Demonstratio(proof_obligation="f", proof_src="by decide")
+        ev = LeanVerifier(backend).discharge(expr, demo)
+        assert demo.kernel_verified is False
+        assert demo.qed == "Q.E.I."
+        assert ev.tier is TrustTier.MECHANICAL
+        assert ev.verdict is Verdict.FAIL
+
+
+def test_sorry_is_never_a_proof():
+    """The axiom of `sorry` must not earn a Q.E.D. — the core soundness property."""
+    with LeanReplBackend() as backend:
+        expr = Expressio(theorem_src="theorem t : 1 + 1 = 2", imports=())
+        demo = Demonstratio(proof_obligation="t", proof_src="by sorry")
+        LeanVerifier(backend).discharge(expr, demo)
+        assert demo.kernel_verified is False
+        assert demo.qed == "Q.E.I."
+
+
+def test_tautology_is_trivial():
+    with LeanReplBackend() as backend:
+        assert backend.closed_by_decision_procedure(
+            Expressio(theorem_src="theorem taut : True", imports=())
+        ) is True
+
+
+def test_malformed_statement_does_not_compile():
+    with LeanReplBackend() as backend:
+        assert backend.compile_statement(
+            Expressio(theorem_src="theorem bad : NoSuchIdent", imports=())
+        ) is False
+
+
+def test_mathlib_import_cached_across_checks():
+    """The reason the REPL exists: import once, reuse the env. Two Mathlib checks
+    on the same import-set must both verify, and the env is created exactly once."""
+    with LeanReplBackend() as backend:
+        imports = ("Mathlib.Tactic",)
+        e1 = Expressio(theorem_src="theorem t (a b : Nat) : a + b = b + a", imports=imports)
+        e2 = Expressio(theorem_src="theorem t (a b : Nat) : a * b = b * a", imports=imports)
+        assert backend.check_proof(e1, "by ring") is True
+        assert backend.check_proof(e2, "by ring") is True
+        assert list(backend._envs.keys()) == [imports]  # imports loaded exactly once
