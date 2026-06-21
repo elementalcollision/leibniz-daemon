@@ -1,6 +1,6 @@
 # ADR 0009 — Close the KFM → SURVEY Discovery Loop (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21)
 - Date: 2026-06-21
 - Related: ADR 0001 (charter), capability-ladder R5; `selection.py` (KFM/Archive),
   `daemon.py` (`_settle`). Optimization roadmap item #1 (highest leverage).
