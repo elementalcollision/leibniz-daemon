@@ -34,6 +34,9 @@ packages = ["leibniz"]
 # Pin discovery to tests/ so `pytest -q` from the repo root always collects the
 # 11 invariant tests; a "0 collected" run is a failure, not a vacuous pass.
 testpaths = ["tests"]
+markers = [
+    "lean: requires the pinned Lean container (leibniz-lean:v4.31.0); skipped where absent",
+]
 
 [tool.ruff]
 line-length = 88
