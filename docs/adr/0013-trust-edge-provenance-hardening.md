@@ -1,6 +1,7 @@
 # ADR 0013 — Trust-Edge Provenance Hardening (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21 — proof-edge provenance landed;
+  EdgeEvidence.producer is append-only so the 11 invariant tests stay byte-identical)
 - Date: 2026-06-21
 - Related: ADR 0001 (trust tiers), the original plan review (tier-mislabel risk);
   `types.py` (`EdgeEvidence`), `trust.py`, `tests/`. **Touches the guarded core**

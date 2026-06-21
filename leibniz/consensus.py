@@ -97,6 +97,7 @@ class ProofConsensus:
                 verdict=Verdict.PASS,
                 detail={**first_pass.detail, "consensus": count, "required": self.min_consensus},
                 cost_units=first_pass.cost_units * max(1, count),
+                producer=first_pass.producer,  # ADR 0013: preserve kernel provenance
             )
         else:
             edge = EdgeEvidence(
