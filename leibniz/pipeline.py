@@ -75,13 +75,18 @@ class Formalize:
     smt: SMTVerifier
     novelty: NoveltyGate
     faithfulness: FaithfulnessGate
+    max_repairs: int = 0  # R4.2: autoformalizer import/statement repair attempts
 
     def run(self, prop: Propositio) -> Optional[Propositio]:
         draft = self.provider.propose(Role.FORMALIZE, prop.enuntiatio.statement)
         expr = _parse_expressio(draft)
-        if not self.lean.validate_statement(expr):
+        expr, compiled = _compile_with_repair(
+            self.provider, self.lean, prop.enuntiatio.statement, expr, self.max_repairs
+        )
+        if not compiled:
             prop.quarantine(FinishReason.MALFORMED)
             return None
+        expr.compiles = True
         expr.normalized_hash = _normalized_hash(self.lean, expr)
         prop.expressio = expr
         prop.signature = _signature(prop)
@@ -161,6 +166,31 @@ def _normalized_hash(lean, expr: Expressio) -> str:
         if h:
             return h
     return normalize_statement(expr.theorem_src)
+
+
+def _compile_with_repair(provider, lean, statement: str, expr: Expressio, max_repairs: int):
+    """Compile the statement; on failure hand the Lean error back to the
+    autoformalizer to fix imports/statement, then retry (R4.2). Falls back to a
+    single plain compile when the backend/provider lack the repair hooks (the demo's
+    fakes), so existing behavior is unchanged. Returns (expr, ok)."""
+    compile_fn = getattr(getattr(lean, "backend", None), "compile_with_error", None)
+    if compile_fn is None:
+        return expr, lean.validate_statement(expr)
+    repair_fn = getattr(provider, "repair_formalization", None)
+    ok, err = compile_fn(expr)
+    attempts = 0
+    while not ok and repair_fn is not None and attempts < max_repairs:
+        attempts += 1
+        try:
+            fixed = repair_fn(statement, expr.theorem_src, err)
+        except Exception:
+            break
+        new_expr = _parse_expressio(fixed)
+        if not new_expr.theorem_src or new_expr.theorem_src.strip() == expr.theorem_src.strip():
+            break  # no useful change -> stop
+        expr = new_expr
+        ok, err = compile_fn(expr)
+    return expr, ok
 
 
 def _maybe_json(draft: str) -> Optional[dict]:

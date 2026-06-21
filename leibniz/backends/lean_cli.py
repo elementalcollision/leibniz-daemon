@@ -129,6 +129,15 @@ class LeanCliBackend:
         res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry")))
         return res is not None and not res.has_errors
 
+    def compile_with_error(self, expr: Expressio) -> tuple[bool, str]:
+        """Compile the statement and return (ok, diagnostics). Powers the R4.2
+        import-repair loop: a failed compile hands its Lean error back to the
+        autoformalizer to fix the imports/statement."""
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry")))
+        if res is None:
+            return (False, "lean backend unavailable")
+        return (not res.has_errors, res.output)
+
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
         res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
         return res is not None and res.kernel_ok
