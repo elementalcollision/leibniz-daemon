@@ -14,5 +14,9 @@ venv/
 .codegraph/
 .cursor/
 
+# Lean / lake build artifacts (the kernel builds inside the container)
+.lake/
+lean-project/.lake/
+
 # OS
 .DS_Store
