@@ -145,3 +145,10 @@ class KFM:
             f"(A) {a.enuntiatio.statement} [{a.enuntiatio.claim_type.value}]; "
             f"(B) {b.enuntiatio.statement} [{b.enuntiatio.claim_type.value}]."
         )
+
+    def recombination_seeds(self, k: int = 4) -> list[str]:
+        """Seeds for the next cycle: recombine curiosity-biased parents pairwise
+        (ADR 0009 — closing the KFM → SURVEY loop). Empty when fewer than 2 elites
+        exist (cold start), so the daemon falls back to a fresh SURVEY."""
+        parents = self.select_parents(k)
+        return [self.recombine(parents[i], parents[i + 1]) for i in range(len(parents) - 1)]
