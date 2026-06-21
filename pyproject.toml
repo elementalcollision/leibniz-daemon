@@ -25,6 +25,16 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Distribution name (leibniz-daemon) != import package (leibniz); tell hatchling
+# which directory is the package or it will build an empty wheel.
+[tool.hatch.build.targets.wheel]
+packages = ["leibniz"]
+
+[tool.pytest.ini_options]
+# Pin discovery to tests/ so `pytest -q` from the repo root always collects the
+# 11 invariant tests; a "0 collected" run is a failure, not a vacuous pass.
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
