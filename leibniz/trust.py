@@ -25,6 +25,10 @@ PROOF_EDGE = "proof<->statement"
 FAITHFULNESS_EDGE = "enuntiatio<->statement"
 NOVELTY_EDGE = "novelty"
 
+# ADR 0013: the only legitimate producer of a proof-edge verdict. A proof edge that
+# carries any other producer is a mislabel and is rejected structurally.
+KERNEL_PRODUCER = "LeanVerifier.discharge"
+
 
 class TrustViolation(Exception):
     """Raised when a promotion path would trust an LLM where it must not."""
@@ -47,6 +51,15 @@ class TrustPolicy:
             raise TrustViolation(
                 "novelty must be settled by retrieval + a decision procedure, "
                 "not a judge"
+            )
+        # ADR 0013: provenance. A proof edge that names a producer must be the
+        # kernel's. (Legacy/unstamped edges carry producer=None and are unaffected,
+        # so the executable invariants stay byte-identical and green.)
+        if (ev.edge == PROOF_EDGE and ev.producer is not None
+                and ev.producer != KERNEL_PRODUCER):
+            raise TrustViolation(
+                f"proof edge produced by {ev.producer!r}; only the Lean kernel "
+                f"({KERNEL_PRODUCER}) may decide a proof"
             )
 
     def validate_path(self, edges: Iterable[EdgeEvidence]) -> None:
