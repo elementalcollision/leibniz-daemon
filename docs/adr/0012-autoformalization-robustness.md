@@ -1,6 +1,6 @@
 # ADR 0012 — Autoformalization Robustness: Mechanical Import-Resolver + Output Normalization (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21)
 - Date: 2026-06-21
 - Related: ADR 0005 (providers), R4.2 (LLM import-repair); `pipeline.py`,
   `consensus.py`, a new resolver module. Non-guarded. Roadmap item #2.
