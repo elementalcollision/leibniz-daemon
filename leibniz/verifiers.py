@@ -24,7 +24,7 @@ from typing import Optional, Protocol
 
 from leibniz.propositio import Demonstratio, Expressio
 from leibniz.types import EdgeEvidence, TrustTier, Verdict
-from leibniz.trust import PROOF_EDGE
+from leibniz.trust import KERNEL_PRODUCER, PROOF_EDGE
 
 
 def normalize_statement(theorem_src: str) -> str:
@@ -69,6 +69,7 @@ class LeanVerifier:
             verdict=Verdict.PASS if ok else Verdict.FAIL,
             detail={"obligation": demo.proof_obligation, "qed": demo.qed},
             cost_units=10.0,  # proof search is the expensive edge
+            producer=KERNEL_PRODUCER,  # ADR 0013: kernel provenance
         )
 
     def is_trivial(self, expr: Expressio) -> bool:

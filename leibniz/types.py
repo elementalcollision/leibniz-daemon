@@ -104,3 +104,7 @@ class EdgeEvidence:
     verdict: Verdict
     detail: dict = field(default_factory=dict)
     cost_units: float = 0.0  # relative compute spent -- drives cheap-refutation-first
+    # ADR 0013: who produced this verdict (e.g. "LeanVerifier.discharge"). Append-only
+    # with a default so positional EdgeEvidence(edge, tier, verdict) still works. The
+    # policy uses it to catch a tier mislabel structurally, not by honest tagging.
+    producer: str | None = None
