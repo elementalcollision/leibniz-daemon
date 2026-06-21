@@ -22,8 +22,11 @@ ENV PATH="/root/.elan/bin:${PATH}"
 WORKDIR /work/lean-project
 COPY lean-project/ /work/lean-project/
 
-# elan auto-installs the toolchain named in lean-toolchain, then prebuild so the
-# kernel + olean cache are baked into the image (fast per-check startup).
-RUN lake build
+# elan auto-installs the toolchain named in lean-toolchain. Resolve + fetch the
+# Mathlib dependency, pull its prebuilt oleans (never cold-compile Mathlib), then
+# build our lib so the kernel + olean cache are baked into the image.
+RUN lake update \
+ && lake exe cache get \
+ && lake build
 
 CMD ["bash"]

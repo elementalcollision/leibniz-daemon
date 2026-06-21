@@ -29,8 +29,9 @@ from typing import Optional
 from leibniz.propositio import Expressio
 
 DEFAULT_IMAGE = "leibniz-lean:v4.31.0"
-# Core-Lean triviality tactics; Mathlib's `aesop` is added with R1b.
-DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial")
+# Triviality tactics. `aesop` needs a Mathlib/Aesop import (R1b) — when absent it
+# simply errors and is treated as "did not close", so listing it is always safe.
+DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop")
 
 
 def _join_proof(theorem_src: str, proof_src: str) -> str:
@@ -46,6 +47,12 @@ def _join_proof(theorem_src: str, proof_src: str) -> str:
     if not proof:
         return f"{head} := by sorry"
     return f"{head} := {proof}"
+
+
+def _with_imports(imports, decl: str) -> str:
+    """Prepend `import X` lines (from Expressio.imports) to a declaration."""
+    lines = "\n".join(f"import {m}" for m in (imports or ()))
+    return f"{lines}\n{decl}" if lines else decl
 
 
 @dataclass(frozen=True)
@@ -80,19 +87,19 @@ class LeanCliBackend:
     # --- LeanBackend Protocol -------------------------------------------------
     def compile_statement(self, expr: Expressio) -> bool:
         """Syntactic/elaboration validity: the statement type checks (sorry-allowed)."""
-        res = self._run_lean(_join_proof(expr.theorem_src, "by sorry"))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry")))
         return res is not None and not res.has_errors
 
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
         """Kernel verification of the complete proof. The only source of truth for
         whether a Demonstratio holds."""
-        res = self._run_lean(_join_proof(expr.theorem_src, proof_src))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
         return res is not None and res.kernel_ok
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         """Non-triviality test: does an automated tactic close the statement alone?"""
         for tac in self.trivial_tactics:
-            res = self._run_lean(_join_proof(expr.theorem_src, f"by {tac}"))
+            res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, f"by {tac}")))
             if res is not None and res.kernel_ok:
                 return True
         return False

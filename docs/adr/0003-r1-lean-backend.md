@@ -54,11 +54,17 @@ regression test.
 ## Consequences
 
 - R1a is **core Lean only** (triviality via `decide`/`simp`/`omega`/`trivial`).
-  R1b adds Mathlib as a lake dependency (`lake exe cache get`) so
-  analysis-of-algorithms statements elaborate, and adds `aesop` to the triviality
-  set. R3 additionally requires an **elaborator-canonical `normalize_statement`**
-  (today it is a textual hash) so structural novelty matching works — tracked as an
-  R1b/R3 item.
+  R1b adds Mathlib as a lake dependency pinned to `v4.31.0` (oleans via
+  `lake exe cache get`) and adds `aesop` to the triviality set.
+- **Targeted Mathlib imports, not the umbrella.** Candidate statements declare the
+  modules they need via `Expressio.imports` (e.g. `("Mathlib.Tactic",)`,
+  `("Aesop",)`). The umbrella `import Mathlib` is deliberately *not* used: its olean
+  is absent from the prebuilt cache, and loading all of Mathlib per check would
+  wreck per-check latency. R4's FORMALIZE emits targeted imports per statement.
+- Still outstanding for R1b/R3: an **elaborator-canonical `normalize_statement`**
+  (today a textual hash) so structural novelty matching works — R3 depends on it —
+  and a long-running container (persistent Lean process) so Mathlib imports load
+  once instead of per `docker run`. Tracked as R1c.
 - Per-check `docker run` startup (~1–2s) is fine for R1 verification volume; a
   long-running container with `docker exec` (or a small RPC server) is an R1b
   throughput optimization.
