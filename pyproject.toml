@@ -36,6 +36,7 @@ packages = ["leibniz"]
 testpaths = ["tests"]
 markers = [
     "lean: requires the pinned Lean container (leibniz-lean:v4.31.0); skipped where absent",
+    "z3: requires the verify extra (z3-solver); skipped where absent",
 ]
 
 [tool.ruff]
