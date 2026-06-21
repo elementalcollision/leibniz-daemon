@@ -1,0 +1,14 @@
+{
+  "analysis_of_algorithms": [
+    "comparison-based sorting lower bound (Omega(n log n))",
+    "the matrix-multiplication exponent omega",
+    "element-distinctness decision-tree lower bounds",
+    "median / selection comparison complexity",
+    "lower bounds for integer multiplication",
+    "amortized complexity of union-find (inverse-Ackermann)",
+    "dynamic connectivity update/query tradeoffs",
+    "cache-oblivious sorting bounds",
+    "space lower bounds for streaming algorithms",
+    "approximate nearest-neighbor query/space tradeoffs"
+  ]
+}
