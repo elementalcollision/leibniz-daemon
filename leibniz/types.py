@@ -76,6 +76,7 @@ class FinishReason(Enum):
     UNPROVEN = "unproven"                     # proof search exhausted budget
     MALFORMED = "malformed"                   # did not compile
     GAMED = "gamed"                           # statement satisfiable while claim false
+    OVER_BUDGET = "over_budget"               # judged-faithfulness residual would exceed budget
 
 
 @dataclass(frozen=True)
