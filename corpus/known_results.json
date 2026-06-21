@@ -1,0 +1,35 @@
+[
+  {
+    "name": "comparison_sort_lower_bound",
+    "claim_type": "complexity_bound",
+    "subject": "comparison_sort",
+    "relation": "lower_bound",
+    "theorem_src": "theorem comparison_sort_lower_bound : forall n h : Nat, 2 ^ h >= Nat.factorial n -> h >= Nat.log 2 (Nat.factorial n)",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "06d010a4f059f931"
+  },
+  {
+    "name": "additive_identity",
+    "claim_type": "structural",
+    "subject": "nat_add",
+    "relation": "identity",
+    "theorem_src": "theorem additive_identity : forall n : Nat, n + 0 = n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "43a919ec1050551b"
+  },
+  {
+    "name": "mul_comm_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "commutativity",
+    "theorem_src": "theorem mul_comm_nat : forall a b : Nat, a * b = b * a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "7669563ab18cf686"
+  }
+]
