@@ -11,6 +11,7 @@ plus the executable invariants):
   leibniz/trust.py                 -- TrustPolicy.validate_path (runtime guard)
   leibniz/verifiers.py             -- LeanVerifier.discharge (sole kernel_verified writer)
   leibniz/types.py                 -- TrustTier / Role / EdgeEvidence
+  leibniz/propositio.py            -- Demonstratio.seal / kernel_verified (invariant 7)
   leibniz/gates/verification.py    -- VerificationGate.is_promotable
   leibniz/gates/faithfulness.py    -- the gaming-witness / DEFER routing
   leibniz/gates/novelty.py         -- novelty == MECHANICAL only
@@ -29,6 +30,7 @@ PROTECTED_SUFFIXES = (
     "leibniz/trust.py",
     "leibniz/verifiers.py",
     "leibniz/types.py",
+    "leibniz/propositio.py",          # Demonstratio.seal / kernel_verified (invariant 7)
     "leibniz/gates/verification.py",
     "leibniz/gates/faithfulness.py",
     "leibniz/gates/novelty.py",
