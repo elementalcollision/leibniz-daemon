@@ -1,8 +1,15 @@
 # Leibniz · *Calculemus* — Handoff & Porting Manual
 
 **Audience:** Claude Code (and the operator directing it).
-**State on handoff:** R0 scaffold, complete and green. `python demo.py` turns one
-circadian cycle; `pytest -q` passes 11 trust-invariant tests.
+**State (updated 2026-06-21):** R0 is **assembled and green**. The code originally
+arrived *unassembled* (flat in `files/`, no package, no `pyproject.toml`), so
+`pytest` collected 0 tests despite the docs claiming "complete and green." It has
+since been laid out as the `leibniz/` package with zero source edits; now
+`pip install -e ".[dev]"` then `pytest -q` passes 11 trust-invariant tests and
+`python demo.py` turns one circadian cycle (one `Q.E.D.` + one each of
+refuted/known/trivial/gamed). Tracked at
+`github.com/elementalcollision/leibniz-daemon` with branch protection on `main`,
+a PreToolUse trust-edge hook, and CI (see §4). What is actually next is in §12.
 **Goal of the port:** climb the capability ladder R1 → R6, replacing marked seams
 with real backends, **without ever weakening the trust boundary**.
 
@@ -85,10 +92,16 @@ enforcement:
    promotion time. This is the runtime guard.
 3. **`tests/test_invariants.py`** — 11 tests that fail CI if a change weakens the
    boundary. **Treat a change that requires editing this file as a red flag.**
-4. **(recommended next)** a Claude Code **PreToolUse hook** that blocks edits to
-   `trust.py` / `verifiers.py::discharge` / `test_invariants.py` without operator
-   sign-off, and a CI job running `pytest -q`. This is the only layer that is a
-   true block; add it early in R1.
+4. **(IMPLEMENTED 2026-06-21)** a Claude Code **PreToolUse hook**
+   (`.claude/hooks/guard-trust-files.py`, wired in `.claude/settings.json`) that
+   prompts for operator sign-off on edits to `trust.py` / `verifiers.py` /
+   `types.py` / the three gates / `test_invariants.py`; a **CI** job
+   (`.github/workflows/ci.yml`) running `pytest -q` + a ≥11-collected guard +
+   `ruff`; and **`CODEOWNERS` + branch protection** on `main` (CI required, code-owner
+   review required, force-push/deletion blocked). This is the only layer that is a
+   true block. Caveat: the hook matches Edit/Write/MultiEdit, not Bash — a
+   `sed`/`ruff --fix`/shell rewrite of a guarded file is not intercepted; CODEOWNERS
+   + CI cover the merge path.
 
 ---
 
@@ -312,10 +325,31 @@ in `CLAUDE.md`.
 
 ## 12. First moves for Claude Code
 
-1. `python demo.py` and `pytest -q` — confirm green before any change.
+R0 assembly **and** the enforcement stack (§4) are **done** (2026-06-21); the repo
+is green and protected. What is actually next:
+
+1. `pip install -e ".[dev]"`, then `pytest -q` (expect **11 passed**) and
+   `python demo.py` (expect one `Q.E.D.` + one each of refuted/known/trivial/gamed).
+   `main` is protected — branch off it; changes land via PR with CI green + a
+   code-owner review.
 2. Read ADR 0001 and 0002.
-3. Add the PreToolUse hook + CI from §4 (cheap, protects everything after).
-4. Take the **R1** ticket: implement `LeanDojoBackend`, keeping
-   `discharge` the sole writer of `kernel_verified`. Re-run `pytest -q` — the 11
-   invariant tests must stay green.
-5. Ask the operator to confirm Leonardo before starting R4.
+3. **Close the faithfulness hole before enabling real promulgation.** `_negate`
+   (in `gates/faithfulness.py`) is a literal-string placeholder, so the adversarial
+   gaming-witness passes *vacuously*. Do **not** let R1's real kernel promulgate
+   against it: force the faithfulness edge to `DEFER` for measurable claims that
+   have no real probe until R2 lands the real `_negate` + the
+   vacuous-specialization regression test. (Worth an **ADR 0003** recording this
+   sequencing rule.)
+4. Take the **R1** ticket: implement `LeanDojoBackend` **in Docker** (Apple-Silicon
+   interactive Dojo is unreliable; Python 3.11 venv — LeanDojo needs <3.12),
+   keeping `discharge` the sole writer of `kernel_verified` (a cache *hit* must
+   carry a kernel certificate, never a bare boolean), **and** wire
+   `normalize_statement` to the elaborator so the novelty hash is structural — R3's
+   "catch the Ω(n log n) re-derivation as KNOWN" exit test depends on it. Re-run
+   `pytest -q` — the 11 invariant tests must stay green.
+5. Enforce the `max_judged_faithfulness_fraction` budget at **R4** (when a real
+   judge first goes live), not R6.
+6. Leonardo is **deferred to R3**. Its real identity is a deployed autonomous agent
+   (see `leonardo-do-study` / `leonardo-uat` and the GitHub repos), **not** the
+   survey/analogy oracle the organ map assumes — confirm and rewire
+   `LeonardoAdapter` then.
