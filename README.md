@@ -62,6 +62,19 @@ each gate fire once — a conjecture killed at cheap refutation, one as
 known, one as trivial, one as *gamed* (faithfulness), and one surviving to a
 kernel-checked `Q.E.D.` — with only the survivor paying for proof.
 
+## Lean kernel (R1)
+
+The real kernel runs in a pinned container (the host stays stdlib-only; Lean lives
+in the container — see `docs/adr/0003-r1-lean-backend.md`):
+
+```bash
+docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .   # OrbStack/Docker
+pytest -q -m lean                                                  # R1 kernel exit tests
+```
+
+Tests tagged `lean` skip automatically where the image is absent (e.g. CI), so the
+stdlib invariant suite stays the universal gate.
+
 ## Layout
 
 ```
