@@ -57,7 +57,7 @@ class AnthropicProvider:
         except ImportError:
             return False
 
-    def propose(self, role: Role, context: str) -> str:
+    def _chat(self, user_content: str) -> str:
         try:
             import anthropic
         except ImportError as e:  # pragma: no cover
@@ -65,14 +65,34 @@ class AnthropicProvider:
         key = os.environ.get(self.api_key_env)
         if not key:
             raise ProviderUnavailable(f"{self.api_key_env} not set")
-        template = _PROMPTS.get(role)
-        if template is None:
-            raise ProviderUnavailable(f"AnthropicProvider does not handle role {role}")
         client = anthropic.Anthropic(api_key=key)
         msg = client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=_SYSTEM,
-            messages=[{"role": "user", "content": template.format(context=context)}],
+            messages=[{"role": "user", "content": user_content}],
         )
         return "".join(getattr(b, "text", "") for b in msg.content).strip()
+
+    def propose(self, role: Role, context: str) -> str:
+        template = _PROMPTS.get(role)
+        if template is None:
+            raise ProviderUnavailable(f"AnthropicProvider does not handle role {role}")
+        return self._chat(template.format(context=context))
+
+    def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
+        """R4.2: hand a failed Lean compile back to the autoformalizer to fix the
+        imports/statement, given the kernel's actual error. Returns corrected JSON."""
+        prompt = (
+            "Your Lean 4 formalization failed to compile. Fix it. Toolchain is Lean "
+            "4.31 + current Mathlib — module paths may have moved since older Mathlib. "
+            "If an import 'does not exist', replace it with the correct current module "
+            "or drop it and rely on `import Mathlib.Tactic`. Keep the statement "
+            "faithful to the claim; do not weaken it to make it compile.\n"
+            f"Claim: {statement}\n"
+            f"Previous attempt:\n{prior_src}\n"
+            f"Lean error:\n{error[:1500]}\n"
+            'Return corrected JSON only: {"theorem_src": "theorem name : ...", '
+            '"imports": ["Mathlib.Tactic", ...], "established_domain": "<predicate over n>"}'
+        )
+        return self._chat(prompt)
