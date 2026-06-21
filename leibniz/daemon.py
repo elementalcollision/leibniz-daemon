@@ -59,6 +59,9 @@ class Leibniz:
     verification: VerificationGate
     kfm: KFM
     domain: str = "analysis_of_algorithms"
+    # D9 (ADR 0015): if set, multi-cycle runs rotate the survey across these domains
+    # (one per cycle, round-robin). Empty -> the single `domain` above, unchanged.
+    domains: tuple[str, ...] = ()
     # R2c: the judged-faithfulness budget (ADR 0001 §5). Optional — when absent the
     # daemon does not bound the residual (the fakes/demo run without it).
     budget: Optional[TrustBudget] = None
@@ -87,11 +90,13 @@ class Leibniz:
         reports: list[CycleReport] = []
         prev_coverage = -1
         stagnant = 0
+        active = self._active_domains()
         for i in range(n):
             if self.cost_budget is not None and self.cost_budget.exhausted():
                 break  # ADR 0011: stop before starting a cycle that would exceed the cap
             fresh_only = i == 0 or stagnant >= stagnation_limit
-            seeds = self._next_seeds(fresh_only, fresh_per_cycle, recombine_k)
+            domain = active[i % len(active)]  # D9: round-robin across domains
+            seeds = self._next_seeds(fresh_only, fresh_per_cycle, recombine_k, domain)
             report = CycleReport()
             report.seeds = len(seeds)
             self._run_seeds(seeds, report)
@@ -105,11 +110,18 @@ class Leibniz:
             prev_coverage = coverage
         return reports
 
-    def _next_seeds(self, fresh_only: bool, fresh_per_cycle: int, recombine_k: int) -> list[str]:
+    def _active_domains(self) -> tuple[str, ...]:
+        """D9: the domains a multi-cycle run rotates over (defaults to `domain`)."""
+        return self.domains or (self.domain,)
+
+    def _next_seeds(
+        self, fresh_only: bool, fresh_per_cycle: int, recombine_k: int, domain: str | None = None
+    ) -> list[str]:
+        domain = domain or self.domain
         if fresh_only:
-            return self.survey.run(self.domain)
-        seeds = self.kfm.recombination_seeds(recombine_k) + self.survey.run(self.domain)[:fresh_per_cycle]
-        return seeds or self.survey.run(self.domain)  # cold archive -> fresh survey
+            return self.survey.run(domain)
+        seeds = self.kfm.recombination_seeds(recombine_k) + self.survey.run(domain)[:fresh_per_cycle]
+        return seeds or self.survey.run(domain)  # cold archive -> fresh survey
 
     def _run_seeds(self, seeds: list[str], report: CycleReport) -> None:
         for seed in seeds:

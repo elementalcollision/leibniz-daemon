@@ -31,5 +31,346 @@
       "Mathlib.Tactic"
     ],
     "formal_hash": "7669563ab18cf686"
+  },
+  {
+    "name": "add_comm_nat",
+    "claim_type": "structural",
+    "subject": "nat_add",
+    "relation": "commutativity",
+    "theorem_src": "theorem add_comm_nat : forall a b : Nat, a + b = b + a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "9c949d1c3c0c7b9f"
+  },
+  {
+    "name": "add_assoc_nat",
+    "claim_type": "structural",
+    "subject": "nat_add",
+    "relation": "associativity",
+    "theorem_src": "theorem add_assoc_nat : forall a b c : Nat, a + b + c = a + (b + c)",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "ec830f7e7d83375d"
+  },
+  {
+    "name": "zero_add_nat",
+    "claim_type": "structural",
+    "subject": "nat_add",
+    "relation": "identity",
+    "theorem_src": "theorem zero_add_nat : forall n : Nat, 0 + n = n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "5a01603ded7a3b5e"
+  },
+  {
+    "name": "mul_assoc_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "associativity",
+    "theorem_src": "theorem mul_assoc_nat : forall a b c : Nat, a * b * c = a * (b * c)",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "1d75bf3b616470ce"
+  },
+  {
+    "name": "mul_one_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "identity",
+    "theorem_src": "theorem mul_one_nat : forall n : Nat, n * 1 = n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "7ab4ad86cbec080f"
+  },
+  {
+    "name": "one_mul_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "identity",
+    "theorem_src": "theorem one_mul_nat : forall n : Nat, 1 * n = n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "105edeef084d7fa4"
+  },
+  {
+    "name": "mul_zero_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "absorption",
+    "theorem_src": "theorem mul_zero_nat : forall n : Nat, n * 0 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "8c9282a3109ccaef"
+  },
+  {
+    "name": "zero_mul_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "absorption",
+    "theorem_src": "theorem zero_mul_nat : forall n : Nat, 0 * n = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "8ed40320cae0de2e"
+  },
+  {
+    "name": "left_distrib_nat",
+    "claim_type": "structural",
+    "subject": "nat_arith",
+    "relation": "distributivity",
+    "theorem_src": "theorem left_distrib_nat : forall a b c : Nat, a * (b + c) = a * b + a * c",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "341ed4e0ffc990d4"
+  },
+  {
+    "name": "right_distrib_nat",
+    "claim_type": "structural",
+    "subject": "nat_arith",
+    "relation": "distributivity",
+    "theorem_src": "theorem right_distrib_nat : forall a b c : Nat, (a + b) * c = a * c + b * c",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "423257e08691d499"
+  },
+  {
+    "name": "two_mul_nat",
+    "claim_type": "structural",
+    "subject": "nat_mul",
+    "relation": "doubling",
+    "theorem_src": "theorem two_mul_nat : forall n : Nat, 2 * n = n + n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "a9c8fdf23aa1f5d5"
+  },
+  {
+    "name": "pow_zero_nat",
+    "claim_type": "structural",
+    "subject": "nat_pow",
+    "relation": "identity",
+    "theorem_src": "theorem pow_zero_nat : forall a : Nat, a ^ 0 = 1",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "579a3b1c77ecbbfd"
+  },
+  {
+    "name": "pow_succ_nat",
+    "claim_type": "structural",
+    "subject": "nat_pow",
+    "relation": "recurrence",
+    "theorem_src": "theorem pow_succ_nat : forall a n : Nat, a ^ (n + 1) = a ^ n * a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "109ff4e21f6b9e67"
+  },
+  {
+    "name": "add_comm_int",
+    "claim_type": "structural",
+    "subject": "int_add",
+    "relation": "commutativity",
+    "theorem_src": "theorem add_comm_int : forall a b : Int, a + b = b + a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "3e69278b47820412"
+  },
+  {
+    "name": "mul_comm_int",
+    "claim_type": "structural",
+    "subject": "int_mul",
+    "relation": "commutativity",
+    "theorem_src": "theorem mul_comm_int : forall a b : Int, a * b = b * a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "269afb6ad582b148"
+  },
+  {
+    "name": "neg_neg_int",
+    "claim_type": "structural",
+    "subject": "int_neg",
+    "relation": "involution",
+    "theorem_src": "theorem neg_neg_int : forall a : Int, -(-a) = a",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "02bf0a97c8633f42"
+  },
+  {
+    "name": "add_left_neg_int",
+    "claim_type": "structural",
+    "subject": "int_add",
+    "relation": "inverse",
+    "theorem_src": "theorem add_left_neg_int : forall a : Int, -a + a = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "737a6aae8213a37f"
+  },
+  {
+    "name": "nat_le_refl",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "reflexivity",
+    "theorem_src": "theorem nat_le_refl : forall n : Nat, n <= n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "9b57d739945ed780"
+  },
+  {
+    "name": "nat_zero_le",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "lower_bound",
+    "theorem_src": "theorem nat_zero_le : forall n : Nat, 0 <= n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "504c6fb15337cd57"
+  },
+  {
+    "name": "nat_lt_succ_self",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "strict_increase",
+    "theorem_src": "theorem nat_lt_succ_self : forall n : Nat, n < n + 1",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "70795fa7cec6cba1"
+  },
+  {
+    "name": "nat_le_add_right",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "monotonicity",
+    "theorem_src": "theorem nat_le_add_right : forall a b : Nat, a <= a + b",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "2c59913c0101eebf"
+  },
+  {
+    "name": "nat_succ_pos",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "positivity",
+    "theorem_src": "theorem nat_succ_pos : forall n : Nat, 0 < n + 1",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "b400cb0e2421627c"
+  },
+  {
+    "name": "nat_add_le_add_left",
+    "claim_type": "correctness",
+    "subject": "nat_order",
+    "relation": "monotonicity",
+    "theorem_src": "theorem nat_add_le_add_left : forall a b c : Nat, b <= c -> a + b <= a + c",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "47b03afdee47c11c"
+  },
+  {
+    "name": "two_mul_mod_two",
+    "claim_type": "invariant",
+    "subject": "nat_parity",
+    "relation": "preservation",
+    "theorem_src": "theorem two_mul_mod_two : forall n : Nat, (2 * n) % 2 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "b241cb99d918681a"
+  },
+  {
+    "name": "add_self_mod_two",
+    "claim_type": "invariant",
+    "subject": "nat_parity",
+    "relation": "preservation",
+    "theorem_src": "theorem add_self_mod_two : forall n : Nat, (n + n) % 2 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "39ec203bdb38e143"
+  },
+  {
+    "name": "mod_two_lt",
+    "claim_type": "invariant",
+    "subject": "nat_parity",
+    "relation": "range",
+    "theorem_src": "theorem mod_two_lt : forall n : Nat, n % 2 < 2",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "6fbd887e5944bd66"
+  },
+  {
+    "name": "two_pow_pos",
+    "claim_type": "complexity_bound",
+    "subject": "exponential",
+    "relation": "positivity",
+    "theorem_src": "theorem two_pow_pos : forall n : Nat, 0 < 2 ^ n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "193a15c7cee01e81"
+  },
+  {
+    "name": "factorial_pos",
+    "claim_type": "complexity_bound",
+    "subject": "factorial",
+    "relation": "positivity",
+    "theorem_src": "theorem factorial_pos : forall n : Nat, 0 < Nat.factorial n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "89c4b280a22fdc63"
+  },
+  {
+    "name": "nat_log_le_self",
+    "claim_type": "complexity_bound",
+    "subject": "logarithm",
+    "relation": "upper_bound",
+    "theorem_src": "theorem nat_log_le_self : forall n : Nat, Nat.log 2 n <= n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "2a1271a526140129"
+  },
+  {
+    "name": "self_le_two_pow",
+    "claim_type": "complexity_bound",
+    "subject": "exponential",
+    "relation": "lower_bound",
+    "theorem_src": "theorem self_le_two_pow : forall n : Nat, n < 2 ^ n",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "514125dc663e21f5"
+  },
+  {
+    "name": "exists_succ",
+    "claim_type": "existence",
+    "subject": "nat_succ",
+    "relation": "construction",
+    "theorem_src": "theorem exists_succ : forall n : Nat, exists m : Nat, m = n + 1",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "a6d5cb187b86ada9"
   }
 ]

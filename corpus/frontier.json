@@ -10,5 +10,23 @@
     "cache-oblivious sorting bounds",
     "space lower bounds for streaming algorithms",
     "approximate nearest-neighbor query/space tradeoffs"
+  ],
+  "arithmetic_and_number_theory": [
+    "monotonicity and bounds of the integer logarithm (Nat.log)",
+    "factorial growth and lower bounds (n! >= 2^(n-1))",
+    "divisibility invariants under addition and multiplication",
+    "gcd / lcm identities and the product law (gcd a b * lcm a b = a * b)",
+    "modular arithmetic identities and parity invariants",
+    "binomial coefficient bounds (C(n,k) <= 2^n)",
+    "sum-of-first-n closed forms and their bounds",
+    "powers-of-two growth versus linear/polynomial growth"
+  ],
+  "discrete_structures_and_combinatorics": [
+    "pigeonhole counting bounds",
+    "monotone-sequence existence (Erdos-Szekeres flavour)",
+    "counting bounds for binary trees (Catalan growth)",
+    "graph degree-sum / handshake invariants",
+    "inclusion-exclusion cardinality identities",
+    "bounds on the number of subsets of a finite set"
   ]
 }

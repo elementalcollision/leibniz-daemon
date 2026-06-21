@@ -108,9 +108,11 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
     policy = TrustPolicy()
+    forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     return Leibniz(
         runtime=SimpleRuntime(),
-        survey=Survey(LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)),
+        survey=Survey(forge),
+        domains=tuple(forge.domains()),  # D9 (ADR 0015): rotate across all frontier domains
         conjecture=Conjecture(autoformalizer),
         formalize=Formalize(autoformalizer, lean, smt, novelty, faithfulness, max_repairs=2),
         derive=NoOpDerive(),
