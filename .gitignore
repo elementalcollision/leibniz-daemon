@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Editable install / venv
+.venv/
+venv/
+
+# Tooling caches (local code-intelligence + editor rules)
+.codegraph/
+.cursor/
+
+# OS
+.DS_Store

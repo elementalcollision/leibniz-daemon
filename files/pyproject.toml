@@ -1,0 +1,30 @@
+[project]
+name = "leibniz-daemon"
+version = "0.0.1"
+description = "Calculemus -- an agentic theorem daemon that confines LLMs to proposal and lets only mechanical checkers decide."
+requires-python = ">=3.11"
+dependencies = []  # core is pure stdlib by design; the trust boundary stays legible
+
+[project.optional-dependencies]
+# The judges. Lean is an external system dependency (install the toolchain + Mathlib
+# separately); LeanDojo provides the proof-state interface.
+verify = [
+    "z3-solver>=4.13",
+    "lean-dojo>=2.0",
+]
+# Proposal-role models. Confined to drafting; never adjudicate.
+propose = [
+    "anthropic>=0.40",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
