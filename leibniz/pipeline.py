@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from leibniz.adapters import LeonardoAdapter, ProviderAdapter
+from leibniz.imports import resolve_imports
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
 from leibniz.propositio import (
@@ -169,15 +170,25 @@ def _normalized_hash(lean, expr: Expressio) -> str:
 
 
 def _compile_with_repair(provider, lean, statement: str, expr: Expressio, max_repairs: int):
-    """Compile the statement; on failure hand the Lean error back to the
-    autoformalizer to fix imports/statement, then retry (R4.2). Falls back to a
-    single plain compile when the backend/provider lack the repair hooks (the demo's
-    fakes), so existing behavior is unchanged. Returns (expr, ok)."""
+    """Compile the statement; on failure first try a cheap MECHANICAL import-repair
+    (ADR 0012 — validate/repair imports against the real Mathlib index), then hand
+    the Lean error back to the autoformalizer to fix imports/statement (R4.2). Falls
+    back to a single plain compile when the backend/provider lack the repair hooks
+    (the demo's fakes), so existing behavior is unchanged. Returns (expr, ok)."""
     compile_fn = getattr(getattr(lean, "backend", None), "compile_with_error", None)
     if compile_fn is None:
         return expr, lean.validate_statement(expr)
     repair_fn = getattr(provider, "repair_formalization", None)
     ok, err = compile_fn(expr)
+    if not ok:  # ADR 0012: mechanical import-resolve before the costlier LLM repair
+        resolved = tuple(resolve_imports(list(expr.imports)))
+        if resolved != tuple(expr.imports):
+            expr = Expressio(
+                theorem_src=expr.theorem_src,
+                imports=resolved,
+                established_domain=expr.established_domain,
+            )
+            ok, err = compile_fn(expr)
     attempts = 0
     while not ok and repair_fn is not None and attempts < max_repairs:
         attempts += 1

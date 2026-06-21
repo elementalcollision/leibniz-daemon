@@ -23,6 +23,25 @@ from leibniz.types import EdgeEvidence, Role, TrustTier, Verdict
 from leibniz.verifiers import LeanVerifier
 
 
+def normalize_proof(text: str) -> str:
+    """Normalize a prover's raw output into a usable proof body (ADR 0012): strip
+    markdown fences and any leading *restated* `theorem … :=` so the result starts
+    at the tactic/term. `_join_proof` then attaches it to the real statement, so a
+    correct proof isn't rejected on formatting."""
+    s = (text or "").strip()
+    if "```" in s:
+        body = s.split("```", 1)[1].split("```", 1)[0]
+        if "\n" in body:  # drop a leading ```lean / ``` language-tag line
+            head, rest = body.split("\n", 1)
+            if head.strip() == "" or head.strip().isalpha():
+                body = rest
+        s = body.strip()
+    cut = s.find(":=")
+    if cut != -1 and s[:cut].lstrip().startswith(("theorem", "lemma", "example")):
+        s = s[cut + 2:].strip()
+    return s
+
+
 @dataclass
 class ConsensusResult:
     count: int                 # distinct kernel-verified proofs found
@@ -51,7 +70,7 @@ class ProofConsensus:
         for prover in self.provers:
             attempts += 1
             try:
-                script = prover.propose(Role.PROOF_DRAFT, expr.theorem_src)
+                script = normalize_proof(prover.propose(Role.PROOF_DRAFT, expr.theorem_src))
             except Exception:
                 continue  # a dead/unconfigured prover never blocks the others
             demo = Demonstratio(proof_obligation=self.obligation, proof_src=script)
