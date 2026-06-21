@@ -14,6 +14,7 @@ and by DEMONSTRATE running the faithfulness gate before sealing.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Optional
 
@@ -77,7 +78,7 @@ class Formalize:
 
     def run(self, prop: Propositio) -> Optional[Propositio]:
         draft = self.provider.propose(Role.FORMALIZE, prop.enuntiatio.statement)
-        expr = Expressio(theorem_src=draft)
+        expr = _parse_expressio(draft)
         if not self.lean.validate_statement(expr):
             prop.quarantine(FinishReason.MALFORMED)
             return None
@@ -162,12 +163,53 @@ def _normalized_hash(lean, expr: Expressio) -> str:
     return normalize_statement(expr.theorem_src)
 
 
+def _maybe_json(draft: str) -> Optional[dict]:
+    """Parse a provider's JSON proposal (ADR 0005). Returns None for non-JSON drafts
+    (the fakes / prose), so parsing degrades safely to the stub path."""
+    try:
+        data = json.loads(draft)
+        return data if isinstance(data, dict) else None
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
+def _claim_type(name: Optional[str]) -> ClaimType:
+    if name:
+        try:
+            return ClaimType(name)
+        except ValueError:
+            pass
+    return ClaimType.COMPLEXITY_BOUND
+
+
 def _parse_enuntiatio(draft: str, seed: str) -> Enuntiatio:
+    data = _maybe_json(draft)
+    if data and data.get("statement"):
+        stmt = str(data["statement"])
+        return Enuntiatio(
+            statement=stmt,
+            claim_type=_claim_type(data.get("claim_type")),
+            falsifiable_claim=str(data.get("falsifiable_claim") or f"exists input violating: {stmt}"),
+            claim_domain=data.get("claim_domain"),
+            claim_property=data.get("claim_property"),
+        )
     return Enuntiatio(
         statement=draft.strip() or seed,
         claim_type=ClaimType.COMPLEXITY_BOUND,
         falsifiable_claim=f"exists input violating: {draft.strip() or seed}",
     )
+
+
+def _parse_expressio(draft: str) -> Expressio:
+    data = _maybe_json(draft)
+    if data and data.get("theorem_src"):
+        imports = data.get("imports")
+        return Expressio(
+            theorem_src=str(data["theorem_src"]),
+            imports=tuple(imports) if isinstance(imports, list) else ("Mathlib",),
+            established_domain=data.get("established_domain"),
+        )
+    return Expressio(theorem_src=draft)
 
 
 def _descriptor(seed: str) -> tuple[float, ...]:
