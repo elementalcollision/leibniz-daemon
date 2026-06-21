@@ -22,6 +22,7 @@ from leibniz.backends.smt_z3 import Z3Backend
 from leibniz.budget import TrustBudget
 from leibniz.consensus import ConsensusDemonstrate, NoOpDerive, ProofConsensus
 from leibniz.corpus import CorpusBackend
+from leibniz.cost import CostBudget
 from leibniz.daemon import Leibniz
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
@@ -99,4 +100,5 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         verification=VerificationGate(policy),
         kfm=KFM(Archive()),
         budget=TrustBudget(policy),
+        cost_budget=CostBudget.from_env(),  # ADR 0011: USD cap for sustained runs
     )
