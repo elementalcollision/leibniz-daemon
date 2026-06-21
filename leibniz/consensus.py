@@ -61,25 +61,32 @@ class ProofConsensus:
     lean: LeanVerifier
     obligation: str = "claim"
     min_consensus: int = 2  # N+1 (default N=1)
+    max_workers: int = 4    # ADR 0011: run the ensemble concurrently (I/O-bound)
+
+    def _attempt(self, prover, expr: Expressio):
+        """Draft + kernel-check one prover. Returns (demo, edge) if kernel-verified,
+        else None. discharge stays the sole kernel_verified writer; each attempt is
+        independent (stateless docker run per check), so this is thread-safe."""
+        try:
+            script = normalize_proof(prover.propose(Role.PROOF_DRAFT, expr.theorem_src))
+        except Exception:
+            return None  # a dead/unconfigured prover never blocks the others
+        demo = Demonstratio(proof_obligation=self.obligation, proof_src=script)
+        ev = self.lean.discharge(expr, demo)
+        return (demo, ev) if demo.kernel_verified else None
 
     def prove(self, expr: Expressio) -> ConsensusResult:
-        verified: list[Demonstratio] = []
-        first_pass: Optional[EdgeEvidence] = None
-        first_proof: Optional[Demonstratio] = None
-        attempts = 0
-        for prover in self.provers:
-            attempts += 1
-            try:
-                script = normalize_proof(prover.propose(Role.PROOF_DRAFT, expr.theorem_src))
-            except Exception:
-                continue  # a dead/unconfigured prover never blocks the others
-            demo = Demonstratio(proof_obligation=self.obligation, proof_src=script)
-            ev = self.lean.discharge(expr, demo)  # kernel decides; sole kernel_verified writer
-            if demo.kernel_verified:
-                verified.append(demo)
-                if first_pass is None:
-                    first_pass, first_proof = ev, demo
+        attempts = len(self.provers)
+        if self.max_workers and attempts > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=min(self.max_workers, attempts)) as ex:
+                results = list(ex.map(lambda p: self._attempt(p, expr), self.provers))
+        else:
+            results = [self._attempt(p, expr) for p in self.provers]
 
+        # Deterministic order (input order) -> stable "first" verified proof.
+        verified = [r for r in results if r is not None]
+        first_proof, first_pass = (verified[0][0], verified[0][1]) if verified else (None, None)
         count = len(verified)
         reached = count >= self.min_consensus
         if reached and first_pass is not None:

@@ -20,6 +20,7 @@ from typing import Optional
 
 from leibniz.adapters import RuntimeAdapter
 from leibniz.budget import TrustBudget
+from leibniz.cost import CostBudget
 from leibniz.gates.verification import VerificationGate
 from leibniz.pipeline import (
     Conjecture,
@@ -61,6 +62,8 @@ class Leibniz:
     # R2c: the judged-faithfulness budget (ADR 0001 §5). Optional — when absent the
     # daemon does not bound the residual (the fakes/demo run without it).
     budget: Optional[TrustBudget] = None
+    # ADR 0011: coarse USD cost cap for multi-cycle autonomous runs. Optional.
+    cost_budget: Optional[CostBudget] = None
 
     def circadian_cycle(self) -> CycleReport:
         report = CycleReport()
@@ -85,12 +88,18 @@ class Leibniz:
         prev_coverage = -1
         stagnant = 0
         for i in range(n):
+            if self.cost_budget is not None and self.cost_budget.exhausted():
+                break  # ADR 0011: stop before starting a cycle that would exceed the cap
             fresh_only = i == 0 or stagnant >= stagnation_limit
             seeds = self._next_seeds(fresh_only, fresh_per_cycle, recombine_k)
             report = CycleReport()
             report.seeds = len(seeds)
             self._run_seeds(seeds, report)
             reports.append(report)
+            if self.cost_budget is not None:
+                # coarse estimate: CONJECTURE+FORMALIZE per candidate, plus the prover
+                # ensemble per candidate that reached proof.
+                self.cost_budget.record_calls(report.conjectured * 2 + report.reached_proof * 4)
             coverage = len(self.kfm.archive.cells)
             stagnant = 0 if coverage > prev_coverage else stagnant + 1
             prev_coverage = coverage

@@ -1,6 +1,8 @@
 # ADR 0011 — Proving Throughput & Cost Governance (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21 — concurrency, cost cap, cross-cycle
+  cache landed; the Lean REPL and persistent+concurrent compose are deferred, see
+  Consequences)
 - Date: 2026-06-21
 - Related: ADR 0003 (Lean backend), ADR 0006 (consensus proving);
   `backends/lean_cli.py`, `consensus.py`, `assembly.py`. Non-guarded. Roadmap #4.
