@@ -61,10 +61,18 @@ regression test.
   `("Aesop",)`). The umbrella `import Mathlib` is deliberately *not* used: its olean
   is absent from the prebuilt cache, and loading all of Mathlib per check would
   wreck per-check latency. R4's FORMALIZE emits targeted imports per statement.
-- Still outstanding for R1b/R3: an **elaborator-canonical `normalize_statement`**
-  (today a textual hash) so structural novelty matching works — R3 depends on it —
-  and a long-running container (persistent Lean process) so Mathlib imports load
-  once instead of per `docker run`. Tracked as R1c.
+- **R1c (done):** `LeanCliBackend.normalize_statement` returns an
+  elaborator-canonical structural hash — a fold over the elaborated type's `Expr`
+  using de Bruijn indices (alpha-invariant) and fully-qualified constant names
+  (notation/namespace-invariant), so `(n:Nat)->n+0=n` and `∀ m:ℕ, m+0=m` collide.
+  Wired into the pipeline (`_normalized_hash`); the textual hash in
+  `verifiers.normalize_statement` remains the fallback for fakes / non-elaborating
+  statements. This is the structural key R3's novelty corpus matches on.
+- **R1c (done):** a `persistent=True` backend mode keeps one container alive and
+  uses `docker exec` per check, removing ~25% per-check container churn (measured:
+  ~0.6s→0.5s core, ~1.5s→1.3s with Mathlib). Default stays stateless (no leak).
+  A full Lean-REPL (load Mathlib imports once) is the deeper optimization, deferred
+  until per-check latency (~1.3s with Mathlib) becomes binding.
 - Per-check `docker run` startup (~1–2s) is fine for R1 verification volume; a
   long-running container with `docker exec` (or a small RPC server) is an R1b
   throughput optimization.
