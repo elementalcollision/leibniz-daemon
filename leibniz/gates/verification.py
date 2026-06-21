@@ -22,7 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from leibniz.propositio import Propositio
-from leibniz.types import EdgeEvidence, FinishReason, Verdict
+from leibniz.types import FinishReason, Verdict
 from leibniz.trust import (
     FAITHFULNESS_EDGE,
     NOVELTY_EDGE,

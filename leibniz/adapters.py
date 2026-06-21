@@ -17,9 +17,9 @@ those repos; each is a Protocol the integration must satisfy.
 
 from __future__ import annotations
 
-from typing import Optional, Protocol
+from typing import Protocol
 
-from leibniz.propositio import Enuntiatio, Expressio, Propositio
+from leibniz.propositio import Propositio
 from leibniz.types import Role
 
 

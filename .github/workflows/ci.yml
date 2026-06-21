@@ -1,0 +1,38 @@
+name: ci
+
+# Trust-boundary CI (HANDOFF §4 layer 4). The invariant tests are the gate:
+# a build is red if any of the 11 invariants fail OR if fewer than 11 are
+# collected (a "0 collected" run must never masquerade as a pass).
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"  # project floor; also the R1 LeanDojo interpreter
+
+      - name: Install (core is stdlib-only; dev extra adds pytest + ruff)
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run trust-invariant tests (BLOCKING)
+        run: pytest -q
+
+      - name: Guard against a vacuous 0-collected pass (BLOCKING)
+        run: |
+          n="$(pytest --collect-only -q | grep -c '::' || true)"
+          echo "collected $n test node(s)"
+          test "$n" -ge 11
+
+      - name: Demo turns one cycle (BLOCKING)
+        run: python demo.py
+
+      - name: Lint (BLOCKING — repo is ruff-clean as of R0 cleanup)
+        run: ruff check .
