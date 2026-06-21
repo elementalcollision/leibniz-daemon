@@ -11,6 +11,7 @@ import json
 import os
 import urllib.request
 from dataclasses import dataclass
+from typing import Optional
 
 from leibniz.providers import ProviderUnavailable
 from leibniz.types import Role
@@ -35,6 +36,7 @@ class OpenRouterProvider:
     url: str = OPENROUTER_URL
     max_tokens: int = 2048
     timeout_s: int = 120
+    meter: Optional[object] = None  # ADR 0014: has .record_usage(model, in, out)
 
     def available(self) -> bool:
         return bool(os.environ.get(self.api_key_env))
@@ -60,4 +62,20 @@ class OpenRouterProvider:
         )
         with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # noqa: S310 (fixed gateway)
             data = json.loads(resp.read().decode())
+        self._meter(data)
         return data["choices"][0]["message"]["content"].strip()
+
+    def _meter(self, data: dict) -> None:
+        """ADR 0014: report real token usage to the cost meter (best-effort).
+        OpenRouter returns OpenAI-style usage: prompt_tokens / completion_tokens."""
+        if self.meter is None:
+            return
+        usage = data.get("usage") or {}
+        try:
+            self.meter.record_usage(
+                self.model,
+                int(usage.get("prompt_tokens", 0) or 0),
+                int(usage.get("completion_tokens", 0) or 0),
+            )
+        except Exception:  # metering must never break a proposal
+            pass

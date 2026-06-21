@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Optional
 
 from leibniz.providers import ProviderUnavailable
 from leibniz.types import Role
@@ -47,6 +48,7 @@ class AnthropicProvider:
     model: str = DEFAULT_MODEL
     api_key_env: str = "ANTHROPIC_API_KEY"
     max_tokens: int = 2048
+    meter: Optional[object] = None  # ADR 0014: has .record_usage(model, in, out)
 
     def available(self) -> bool:
         if not os.environ.get(self.api_key_env):
@@ -72,7 +74,24 @@ class AnthropicProvider:
             system=_SYSTEM,
             messages=[{"role": "user", "content": user_content}],
         )
+        self._meter(msg)
         return "".join(getattr(b, "text", "") for b in msg.content).strip()
+
+    def _meter(self, msg: object) -> None:
+        """ADR 0014: report real token usage to the cost meter (best-effort)."""
+        if self.meter is None:
+            return
+        usage = getattr(msg, "usage", None)
+        if usage is None:
+            return
+        try:
+            self.meter.record_usage(
+                self.model,
+                int(getattr(usage, "input_tokens", 0) or 0),
+                int(getattr(usage, "output_tokens", 0) or 0),
+            )
+        except Exception:  # metering must never break a proposal
+            pass
 
     def propose(self, role: Role, context: str) -> str:
         template = _PROMPTS.get(role)

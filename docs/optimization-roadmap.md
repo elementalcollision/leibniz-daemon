@@ -28,12 +28,24 @@ Accepted; two follow-ups remain (see below). The trust boundary held throughout 
 ³ Adversarial-review-hardened: the load-bearing AST-guard landed, **and §2 general
   judge-producer stamping** on faithfulness/novelty edges shipped (PR #25).
 
+## Tier 3 — substrate maturity (in progress)
+
+Making sustained autonomous discovery affordable, honest, and broad before the
+discovery-frontier push.
+
+| ADR | Decision | Theme | Guarded? | Status |
+|---|---|---|---|---|
+| **0014** | Real (token-based) cost accounting (meter provider usage; price table; exact USD cap) | Cost governance | no | ✅ done |
+| **0015** | Corpus (D4) + domain (D9) expansion | Discovery inputs | no | ⏳ next |
+| **0016** | Chimera runtime — real persistent runtime vs the `SimpleRuntime` stub | Substrate | no | ⏳ planned |
+
 ## Remaining follow-ups
 
-- **The open frontier (not an ADR yet)** — autonomous *discovery*: the daemon runs
-  end-to-end but rarely promulgates because conjectures land trivial-or-too-hard.
-  Tuning the conjecturer toward provable-yet-novel statements (over the now-closed
-  KFM loop) is the next mission-level push.
+- **The open frontier / discovery (Tier 1, last)** — autonomous *discovery*: the
+  daemon runs end-to-end but rarely promulgates because conjectures land
+  trivial-or-too-hard. Tuning the conjecturer toward provable-yet-novel statements
+  (over the now-closed KFM loop) is the final mission-level push, after the Tier 3
+  substrate and the Tier 4 Calculemus site.
 
 ## Sequencing (as built)
 
