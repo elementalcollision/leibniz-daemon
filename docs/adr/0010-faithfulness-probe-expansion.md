@@ -1,6 +1,8 @@
 # ADR 0010 — Expand the Faithfulness Claim-Type Probe Table (Proposed)
 
-- Status: **Proposed**
+- Status: **Accepted** (implemented 2026-06-21 — OPTIMALITY + INVARIANT added to the
+  domain-coverage probe; EXISTENCE/STRUCTURAL remain DEFER. Probe-table-only, so it
+  needed no edit to the guarded gate.)
 - Date: 2026-06-21
 - Related: ADR 0002 (faithfulness gate), ADR 0004 (structured claim contract);
   `gates/faithfulness.py`, `probes.py`. **Touches the guarded core** (operator

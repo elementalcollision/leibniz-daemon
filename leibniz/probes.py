@@ -43,11 +43,18 @@ def coverage_probe(smt, bound: int = 64):
 
 
 def default_probes(smt, bound: int = 64) -> dict[ClaimType, object]:
-    """The probe table the daemon wires into the FaithfulnessGate. COMPLEXITY_BOUND
-    and CORRECTNESS_OVER_DOMAIN share the domain-coverage probe; other measurable
-    types DEFER until they get a dedicated probe (never laundered to a judge)."""
+    """The probe table the daemon wires into the FaithfulnessGate (ADR 0010).
+
+    Every "for all n in domain D, property P(n)" claim shares the domain-coverage
+    probe — COMPLEXITY_BOUND, CORRECTNESS_OVER_DOMAIN, OPTIMALITY, INVARIANT. The
+    probe PASSes iff the statement's established_domain covers the claim_domain
+    (no gap), else DEFER. EXISTENCE and STRUCTURAL do not fit the ∀-over-domain
+    shape and have no decisive arithmetic check, so they stay DEFER (never laundered
+    to a judge) until a bespoke probe exists."""
     probe = coverage_probe(smt, bound)
     return {
         ClaimType.COMPLEXITY_BOUND: probe,
         ClaimType.CORRECTNESS_OVER_DOMAIN: probe,
+        ClaimType.OPTIMALITY: probe,
+        ClaimType.INVARIANT: probe,
     }
