@@ -151,11 +151,16 @@ discovery-frontier push.
   0 → 31/39 (the DEFER fraction collapsed ~95% → ~20%). Proposal-side; invariants
   byte-identical.
 - **Prover reach (new headline blocker)** — with faithfulness no longer the bottleneck,
-  conjectures reach the kernel but the HF ensemble can't close them (0/31 proved). The
-  levers: lower/weaken the band harder (the controller already eases off), a
-  stronger/longer prover budget, and **lemma decomposition** (below) for the genuinely
-  hard ones. This is the normal discovery regime — the path to a first promulgation now
-  runs through proving power, not the gate.
+  conjectures reach the kernel but the HF ensemble can't close them (0/31 proved). This
+  is the normal discovery regime — the path to a first promulgation now runs through
+  proving power, not the gate. Levers, in order:
+  - ✅ **Lever 1 — weaken-and-retry (ADR 0023)**: persist the `DiscoveryNotebook` so
+    near-misses accumulate across runs, raise weaken throughput (`weaken_k` 2→3,
+    `capacity` 6→12), and weaken the *freshest* near-misses. Proposal-side; invariants
+    byte-identical. Pending a billable weaken-heavy run to attempt a first promulgation.
+  - **Lever 2 — lemma decomposition (ADR 0024, next)**: split a hard conjecture into
+    kernel-sized sub-lemmas, prove independently, compose.
+  - **Lever 3 — stronger/longer prover**: more consensus depth / tokens per attempt.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 

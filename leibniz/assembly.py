@@ -25,7 +25,12 @@ from leibniz.consensus import ConsensusDemonstrate, NoOpDerive, ProofConsensus
 from leibniz.corpus import CorpusBackend
 from leibniz.cost import CostBudget
 from leibniz.daemon import Leibniz
-from leibniz.discovery import _DEFAULT_FRONTIER, DiscoveryNotebook, FrontierController
+from leibniz.discovery import (
+    _DEFAULT_FRONTIER,
+    _DEFAULT_NOTEBOOK,
+    DiscoveryNotebook,
+    FrontierController,
+)
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
 from leibniz.gates.verification import VerificationGate
@@ -70,6 +75,18 @@ class ConservativeJudge:
 
     def round_trip_agrees(self, prop) -> float:
         return 0.0
+
+
+def _env_int(name: str, default: int) -> int:
+    """Read an int env knob, falling back to `default` on absent/blank/garbage rather
+    than aborting assembly on an operator typo (ADR 0023 review)."""
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
 
 
 def prover_ensemble(meter: object | None = None) -> list:
@@ -121,6 +138,10 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_PATH") or str(_DEFAULT_FRONTIER)
+    # ADR 0023 (lever 1): persist + accumulate near-misses, and raise weaken throughput
+    # so the weaken-and-retry loop keeps grinding the UNPROVEN frontier toward a proof.
+    _notebook_path = os.environ.get("LEIBNIZ_NOTEBOOK_PATH") or str(_DEFAULT_NOTEBOOK)
+    _nb_cap = _env_int("LEIBNIZ_NOTEBOOK_CAP", 12)
     return Leibniz(
         runtime=PersistentRuntime(),  # ADR 0016: SQLite memory + circadian phase
         survey=Survey(forge),
@@ -139,7 +160,11 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         kfm=KFM(Archive()),
         budget=TrustBudget(policy),
         cost_budget=cost_budget,  # ADR 0011 cap, ADR 0014 metered by real usage
-        notebook=DiscoveryNotebook(),     # ADR 0018: outcome-conditioned conjecture
+        # ADR 0018: outcome-conditioned conjecture; ADR 0023: resumed from + persisted
+        # to disk so near-misses accumulate across runs for weaken-and-retry.
+        notebook=DiscoveryNotebook.load(_notebook_path, capacity=_nb_cap),
+        notebook_path=_notebook_path,
+        weaken_k=_env_int("LEIBNIZ_WEAKEN_K", 3),
         # ADR 0018/0019: adaptive difficulty band, resumed from + persisted to disk.
         frontier=FrontierController.load(_frontier_path),
         frontier_path=_frontier_path,

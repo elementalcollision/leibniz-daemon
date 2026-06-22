@@ -36,8 +36,11 @@ from typing import Union
 from leibniz.propositio import Propositio
 from leibniz.types import FinishReason
 
-# Where the learned difficulty band persists across runs (gitignored, per-machine).
+# Where the learned difficulty band + outcome notebook persist across runs (gitignored,
+# per-machine). Persisting the notebook (ADR 0023) means near-misses accumulate across
+# runs, so weaken-and-retry keeps grinding the same UNPROVEN frontier toward a proof.
 _DEFAULT_FRONTIER = Path(__file__).resolve().parent.parent / ".leibniz" / "frontier.json"
+_DEFAULT_NOTEBOOK = Path(__file__).resolve().parent.parent / ".leibniz" / "notebook.json"
 
 # Outcomes that mean "do not propose shapes like this again" (dead ends).
 _AVOID = frozenset({
@@ -117,7 +120,10 @@ class DiscoveryNotebook:
         if not item or item in bucket:
             return
         bucket.append(item)
-        del bucket[:-cap]  # keep only the most recent `cap`
+        if cap >= 1:
+            del bucket[:-cap]  # keep only the most recent `cap`
+        else:
+            bucket.clear()  # cap<=0 disables the notebook (del bucket[:-0] would be a no-op)
 
     def record(self, prop: Propositio, reason: FinishReason | None = None) -> None:
         stmt = prop.enuntiatio.statement if prop.enuntiatio else ""
@@ -152,6 +158,37 @@ class DiscoveryNotebook:
             lines.append("Recently TOO HARD to prove (propose something in reach, or a "
                          "weaker cousin): " + "; ".join(self.too_hard[-3:]))
         return ("Lessons from the ledger so far:\n- " + "\n- ".join(lines)) if lines else ""
+
+    # --- persistence (ADR 0023): carry accumulated near-misses across runs so the
+    # weaken-and-retry loop keeps working the same frontier instead of forgetting it.
+    def to_dict(self) -> dict:
+        return {"proven": list(self.proven), "too_hard": list(self.too_hard),
+                "avoid": list(self.avoid)}
+
+    @classmethod
+    def from_dict(cls, d: dict, capacity: int = 6) -> "DiscoveryNotebook":
+        nb = cls(capacity=capacity)
+        if not isinstance(d, dict):
+            return nb  # a non-dict payload (forged/truncated) -> fresh, never a crash
+        for bucket, key in ((nb.proven, "proven"), (nb.too_hard, "too_hard"), (nb.avoid, "avoid")):
+            vals = d.get(key)
+            for stmt in (vals if isinstance(vals, list) else []):  # a str bucket would iterate chars
+                cls._push(bucket, str(stmt), capacity)
+        return nb
+
+    def save(self, path: Union[str, Path]) -> None:
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(self.to_dict()))
+
+    @classmethod
+    def load(cls, path: Union[str, Path, None] = None, capacity: int = 6) -> "DiscoveryNotebook":
+        """Resume the notebook from disk; a missing/corrupt file yields a fresh one —
+        so a cold start (or CI) behaves exactly as before."""
+        try:
+            return cls.from_dict(json.loads(Path(path or _DEFAULT_NOTEBOOK).read_text()), capacity)
+        except (OSError, ValueError, TypeError):
+            return cls(capacity=capacity)
 
 
 @dataclass
@@ -221,8 +258,11 @@ class FrontierController:
 
     @classmethod
     def from_dict(cls, d: dict) -> "FrontierController":
+        if not isinstance(d, dict):
+            return cls()  # a non-dict payload (forged/truncated) -> fresh, never a crash
         fc = cls(target=float(d.get("target", 0.45)))
-        fc._recent = [bool(x) for x in (d.get("recent") or [])][-fc.window:]
+        rec = d.get("recent")
+        fc._recent = [bool(x) for x in (rec if isinstance(rec, list) else [])][-fc.window:]
         fc._jumps = int(d.get("jumps", 0))
         return fc
 
@@ -250,16 +290,22 @@ def weakening_seeds(statements: list[str], k: int = 2) -> list[str]:
     the kernel — a trivial weakening is caught, a provable non-trivial one is a real
     (if modest) discovery and a stepping stone.
 
-    Depth-1 bound (ADR 0018 review): never weaken a statement that already carries the
-    weakening instruction. This terminates the chain — a weakening of a weakening is
-    not re-weakened — and kills the compounding loop a verbatim-echoing provider could
-    otherwise drive."""
+    Echo guard (ADR 0018 review): never weaken a statement that already carries the
+    weakening instruction. This kills the compounding loop a verbatim-echoing provider
+    could otherwise drive. (For an honest provider a weakened *claim* carries no marker,
+    so legitimate progressive weakening across cycles is unaffected.)
+
+    Targets the MOST RECENT k near-misses (ADR 0023): the freshest UNPROVEN candidates
+    — the ones just seen to reach proof yet not close — are the best retry candidates,
+    and with the notebook now persisted they accumulate across runs."""
+    if k <= 0:
+        return []  # NB: fresh[-0:] is the WHOLE list, not none — guard k explicitly
     fresh = [s for s in statements if _WEAKEN_MARK not in s]
     return [
         f"Propose a {_WEAKEN_MARK} but still non-trivial and novel variant of this "
         "claim that is more likely provable — add a hypothesis, specialize a "
         f"variable, or bound a quantifier: {s}"
-        for s in fresh[:k]
+        for s in fresh[-k:]
     ]
 
 
