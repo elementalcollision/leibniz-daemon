@@ -80,12 +80,25 @@ class ProofConsensus:
     min_consensus: int = 2  # N+1 (default N=1)
     max_workers: int = 4    # ADR 0011: run the ensemble concurrently (I/O-bound)
 
+    @staticmethod
+    def _prover_context(expr: Expressio) -> str:
+        """What the prover is asked to prove. ADR 0027: when proven helper lemmas are
+        available, offer them as `have` blocks the prover may splice into its proof. These
+        are CONTEXT ONLY — the kernel check (discharge -> check_proof) still elaborates a
+        single self-contained declaration `theorem_src := proof`, never these hints, so
+        they cannot reach the kernel file. The prover's own proof is what gets verified."""
+        hints = (getattr(expr, "proof_hints", "") or "").strip()
+        if hints:
+            return ("You may reuse any of these ALREADY-PROVEN facts by pasting them as "
+                    f"`have` steps at the start of your proof:\n{hints}\n\nProve:\n{expr.theorem_src}")
+        return expr.theorem_src
+
     def _attempt(self, prover, expr: Expressio):
         """Draft + kernel-check one prover. Returns (demo, edge) if kernel-verified,
         else None. discharge stays the sole kernel_verified writer; each attempt is
         independent (stateless docker run per check), so this is thread-safe."""
         try:
-            script = normalize_proof(prover.propose(Role.PROOF_DRAFT, expr.theorem_src))
+            script = normalize_proof(prover.propose(Role.PROOF_DRAFT, self._prover_context(expr)))
         except Exception:
             return None  # a dead/unconfigured prover never blocks the others
         demo = Demonstratio(proof_obligation=self.obligation, proof_src=script)

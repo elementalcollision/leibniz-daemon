@@ -34,6 +34,7 @@ from leibniz.discovery import (
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
 from leibniz.gates.verification import VerificationGate
+from leibniz.lemma_decomposition import DecomposingDemonstrate, LemmaDecomposer
 from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
@@ -146,6 +147,14 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         lean=_proof_verifier(lean),  # ADR 0011: REPL (import-cached) when available
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
+    # ADR 0027: deeper decomposition — when normal consensus fails, prove helper lemmas
+    # independently, then re-prove the main with them offered as `have` hints (the kernel
+    # still checks one self-contained declaration; hints never enter the Lean source).
+    if _env_int("LEIBNIZ_LEMMA_DECOMPOSE", 1) > 0:
+        demonstrate = DecomposingDemonstrate(
+            consensus, LemmaDecomposer(provider=autoformalizer, consensus=consensus))
+    else:
+        demonstrate = ConsensusDemonstrate(consensus)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_PATH") or str(_DEFAULT_FRONTIER)
@@ -165,7 +174,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
             max_contract_repairs=int(os.environ.get("LEIBNIZ_CONTRACT_REPAIRS", "1") or 1),
         ),
         derive=NoOpDerive(),
-        demonstrate=ConsensusDemonstrate(consensus),
+        demonstrate=demonstrate,
         promulgate=Promulgate(),
         verification=VerificationGate(policy),
         kfm=KFM(Archive()),
