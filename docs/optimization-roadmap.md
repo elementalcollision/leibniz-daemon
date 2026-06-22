@@ -37,7 +37,11 @@ discovery-frontier push.
 |---|---|---|---|---|
 | **0014** | Real (token-based) cost accounting (meter provider usage; price table; exact USD cap) | Cost governance | no | ✅ done |
 | **0015** | Corpus (D4: 3→34 known results) + domain (D9: 1→3, round-robin) expansion | Discovery inputs | no | ✅ done |
-| **0016** | Chimera runtime — real persistent runtime vs the `SimpleRuntime` stub | Substrate | no | ⏳ next |
+| **0016** | Chimera runtime — `PersistentRuntime` (SQLite memory + circadian phase) vs the `SimpleRuntime` stub | Substrate | no | ✅ done⁴ |
+
+⁴ Self-contained per operator decision: no external Chimera checkout in-env, so the
+  real runtime is built behind the `RuntimeAdapter` Protocol; external-Chimera
+  wiring stays a documented drop-in. **Tier 3 complete.**
 
 ## Remaining follow-ups
 

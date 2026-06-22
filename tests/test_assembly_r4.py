@@ -5,11 +5,12 @@ creds. The live end-to-end run lives in scripts/run_live.py.
 """
 from __future__ import annotations
 
-from leibniz.assembly import ConservativeJudge, SimpleRuntime, build_daemon, prover_ensemble
+from leibniz.assembly import ConservativeJudge, build_daemon, prover_ensemble
 from leibniz.budget import TrustBudget
 from leibniz.consensus import ConsensusDemonstrate, NoOpDerive
 from leibniz.daemon import Leibniz
 from leibniz.gates.verification import VerificationGate
+from leibniz.runtime import PersistentRuntime
 
 
 def test_build_daemon_constructs_real_stack_without_network():
@@ -18,7 +19,7 @@ def test_build_daemon_constructs_real_stack_without_network():
     assert isinstance(d.derive, NoOpDerive)
     assert isinstance(d.demonstrate, ConsensusDemonstrate)   # N+1 consensus proving
     assert isinstance(d.budget, TrustBudget)                 # judged-faithfulness budget
-    assert isinstance(d.runtime, SimpleRuntime)
+    assert isinstance(d.runtime, PersistentRuntime)  # ADR 0016: real runtime, not the stub
     assert isinstance(d.verification, VerificationGate)
 
 
