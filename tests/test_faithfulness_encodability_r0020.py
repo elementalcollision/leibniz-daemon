@@ -8,11 +8,17 @@ check it could not perform.
 """
 from __future__ import annotations
 
-from leibniz.backends.smt_z3 import Z3Backend
+import pytest
+
+from leibniz.backends.smt_z3 import Z3Backend, available
 from leibniz.probes import coverage_probe
 from leibniz.propositio import Enuntiatio, Expressio, Propositio
 from leibniz.types import ClaimType
 from leibniz.verifiers import SMTVerifier
+
+# These exercise the real Z3 DSL; skip where z3 (the `verify` extra) is absent — e.g.
+# the stdlib-only CI `invariants` job — so the universal gate stays the invariant suite.
+pytestmark = pytest.mark.skipif(not available(), reason="z3 not installed (verify extra)")
 
 
 def _prop(claim_domain, claim_property, established_domain):
