@@ -32,26 +32,39 @@ def coverage_probe(smt, bound: int = 64):
         expr = prop.expressio
         if not (en.claim_domain and en.claim_property and expr is not None and expr.established_domain):
             return None  # incomplete contract -> cannot certify mechanically -> DEFER
-        # A mechanical PASS must rest on a contract the SMT can ACTUALLY search. The DSL
-        # is a single-variable arithmetic fragment; a richer predicate (^, a second
-        # variable, a function) raises PredicateError and the search degrades to None —
-        # which, read as "no gap", would be a VACUOUS pass (ADR 0020). Refuse it: if any
-        # part of the contract is un-encodable, DEFER rather than launder a check we
-        # never performed. (The adversarial spine, run earlier in the gate, likewise can
-        # only bite when claim_property is encodable — so requiring it here makes a PASS
-        # mean both the spine and this probe genuinely ran.)
         be = smt.backend
+        # A mechanical PASS must rest on a contract the SMT can ACTUALLY search and on
+        # CONCLUSIVE results. If any part is un-encodable (richer than the DSL), DEFER —
+        # the search would degrade to None, which read as "no gap" is a vacuous PASS
+        # (ADR 0020). Requiring claim_property encodable too makes a PASS mean the gaming
+        # check below genuinely ran.
         encodable = getattr(be, "encodable", None)
         if encodable is not None and not (
             encodable(en.claim_domain) and encodable(en.claim_property) and encodable(expr.established_domain)
         ):
-            return None  # un-encodable contract -> DEFER, never a vacuous PASS
+            return None
+        decide = getattr(be, "decide_unsat", None)
+        if decide is not None:
+            # Certify ONLY on conclusive UNSAT of BOTH (ADR 0021 soundness review):
+            #  (1) coverage  — claim_domain ⊆ established_domain (no gap), and
+            #  (2) no gaming — ¬established_domain ∧ claim_domain ∧ ¬claim_property.
+            # A gap, a gaming witness, OR an undecided/timed-out search (None) all DEFER;
+            # a PASS never rests on a None that meant "could not check".
+            covered = decide([f"({en.claim_domain})", f"not ({expr.established_domain})"], bound)
+            if covered is not True:
+                return None
+            no_gaming = decide(
+                [f"not ({expr.established_domain})", f"({en.claim_domain})", f"not ({en.claim_property})"],
+                bound,
+            )
+            return True if no_gaming is True else None
+        # Fallback for minimal backends (test doubles without decide_unsat): legacy gap check.
         gap = be.find_gaming_witness(
             statement=f"not ({expr.established_domain})",
             negated_claim=en.claim_domain,
             bound=bound,
         )
-        return True if gap is None else None  # full coverage -> PASS; gap -> DEFER
+        return True if gap is None else None
 
     return probe
 

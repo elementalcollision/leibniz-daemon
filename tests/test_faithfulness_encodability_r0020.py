@@ -59,5 +59,36 @@ def test_genuine_coverage_gap_defers():
 
 def test_backend_encodable_distinguishes_dsl_from_rich():
     be = Z3Backend()
-    assert be.encodable("n >= 1") is True and be.encodable("n < 2 * n") is True
-    assert be.encodable("n < 2 ^ n") is False and be.encodable("a + b == b + a") is False
+    # widened DSL (ADR 0021): multi-variable, constant powers, constant mod/div
+    assert be.encodable("n >= 1") is True
+    assert be.encodable("a + b == b + a") is True            # multiple variables
+    assert be.encodable("n ^ 2 <= n * n + 1") is True        # constant exponent
+    assert be.encodable("(n * (n + 1)) / 2 >= n") is True    # constant divisor
+    assert be.encodable("n % 2 == 0") is True                # constant modulus
+    # still outside the sound DSL -> DEFER (honest)
+    assert be.encodable("n < 2 ^ n") is False                # symbolic exponent
+    assert be.encodable("Nat.log 2 n <= n") is False         # function / syntax
+    assert be.encodable("n / m == 1") is False               # variable divisor
+
+
+def test_multivariable_contract_now_certifies():
+    # A two-variable contract that ADR 0020 would DEFER (un-encodable) is now
+    # genuinely checked and PASSes when covered (ADR 0021 widening).
+    p = _prop("a >= 0 and b >= 0", "a + b == b + a", "a >= 0 and b >= 0")
+    assert _probe()(p) is True
+
+
+def test_caret_power_no_longer_vacuously_passes():
+    # ADR 0021 soundness-review CRITICAL: "n * 2 ^ 0 >= 1" once mis-parsed as (2n)^0=1
+    # (true everywhere) -> vacuous PASS. With ^->** it is n*1>=1 = n>=1, which does NOT
+    # cover claim_domain n>=0 (real gap at n=0) -> the probe DEFERs (catches it).
+    p = _prop("n >= 0", "n >= 1", "n * 2 ^ 0 >= 1")
+    assert _probe()(p) is None
+
+
+def test_probe_defers_on_domain_narrowing():
+    # The proof's established_domain (n>=1) is narrower than the claim_domain (n>=0) —
+    # exactly the region where the property "2n>=n+1" fails (n=0). A real coverage gap
+    # at n=0 -> the probe DEFERs (refuses to certify the narrowed statement).
+    p = _prop("n >= 0", "2 * n >= n + 1", "n >= 1")
+    assert _probe()(p) is None
