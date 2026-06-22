@@ -28,7 +28,7 @@ Accepted; two follow-ups remain (see below). The trust boundary held throughout 
 ³ Adversarial-review-hardened: the load-bearing AST-guard landed, **and §2 general
   judge-producer stamping** on faithfulness/novelty edges shipped (PR #25).
 
-## Tier 3 — substrate maturity (in progress)
+## Tier 3 — substrate maturity (complete)
 
 Making sustained autonomous discovery affordable, honest, and broad before the
 discovery-frontier push.
@@ -42,6 +42,20 @@ discovery-frontier push.
 ⁴ Self-contained per operator decision: no external Chimera checkout in-env, so the
   real runtime is built behind the `RuntimeAdapter` Protocol; external-Chimera
   wiring stays a documented drop-in. **Tier 3 complete.**
+
+## Tier 4 — the public reading-room (complete)
+
+| ADR | Decision | Theme | Guarded? | Status |
+|---|---|---|---|---|
+| **0017** | Codex Calculemus — standalone private Astro repo (codexcalculemus.com) rendering the published ledger, mirroring codex-vitruvianus | Presentation (R6) | no | ✅ done⁵ |
+
+⁵ Separate private repo
+  [`codex-calculemus`](https://github.com/elementalcollision/codex-calculemus) (the
+  renderer); Leibniz keeps the producer bridge `leibniz/calculemus_site.py` +
+  `scripts/export_calculemus.py`. Specimens are genuinely kernel-checked (REPL);
+  `export_calculemus.py --check` re-verifies every Q.E.D. against the kernel.
+  Read-only over the ledger; invariants byte-identical. **Tier 4 complete** — only
+  Tier 1 (discovery) remains.
 
 ## Remaining follow-ups
 

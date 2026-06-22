@@ -1,0 +1,16 @@
+{
+  "statement": "Every power of two is positive",
+  "claim_type": "complexity_bound",
+  "falsifiable_claim": "a natural n for which 2 ^ n = 0",
+  "domain": "analysis_of_algorithms",
+  "theorem_src": "theorem two_pow_pos (n : Nat) : 0 < 2 ^ n",
+  "proof_src": "by positivity",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "2026-06-21T00:00:00Z",
+  "specimen": true
+}
