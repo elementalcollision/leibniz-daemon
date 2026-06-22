@@ -10,6 +10,7 @@ from leibniz.budget import TrustBudget
 from leibniz.consensus import ConsensusDemonstrate, NoOpDerive
 from leibniz.daemon import Leibniz
 from leibniz.gates.verification import VerificationGate
+from leibniz.lemma_decomposition import DecomposingDemonstrate
 from leibniz.runtime import PersistentRuntime
 
 
@@ -17,7 +18,8 @@ def test_build_daemon_constructs_real_stack_without_network():
     d = build_daemon(frontier_limit=1, analogy_limit=1)
     assert isinstance(d, Leibniz)
     assert isinstance(d.derive, NoOpDerive)
-    assert isinstance(d.demonstrate, ConsensusDemonstrate)   # N+1 consensus proving
+    # N+1 consensus proving — ADR 0027 wraps it with a decomposition fallback by default
+    assert isinstance(d.demonstrate, (ConsensusDemonstrate, DecomposingDemonstrate))
     assert isinstance(d.budget, TrustBudget)                 # judged-faithfulness budget
     assert isinstance(d.runtime, PersistentRuntime)  # ADR 0016: real runtime, not the stub
     assert isinstance(d.verification, VerificationGate)

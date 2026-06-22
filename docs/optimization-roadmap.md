@@ -191,8 +191,20 @@ discovery-frontier push.
   steering + integrity fixes work end-to-end; the binding blocker is now squarely **prover
   reach**: 23/24 non-trivial conjectures reached the kernel but the ensemble + decomposition
   could not close them → lever 3 (stronger/longer prover) + deeper decomposition.
-- **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
-  conjectures.
+- ✅ **Decomposition — independent sub-lemmas (ADR 0027)** — the deeper M3: a
+  `LemmaDecomposer` asks for helper lemmas, proves each INDEPENDENTLY via N+1 consensus,
+  then re-proves the main with the proven lemmas offered as `have`-block **hints**. The
+  kernel only ever checks ONE self-contained declaration (`theorem_src := proof`); the
+  hints are prover context and NEVER enter the Lean source — so there is no
+  separate-declaration surface to poison (`discharge` unchanged, sole writer; N+1
+  preserved). `DecomposingDemonstrate` runs it as a fallback after normal consensus
+  (`LEIBNIZ_LEMMA_DECOMPOSE`, default 1), recording exactly one proof edge.
+  **An adversarial review CRITICALLY rejected the first ("preamble") cut** — prepending
+  the lemmas as separate declarations let a preamble poison elaboration via
+  `attribute`/`notation`/`run_cmd` with no denylisted keyword; the hints redesign
+  eliminates the vulnerability class rather than guarding it. Invariants byte-identical.
+  Pending a billable re-run to measure whether it closes the non-trivial conjectures the
+  ensemble could not.
 
 ## Sequencing (as built)
 
