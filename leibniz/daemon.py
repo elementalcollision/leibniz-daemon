@@ -77,6 +77,7 @@ class Leibniz:
     # ADR 0018 (discovery frontier): proposal-side steering. Both optional — when
     # absent the loop behaves exactly as before (cold start / deterministic fakes).
     notebook: Optional[DiscoveryNotebook] = None       # outcome-conditioned conjecture
+    notebook_path: Optional[str] = None                # ADR 0023: persist near-misses across runs
     frontier: Optional[FrontierController] = None       # adaptive difficulty band
     frontier_path: Optional[str] = None                # persist the band across runs
     weaken_k: int = 2                                   # UNPROVEN -> weaker re-conjectures
@@ -125,6 +126,8 @@ class Leibniz:
                 self.frontier.update()  # ADR 0018 M2: retune the band from outcomes
                 if self.frontier_path:
                     self.frontier.save(self.frontier_path)  # persist across runs
+            if self.notebook is not None and self.notebook_path:
+                self.notebook.save(self.notebook_path)  # ADR 0023: persist near-misses
         return reports
 
     def _active_domains(self) -> tuple[str, ...]:
