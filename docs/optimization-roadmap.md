@@ -57,13 +57,29 @@ discovery-frontier push.
   Read-only over the ledger; invariants byte-identical. **Tier 4 complete** — only
   Tier 1 (discovery) remains.
 
+## Tier 1 — the discovery frontier (the mission)
+
+| ADR | Decision | Theme | Guarded? | Status |
+|---|---|---|---|---|
+| **0018** | Discovery frontier — outcome-conditioned conjecture + difficulty thermostat + weakening seeds + graded quality | Discovery yield | no | ✅ done⁶ |
+
+⁶ Closes the learning loop on the **proposal** side (ADR 0009 closed it on selection):
+  `leibniz/discovery.py` — `DiscoveryNotebook` (M1), `FrontierController` (M2),
+  `weakening_seeds` (M3, depth-1 bounded), graded tent `quality`/`difficulty` (M4),
+  `scripts/measure_discovery.py` (M5, shows the thermostat lifts yield 0%→~50% on a
+  hidden tractable window and recovers from overshooting a narrow one). Adversarially
+  reviewed (4 lenses): trust-safety clean, robustness defects fixed. All proposal-side;
+  the kernel + Z3 still decide;
+  invariants byte-identical. **Tier 1 landed** — remaining work is live calibration
+  and deeper decomposition (ADR 0018 open questions).
+
 ## Remaining follow-ups
 
-- **The open frontier / discovery (Tier 1, last)** — autonomous *discovery*: the
-  daemon runs end-to-end but rarely promulgates because conjectures land
-  trivial-or-too-hard. Tuning the conjecturer toward provable-yet-novel statements
-  (over the now-closed KFM loop) is the final mission-level push, after the Tier 3
-  substrate and the Tier 4 Calculemus site.
+- **Live calibration of the frontier** — the thermostat converges in simulation; a
+  sustained live run (real providers + Lean) should tune the window/step against the
+  prover's real reach, and confirm yield rises end-to-end.
+- **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
+  conjectures.
 
 ## Sequencing (as built)
 

@@ -23,7 +23,14 @@ _SYSTEM = (
 
 _PROMPTS = {
     Role.CONJECTURE: (
-        "Propose ONE novel, plausibly-true, non-trivial conjecture seeded by: {context}\n"
+        "Propose ONE conjecture that is (a) NOVEL — not a textbook/Mathlib result, "
+        "(b) NON-TRIVIAL — not closed by `decide`/`simp`/`omega` alone, and "
+        "(c) PLAUSIBLY PROVABLE with standard Mathlib tactics. The aim is the band of "
+        "the novel-yet-tractable: a true statement just past what is already known but "
+        "still within reach of a proof. Honour any lessons and target difficulty band "
+        "in the context (emulate what proved, avoid what was trivial/known, weaken what "
+        "was too hard).\n"
+        "Context: {context}\n"
         'Return JSON: {{"statement": <human claim>, "claim_type": '
         '"complexity_bound|correctness|optimality|invariant|existence|structural|open_form", '
         '"falsifiable_claim": <what would refute it>, '
