@@ -21,6 +21,13 @@ from typing import Optional
 from leibniz.adapters import RuntimeAdapter
 from leibniz.budget import TrustBudget
 from leibniz.cost import CostBudget
+from leibniz.discovery import (
+    DiscoveryNotebook,
+    FrontierController,
+    steer,
+    weakening_seeds,
+)
+from leibniz.discovery import quality as _quality
 from leibniz.gates.verification import VerificationGate
 from leibniz.pipeline import (
     Conjecture,
@@ -67,6 +74,11 @@ class Leibniz:
     budget: Optional[TrustBudget] = None
     # ADR 0011: coarse USD cost cap for multi-cycle autonomous runs. Optional.
     cost_budget: Optional[CostBudget] = None
+    # ADR 0018 (discovery frontier): proposal-side steering. Both optional — when
+    # absent the loop behaves exactly as before (cold start / deterministic fakes).
+    notebook: Optional[DiscoveryNotebook] = None       # outcome-conditioned conjecture
+    frontier: Optional[FrontierController] = None       # adaptive difficulty band
+    weaken_k: int = 2                                   # UNPROVEN -> weaker re-conjectures
 
     def circadian_cycle(self) -> CycleReport:
         report = CycleReport()
@@ -108,6 +120,8 @@ class Leibniz:
             coverage = len(self.kfm.archive.cells)
             stagnant = 0 if coverage > prev_coverage else stagnant + 1
             prev_coverage = coverage
+            if self.frontier is not None:
+                self.frontier.update()  # ADR 0018 M2: retune the band from outcomes
         return reports
 
     def _active_domains(self) -> tuple[str, ...]:
@@ -120,12 +134,18 @@ class Leibniz:
         domain = domain or self.domain
         if fresh_only:
             return self.survey.run(domain)
-        seeds = self.kfm.recombination_seeds(recombine_k) + self.survey.run(domain)[:fresh_per_cycle]
+        # ADR 0018 M3: mine UNPROVEN near-misses into strictly-weaker re-conjectures,
+        # alongside the KFM recombinations and a few fresh survey seeds.
+        weaken = weakening_seeds(self.notebook.too_hard, self.weaken_k) if self.notebook else []
+        seeds = (self.kfm.recombination_seeds(recombine_k) + weaken
+                 + self.survey.run(domain)[:fresh_per_cycle])
         return seeds or self.survey.run(domain)  # cold archive -> fresh survey
 
     def _run_seeds(self, seeds: list[str], report: CycleReport) -> None:
         for seed in seeds:
-            prop = self.conjecture.run(seed)
+            # ADR 0018 M1/M2: condition the conjecture on ledger lessons + the target
+            # difficulty band (a no-op until the notebook/frontier have learned).
+            prop = self.conjecture.run(steer(seed, self.notebook, self.frontier))
             report.conjectured += 1
 
             survivor = self.formalize.run(prop)  # cheap gates run inside
@@ -161,18 +181,18 @@ class Leibniz:
         self.kfm.archive.consider(prop, quality)
         self.runtime.remember(prop)
 
+        # ADR 0018 M1/M2: feed the outcome back to the proposal side (pass the
+        # resolved reason so a reached-but-unproven candidate is mined, not lost).
+        if self.notebook is not None:
+            self.notebook.record(prop, reason)
+        if self.frontier is not None:
+            # Track PROVABILITY (did the kernel close it), not promulgation — a
+            # budget-refused but kernel-proved candidate is a tractable difficulty, not
+            # a miss (ADR 0018 review).
+            self.frontier.record(bool(prop.demonstratio and prop.demonstratio.kernel_verified))
+
         # KFM disposition is recorded by placing the candidate in the archive above;
         # run_cycles() closes the loop by drawing recombined parents from the archive
         # as the next cycle's seeds (ADR 0009). RECOMBINE candidates (unproven but not
         # dead) stay as higher-quality stepping stones for that selection.
         _ = self.kfm.disposition(prop)
-
-
-def _quality(prop: Propositio) -> float:
-    """Scalar quality for archive competition. Promulgated > faithful-unproven >
-    dead. A real version weights proof difficulty and statement generality."""
-    if prop.promulgated:
-        return 1.0
-    if prop.finish_reason in {FinishReason.UNPROVEN}:
-        return 0.5  # survived every cheap gate, only lacks a proof -- valuable
-    return 0.0

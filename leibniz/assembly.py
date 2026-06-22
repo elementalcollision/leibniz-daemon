@@ -25,6 +25,7 @@ from leibniz.consensus import ConsensusDemonstrate, NoOpDerive, ProofConsensus
 from leibniz.corpus import CorpusBackend
 from leibniz.cost import CostBudget
 from leibniz.daemon import Leibniz
+from leibniz.discovery import DiscoveryNotebook, FrontierController
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
 from leibniz.gates.verification import VerificationGate
@@ -125,4 +126,6 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         kfm=KFM(Archive()),
         budget=TrustBudget(policy),
         cost_budget=cost_budget,  # ADR 0011 cap, ADR 0014 metered by real usage
+        notebook=DiscoveryNotebook(),     # ADR 0018: outcome-conditioned conjecture
+        frontier=FrontierController(),    # ADR 0018: adaptive difficulty band
     )
