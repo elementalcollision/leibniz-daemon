@@ -58,11 +58,13 @@ no cycle can promulgate a law whose proof was not kernel-checked.
   via `lake env lean` — LeanDojo deferred, ADR 0003) + Z3 gaming-witness (ADR 0004) +
   a structural-hash novelty corpus (ADR 0007 corpus). → `leibniz.verifiers`,
   `leibniz.backends`, `leibniz.corpus`
-- **Calculemus → the reading-room (the public face).** An Astro static site that
-  renders the operator-published ledger (the triad + kernel certificate) as an
-  illuminated codex, in continuity with the sibling Codex Vitruvianus (ADR 0017). →
-  [codexcalculemus.com](https://codexcalculemus.com) · `site/`,
-  `leibniz.calculemus_site`
+- **Calculemus → the reading-room (the public face).** A standalone private repo,
+  [`codex-calculemus`](https://github.com/elementalcollision/codex-calculemus) — an
+  Astro static site that renders the operator-published ledger (the triad + kernel
+  certificate) as an illuminated codex, in continuity with the sibling Codex
+  Vitruvianus (ADR 0017). This repo is the producer: `leibniz.calculemus_site` +
+  `scripts/export_calculemus.py` serialize and kernel-re-verify the ledger. →
+  [codexcalculemus.com](https://codexcalculemus.com)
 
 ## Run the scaffold
 

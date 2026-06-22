@@ -1,0 +1,64 @@
+{
+  "$ref": "#/definitions/cycles",
+  "definitions": {
+    "cycles": {
+      "type": "object",
+      "properties": {
+        "cycle": {
+          "type": "number"
+        },
+        "roman": {
+          "type": "string",
+          "default": ""
+        },
+        "created_at": {
+          "type": "string",
+          "default": ""
+        },
+        "domain": {
+          "type": "string",
+          "default": ""
+        },
+        "seeds": {
+          "type": "number",
+          "default": 0
+        },
+        "conjectured": {
+          "type": "number",
+          "default": 0
+        },
+        "reached_proof": {
+          "type": "number",
+          "default": 0
+        },
+        "promulgated": {
+          "type": "number",
+          "default": 0
+        },
+        "by_reason": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {}
+        },
+        "summary": {
+          "type": "string",
+          "default": ""
+        },
+        "illustrative": {
+          "type": "boolean",
+          "default": false
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "cycle"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

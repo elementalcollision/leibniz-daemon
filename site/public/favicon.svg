@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#f4ecd8"/>
-  <!-- Leibniz's integral ſ, the elongated summa -->
-  <path d="M20 7 C20 5, 17 5, 16.5 8 C15.5 13, 16.5 19, 15.5 24 C15 27, 12 27, 12 25"
-        fill="none" stroke="#a03b2a" stroke-width="2.2" stroke-linecap="round"/>
-</svg>

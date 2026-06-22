@@ -4,8 +4,10 @@
 - Date: 2026-06-21
 - Related: ADR 0008 / R6 (Calculemus reading-room + operator publish tier), the
   sibling [`codex-vitruvianus`](https://github.com/elementalcollision/codex-vitruvianus).
-  `site/**`, `leibniz/calculemus_site.py`, `scripts/export_calculemus.py`.
-  Non-guarded. Roadmap: Tier 4.
+  The site is its own private repo
+  [`codex-calculemus`](https://github.com/elementalcollision/codex-calculemus); this
+  repo keeps the producer bridge `leibniz/calculemus_site.py` +
+  `scripts/export_calculemus.py`. Non-guarded. Roadmap: Tier 4.
 
 ## Context
 
@@ -18,8 +20,11 @@ operator asked for the Calculemus equivalent, following that example.
 
 ## Decision
 
-Build **`site/`** — an Astro 5 static site (Cloudflare Pages), faithfully mirroring
-Codex Vitruvianus, that renders the Calculemus ledger as a browsable codex.
+Build **Codex Calculemus** as its own private repo
+(`elementalcollision/codex-calculemus`) — an Astro 5 static site (Cloudflare Pages),
+faithfully mirroring Codex Vitruvianus, that renders the Calculemus ledger as a
+browsable codex. The producer (Leibniz) and renderer (the site repo) are separate,
+exactly as the daemon and forge are for Vitruvianus.
 
 1. **Same stack + design system.** Astro static output, the Lo Studiolo tokens
    (vellum/ink themes, Instrument Serif/Sans + JetBrains Mono), near-zero JS (theme
@@ -30,12 +35,13 @@ Codex Vitruvianus, that renders the Calculemus ledger as a browsable codex.
    frontispiece, **Le Leggi** (laws index + reader), **Il Lavoro** (cycle work-log),
    **Colophon** (publish gate + provenance), **L'Ingegno** (architecture + system
    map of the trust boundary).
-3. **Public ledger, committed.** Unlike Vitruvianus's *private* forge (pulled with a
-   token at build), the *published* Calculemus ledger is meant to be read, so it is
-   committed as `site/ledger/calculemus.json` — the build needs no secret.
-   `scripts/sync-ledger.mjs` normalizes it into Astro content collections.
-   `leibniz/calculemus_site.py` is the forward path: it serializes a live
-   `Calculemus` (published laws + held-back colophon) to that ledger.
+3. **Public ledger, committed in the site repo.** Unlike Vitruvianus's *private*
+   forge (pulled with a token at build), the *published* Calculemus ledger is meant
+   to be read, so it is committed in the site repo at `ledger/calculemus.json` — the
+   build needs no secret. The site's `scripts/sync-ledger.mjs` normalizes it into
+   Astro content collections. `leibniz/calculemus_site.py` is the forward path: it
+   serializes a live `Calculemus` (published laws + held-back colophon) to that
+   ledger, which the operator commits to the site repo.
 4. **Honesty by construction.** Until the discovery frontier publishes novel
    theorems, the ledger ships **specimens** — well-known results, **genuinely
    kernel-checked** through the Lean REPL backend (ADR 0011), marked `specimen:
@@ -46,8 +52,10 @@ Codex Vitruvianus, that renders the Calculemus ledger as a browsable codex.
 ## Options considered
 
 - Standalone repo (like Vitruvianus) vs. `site/` subtree in the Leibniz repo:
-  **subtree now** (reviewable via the normal PR flow, liftable later);
-  `DEPLOY.md` documents both deploy paths.
+  **standalone private repo** (`codex-calculemus`) — the faithful mirror of the
+  Vitruvianus↔forge split, keeps the public-facing renderer separate from the
+  private daemon, and lets the site build with no Leibniz dependency. (Built first
+  as a subtree, then split out.)
 - Generate the site from Python vs. Astro: **Astro**, to match the sibling exactly
   and reuse its design system; Python only bridges the ledger.
 
