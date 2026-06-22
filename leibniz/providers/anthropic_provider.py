@@ -21,6 +21,27 @@ _SYSTEM = (
     "claim something is proven. Respond with ONLY the requested JSON, no prose."
 )
 
+# ADR 0022: the faithfulness checker can only certify a contract whose predicates
+# live in this sound, Z3-decidable arithmetic DSL (ADR 0021). A contract outside it
+# DEFERs before any proof compute — so it can never be promulgated. Steer proposals
+# INTO the grammar; this is the single source of truth quoted to both roles.
+_DSL = (
+    "FAITHFULNESS DSL — the contract predicates must use ONLY these constructs, or "
+    "the claim is rejected (DEFERred) before it can ever be proven:\n"
+    "  • non-negative integer variables — name them freely (n, a, b, k, ...)\n"
+    "  • non-negative integer literals\n"
+    "  • + - *  (add, subtract, multiply)\n"
+    "  • ^ with a CONSTANT exponent 0..8 (n^2, (a+b)^3) — NOT a variable exponent\n"
+    "  • / and % by a CONSTANT positive divisor (n/2, n%3)\n"
+    "  • comparisons < <= > >= == != ; and / or / not ; parentheses\n"
+    "FORBIDDEN (these make the claim un-checkable): named functions (log, sqrt, gcd, "
+    "factorial, Nat.log, min, max, floor, sums/products), VARIABLE exponents (2^n, "
+    "k^n), division/modulo by a variable, real/rational numbers, quantifiers inside "
+    "a predicate. If the natural claim needs any of these, RESTATE it as an "
+    "elementary-arithmetic statement that does fit (e.g. a concrete polynomial bound, "
+    "a divisibility/mod identity) — that is the novel-yet-tractable band."
+)
+
 _PROMPTS = {
     Role.CONJECTURE: (
         "Propose ONE conjecture that is (a) NOVEL — not a textbook/Mathlib result, "
@@ -30,18 +51,29 @@ _PROMPTS = {
         "still within reach of a proof. Honour any lessons and target difficulty band "
         "in the context (emulate what proved, avoid what was trivial/known, weaken what "
         "was too hard).\n"
+        "The claim must come with a machine-checkable CONTRACT (claim_domain, "
+        "claim_property): for all integer inputs satisfying claim_domain, claim_property "
+        "holds. BOTH predicates MUST be inside the DSL below — prefer claims whose core "
+        "assertion is elementary arithmetic so the contract fits.\n"
+        f"{_DSL}\n"
+        "Example contract — claim_domain \"a >= 1 and b >= 1\", claim_property "
+        "\"(a + b)^2 >= a^2 + b^2 + 2*a\".\n"
         "Context: {context}\n"
         'Return JSON: {{"statement": <human claim>, "claim_type": '
         '"complexity_bound|correctness|optimality|invariant|existence|structural|open_form", '
         '"falsifiable_claim": <what would refute it>, '
-        '"claim_domain": <arithmetic predicate over n, e.g. "n >= 1">, '
-        '"claim_property": <arithmetic predicate over n the claim asserts>}}'
+        '"claim_domain": <DSL predicate bounding the inputs>, '
+        '"claim_property": <DSL predicate the claim asserts on that domain>}}'
     ),
     Role.FORMALIZE: (
         "Formalize this claim as a Lean 4 theorem statement (header only, no proof): {context}\n"
+        "Also give established_domain: the DSL predicate over the same integer "
+        "variables that the formal statement ACTUALLY establishes the property on. It "
+        "must COVER claim_domain (be at least as broad) and stay inside the DSL.\n"
+        f"{_DSL}\n"
         'Return JSON: {{"theorem_src": "theorem name : ...", '
         '"imports": ["Mathlib.Tactic"], '
-        '"established_domain": <arithmetic predicate over n the statement actually covers>}}'
+        '"established_domain": <DSL predicate the statement covers>}}'
     ),
     Role.PROOF_DRAFT: (
         "Draft a Lean 4 tactic script proving this statement. Return ONLY the script "
@@ -120,5 +152,39 @@ class AnthropicProvider:
             f"Lean error:\n{error[:1500]}\n"
             'Return corrected JSON only: {"theorem_src": "theorem name : ...", '
             '"imports": ["Mathlib.Tactic", ...], "established_domain": "<predicate over n>"}'
+        )
+        return self._chat(prompt)
+
+    def repair_contract(
+        self,
+        statement: str,
+        claim_domain: str,
+        claim_property: str,
+        established_domain: str,
+        problems: list[str],
+    ) -> str:
+        """ADR 0022: the faithfulness checker cannot decide this contract because one
+        or more predicates are outside its DSL. Restate the three predicates INSIDE the
+        DSL, preserving meaning — do NOT change the human claim and do NOT narrow
+        claim_domain to dodge the checker. Returns corrected JSON."""
+        prompt = (
+            "The machine-checkable CONTRACT for your claim cannot be verified: these "
+            f"fields use constructs outside the decidable DSL: {', '.join(problems)}. "
+            "Restate ALL THREE predicates so each is inside the DSL, WITHOUT changing "
+            "what the claim means.\n"
+            f"{_DSL}\n"
+            f"Claim (do NOT change): {statement}\n"
+            "Current contract:\n"
+            f"  claim_domain: {claim_domain}\n"
+            f"  claim_property: {claim_property}\n"
+            f"  established_domain: {established_domain}\n"
+            "Rules: keep claim_domain NON-EMPTY and just as broad (adding constraints "
+            "to shrink it is cheating and will be rejected); keep claim_property at "
+            "least as STRONG (a weaker/hollowed property is rejected — the new one must "
+            "imply the old); established_domain must COVER claim_domain; preserve the "
+            "mathematical meaning. If the claim genuinely cannot be expressed in this "
+            "DSL, return the fields unchanged.\n"
+            'Return JSON only: {"claim_domain": "...", "claim_property": "...", '
+            '"established_domain": "..."}'
         )
         return self._chat(prompt)

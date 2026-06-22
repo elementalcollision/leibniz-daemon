@@ -165,7 +165,10 @@ class Z3Backend:
         env: dict = {}
         try:
             exprs = [compile_pred(p, env) for p in preds]
-        except (PredicateError, RecursionError):
+        except (PredicateError, RecursionError, z3.Z3Exception):
+            # z3 raises a Z3Exception at CONSTRUCTION time for a non-boolean term fed to
+            # And/Or/Not (e.g. "not n", "n and n>0"); treat it as un-encodable, never a
+            # crash (matches this module's docstring contract).
             return ("error", None)
         try:
             solver = z3.Solver()
@@ -192,8 +195,8 @@ class Z3Backend:
         try:
             compile_pred(pred)
             return True
-        except (PredicateError, RecursionError):
-            return False
+        except (PredicateError, RecursionError, z3.Z3Exception):
+            return False  # incl. a non-boolean term z3 rejects at construction time
 
     def decide_unsat(self, preds: list[str], bound: int = 0) -> Optional[bool]:
         """Tri-state: True iff the conjunction is conclusively UNSAT (no witness in
