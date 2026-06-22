@@ -125,6 +125,33 @@ def test_frontier_holds_on_thin_evidence():
     assert fc.target == 0.45
 
 
+def test_frontier_persists_and_resumes(tmp_path):
+    fc = FrontierController(target=0.45)
+    for _ in range(8):
+        fc.record(False)
+    fc.update()  # moves the band + holds the outcome window
+    p = tmp_path / "frontier.json"
+    fc.save(p)
+    resumed = FrontierController.load(p)
+    assert resumed.target == fc.target
+    assert resumed._recent == fc._recent[-resumed.window:]
+
+
+def test_frontier_load_missing_is_default(tmp_path):
+    fc = FrontierController.load(tmp_path / "absent.json")
+    assert fc.target == 0.45 and fc._recent == []  # cold start unchanged
+
+
+def test_daemon_persists_band_across_run(tmp_path):
+    path = str(tmp_path / "frontier.json")
+    fc = FrontierController()
+    d = _daemon(notebook=DiscoveryNotebook(), frontier=fc)
+    d.frontier_path = path
+    d.run_cycles(2)
+    assert (tmp_path / "frontier.json").exists()
+    assert FrontierController.load(path).target == fc.target  # the run's band persisted
+
+
 def test_frontier_reexplores_when_pinned_at_floor():
     # Overshot a narrow window down to the floor with nothing proving: must jump back
     # and re-search, not pin at the floor at 0% forever (ADR 0018 review).
