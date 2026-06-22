@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# This file belongs in the LEIBNIZ repo, not the site repo.
+# Install it at:  elementalcollision/leibniz → .github/workflows/notify-site.yml
+#
+# It fires whenever a newly published law changes the ledger (a push touching
+# site/ledger/**), and pings the Cloudflare Pages deploy hook so
+# codexcalculemus.com rebuilds (re-reading the ledger) within ~1–2 minutes.
+#
+# Required Leibniz secret:  CF_DEPLOY_HOOK  (the Cloudflare Pages deploy-hook URL)
+# See DEPLOY.md in the site for how to create it.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Notify Codex Calculemus
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/ledger/**"
+  workflow_dispatch: {}
+
+# Avoid stacking rebuilds when several laws publish in a burst.
+concurrency:
+  group: notify-codex-calculemus
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Cloudflare Pages deploy hook
+        env:
+          HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::CF_DEPLOY_HOOK is not set; nothing to notify." >&2
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" -o /dev/null -w "deploy hook → HTTP %{http_code}\n"
