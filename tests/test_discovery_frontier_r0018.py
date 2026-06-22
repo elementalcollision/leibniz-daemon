@@ -98,6 +98,91 @@ def test_notebook_is_bounded_and_dedups():
     assert nb.too_hard == ["hard 3", "hard 4"]  # only most-recent `capacity`, no dup
 
 
+# --- DiscoveryNotebook persistence (ADR 0023) --------------------------------
+
+def test_notebook_persists_and_resumes(tmp_path):
+    nb = DiscoveryNotebook(capacity=6)
+    nb.record(_prop("a proven law", promulgated=True, reason=FinishReason.PROMULGATED))
+    nb.record(_prop("a near miss", reason=FinishReason.UNPROVEN))
+    nb.record(_prop("a known one", reason=FinishReason.KNOWN))
+    p = tmp_path / "notebook.json"
+    nb.save(p)
+    resumed = DiscoveryNotebook.load(p, capacity=6)
+    assert resumed.proven == ["a proven law"]
+    assert resumed.too_hard == ["a near miss"]   # the near-miss survives the run boundary
+    assert resumed.avoid == ["a known one"]
+
+
+def test_notebook_load_missing_is_fresh(tmp_path):
+    nb = DiscoveryNotebook.load(tmp_path / "absent.json", capacity=9)
+    assert nb.too_hard == [] and nb.proven == [] and nb.avoid == []
+    assert nb.capacity == 9
+
+
+def test_notebook_load_respects_capacity(tmp_path):
+    big = DiscoveryNotebook(capacity=10)
+    for i in range(10):
+        big.record(_prop(f"hard {i}", reason=FinishReason.UNPROVEN))
+    p = tmp_path / "notebook.json"
+    big.save(p)
+    small = DiscoveryNotebook.load(p, capacity=3)
+    assert small.too_hard == ["hard 7", "hard 8", "hard 9"]  # capped to the most recent 3
+
+
+def test_daemon_persists_notebook_across_run(tmp_path):
+    path = str(tmp_path / "notebook.json")
+    nb = DiscoveryNotebook()
+    d = _daemon(notebook=nb, frontier=FrontierController())
+    d.notebook_path = path
+    d.run_cycles(2)
+    assert (tmp_path / "notebook.json").exists()
+    # the run's near-misses were written out (the _FormalizeNull settles UNPROVEN)
+    assert DiscoveryNotebook.load(path).too_hard == nb.too_hard
+
+
+def test_notebook_capacity_zero_keeps_nothing_not_unbounded():
+    # ADR 0023 review (HIGH): del bucket[:-0] is a no-op -> a cap<=0 must DISABLE the
+    # bucket (keep nothing), never grow without bound.
+    nb = DiscoveryNotebook(capacity=0)
+    for i in range(50):
+        nb.record(_prop(f"hard {i}", reason=FinishReason.UNPROVEN))
+    assert nb.too_hard == []
+
+
+def test_notebook_load_tolerates_nondict_and_wrongtyped(tmp_path):
+    # ADR 0023 review (MEDIUM): a forged/truncated non-dict payload -> fresh, no crash.
+    for bad in ("[1, 2, 3]", "42", '"oops"', "null"):
+        p = tmp_path / "nb.json"
+        p.write_text(bad)
+        nb = DiscoveryNotebook.load(p, capacity=6)
+        assert nb.too_hard == [] and nb.proven == [] and nb.avoid == []
+    # a string-valued bucket must degrade to empty, not iterate into per-char seeds.
+    p.write_text('{"too_hard": "abc"}')
+    assert DiscoveryNotebook.load(p).too_hard == []
+
+
+def test_frontier_load_tolerates_nondict(tmp_path):
+    # parity fix: FrontierController.from_dict had the identical latent crash.
+    p = tmp_path / "fr.json"
+    p.write_text("[1, 2, 3]")
+    fc = FrontierController.load(p)
+    assert fc.target == 0.45 and fc._recent == []
+
+
+def test_env_int_falls_back_on_garbage(monkeypatch):
+    # ADR 0023 review (LOW): an operator typo in LEIBNIZ_WEAKEN_K / LEIBNIZ_NOTEBOOK_CAP
+    # must fall back to the default, not abort build_daemon with a ValueError.
+    from leibniz.assembly import _env_int
+    monkeypatch.setenv("X_KNOB", "notanint")
+    assert _env_int("X_KNOB", 3) == 3
+    monkeypatch.setenv("X_KNOB", "")
+    assert _env_int("X_KNOB", 3) == 3
+    monkeypatch.delenv("X_KNOB", raising=False)
+    assert _env_int("X_KNOB", 3) == 3
+    monkeypatch.setenv("X_KNOB", "5")
+    assert _env_int("X_KNOB", 3) == 5
+
+
 # --- FrontierController (thermostat) -----------------------------------------
 
 def test_frontier_eases_off_when_nothing_proves():
@@ -169,18 +254,28 @@ def test_frontier_band_is_descriptive():
 
 # --- weakening seeds + steer -------------------------------------------------
 
-def test_weakening_seeds_reference_statements_and_cap():
+def test_weakening_seeds_target_the_most_recent_and_cap():
+    # ADR 0023: weaken the FRESHEST k near-misses (the ones just seen to reach-proof
+    # but not close), not the oldest.
     seeds = weakening_seeds(["claim one", "claim two", "claim three"], k=2)
     assert len(seeds) == 2
     assert all("STRICTLY WEAKER" in s for s in seeds)
-    assert "claim one" in seeds[0] and "claim two" in seeds[1]
+    assert "claim two" in seeds[0] and "claim three" in seeds[1]
 
 
-def test_weakening_is_depth_one():
+def test_weakening_echo_guard_stops_marked_instructions():
     once = weakening_seeds(["fresh claim"], k=2)
     assert len(once) == 1
-    # a statement that is already a weakening instruction is never re-weakened
+    # the echo guard: a statement that already carries the weakening instruction is
+    # never re-weakened (kills a verbatim-echoing provider's compounding loop).
     assert weakening_seeds(once, k=2) == []
+
+
+def test_weakening_k_zero_returns_none_not_all(tmp_path=None):
+    # ADR 0023 review (HIGH): fresh[-0:] is the WHOLE list — k<=0 must mean NONE, not
+    # "weaken every accumulated near-miss" (a billable cost blowup).
+    assert weakening_seeds(["a", "b", "c"], k=0) == []
+    assert weakening_seeds(["a", "b", "c"], k=-1) == []
 
 
 def test_steer_is_noop_without_signals():
