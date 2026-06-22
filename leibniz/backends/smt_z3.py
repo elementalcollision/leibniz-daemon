@@ -1,4 +1,4 @@
-"""R2 SMT backend — Z3 over a small, safe arithmetic predicate DSL.
+"""R2 SMT backend — Z3 over a small, *sound* arithmetic predicate DSL.
 
 Implements ``leibniz.verifiers.SMTBackend``. Both entry points only ever *kill* a
 candidate; a model means "refuted / gamed", UNSAT means "survived" (never
@@ -7,17 +7,26 @@ candidate; a model means "refuted / gamed", UNSAT means "survived" (never
 - ``find_counterexample(claim, bound)`` — search the conjecture's falsifiable
   predicate for a model (a refutation).
 - ``find_gaming_witness(statement, negated_claim, bound)`` — search
-  ``statement ∧ negated_claim`` for a model: an object the formal statement admits
-  while the human claim is false. For the canonical *domain-narrowing / vacuous
-  specialization* gaming pattern the gate (R2b) passes ``statement`` = the region
-  the formal statement leaves unconstrained (``¬established_domain``) and
-  ``negated_claim`` = ``claim_domain ∧ ¬claim_property`` (see ADR 0004).
+  ``statement ∧ negated_claim`` for a model (the domain-narrowing gaming pattern,
+  ADR 0004).
+- ``decide_unsat(preds, bound)`` — TRI-STATE: True iff the conjunction is
+  conclusively UNSAT, False iff SAT, None iff undecided/un-encodable. The
+  faithfulness probe (ADR 0020) certifies only on a conclusive True.
 
-Predicate DSL: boolean/arithmetic expressions over the single integer variable
-``n`` — integer literals, ``n``, ``+ - *``, comparisons (``< <= > >= == !=``),
-``and`` / ``or`` / ``not``, parentheses. Parsed via a whitelisted ``ast`` walk
-(no ``eval``); anything else raises ``PredicateError`` and the search degrades to
-"no witness" rather than crashing the gate.
+Predicate DSL (ADR 0021 widening): boolean/arithmetic over **any number** of
+non-negative integer variables — integer literals; ``+ - *``; **constant-exponent**
+power (``^``/``**``, expanded to repeated multiplication); **constant-positive**
+``/`` (floor div) and ``%``; comparisons; ``and``/``or``/``not``; parentheses.
+
+Soundness (ADR 0021 + the 0021 soundness review):
+- ``^`` is rewritten to ``**`` *before* parsing, so it gets exponentiation
+  precedence (Python parses a bare ``^`` as BitXor, which binds *looser* than ``*``
+  and would mis-encode ``n*2^0`` — a wrong-UNSAT / vacuous PASS).
+- Every search has a timeout; ``z3`` ``unknown`` (and any exception — un-encodable,
+  RecursionError, non-boolean, Z3Exception) is reported as "undecided", never as
+  "no witness". The DSL is a fragment Z3 decides soundly over a bounded box, so a
+  conclusive UNSAT genuinely means "no witness in the box". Un-decided/un-encodable
+  contracts DEFER at the probe — never a vacuous PASS, never a gate crash.
 """
 from __future__ import annotations
 
@@ -31,10 +40,12 @@ except ImportError:  # pragma: no cover
     z3 = None  # type: ignore[assignment]
 
 VAR = "n"
+MAX_POW = 8       # cap constant exponents (sound expansion to repeated multiplication)
+MAX_NODES = 200   # cap predicate AST size (bounds recursion on untrusted input)
 
 
 class PredicateError(ValueError):
-    """The predicate string is outside the safe DSL."""
+    """The predicate string is outside the safe, soundly-decidable DSL."""
 
 
 _CMP = {
@@ -47,27 +58,59 @@ _CMP = {
 }
 
 
-def _conv(node: ast.AST, n: z3.ArithRef):
+def _const_int(node: ast.AST) -> Optional[int]:
+    """The int value if `node` is a non-negative integer literal, else None."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
+        return node.value
+    return None
+
+
+def _conv(node: ast.AST, env: dict):
+    """Compile an AST node to a Z3 expression over the integer variables in `env`
+    (created on demand — multi-variable). Only soundly-encodable constructs are
+    accepted; anything else raises PredicateError."""
     if isinstance(node, ast.BoolOp):
-        vals = [_conv(v, n) for v in node.values]
+        vals = [_conv(v, env) for v in node.values]
         return z3.And(*vals) if isinstance(node.op, ast.And) else z3.Or(*vals)
     if isinstance(node, ast.UnaryOp):
         if isinstance(node.op, ast.Not):
-            return z3.Not(_conv(node.operand, n))
+            return z3.Not(_conv(node.operand, env))
         if isinstance(node.op, ast.USub):
-            return -_conv(node.operand, n)
+            return -_conv(node.operand, env)
         raise PredicateError(f"unary op {type(node.op).__name__}")
     if isinstance(node, ast.BinOp):
-        a, b = _conv(node.left, n), _conv(node.right, n)
-        if isinstance(node.op, ast.Add):
-            return a + b
-        if isinstance(node.op, ast.Sub):
-            return a - b
-        if isinstance(node.op, ast.Mult):
-            return a * b
-        raise PredicateError(f"bin op {type(node.op).__name__}")
+        op = node.op
+        if isinstance(op, ast.Add):
+            return _conv(node.left, env) + _conv(node.right, env)
+        if isinstance(op, ast.Sub):
+            return _conv(node.left, env) - _conv(node.right, env)
+        if isinstance(op, ast.Mult):
+            return _conv(node.left, env) * _conv(node.right, env)
+        # `^` is rewritten to `**` before parsing, so only ast.Pow reaches here. Sound
+        # only for a constant, small, non-negative exponent -> repeated multiplication.
+        if isinstance(op, ast.Pow):
+            k = _const_int(node.right)
+            if k is None or k > MAX_POW:
+                raise PredicateError("power needs a constant exponent in [0, MAX_POW]")
+            base = _conv(node.left, env)
+            out = z3.IntVal(1)
+            for _ in range(k):
+                out = out * base
+            return out
+        # Floor division / modulo: only by a constant positive divisor.
+        if isinstance(op, (ast.Div, ast.FloorDiv)):
+            d = _const_int(node.right)
+            if not d or d <= 0:
+                raise PredicateError("division needs a constant positive divisor")
+            return _conv(node.left, env) / d
+        if isinstance(op, ast.Mod):
+            d = _const_int(node.right)
+            if not d or d <= 0:
+                raise PredicateError("modulo needs a constant positive divisor")
+            return _conv(node.left, env) % d
+        raise PredicateError(f"bin op {type(op).__name__}")
     if isinstance(node, ast.Compare):
-        terms = [_conv(node.left, n), *[_conv(c, n) for c in node.comparators]]
+        terms = [_conv(node.left, env), *[_conv(c, env) for c in node.comparators]]
         clauses = []
         for i, op in enumerate(node.ops):
             fn = _CMP.get(type(op))
@@ -76,21 +119,32 @@ def _conv(node: ast.AST, n: z3.ArithRef):
             clauses.append(fn(terms[i], terms[i + 1]))
         return z3.And(*clauses) if len(clauses) > 1 else clauses[0]
     if isinstance(node, ast.Name):
-        if node.id != VAR:
-            raise PredicateError(f"unknown name {node.id!r} (only {VAR!r} allowed)")
-        return n
-    if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
-        return node.value
+        return env.setdefault(node.id, z3.Int(node.id))  # integer var, on demand
+    val = _const_int(node)
+    if val is not None:
+        return val
     raise PredicateError(f"unsupported syntax: {type(node).__name__}")
 
 
-def compile_pred(src: str, n: z3.ArithRef):
-    """Compile a DSL predicate string into a Z3 boolean expression over `n`."""
+def compile_pred(src: str, env=None):
+    """Compile a DSL predicate into a Z3 BOOLEAN over the integer vars in `env`. The
+    result must be boolean (a bare term like ``n + 1`` is rejected). `env=None` starts
+    fresh; a bare Z3 var is accepted for the legacy single-`n` call shape."""
+    if env is None:
+        env = {}
+    elif not isinstance(env, dict):
+        env = {VAR: env}  # legacy: compile_pred(src, z3.Int("n"))
+    src = src.replace("^", "**")  # `^` means power here; give it exponentiation precedence
     try:
         tree = ast.parse(src, mode="eval")
-    except SyntaxError as e:
+    except (SyntaxError, ValueError) as e:
         raise PredicateError(str(e)) from e
-    return _conv(tree.body, n)
+    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
+        raise PredicateError("predicate too large")
+    result = _conv(tree.body, env)
+    if not isinstance(result, z3.BoolRef):
+        raise PredicateError("predicate is not a boolean expression")
+    return result
 
 
 @dataclass
@@ -98,40 +152,69 @@ class Z3Backend:
     """Z3-backed SMTBackend. Only kills; never promotes."""
 
     default_bound: int = 64
+    timeout_ms: int = 3000
 
-    def _search(self, preds: list[str], bound: int) -> Optional[dict]:
-        n = z3.Int(VAR)
-        solver = z3.Solver()
-        solver.add(n >= 0, n <= bound)
+    def _decide(self, preds: list[str], bound: int) -> tuple[str, Optional[dict]]:
+        """Decide the conjunction of `preds` over the bounded box. Returns a status —
+        'sat' (with model), 'unsat', 'unknown', or 'error' — so callers can tell a
+        conclusive result from an undecided/un-encodable one. Any failure (un-encodable
+        predicate, RecursionError on a deep parse, non-boolean, Z3 error) degrades to
+        'error', never a crash and never a silent 'no witness'."""
+        if z3 is None:
+            return ("error", None)
+        env: dict = {}
         try:
-            for p in preds:
-                solver.add(compile_pred(p, n))
-        except PredicateError:
-            return None  # un-encodable -> no witness (do not crash the gate)
-        if solver.check() == z3.sat:
-            return {"n": solver.model()[n].as_long()}
-        return None
+            exprs = [compile_pred(p, env) for p in preds]
+        except (PredicateError, RecursionError):
+            return ("error", None)
+        try:
+            solver = z3.Solver()
+            solver.set("timeout", self.timeout_ms)
+            for v in env.values():
+                solver.add(v >= 0, v <= bound)
+            for e in exprs:
+                solver.add(e)
+            res = solver.check()
+        except (z3.Z3Exception, RecursionError):  # pragma: no cover
+            return ("error", None)
+        if res == z3.sat:
+            m = solver.model()
+            return ("sat", {name: (m[v].as_long() if m[v] is not None else 0) for name, v in env.items()})
+        if res == z3.unsat:
+            return ("unsat", None)
+        return ("unknown", None)
 
     def encodable(self, pred: str) -> bool:
-        """True iff `pred` compiles in the safe DSL — so a None search result can be
-        read as 'checked, no witness' rather than 'could not encode'. The faithfulness
-        probe uses this to DEFER (not vacuously PASS) on contracts it cannot search."""
+        """True iff `pred` compiles to a boolean in the sound DSL — so a None search
+        result can be read as 'checked, no witness' rather than 'could not encode'."""
         if z3 is None:
             return False
         try:
-            compile_pred(pred, z3.Int(VAR))
+            compile_pred(pred)
             return True
-        except PredicateError:
+        except (PredicateError, RecursionError):
             return False
+
+    def decide_unsat(self, preds: list[str], bound: int = 0) -> Optional[bool]:
+        """Tri-state: True iff the conjunction is conclusively UNSAT (no witness in
+        the box), False iff SAT, None iff undecided/un-encodable. The faithfulness
+        probe certifies only on a conclusive True — sat *or* None DEFERs."""
+        status, _ = self._decide(preds, bound or self.default_bound)
+        if status == "unsat":
+            return True
+        if status == "sat":
+            return False
+        return None
 
     # --- SMTBackend Protocol --------------------------------------------------
     def find_counterexample(self, claim: str, bound: int = 0) -> Optional[dict]:
-        return self._search([claim], bound or self.default_bound)
+        # Only a *conclusive* model kills (undecided/un-encodable -> no refutation).
+        return self._decide([claim], bound or self.default_bound)[1]
 
     def find_gaming_witness(
         self, statement: str, negated_claim: str, bound: int = 0
     ) -> Optional[dict]:
-        return self._search([statement, negated_claim], bound or self.default_bound)
+        return self._decide([statement, negated_claim], bound or self.default_bound)[1]
 
 
 def available() -> bool:

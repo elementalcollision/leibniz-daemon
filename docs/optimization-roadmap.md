@@ -97,12 +97,21 @@ discovery-frontier push.
   `probes.py`/`smt_z3.py`; `gates/` untouched; invariants byte-identical). The gate is
   honest — and this **exposes the faithfulness DSL as the headline discovery blocker**.
 
+| **0021** | Widen the faithfulness DSL soundly (multi-variable, constant powers, constant mod/div) | Faithfulness (trust) | no | ✅ done⁹ |
+
+⁹ The gate can now *honestly certify* the bulk of real conjectures (not just single-`n`
+  arithmetic), unblocking the path to proof. An adversarial **soundness review** (3
+  lenses, 8 findings) caught + fixed a CRITICAL wrong-UNSAT (`^` parsed as BitXor →
+  vacuous PASS), z3-`unknown`-as-UNSAT, and non-boolean/recursion crashes: searches are
+  now timed-out + tri-state, and the probe certifies only on **conclusive UNSAT** of
+  both coverage and no-gaming. `gates/` untouched; invariants byte-identical.
+
 ## Remaining follow-ups
 
-- **Widen the faithfulness DSL** (the now-headline blocker) — multi-variable,
-  exponentiation, named functions, so rich conjectures can be *honestly* certified
-  rather than DEFERred. Higher leverage than prover budget (candidates DEFER before
-  proof). The next deep faithfulness ADR.
+- **Faithfulness DSL — next increment** — ADR 0021 widened it to multi-variable +
+  constant powers + constant mod/div; still DEFERred: symbolic exponents (`2^n`),
+  named functions (`Nat.log`, `factorial`, `gcd`). A bounded definitional encoding
+  would bring them in.
 - **Persist the frontier band** across runs (ADR 0019) so calibration accumulates.
 - **Deeper live calibration** — a ≥5-cycle run with a larger proof-draft budget once
   faithfulness can certify enough candidates to reach proof.
