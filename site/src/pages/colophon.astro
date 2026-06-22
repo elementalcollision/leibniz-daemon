@@ -36,8 +36,13 @@ const generatedAt: string = report?.generated_at ?? "";
         <strong>An LLM may propose; only a mechanical checker may decide.</strong>
         Conjecture and formalization are drafted by language models, but no model's
         opinion ever promotes a law. A proof is admitted only when the
-        <strong>Lean kernel</strong> verifies it; faithfulness and refutation are
-        settled by <strong>Z3</strong> and a structural corpus, never by a judge.
+        <strong>Lean kernel</strong> verifies it. Refutation and the faithfulness
+        <em>gaming-witness</em> are settled by <strong>Z3</strong>; novelty is
+        settled by structural comparison against a corpus of known results — all
+        mechanical. The one irreducible residual is faithfulness for claims that
+        resist operationalization (<em>open-form</em>): it is attacked adversarially
+        first and only then falls back to a budget-bounded <em>judged</em> review —
+        never silently waved through, and never enough on its own to promote a law.
         The certificate <span class="rubric">Q.E.D.</span> is stamped if and only if
         the kernel verified the proof — it is never hand-set. Everything in
         <a href="/laws">Le Leggi</a> carries one.

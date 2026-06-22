@@ -54,7 +54,6 @@ function main() {
     const id = slug(law.id || law.theorem_src || law.statement);
     if (law.specimen) specimens++;
     writeFileSync(join(lawsDir, `${id}.json`), JSON.stringify({
-      pid: law.pid ?? "",
       statement: law.statement ?? "",
       claim_type: law.claim_type ?? "",
       falsifiable_claim: law.falsifiable_claim ?? "",
@@ -76,6 +75,12 @@ function main() {
   const cycles = Array.isArray(ledger.cycles) ? ledger.cycles : [];
   for (const c of cycles) {
     const n = Number(c.cycle ?? 0);
+    // Coerce by_reason counts to numbers so the cycles schema (z.record(z.number()))
+    // never rejects a stringified count from a hand-edited ledger.
+    const byReason = {};
+    if (c.by_reason && typeof c.by_reason === "object") {
+      for (const [k, v] of Object.entries(c.by_reason)) byReason[k] = Number(v) || 0;
+    }
     writeFileSync(join(cyclesDir, `cycle_${String(n).padStart(6, "0")}.json`), JSON.stringify({
       cycle: n,
       roman: romanize(n),
@@ -85,8 +90,9 @@ function main() {
       conjectured: Number(c.conjectured ?? 0),
       reached_proof: Number(c.reached_proof ?? 0),
       promulgated: Number(c.promulgated ?? 0),
-      by_reason: c.by_reason && typeof c.by_reason === "object" ? c.by_reason : {},
+      by_reason: byReason,
       summary: c.summary ?? "",
+      illustrative: !!c.illustrative,
     }, null, 2));
   }
 
