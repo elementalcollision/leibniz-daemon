@@ -1,0 +1,17 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  summary: string;
+  eyebrow: string;
+  lang?: string;
+  readLabel?: string;
+}
+const { href, title, summary, eyebrow, lang = "mixed", readLabel = "Read in full →" } = Astro.props;
+---
+<a class="entry-card" href={href} data-lang={lang}>
+  <div class="eyebrow" set:html={eyebrow}></div>
+  <h2 class="entry-title">{title}</h2>
+  <p class="entry-summary">{summary}</p>
+  <span class="read-link">{readLabel}</span>
+</a>

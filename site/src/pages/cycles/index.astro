@@ -1,0 +1,32 @@
+---
+import Page from "../../layouts/Page.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import { getCollection } from "astro:content";
+import { formatDate } from "../../lib/format";
+
+const cycles = (await getCollection("cycles")).sort((a, b) => b.data.cycle - a.data.cycle);
+---
+<Page title="Il Lavoro — Codex Calculemus">
+  <article class="folio">
+    <a class="back-link" href="/">← Frontispiece</a>
+    <div class="eyebrow" style="margin-top:var(--space-5)">IL LAVORO <span class="sep">·</span> THE WORK</div>
+    <h1 class="page-title">Il Lavoro</h1>
+    <p class="lede">{cycles.length} circadian {cycles.length === 1 ? "cycle" : "cycles"}, newest first — the daemon's ledger of work, candidates and all.</p>
+
+    {cycles.length === 0 ? (
+      <p class="prose prose--mixed"><em>No cycles recorded yet.</em></p>
+    ) : (
+      <div class="entry-list">
+        {cycles.map((c) => (
+          <EntryCard
+            href={`/cycles/${c.id}`}
+            title={`Cycle ${c.data.cycle}`}
+            summary={c.data.summary || `${c.data.conjectured} conjectured · ${c.data.reached_proof} reached proof · ${c.data.promulgated} promulgated`}
+            readLabel="Open the ledger →"
+            eyebrow={`<span class="rubric">${c.data.roman || c.data.cycle}</span>${c.data.created_at ? `<span class="sep">·</span>${formatDate(c.data.created_at)}` : ""}${c.data.domain ? `<span class="sep">·</span>${c.data.domain.replace(/_/g, " ").toUpperCase()}` : ""}`}
+          />
+        ))}
+      </div>
+    )}
+  </article>
+</Page>

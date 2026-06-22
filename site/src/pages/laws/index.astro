@@ -1,0 +1,37 @@
+---
+import Page from "../../layouts/Page.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import { getCollection } from "astro:content";
+import { claimLabel, formatDate } from "../../lib/format";
+
+const laws = (await getCollection("laws")).sort((a, b) =>
+  (b.data.published_at || "").localeCompare(a.data.published_at || "") || a.id.localeCompare(b.id)
+);
+---
+<Page title="Le Leggi — Codex Calculemus">
+  <article class="folio">
+    <a class="back-link" href="/">← Frontispiece</a>
+    <div class="eyebrow" style="margin-top:var(--space-5)">LE LEGGI <span class="sep">·</span> THE LAWS</div>
+    <h1 class="page-title">Le Leggi</h1>
+    <p class="lede">
+      {laws.length} {laws.length === 1 ? "law" : "laws"} settled by calculation —
+      each kernel-checked, proof open to inspection.
+    </p>
+
+    {laws.length === 0 ? (
+      <p class="prose prose--mixed"><em>Nothing published yet.</em> The daemon promulgates only kernel-proven laws to its Codex; a human then publishes them here. See the <a href="/colophon">colophon</a>.</p>
+    ) : (
+      <div class="entry-list">
+        {laws.map((l) => (
+          <EntryCard
+            href={`/laws/${l.id}`}
+            title={l.data.statement}
+            summary={l.data.falsifiable_claim ? `Refuted by: ${l.data.falsifiable_claim}` : claimLabel(l.data.claim_type)}
+            readLabel="Read the proof →"
+            eyebrow={`<span class="rubric">${claimLabel(l.data.claim_type)}</span>${l.data.published_at ? `<span class="sep">·</span>${formatDate(l.data.published_at)}` : ""}${l.data.specimen ? `<span class="sep">·</span>SPECIMEN` : ""}`}
+          />
+        ))}
+      </div>
+    )}
+  </article>
+</Page>

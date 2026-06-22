@@ -1,0 +1,619 @@
+/* =============================================================================
+   Codex Vitruvianus — reading-room layout over the Lo Studiolo design tokens.
+   Colour, type and motion primitives come from tokens.css (vellum / ink).
+   This sheet composes them into a public book: frontispiece, indices, readers.
+   ============================================================================= */
+
+@import "./tokens.css";
+@import "./fonts.css";
+
+/* ---- page frame ---------------------------------------------------------- */
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
+    var(--paper-edge);
+  min-height: 100vh;
+}
+
+.shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-20);
+}
+
+/* ---- toolbar ------------------------------------------------------------- */
+.toolbar {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-5) 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.brand {
+  text-decoration: none;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.brand b {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-body-lg);
+  letter-spacing: var(--ls-tight);
+}
+.brand small {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.theme-toggle {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 6px 14px;
+  transition: color var(--dur-base), border-color var(--dur-base);
+}
+.theme-toggle:hover { color: var(--rubric); border-color: var(--rubric); }
+.toolbar-actions { display: flex; align-items: center; gap: var(--space-4); }
+.gh-link {
+  display: inline-flex;
+  color: var(--ink-soft);
+  transition: color var(--dur-base);
+}
+.gh-link:hover { color: var(--rubric); }
+.gh-link svg { display: block; }
+
+/* ---- the folio card ------------------------------------------------------ */
+.folio {
+  position: relative;
+  background:
+    linear-gradient(var(--paper), var(--paper)) padding-box,
+    repeating-linear-gradient(0deg, transparent, transparent 27px, color-mix(in srgb, var(--ink) 4%, transparent) 28px);
+  background-color: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 3px;
+  box-shadow: var(--shadow-folio);
+  padding: clamp(28px, 6vw, 72px);
+  margin-top: var(--space-6);
+}
+.folio::before {
+  /* spine shadow at the binding edge */
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14px;
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 10%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* ---- type atoms ---------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.eyebrow .sep { color: var(--ink-faint); margin: 0 8px; }
+.eyebrow .rubric { color: var(--rubric); }
+
+.page-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(34px, 7vw, var(--fs-title));
+  line-height: var(--lh-tight);
+  color: var(--rubric);
+  margin: var(--space-3) 0 0;
+  letter-spacing: var(--ls-tight);
+}
+.subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body-lg);
+  color: var(--ink-soft);
+  margin-top: var(--space-2);
+}
+.lede {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-soft);
+  margin: var(--space-5) 0 0;
+  max-width: 60ch;
+}
+.rule {
+  height: 1px;
+  background: var(--rule);
+  border: 0;
+  margin: var(--space-8) 0;
+}
+
+/* ---- table of contents (frontispiece) ------------------------------------ */
+.toc {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.toc-card {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--space-5);
+  transition: border-color var(--dur-base), transform var(--dur-base), background var(--dur-base);
+}
+.toc-card:hover {
+  border-color: var(--rubric);
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--rubric) 4%, transparent);
+}
+.toc-card .num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-lg);
+  color: var(--rubric);
+}
+.toc-card h3 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 28px;
+  margin: var(--space-2) 0 var(--space-1);
+}
+.toc-card p {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--ink-soft);
+  line-height: var(--lh-normal);
+}
+
+/* ---- entry list (indices) ------------------------------------------------ */
+.entry-list { margin-top: var(--space-6); display: flex; flex-direction: column; }
+.entry-card {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--rule);
+  animation: inkBleed var(--dur-ink-bleed) var(--ease-standard) both;
+}
+.entry-card:last-child { border-bottom: 1px solid var(--rule); }
+.entry-card:hover .entry-title { color: var(--rubric); }
+.entry-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-body-lg);
+  margin: var(--space-2) 0 var(--space-1);
+  transition: color var(--dur-base);
+}
+.entry-summary {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: var(--lh-relaxed);
+  max-width: 70ch;
+}
+.entry-card[data-lang="it"] .entry-summary { font-family: var(--font-serif); font-style: italic; }
+.read-link {
+  display: inline-block;
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--rubric);
+}
+
+/* section grouping label (correspondence by recipient) */
+.group-label {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 30px;
+  color: var(--ink);
+  margin: var(--space-10) 0 var(--space-1);
+}
+.group-label:first-child { margin-top: var(--space-4); }
+
+/* ---- reader prose -------------------------------------------------------- */
+.prose {
+  margin-top: var(--space-8);
+  max-width: 68ch;
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-relaxed);
+  color: var(--ink);
+}
+.prose p { margin: 0 0 var(--space-5); }
+.prose--it, .prose--it p { font-family: var(--font-serif); font-style: italic; }
+.prose--mixed { font-family: var(--font-serif); }
+.prose--en { font-family: var(--font-sans); }
+/* Italian phrases marked by the daemon stay italic serif in any context. */
+.prose em { font-family: var(--font-serif); font-style: italic; }
+.prose strong {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-mono-lg);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--rubric);
+}
+.prose h1, .prose h2, .prose h3 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--rubric);
+  line-height: var(--lh-snug);
+  margin: var(--space-8) 0 var(--space-3);
+}
+.prose h1 { font-size: 32px; }
+.prose h2 { font-size: 26px; }
+.prose h3 { font-size: 21px; }
+.prose hr { height: 1px; background: var(--rule); border: 0; margin: var(--space-6) 0; }
+.prose ul { padding-left: 1.2em; }
+.prose li { margin: 0 0 var(--space-2); }
+.prose blockquote {
+  margin: var(--space-5) 0;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--rubric);
+  color: var(--ink-soft);
+}
+/* illuminated drop-cap on the opening paragraph of a reader */
+.prose--drop > p:first-of-type::first-letter,
+.prose--drop > h1:first-child + p::first-letter {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 5.2em;
+  line-height: 0.7;
+  float: left;
+  color: var(--rubric);
+  padding: 0.08em 0.12em 0 0;
+}
+
+/* ---- mirror script (codex folios) --------------------------------------- */
+.mirror { transform: scaleX(-1); transform-origin: center; }
+.folio-grid {
+  margin-top: var(--space-8);
+  display: grid;
+  gap: var(--space-10);
+  grid-template-columns: 1fr;
+}
+.folio-grid.parallel { grid-template-columns: 1fr 1fr; }
+@media (max-width: 720px) { .folio-grid.parallel { grid-template-columns: 1fr; } }
+.col-it, .col-it p { font-family: var(--font-serif); font-style: italic; }
+.col-en, .col-en p { font-family: var(--font-sans); }
+.col h4 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 var(--space-4);
+}
+.col p { margin: 0 0 var(--space-5); line-height: var(--lh-relaxed); }
+.col em { font-family: var(--font-serif); font-style: italic; }
+/* illuminated initial on the opening Italian paragraph of a folio */
+.col-it > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 4.4em;
+  line-height: 0.7;
+  float: left;
+  color: var(--rubric);
+  padding: 0.06em 0.12em 0 0;
+}
+.minibtn {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body-sm);
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 5px 12px;
+  margin-right: var(--space-3);
+  transition: all var(--dur-base);
+}
+.minibtn[aria-pressed="true"] { color: var(--rubric); border-color: var(--rubric); }
+.reader-tools { margin-top: var(--space-6); display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+
+/* ---- marginalia ---------------------------------------------------------- */
+.marginalia { margin: var(--space-8) 0 0; max-width: 240px; }
+.marginalia img {
+  width: 100%;
+  filter: sepia(0.45) brightness(0.97) contrast(1.02);
+  box-shadow: 0 4px 14px rgba(42, 31, 20, 0.25);
+  transform: rotate(-1.5deg);
+}
+[data-theme="ink"] .marginalia img { filter: sepia(0.3) brightness(0.85) contrast(1.05); }
+.marginalia figcaption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: var(--space-2);
+  text-align: center;
+}
+
+/* ---- reader footer / pagination ------------------------------------------ */
+.reader-foot {
+  margin-top: var(--space-16);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+}
+.reader-foot a { color: var(--ink-soft); text-decoration: none; }
+.reader-foot a:hover { color: var(--rubric); }
+.reader-foot span[aria-disabled] { color: var(--ink-faint); }
+
+/* ---- misc atoms ---------------------------------------------------------- */
+.back-link {
+  display: inline-block;
+  margin-top: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--rubric); }
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--mint);
+  border: 1px solid color-mix(in srgb, var(--mint) 50%, transparent);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.live-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--rubric);
+  margin-right: 7px;
+  animation: pulse var(--dur-pulse) var(--ease-standard) infinite;
+}
+.colophon-note {
+  font-size: var(--fs-body-sm);
+  color: var(--ink-soft);
+  line-height: var(--lh-relaxed);
+  max-width: 64ch;
+}
+.colophon-note code { font-family: var(--font-mono); font-size: 0.9em; color: var(--rubric); }
+
+footer.foot {
+  max-width: 960px;
+  margin: var(--space-12) auto 0;
+  padding: var(--space-6) var(--space-5);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+footer.foot a { color: var(--ink-soft); text-decoration: none; }
+footer.foot a:hover { color: var(--rubric); }
+
+/* ---- apparatus strip (frontispiece → L'Ingegno + Colophon) --------------- */
+.apparatus {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+.apparatus a {
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+  transition: color var(--dur-base);
+}
+.apparatus a:hover { color: var(--rubric); }
+.apparatus .eyebrow { display: block; margin-bottom: var(--space-1); }
+.apparatus .label-it {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-body-lg);
+}
+.apparatus .desc { color: var(--ink-soft); font-size: var(--fs-body-sm); }
+
+/* ---- L'Ingegno — themed Mermaid diagrams --------------------------------- */
+/* The SVGs are rendered colour-neutral (scripts/render-diagrams.mjs strips
+   Mermaid's baked theme); all colour comes from our tokens here, so the
+   diagrams re-skin instantly with the vellum/ink toggle. */
+.diagram {
+  margin: var(--space-8) 0 var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+  overflow-x: auto;
+}
+.diagram .ingegno-diagram { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+/* wide system map: break out of the folio padding to the card edges + fill width */
+.diagram--wide {
+  margin-left: calc(clamp(28px, 6vw, 72px) * -1);
+  margin-right: calc(clamp(28px, 6vw, 72px) * -1);
+}
+.diagram--wide .ingegno-diagram { width: 100%; }
+/* tall cycle: bound by height and centred, never stretched to full width */
+.diagram--tall .ingegno-diagram { width: auto; max-height: 82vh; }
+.diagram figcaption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: var(--space-4);
+  text-align: center;
+}
+
+.ingegno-diagram .node rect,
+.ingegno-diagram .node polygon,
+.ingegno-diagram .node circle,
+.ingegno-diagram .node path {
+  fill: var(--paper-shade) !important;
+  stroke: var(--accent) !important;
+  stroke-width: 1.25px !important;
+}
+.ingegno-diagram .cluster rect {
+  fill: color-mix(in srgb, var(--accent) 7%, transparent) !important;
+  stroke: var(--rule) !important;
+  stroke-width: 1px !important;
+}
+.ingegno-diagram .nodeLabel,
+.ingegno-diagram .nodeLabel p,
+.ingegno-diagram span.nodeLabel,
+.ingegno-diagram .label,
+.ingegno-diagram foreignObject div {
+  color: var(--ink) !important;
+  fill: var(--ink) !important;
+  font-family: var(--font-sans) !important;
+}
+/* Mermaid sizes each label box to the font it measured with at render time;
+   post-render we only recolour. Never change font-family/size/line-height here
+   (it shifts text outside its box and clips). overflow:visible is the belt-and-
+   suspenders so a small render-vs-display metric difference can't clip either. */
+.ingegno-diagram foreignObject { overflow: visible; }
+.ingegno-diagram small { color: var(--ink-soft); }
+/* subgraph titles: distinguish by colour only */
+.ingegno-diagram .cluster-label .nodeLabel,
+.ingegno-diagram .cluster-label p,
+.ingegno-diagram .cluster span {
+  color: var(--ink-soft) !important;
+}
+.ingegno-diagram .edgePath .path,
+.ingegno-diagram .flowchart-link,
+.ingegno-diagram path.path {
+  stroke: var(--accent) !important;
+  stroke-width: 1.25px !important;
+  fill: none !important;
+}
+.ingegno-diagram .arrowheadPath,
+.ingegno-diagram marker path,
+.ingegno-diagram defs marker path {
+  fill: var(--accent) !important;
+  stroke: var(--accent) !important;
+}
+.ingegno-diagram .edgeLabel,
+.ingegno-diagram .edgeLabel p,
+.ingegno-diagram .edgeLabel .nodeLabel,
+.ingegno-diagram .edgeLabel foreignObject div {
+  color: var(--ink-soft) !important;
+  fill: var(--ink-soft) !important;
+  background: var(--paper) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+}
+/* rubric-accented nodes (drift gate / safeguards) */
+.ingegno-diagram .node.accent rect,
+.ingegno-diagram .node.accent polygon,
+.ingegno-diagram .node.accent path {
+  stroke: var(--rubric) !important;
+  fill: color-mix(in srgb, var(--rubric) 9%, var(--paper)) !important;
+}
+.ingegno-diagram .node.accent .nodeLabel,
+.ingegno-diagram .node.accent .nodeLabel p { color: var(--rubric) !important; }
+/* mint-accented node (this site) */
+.ingegno-diagram .node.mint rect {
+  stroke: var(--mint) !important;
+  fill: color-mix(in srgb, var(--mint) 13%, var(--paper)) !important;
+}
+
+/* ---- diagram lightbox (click to enlarge) -------------------------------- */
+.diagram.is-zoomable { cursor: zoom-in; }
+.diagram .zoom-hint {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: var(--paper);
+  padding: 4px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  pointer-events: none;
+  transition: color var(--dur-base), border-color var(--dur-base);
+}
+.diagram.is-zoomable:hover .zoom-hint,
+.diagram.is-zoomable:focus-visible .zoom-hint { color: var(--rubric); border-color: var(--rubric); }
+.diagram.is-zoomable:focus-visible { outline: 2px solid var(--rubric); outline-offset: 3px; }
+
+dialog.lightbox {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  place-items: center;
+}
+dialog.lightbox[open] { display: grid; }
+dialog.lightbox::backdrop {
+  background: color-mix(in srgb, var(--paper-edge) 90%, transparent);
+  backdrop-filter: blur(2px);
+}
+.lightbox-stage {
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  box-shadow: var(--shadow-folio);
+  padding: clamp(16px, 3vw, 44px);
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow: auto;
+}
+.lightbox-stage .ingegno-diagram { display: block; }
+/* explicit viewport-based sizing (the clone's inline style is stripped in JS) */
+.lightbox-stage .ingegno-diagram.lb-wide { width: 90vw; max-width: 90vw; height: auto; max-height: 84vh; }
+.lightbox-stage .ingegno-diagram.lb-tall { height: 84vh; width: auto; max-width: 90vw; }
+.lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur-base), border-color var(--dur-base);
+}
+.lightbox-close:hover { color: var(--rubric); border-color: var(--rubric); }

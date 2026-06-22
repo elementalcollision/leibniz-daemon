@@ -1,0 +1,174 @@
+/* =============================================================================
+   Lo Studiolo — Design tokens
+   =============================================================================
+   Two themes: vellum (day) and ink (night). Toggled via [data-theme="ink"]
+   on <html>. The folio theme overlays paper/ink/rubric on top of the
+   underlying type scale and spacing primitives.
+
+   Source of truth for theme values: design_handoff_caddy_studiolo/README.md
+   "Visual language → Theme" table. Underlying type/spacing/motion adapted
+   from design/colors_and_type.css.
+   ============================================================================= */
+
+:root {
+  /* Type families */
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, "Times New Roman",
+    serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+    monospace;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Studiolo type scale (per README "Type scale used throughout") */
+  --fs-eyebrow: 11px;
+  --fs-mono-sm: 9px;
+  --fs-mono: 11px;
+  --fs-mono-lg: 13px;
+  --fs-body-sm: 13px;
+  --fs-body: 15px;
+  --fs-body-md: 17px;
+  --fs-body-lg: 19px;
+  --fs-title: 56px;
+
+  --lh-tight: 1.0;
+  --lh-snug: 1.2;
+  --lh-normal: 1.55;
+  --lh-relaxed: 1.65;
+
+  /* Tracking — eyebrows are heavily tracked */
+  --ls-tight: -0.02em;
+  --ls-normal: 0;
+  --ls-eyebrow: 0.22em;
+  --ls-eyebrow-wide: 0.36em;
+
+  /* Spacing — 4pt base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Folio canvas */
+  --folio-width: 1280px;
+  --folio-min-height: 1700px;
+  --folio-margin-outer: 64px;
+  --folio-margin-inter-column: 48px;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0.1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-page-flip: 320ms;
+  --dur-pulse: 2400ms;
+  --dur-ink-bleed: 400ms;
+  --dur-mirror-reveal: 26000ms;
+
+  /* Default theme = vellum (day). [data-theme="ink"] overrides below. */
+  --paper: #f4ecd8;
+  --paper-shade: #eadfc4;
+  --paper-edge: #d9cdb0;
+  --ink: #2a1f14;
+  --ink-soft: rgba(42, 31, 20, 0.65);
+  --ink-faint: rgba(42, 31, 20, 0.32);
+  --rule: rgba(42, 31, 20, 0.18);
+  --accent: #6f4a2e;
+  --rubric: #a03b2a;
+  --mint: #62826c;
+
+  /* Derived shadow for the codex-bound-at-spine effect */
+  --shadow-folio: 0 2px 6px rgba(42, 31, 20, 0.08),
+    0 12px 32px rgba(42, 31, 20, 0.10);
+}
+
+[data-theme="ink"] {
+  --paper: #1a1d28;
+  --paper-shade: #252836;
+  --paper-edge: #0e1018;
+  --ink: #e8dec8;
+  --ink-soft: rgba(232, 222, 200, 0.7);
+  --ink-faint: rgba(232, 222, 200, 0.35);
+  --rule: rgba(232, 222, 200, 0.18);
+  --accent: #c99b68;
+  --rubric: #a03b2a; /* unchanged — illuminated red holds across themes */
+  --mint: #62826c; /* unchanged */
+  --shadow-folio: 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Reduce motion respects user preference for the long-running mirror-reveal
+   and active-phase pulse animations. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-pulse: 0ms;
+    --dur-mirror-reveal: 1ms;
+    --dur-page-flip: 0ms;
+  }
+}
+
+/* =============================================================================
+   BASE RESETS
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  color: var(--ink);
+  background: var(--paper-edge);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body {
+  line-height: var(--lh-normal);
+  background: var(--paper-edge);
+  color: var(--ink);
+  /* Prevent inadvertent horizontal scroll on narrow viewports;
+     we are deliberately desktop-first per README out-of-scope item. */
+  overflow-x: auto;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
