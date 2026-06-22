@@ -112,7 +112,9 @@ discovery-frontier push.
   constant powers + constant mod/div; still DEFERred: symbolic exponents (`2^n`),
   named functions (`Nat.log`, `factorial`, `gcd`). A bounded definitional encoding
   would bring them in.
-- **Persist the frontier band** across runs (ADR 0019) so calibration accumulates.
+- ✅ **Persist the frontier band** across runs (ADR 0019 follow-up) — `FrontierController.save/load`,
+  wired through `build_daemon` + `run_cycles` (`.leibniz/frontier.json`), so calibration
+  accumulates instead of resetting to the default band. Done.
 - **Deeper live calibration** — a ≥5-cycle run with a larger proof-draft budget once
   faithfulness can certify enough candidates to reach proof.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard

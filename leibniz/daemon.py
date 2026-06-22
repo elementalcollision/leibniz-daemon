@@ -78,6 +78,7 @@ class Leibniz:
     # absent the loop behaves exactly as before (cold start / deterministic fakes).
     notebook: Optional[DiscoveryNotebook] = None       # outcome-conditioned conjecture
     frontier: Optional[FrontierController] = None       # adaptive difficulty band
+    frontier_path: Optional[str] = None                # persist the band across runs
     weaken_k: int = 2                                   # UNPROVEN -> weaker re-conjectures
 
     def circadian_cycle(self) -> CycleReport:
@@ -122,6 +123,8 @@ class Leibniz:
             prev_coverage = coverage
             if self.frontier is not None:
                 self.frontier.update()  # ADR 0018 M2: retune the band from outcomes
+                if self.frontier_path:
+                    self.frontier.save(self.frontier_path)  # persist across runs
         return reports
 
     def _active_domains(self) -> tuple[str, ...]:
