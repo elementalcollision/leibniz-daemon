@@ -33,6 +33,7 @@ from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
 from leibniz.providers.anthropic_provider import AnthropicProvider
+from leibniz.providers.huggingface_provider import HuggingFaceProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
 from leibniz.runtime import PersistentRuntime
 from leibniz.selection import KFM, Archive
@@ -71,9 +72,14 @@ class ConservativeJudge:
         return 0.0
 
 
-def prover_ensemble(meter: object | None = None) -> list[OpenRouterProvider]:
-    """The cascade + witnesses from LEIBNIZ_PROVER_MODELS (OpenRouter model ids).
-    Each prover meters real token usage into `meter` (ADR 0014)."""
+def prover_ensemble(meter: object | None = None) -> list:
+    """The prover cascade + witnesses for N+1 consensus. HuggingFace
+    (`LEIBNIZ_HF_PROVER_MODELS`) is preferred — the specialized prover models
+    (DeepSeek-Prover-V2 / Goedel class) live there — else OpenRouter
+    (`LEIBNIZ_PROVER_MODELS`). Each prover meters real token usage (ADR 0014)."""
+    hf = [m.strip() for m in os.environ.get("LEIBNIZ_HF_PROVER_MODELS", "").split(",") if m.strip()]
+    if hf:
+        return [HuggingFaceProvider(model=m, meter=meter) for m in hf]
     models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
     return [OpenRouterProvider(model=m, meter=meter) for m in models]
 
