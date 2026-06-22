@@ -40,9 +40,13 @@ from typing import Optional
 from leibniz.propositio import Expressio
 
 DEFAULT_IMAGE = "leibniz-lean:v4.31.0"
-# Triviality tactics. `aesop` needs a Mathlib/Aesop import (R1b) — when absent it
-# simply errors and is treated as "did not close", so listing it is always safe.
-DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop")
+# Triviality tactics. A statement any of these closes ON ITS OWN is vacuous and must
+# NOT be promulgated. `ring`/`nlinarith` were added (ADR 0025) after a calibration
+# promulgated 32 polynomial identities (e.g. (m+3)(m+5)+1=(m+4)^2) that `ring` closes
+# instantly — they slipped through because the set lacked a (non)linear-arithmetic
+# decision procedure. Each tactic needs a Mathlib import; when absent it simply errors
+# and is treated as "did not close", so listing it is always safe.
+DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop", "ring", "nlinarith")
 
 _NAME_RE = re.compile(r"^(\s*)(theorem|lemma)\s+([^\s({\[:]+)")
 
