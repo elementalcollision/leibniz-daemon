@@ -112,6 +112,18 @@ class Z3Backend:
             return {"n": solver.model()[n].as_long()}
         return None
 
+    def encodable(self, pred: str) -> bool:
+        """True iff `pred` compiles in the safe DSL — so a None search result can be
+        read as 'checked, no witness' rather than 'could not encode'. The faithfulness
+        probe uses this to DEFER (not vacuously PASS) on contracts it cannot search."""
+        if z3 is None:
+            return False
+        try:
+            compile_pred(pred, z3.Int(VAR))
+            return True
+        except PredicateError:
+            return False
+
     # --- SMTBackend Protocol --------------------------------------------------
     def find_counterexample(self, claim: str, bound: int = 0) -> Optional[dict]:
         return self._search([claim], bound or self.default_bound)
