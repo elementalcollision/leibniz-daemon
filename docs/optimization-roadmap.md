@@ -176,6 +176,13 @@ discovery-frontier push.
   pattern now reads TRIVIAL), and `proof_src` is persisted (with a DB migration).
   Strictly more conservative; invariants byte-identical. Expect far fewer, higher-quality
   promulgations next — the honest state.
+- ✅ **Non-trivial conjecture steering (ADR 0026)** — resolves the 0022↔0025 tension:
+  the CONJECTURE prompt no longer steers toward elementary (ring-trivial) arithmetic. It
+  now names the full trivial-tactic set (incl. `ring`/`nlinarith`), forbids polynomial
+  identities/inequalities, and steers toward induction/case-analysis/lemma-requiring
+  claims (divisibility/modular facts about non-linear expressions) — while keeping the
+  in-DSL contract so faithfulness still certifies. Prompt-only; invariants byte-identical.
+  Pending a short validation run (fresh notebook/band) to measure the disposition shift.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 
