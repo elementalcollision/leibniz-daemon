@@ -28,10 +28,16 @@ Pieces:
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Union
 
 from leibniz.propositio import Propositio
 from leibniz.types import FinishReason
+
+# Where the learned difficulty band persists across runs (gitignored, per-machine).
+_DEFAULT_FRONTIER = Path(__file__).resolve().parent.parent / ".leibniz" / "frontier.json"
 
 # Outcomes that mean "do not propose shapes like this again" (dead ends).
 _AVOID = frozenset({
@@ -207,6 +213,32 @@ class FrontierController:
         return (f"Aim for difficulty ~{self.target:.2f} (band {lo:.2f}–{hi:.2f}; "
                 "0 = decidable triviality, 1 = open problem). Prefer claims provable "
                 "by standard Mathlib tactics.")
+
+    # --- persistence (ADR 0019 follow-up): carry the learned band across runs -----
+    def to_dict(self) -> dict:
+        """The learned STATE only (not the tunable aim/gain/bounds)."""
+        return {"target": self.target, "recent": list(self._recent), "jumps": self._jumps}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "FrontierController":
+        fc = cls(target=float(d.get("target", 0.45)))
+        fc._recent = [bool(x) for x in (d.get("recent") or [])][-fc.window:]
+        fc._jumps = int(d.get("jumps", 0))
+        return fc
+
+    def save(self, path: Union[str, Path]) -> None:
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(self.to_dict()))
+
+    @classmethod
+    def load(cls, path: Union[str, Path, None] = None) -> "FrontierController":
+        """Resume the band from disk; a missing/corrupt file yields a fresh default —
+        so a cold start (or CI) behaves exactly as before."""
+        try:
+            return cls.from_dict(json.loads(Path(path or _DEFAULT_FRONTIER).read_text()))
+        except (OSError, ValueError, TypeError):
+            return cls()
 
 
 _WEAKEN_MARK = "STRICTLY WEAKER"
