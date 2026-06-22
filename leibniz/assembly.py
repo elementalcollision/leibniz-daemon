@@ -126,7 +126,12 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         survey=Survey(forge),
         domains=tuple(forge.domains()),  # D9 (ADR 0015): rotate across all frontier domains
         conjecture=Conjecture(autoformalizer),
-        formalize=Formalize(autoformalizer, lean, smt, novelty, faithfulness, max_repairs=2),
+        formalize=Formalize(
+            autoformalizer, lean, smt, novelty, faithfulness, max_repairs=2,
+            # ADR 0022: steer the contract into the faithfulness DSL so candidates can
+            # be certified and reach proof (proposal-side; the gate still decides).
+            max_contract_repairs=int(os.environ.get("LEIBNIZ_CONTRACT_REPAIRS", "1") or 1),
+        ),
         derive=NoOpDerive(),
         demonstrate=ConsensusDemonstrate(consensus),
         promulgate=Promulgate(),
