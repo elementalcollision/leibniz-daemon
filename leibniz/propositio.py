@@ -60,6 +60,13 @@ class Expressio:
     # R2 (ADR 0004): the domain over `n` the formal statement actually establishes
     # the claimed property on. Faithful iff it covers the Enuntiatio's claim_domain.
     established_domain: Optional[str] = None
+    # ADR 0027: PROVER-CONTEXT-ONLY hints — independently-proven helper lemmas offered to
+    # the prover (as copy-pasteable `have` blocks) when re-proving a hard goal. This is
+    # NEVER placed in the Lean source the kernel checks: the kernel only ever sees one
+    # self-contained declaration (`theorem_src := proof`), so a smuggled top-level command
+    # would be a parse error inside the proof — there is no separate-declaration surface to
+    # poison. Empty for ordinary proofs.
+    proof_hints: str = ""
 
 
 @dataclass

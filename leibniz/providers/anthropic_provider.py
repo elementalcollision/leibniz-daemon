@@ -196,3 +196,23 @@ class AnthropicProvider:
             '"established_domain": "..."}'
         )
         return self._chat(prompt)
+
+    def decompose(self, theorem_src: str) -> str:
+        """ADR 0027: a hard theorem one-shot proving missed. Propose helper LEMMAS that,
+        once proven independently, make the main proof short — plus the main proof citing
+        them by name. Each lemma is proven on its own and the kernel re-verifies the whole
+        composed artifact, so this only proposes; it never decides. Returns JSON."""
+        prompt = (
+            "This Lean 4 theorem is hard to prove in one shot. DECOMPOSE it: propose 1-4 "
+            "helper LEMMAS that, once proven, make the main proof short, plus the main "
+            "proof that uses them BY NAME. Each lemma must be a self-contained Lean 4 "
+            "statement provable on its own (induction / case analysis welcome), and "
+            "genuinely useful for the main goal. Name them aux1, aux2, ... Use ONLY "
+            "`lemma`/tactic proofs — never `axiom`, `sorry`, `admit`, or `opaque`.\n"
+            f"Theorem:\n{theorem_src}\n"
+            'Return JSON only: {"lemmas": [{"name": "aux1", "statement": "<binders> : '
+            '<prop>"}], "main_proof": "by <tactic script citing aux1, aux2, ...>"}. '
+            'The lemma "statement" is everything AFTER the lemma name, e.g. '
+            '"(n : Nat) : 2 ∣ n * (n + 1)". One line per statement, no `:=`.'
+        )
+        return self._chat(prompt)
