@@ -49,10 +49,18 @@ CREATE TABLE IF NOT EXISTS memory (
     born REAL, ts REAL,
     statement TEXT, claim_type TEXT, falsifiable_claim TEXT, domain TEXT,
     theorem_src TEXT, normalized_hash TEXT,
-    kernel_verified INTEGER, qed TEXT,
+    kernel_verified INTEGER, qed TEXT, proof_src TEXT,
     finish_reason TEXT, parents TEXT
 )
 """
+
+# Columns the runtime reads/writes by NAME (so the INSERT is robust to a migrated
+# DB where ALTER TABLE appended `proof_src` at the end, ADR 0025).
+_COLUMNS = (
+    "pid", "born", "ts", "statement", "claim_type", "falsifiable_claim", "domain",
+    "theorem_src", "normalized_hash", "kernel_verified", "qed", "proof_src",
+    "finish_reason", "parents",
+)
 
 
 def phase_for_hour(hour: int) -> str:
@@ -84,6 +92,11 @@ class PersistentRuntime:
                 Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
             self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self._conn.execute(_SCHEMA)
+            # ADR 0025: idempotent migration — add proof_src to a pre-existing DB so a
+            # promulgated law's kernel-checked proof is persisted (not just its verdict).
+            have = {row[1] for row in self._conn.execute("PRAGMA table_info(memory)")}
+            if "proof_src" not in have:
+                self._conn.execute("ALTER TABLE memory ADD COLUMN proof_src TEXT")
             self._conn.commit()
         return self._conn
 
@@ -98,12 +111,15 @@ class PersistentRuntime:
             en.statement, en.claim_type.value, en.falsifiable_claim, en.domain,
             ex.theorem_src if ex else None, ex.normalized_hash if ex else None,
             int(de.kernel_verified) if de else 0, de.qed if de else "Q.E.I.",
+            de.proof_src if de else None,  # ADR 0025: persist the kernel-checked proof
             prop.finish_reason.value if prop.finish_reason else None,
             json.dumps(list(prop.parents)),
         )
+        cols = ", ".join(_COLUMNS)
+        marks = ", ".join("?" for _ in _COLUMNS)
         with self._lock:
             self._db().execute(
-                "INSERT OR REPLACE INTO memory VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", row
+                f"INSERT OR REPLACE INTO memory ({cols}) VALUES ({marks})", row
             )
             self._db().commit()
 
@@ -111,7 +127,7 @@ class PersistentRuntime:
         with self._lock:
             rows = self._db().execute(
                 "SELECT pid, born, statement, claim_type, falsifiable_claim, domain, "
-                "theorem_src, normalized_hash, kernel_verified, qed, "
+                "theorem_src, normalized_hash, kernel_verified, qed, proof_src, "
                 "finish_reason, parents FROM memory ORDER BY ts DESC, rowid DESC LIMIT ?",
                 (n,),
             ).fetchall()
@@ -138,7 +154,7 @@ class PersistentRuntime:
 
 def _row_to_prop(r: tuple) -> Propositio:
     (pid, born, statement, claim_type, falsifiable_claim, domain, theorem_src,
-     normalized_hash, kernel_verified, qed, finish_reason, parents) = r
+     normalized_hash, kernel_verified, qed, proof_src, finish_reason, parents) = r
     en = Enuntiatio(
         statement=statement, claim_type=ClaimType(claim_type),
         falsifiable_claim=falsifiable_claim or "",
@@ -146,11 +162,13 @@ def _row_to_prop(r: tuple) -> Propositio:
     )
     ex = Expressio(theorem_src=theorem_src, normalized_hash=normalized_hash or "") if theorem_src else None
     # Reconstruct the certificate only for proven candidates (qed == Q.E.D. iff
-    # kernel_verified); unproven props kept no surviving proof script to restore.
+    # kernel_verified), now WITH its kernel-checked proof script (ADR 0025) so a
+    # promulgated law carries its proof for audit/publication.
     # kernel_verified is set via the Demonstratio constructor (not an attribute
     # assignment) — the single-writer guard binds discharge, and this only replays
     # a stored verdict, never mints one.
-    de = Demonstratio(proof_obligation=pid, kernel_verified=bool(kernel_verified), qed=qed) \
+    de = Demonstratio(proof_obligation=pid, proof_src=proof_src,
+                      kernel_verified=bool(kernel_verified), qed=qed) \
         if kernel_verified else None
     prop = Propositio(
         enuntiatio=en, expressio=ex, demonstratio=de, pid=pid, born=born,

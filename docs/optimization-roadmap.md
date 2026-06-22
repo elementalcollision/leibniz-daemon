@@ -165,6 +165,17 @@ discovery-frontier push.
     Proposal-side; invariants byte-identical. Deferred to a future guarded-core ADR:
     *independent* sub-lemma proving + a verified preamble for reuse as stepping stones.
   - **Lever 3 — stronger/longer prover**: more consensus depth / tokens per attempt.
+- **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
+  run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
+  kernel-verified promulgations. An audit confirmed the verification is **sound** (true
+  identities verify via `ring` under `Mathlib.Tactic`; false statements and `sorry` are
+  rejected; `discharge` still the sole writer) but found the 32 are **ring-trivial**
+  polynomial identities that slipped the non-triviality gate (its tactic set lacked
+  `ring`/`nlinarith`), and that proofs weren't persisted (ledger showed `(none)`). ADR
+  0025 fixes both: `ring`/`nlinarith` join the triviality decision procedures (the 32's
+  pattern now reads TRIVIAL), and `proof_src` is persisted (with a DB migration).
+  Strictly more conservative; invariants byte-identical. Expect far fewer, higher-quality
+  promulgations next — the honest state.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 

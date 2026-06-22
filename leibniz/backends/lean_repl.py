@@ -25,7 +25,9 @@ from typing import Optional
 from leibniz.propositio import Expressio
 
 REPL_IMAGE = "leibniz-lean-repl:v4.31.0"
-DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop")
+# Kept in sync with lean_cli.DEFAULT_TRIVIAL_TACTICS (ADR 0025 added ring/nlinarith so
+# ring-decidable polynomial identities are quarantined as TRIVIAL, not promulgated).
+DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop", "ring", "nlinarith")
 
 
 def _join_proof(theorem_src: str, proof_src: str) -> str:
