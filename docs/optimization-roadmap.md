@@ -106,6 +106,22 @@ discovery-frontier push.
   now timed-out + tri-state, and the probe certifies only on **conclusive UNSAT** of
   both coverage and no-gaming. `gates/` untouched; invariants byte-identical.
 
+| **0022** | Conjecturer contract encodability — steer claims into the faithfulness DSL | Discovery (proposal) | no | ✅ done¹⁰ |
+
+¹⁰ The deeper calibration showed the binding blocker had moved *upstream* to faithfulness
+  DEFER (research-seeded contracts exceed even the widened DSL). ADR 0022 steers the
+  **proposal** side: the CONJECTURE/FORMALIZE prompts now carry the DSL grammar, and a
+  bounded, mechanical **contract-repair** pass in `Formalize` rewrites an un-encodable
+  contract toward the DSL — committing a repair ONLY if every field is encodable, the
+  `claim_domain` stays satisfiable, AND `claim_property` is not weakened (it must imply
+  the original); it **fails closed** without a decider. The adversarial review (3 lenses,
+  4 fixed findings) also closed a *pre-existing* gate hole: `coverage_probe` now tests the
+  property **inside** `established_domain` (it was vacuously satisfied once coverage held),
+  and `smt_z3` no longer crashes a cycle on a non-boolean predicate. Entirely
+  proposal-side / strictly-tightening on the gate: the honest gate still decides,
+  `theorem_src` unchanged, `trust.py`/invariants byte-identical. The first lever aimed
+  squarely at a **first kernel-verified promulgation**.
+
 ## Remaining follow-ups
 
 - **Faithfulness DSL — next increment** — ADR 0021 widened it to multi-variable +
@@ -123,10 +139,11 @@ discovery-frontier push.
   — it adapted 0.45→0.34→0.24→0.15(floor)→re-explored to 0.73, persisted at 0.625. So the
   next lever is **conjecturer contract steering** (emit fully-encodable contracts so
   candidates reach proof), not prover/band tuning.
-- **Conjecturer contract encodability** (new headline) — steer the autoformalizer/
-  conjecturer to emit `claim_domain`/`claim_property`/`established_domain` within the
-  faithfulness DSL, so claims can be honestly certified and reach proof. Highest-leverage
-  path to a first promulgation; pairs with the DSL-widening increment above.
+- ✅ **Conjecturer contract encodability** — ADR 0022: prompts carry the DSL grammar +
+  a bounded, sound contract-repair pass in `Formalize` (non-empty-domain guard), so
+  claims can be honestly certified and reach proof. Done; proposal-side; invariants
+  byte-identical. Remaining: a live calibration to **measure** the DEFER fraction fall
+  and `reached_proof` rise (the ADR 0022 success metric), then iterate.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 

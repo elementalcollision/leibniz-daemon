@@ -77,6 +77,7 @@ class Formalize:
     novelty: NoveltyGate
     faithfulness: FaithfulnessGate
     max_repairs: int = 0  # R4.2: autoformalizer import/statement repair attempts
+    max_contract_repairs: int = 0  # ADR 0022: steer the contract into the faithfulness DSL
 
     def run(self, prop: Propositio) -> Optional[Propositio]:
         draft = self.provider.propose(Role.FORMALIZE, prop.enuntiatio.statement)
@@ -104,12 +105,69 @@ class Formalize:
         if nov.verdict is Verdict.FAIL:
             return None  # gate already quarantined with KNOWN/TRIVIAL
 
+        # ADR 0022: steer the structured contract INTO the faithfulness DSL so the
+        # honest gate can CERTIFY rather than DEFER. Proposal-side only — it rewrites
+        # a proposal the SAME gate (next line) then re-decides; it never weakens it.
+        self._steer_contract(prop)
+
         faith = self.faithfulness.check(prop)
         prop.record(faith)
         if faith.verdict is not Verdict.PASS:
             return None  # GAMED / UNFAITHFUL / DEFER -- do not pay for proof
 
         return prop
+
+    def _steer_contract(self, prop: Propositio) -> None:
+        """ADR 0022: bounded, mechanical repair of the structured faithfulness
+        contract toward the sound DSL. A repair is committed ONLY if it is strictly
+        sound — every field encodable, claim_domain still satisfiable (non-empty), AND
+        claim_property NOT weakened (the new property must provably imply the original,
+        so the LLM cannot hollow the asserted property to dodge the checker). All three
+        guards need a usable decide_unsat, so the pass FAILS CLOSED (commits nothing)
+        when that is absent. Degrades to a no-op without z3 / a repair hook (the
+        deterministic fakes are unchanged); if no sound contract is reached the
+        candidate is left to DEFER honestly. Proposal-side only — the same gate then
+        re-decides coverage AND the property; this never weakens it."""
+        en, expr = prop.enuntiatio, prop.expressio
+        if expr is None or not (en.claim_domain and en.claim_property and expr.established_domain):
+            return  # prose-only / OPEN_FORM contract: nothing to encode
+        backend = getattr(self.smt, "backend", None)
+        encodable = getattr(backend, "encodable", None)
+        repair = getattr(self.provider, "repair_contract", None)
+        if encodable is None or repair is None or self.max_contract_repairs <= 0:
+            return
+
+        original_cp = en.claim_property  # repair may not weaken this
+        cd, cp, ed = en.claim_domain, en.claim_property, expr.established_domain
+        for _ in range(self.max_contract_repairs):
+            problems = [name for name, pred in (("claim_domain", cd),
+                        ("claim_property", cp), ("established_domain", ed))
+                        if not encodable(pred)]
+            if not problems:
+                break  # already fully encodable
+            try:
+                fixed = repair(en.statement, cd, cp, ed, problems)
+            except Exception:
+                return  # a proposal failure must never break the pipeline
+            data = _maybe_json(fixed) or {}
+            ncd, ncp, ned = (data.get("claim_domain"), data.get("claim_property"),
+                             data.get("established_domain"))
+            if not (ncd and ncp and ned):
+                return  # malformed repair -> stop; honest DEFER downstream
+            cd, cp, ed = str(ncd), str(ncp), str(ned)
+
+        # Commit ONLY a fully-sound contract. Every guard below needs a conclusive
+        # decision, so without decide_unsat we refuse (fail closed) rather than commit.
+        if not all(encodable(p) for p in (cd, cp, ed)):
+            return
+        decide = getattr(backend, "decide_unsat", None)
+        if decide is None:
+            return  # cannot verify the soundness guards -> refuse, DEFER honestly
+        if decide([cd]) is True:
+            return  # repair emptied claim_domain -> reject (would be a laundered PASS)
+        if cp != original_cp and decide([f"({cp})", f"not ({original_cp})"]) is not True:
+            return  # cannot confirm the repaired property is no weaker -> refuse
+        en.claim_domain, en.claim_property, expr.established_domain = cd, cp, ed
 
 
 @dataclass
