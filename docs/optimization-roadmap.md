@@ -73,13 +73,30 @@ discovery-frontier push.
   invariants byte-identical. **Tier 1 landed** — remaining work is live calibration
   and deeper decomposition (ADR 0018 open questions).
 
+## Tier 1 — live calibration (first pass)
+
+| ADR | Decision | Theme | Guarded? | Status |
+|---|---|---|---|---|
+| **0019** | HuggingFace prover backend + certifi SSL + first live calibration | Discovery (live) | no | ✅ done⁷ |
+
+⁷ The pipeline runs **end-to-end on the real stack** (Anthropic conjecture/formalize,
+  HF prover ensemble — DeepSeek-Prover-V2 et al., Lean REPL under N+1 consensus, Z3),
+  feed-seeded from the curated arXiv feed. First run (2 cycles, $0.72): 10/10 reached
+  proof, **0 promulgated, disposition pure `unproven`** — proving is the sole
+  bottleneck (research-seeded conjectures above the ensemble's reach). The frontier
+  mechanisms fired (weakening + recombination grew the seeds) but the thin-evidence
+  guard held the band over 2 cycles — the controller needs ≥5. Proposal-side only;
+  invariants byte-identical.
+
 ## Remaining follow-ups
 
-- **Live calibration of the frontier** — the thermostat converges in simulation; a
-  sustained live run (real providers + Lean) should tune the window/step against the
-  prover's real reach, and confirm yield rises end-to-end.
+- **Deeper live calibration** — a ≥5-cycle run so the frontier band adapts past the
+  warm-up and the prover's reach is found, plus a larger proof-draft budget / more
+  attempts; persist the band across runs (ADR 0019 open questions).
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
+- **Faithfulness on prose claims** — confirm the gaming-witness bites on the
+  structured contract rather than passing vacuously (ADR 0019 open question).
 
 ## Sequencing (as built)
 

@@ -24,5 +24,8 @@ lean-project/.lake/
 # Persistent runtime memory (ADR 0016) — SQLite ledger, per-machine, never committed
 .leibniz/
 
+# Live-calibration run artifact (ADR 0019) — regenerated each run
+calibration_report.json
+
 # OS
 .DS_Store
