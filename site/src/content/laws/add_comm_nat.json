@@ -1,0 +1,16 @@
+{
+  "statement": "Addition of natural numbers is commutative",
+  "claim_type": "structural",
+  "falsifiable_claim": "two naturals a, b with a + b ≠ b + a",
+  "domain": "arithmetic_and_number_theory",
+  "theorem_src": "theorem add_comm_nat (a b : Nat) : a + b = b + a",
+  "proof_src": "by ring",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "2026-06-21T00:00:00Z",
+  "specimen": true
+}

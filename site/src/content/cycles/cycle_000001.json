@@ -1,0 +1,20 @@
+{
+  "cycle": 1,
+  "roman": "I",
+  "created_at": "2026-06-21T00:00:00Z",
+  "domain": "analysis_of_algorithms",
+  "seeds": 6,
+  "conjectured": 6,
+  "reached_proof": 2,
+  "promulgated": 1,
+  "by_reason": {
+    "promulgated": 1,
+    "known": 1,
+    "refuted": 1,
+    "malformed": 1,
+    "unfaithful": 1,
+    "unproven": 1
+  },
+  "summary": "An illustrative cycle showing the work-log format: six seeds surveyed over the analysis-of-algorithms frontier, candidates quarantined with their reasons, one law promulgated.",
+  "illustrative": true
+}

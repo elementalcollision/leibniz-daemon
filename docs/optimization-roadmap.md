@@ -47,12 +47,15 @@ discovery-frontier push.
 
 | ADR | Decision | Theme | Guarded? | Status |
 |---|---|---|---|---|
-| **0017** | Codex Calculemus — Astro static site (codexcalculemus.com) rendering the published ledger, mirroring codex-vitruvianus | Presentation (R6) | no | ✅ done⁵ |
+| **0017** | Codex Calculemus — standalone private Astro repo (codexcalculemus.com) rendering the published ledger, mirroring codex-vitruvianus | Presentation (R6) | no | ✅ done⁵ |
 
-⁵ `site/` Astro app + `leibniz/calculemus_site.py` exporter + committed public
-  ledger. Specimens are genuinely kernel-checked (REPL); `export_calculemus.py
-  --check` re-verifies every Q.E.D. against the kernel. Read-only over the ledger;
-  invariants byte-identical. **Tier 4 complete** — only Tier 1 (discovery) remains.
+⁵ Separate private repo
+  [`codex-calculemus`](https://github.com/elementalcollision/codex-calculemus) (the
+  renderer); Leibniz keeps the producer bridge `leibniz/calculemus_site.py` +
+  `scripts/export_calculemus.py`. Specimens are genuinely kernel-checked (REPL);
+  `export_calculemus.py --check` re-verifies every Q.E.D. against the kernel.
+  Read-only over the ledger; invariants byte-identical. **Tier 4 complete** — only
+  Tier 1 (discovery) remains.
 
 ## Remaining follow-ups
 

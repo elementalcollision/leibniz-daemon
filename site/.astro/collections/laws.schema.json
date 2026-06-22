@@ -1,0 +1,68 @@
+{
+  "$ref": "#/definitions/laws",
+  "definitions": {
+    "laws": {
+      "type": "object",
+      "properties": {
+        "statement": {
+          "type": "string"
+        },
+        "claim_type": {
+          "type": "string",
+          "default": ""
+        },
+        "falsifiable_claim": {
+          "type": "string",
+          "default": ""
+        },
+        "domain": {
+          "type": "string",
+          "default": ""
+        },
+        "theorem_src": {
+          "type": "string",
+          "default": ""
+        },
+        "proof_src": {
+          "type": "string",
+          "default": ""
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "qed": {
+          "type": "string",
+          "default": "Q.E.I."
+        },
+        "kernel_verified": {
+          "type": "boolean",
+          "default": false
+        },
+        "consensus": {
+          "type": "number",
+          "default": 0
+        },
+        "published_at": {
+          "type": "string",
+          "default": ""
+        },
+        "specimen": {
+          "type": "boolean",
+          "default": false
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "statement"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
