@@ -119,8 +119,15 @@ discovery-frontier push.
   property **inside** `established_domain` (it was vacuously satisfied once coverage held),
   and `smt_z3` no longer crashes a cycle on a non-boolean predicate. Entirely
   proposal-side / strictly-tightening on the gate: the honest gate still decides,
-  `theorem_src` unchanged, `trust.py`/invariants byte-identical. The first lever aimed
-  squarely at a **first kernel-verified promulgation**.
+  `theorem_src` unchanged, `trust.py`/invariants byte-identical.
+
+  **Measured (clean A/B vs the deeper run, band reset to 0.45, ADR 0022 the only
+  changed variable; 6 cycles, 39 conjectures, $3.19):** `reached_proof` **0 → 31**
+  (0% → 79%); the faithfulness DEFER fraction collapsed from ~95% to ~20%; 0 unfaithful,
+  0 gamed (the hardened gate did not false-reject). ADR 0022 did exactly what it was
+  designed to do — it pulled conjectures out of faithfulness DEFER and into proof. The
+  binding blocker has now moved **downstream to the prover**: conjectures reach the
+  kernel but the HF ensemble cannot close them under N+1 consensus (0 promulgated).
 
 ## Remaining follow-ups
 
@@ -140,10 +147,15 @@ discovery-frontier push.
   next lever is **conjecturer contract steering** (emit fully-encodable contracts so
   candidates reach proof), not prover/band tuning.
 - ✅ **Conjecturer contract encodability** — ADR 0022: prompts carry the DSL grammar +
-  a bounded, sound contract-repair pass in `Formalize` (non-empty-domain guard), so
-  claims can be honestly certified and reach proof. Done; proposal-side; invariants
-  byte-identical. Remaining: a live calibration to **measure** the DEFER fraction fall
-  and `reached_proof` rise (the ADR 0022 success metric), then iterate.
+  a bounded, sound contract-repair pass in `Formalize`. Done + **measured**: `reached_proof`
+  0 → 31/39 (the DEFER fraction collapsed ~95% → ~20%). Proposal-side; invariants
+  byte-identical.
+- **Prover reach (new headline blocker)** — with faithfulness no longer the bottleneck,
+  conjectures reach the kernel but the HF ensemble can't close them (0/31 proved). The
+  levers: lower/weaken the band harder (the controller already eases off), a
+  stronger/longer prover budget, and **lemma decomposition** (below) for the genuinely
+  hard ones. This is the normal discovery regime — the path to a first promulgation now
+  runs through proving power, not the gate.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 
