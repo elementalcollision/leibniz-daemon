@@ -21,5 +21,8 @@ venv/
 .lake/
 lean-project/.lake/
 
+# Persistent runtime memory (ADR 0016) — SQLite ledger, per-machine, never committed
+.leibniz/
+
 # OS
 .DS_Store
