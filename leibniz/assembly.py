@@ -33,13 +33,16 @@ from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
 from leibniz.providers.anthropic_provider import AnthropicProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
+from leibniz.runtime import PersistentRuntime
 from leibniz.selection import KFM, Archive
 from leibniz.trust import TrustPolicy
 from leibniz.verifiers import LeanVerifier, SMTVerifier
 
 
 class SimpleRuntime:
-    """Minimal in-memory RuntimeAdapter. (Chimera integration is a separate seam.)"""
+    """Minimal in-memory RuntimeAdapter for the demo/fakes. The real assembly uses
+    `leibniz.runtime.PersistentRuntime` (ADR 0016); full external-Chimera wiring is
+    still a drop-in behind the same Protocol."""
 
     def __init__(self) -> None:
         self.memory: list = []
@@ -110,7 +113,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     return Leibniz(
-        runtime=SimpleRuntime(),
+        runtime=PersistentRuntime(),  # ADR 0016: SQLite memory + circadian phase
         survey=Survey(forge),
         domains=tuple(forge.domains()),  # D9 (ADR 0015): rotate across all frontier domains
         conjecture=Conjecture(autoformalizer),

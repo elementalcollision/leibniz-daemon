@@ -37,8 +37,9 @@ no cycle can promulgate a law whose proof was not kernel-checked.
 ## The organ map (combining the extant code)
 
 - **Chimera → runtime (the body).** Scheduler, memory, cross-model witness, drift.
-  Seam today (`SimpleRuntime` in `leibniz.assembly`); full Chimera wiring pending. →
-  `leibniz.adapters.RuntimeAdapter`
+  Real today: `leibniz.runtime.PersistentRuntime` (SQLite memory that survives
+  restarts + clock-based circadian phase, ADR 0016); external-Chimera wiring drops
+  in behind the same `leibniz.adapters.RuntimeAdapter` Protocol.
 - **Newton → loop + ledger (the spine).** The six stages and the
   Enuntiatio/Expressio/Demonstratio triad, kept wholesale; only the Demonstratio
   backend flips from execution-gate to kernel proof. → `leibniz.pipeline`, `leibniz.propositio`
