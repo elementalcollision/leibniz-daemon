@@ -158,8 +158,12 @@ discovery-frontier push.
     near-misses accumulate across runs, raise weaken throughput (`weaken_k` 2→3,
     `capacity` 6→12), and weaken the *freshest* near-misses. Proposal-side; invariants
     byte-identical. Pending a billable weaken-heavy run to attempt a first promulgation.
-  - **Lever 2 — lemma decomposition (ADR 0024, next)**: split a hard conjecture into
-    kernel-sized sub-lemmas, prove independently, compose.
+  - ✅ **Lever 2 — lemma decomposition (ADR 0024)**: a `DecompositionProver` adds a
+    structured-proof strategy to the ensemble — prove via `have`/`suffices` lemmas, then
+    compose — closing goals one-shot drafts miss. Kernel-checks the whole proof
+    (`discharge` untouched); composes with N+1 consensus; `LEIBNIZ_DECOMPOSE` (default 1).
+    Proposal-side; invariants byte-identical. Deferred to a future guarded-core ADR:
+    *independent* sub-lemma proving + a verified preamble for reuse as stepping stones.
   - **Lever 3 — stronger/longer prover**: more consensus depth / tokens per attempt.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.

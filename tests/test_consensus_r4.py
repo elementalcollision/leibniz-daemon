@@ -90,3 +90,49 @@ def test_all_drafts_rejected_yields_fail():
     r = pc.prove(_expr())
     assert r.count == 0 and r.reached is False
     assert r.edge.verdict is Verdict.FAIL
+
+
+# --- consensus counts DISTINCT models, not raw attempts (ADR 0024 review) ------
+
+class _ModelProver:
+    def __init__(self, model, script):
+        self.model, self.script = model, script
+
+    def propose(self, role: Role, context: str) -> str:
+        return self.script
+
+    def available(self):
+        return True
+
+
+def test_one_model_with_two_strategies_is_one_voter():
+    # the exact ADR 0024 amplification: a model + its decomposition wrapper both verify,
+    # but they share an identity, so a single model can NOT self-satisfy N+1.
+    from leibniz.providers.decomposition_prover import DecompositionProver
+    p = _ModelProver("M", "by good")
+    pc = ProofConsensus(provers=[p, DecompositionProver(p)], lean=_lean(), min_consensus=2)
+    r = pc.prove(_expr())
+    assert r.count == 1 and r.reached is False  # one model, two strategies -> one voter
+    assert r.proof is None
+
+
+def test_distinct_models_reach_consensus():
+    pc = ProofConsensus(
+        provers=[_ModelProver("A", "by good"), _ModelProver("B", "by good")],
+        lean=_lean(), min_consensus=2,
+    )
+    r = pc.prove(_expr())
+    assert r.count == 2 and r.reached is True  # two INDEPENDENT models -> genuine consensus
+
+
+def test_decomposition_adds_a_strategy_not_a_false_vote():
+    # a decomposition wrapper of model A + a distinct model B: A (either strategy) and B
+    # are two voters -> consensus; the wrapper gave A a second *way* to find a proof.
+    from leibniz.providers.decomposition_prover import DecompositionProver
+    a = _ModelProver("A", "by good")
+    pc = ProofConsensus(
+        provers=[a, DecompositionProver(a), _ModelProver("B", "by good")],
+        lean=_lean(), min_consensus=2,
+    )
+    r = pc.prove(_expr())
+    assert r.count == 2 and r.reached is True  # {A, B}, not 3
