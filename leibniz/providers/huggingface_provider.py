@@ -1,9 +1,12 @@
-"""OpenRouter proposal provider (OpenAI-compatible gateway) — R4.1.
+"""HuggingFace proposal provider (HF Inference router, OpenAI-compatible) — for the
+PROOF_DRAFT prover ensemble.
 
-Used for the prover cascade (DeepSeek-Prover-V2 / Goedel / a Claude witness) behind
-one key. Proposal-only (ADR 0001): returns a tactic-script draft the kernel checks;
-it never decides. stdlib `urllib`, env-gated (`OPENROUTER_API_KEY`). Model id is
-per-instance so the same class serves every member of the prover ensemble.
+The specialized provers (DeepSeek-Prover-V2 / Goedel-Prover class) live on HuggingFace,
+not OpenRouter. This calls HF's router (`router.huggingface.co/v1/chat/completions`,
+OpenAI-compatible) with `HUGGINGFACE_API_KEY`. Proposal-only (ADR 0001): it returns a
+tactic-script draft the kernel checks; it never decides. stdlib `urllib` + a certifi
+SSL context (the macOS trust-store fix); model id is per-instance so the same class
+serves every member of the ensemble.
 """
 from __future__ import annotations
 
@@ -16,7 +19,7 @@ from typing import Optional
 from leibniz.providers import ProviderUnavailable, ssl_context
 from leibniz.types import Role
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
 
 _PROOF_SYSTEM = (
     "You draft Lean 4 tactic scripts for a theorem daemon. Output ONLY the proof "
@@ -30,12 +33,12 @@ _GENERIC_SYSTEM = (
 
 
 @dataclass
-class OpenRouterProvider:
+class HuggingFaceProvider:
     model: str
-    api_key_env: str = "OPENROUTER_API_KEY"
-    url: str = OPENROUTER_URL
+    api_key_env: str = "HUGGINGFACE_API_KEY"
+    url: str = HF_ROUTER_URL
     max_tokens: int = 2048
-    timeout_s: int = 120
+    timeout_s: int = 180
     meter: Optional[object] = None  # ADR 0014: has .record_usage(model, in, out)
 
     def available(self) -> bool:
@@ -66,8 +69,7 @@ class OpenRouterProvider:
         return data["choices"][0]["message"]["content"].strip()
 
     def _meter(self, data: dict) -> None:
-        """ADR 0014: report real token usage to the cost meter (best-effort).
-        OpenRouter returns OpenAI-style usage: prompt_tokens / completion_tokens."""
+        """ADR 0014: report real token usage to the cost meter (best-effort)."""
         if self.meter is None:
             return
         usage = data.get("usage") or {}
