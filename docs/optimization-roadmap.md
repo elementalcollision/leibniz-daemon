@@ -88,15 +88,26 @@ discovery-frontier push.
   guard held the band over 2 cycles — the controller needs ≥5. Proposal-side only;
   invariants byte-identical.
 
+| **0020** | Faithfulness gate refuses vacuous passes (encodability gate) | Faithfulness (trust) | no | ✅ done⁸ |
+
+⁸ The ADR 0019 calibration's "10/10 passed faithfulness" was **vacuous** — the
+  single-variable arithmetic DSL can't encode richer contracts (^, multi-variable,
+  functions), so the gaming-witness silently returned "no witness" and the probe read
+  PASS. Now the probe DEFERs unless the whole contract is encodable (non-guarded fix in
+  `probes.py`/`smt_z3.py`; `gates/` untouched; invariants byte-identical). The gate is
+  honest — and this **exposes the faithfulness DSL as the headline discovery blocker**.
+
 ## Remaining follow-ups
 
-- **Deeper live calibration** — a ≥5-cycle run so the frontier band adapts past the
-  warm-up and the prover's reach is found, plus a larger proof-draft budget / more
-  attempts; persist the band across runs (ADR 0019 open questions).
+- **Widen the faithfulness DSL** (the now-headline blocker) — multi-variable,
+  exponentiation, named functions, so rich conjectures can be *honestly* certified
+  rather than DEFERred. Higher leverage than prover budget (candidates DEFER before
+  proof). The next deep faithfulness ADR.
+- **Persist the frontier band** across runs (ADR 0019) so calibration accumulates.
+- **Deeper live calibration** — a ≥5-cycle run with a larger proof-draft budget once
+  faithfulness can certify enough candidates to reach proof.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
-- **Faithfulness on prose claims** — confirm the gaming-witness bites on the
-  structured contract rather than passing vacuously (ADR 0019 open question).
 
 ## Sequencing (as built)
 

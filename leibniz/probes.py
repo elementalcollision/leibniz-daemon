@@ -30,9 +30,23 @@ def coverage_probe(smt, bound: int = 64):
     def probe(prop: Propositio) -> Optional[bool]:
         en = prop.enuntiatio
         expr = prop.expressio
-        if not (en.claim_domain and expr is not None and expr.established_domain):
-            return None  # no structured contract -> cannot certify mechanically
-        gap = smt.backend.find_gaming_witness(
+        if not (en.claim_domain and en.claim_property and expr is not None and expr.established_domain):
+            return None  # incomplete contract -> cannot certify mechanically -> DEFER
+        # A mechanical PASS must rest on a contract the SMT can ACTUALLY search. The DSL
+        # is a single-variable arithmetic fragment; a richer predicate (^, a second
+        # variable, a function) raises PredicateError and the search degrades to None —
+        # which, read as "no gap", would be a VACUOUS pass (ADR 0020). Refuse it: if any
+        # part of the contract is un-encodable, DEFER rather than launder a check we
+        # never performed. (The adversarial spine, run earlier in the gate, likewise can
+        # only bite when claim_property is encodable — so requiring it here makes a PASS
+        # mean both the spine and this probe genuinely ran.)
+        be = smt.backend
+        encodable = getattr(be, "encodable", None)
+        if encodable is not None and not (
+            encodable(en.claim_domain) and encodable(en.claim_property) and encodable(expr.established_domain)
+        ):
+            return None  # un-encodable contract -> DEFER, never a vacuous PASS
+        gap = be.find_gaming_witness(
             statement=f"not ({expr.established_domain})",
             negated_claim=en.claim_domain,
             bound=bound,
