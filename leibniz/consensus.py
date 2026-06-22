@@ -42,9 +42,26 @@ def normalize_proof(text: str) -> str:
     return s
 
 
+def _prover_identity(prover) -> str:
+    """A stable identity for consensus de-duplication: a model is ONE independent voter
+    however many proof STRATEGIES it runs. Unwrap strategy wrappers (e.g. the ADR 0024
+    DecompositionProver, which only reshapes the prompt) to the underlying base, then key
+    on the model name; fall back to object identity for adapters without a model (test
+    doubles / hosted clients)."""
+    seen: set[int] = set()
+    while True:
+        base = getattr(prover, "base", None)
+        if base is None or id(prover) in seen:
+            break
+        seen.add(id(prover))  # guard against a pathological self-referential wrapper
+        prover = base
+    model = getattr(prover, "model", None)
+    return f"model:{model}" if model else f"obj:{id(prover)}"
+
+
 @dataclass
 class ConsensusResult:
-    count: int                 # distinct kernel-verified proofs found
+    count: int                 # distinct prover identities (models) with a kernel proof
     required: int              # min_consensus (N+1)
     attempts: int              # provers actually consulted
     edge: EdgeEvidence         # the PROOF_EDGE to record (PASS iff consensus)
@@ -85,9 +102,13 @@ class ProofConsensus:
             results = [self._attempt(p, expr) for p in self.provers]
 
         # Deterministic order (input order) -> stable "first" verified proof.
-        verified = [r for r in results if r is not None]
-        first_proof, first_pass = (verified[0][0], verified[0][1]) if verified else (None, None)
-        count = len(verified)
+        verified = [(p, r) for p, r in zip(self.provers, results) if r is not None]
+        # Count DISTINCT prover identities (models), NOT raw passing attempts: N+1
+        # consensus is about INDEPENDENT provers (ADR 0006/0024 review). A model that
+        # proves the goal by two strategies (e.g. one-shot + decomposition) is ONE voter,
+        # so a single model can never self-satisfy the threshold.
+        count = len({_prover_identity(p) for p, _ in verified})
+        first_proof, first_pass = (verified[0][1][0], verified[0][1][1]) if verified else (None, None)
         reached = count >= self.min_consensus
         if reached and first_pass is not None:
             # Record a REAL kernel PASS edge, annotated with the consensus.

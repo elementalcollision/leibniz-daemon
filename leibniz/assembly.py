@@ -38,6 +38,7 @@ from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
 from leibniz.providers.anthropic_provider import AnthropicProvider
+from leibniz.providers.decomposition_prover import DecompositionProver
 from leibniz.providers.huggingface_provider import HuggingFaceProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
 from leibniz.runtime import PersistentRuntime
@@ -93,13 +94,23 @@ def prover_ensemble(meter: object | None = None) -> list:
     """The prover cascade + witnesses for N+1 consensus. HuggingFace
     (`LEIBNIZ_HF_PROVER_MODELS`) is preferred — the specialized prover models
     (DeepSeek-Prover-V2 / Goedel class) live there — else OpenRouter
-    (`LEIBNIZ_PROVER_MODELS`). Each prover meters real token usage (ADR 0014)."""
+    (`LEIBNIZ_PROVER_MODELS`). Each prover meters real token usage (ADR 0014).
+
+    ADR 0024: also add `LEIBNIZ_DECOMPOSE` lemma-decomposition variants of the first
+    base provers (default 1) — a distinct proving STRATEGY (structured `have`/`suffices`
+    proofs) that closes goals one-shot drafts miss. The kernel still solely decides; each
+    variant is just another independent attempt under N+1 consensus."""
     max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)  # proof-draft budget
     hf = [m.strip() for m in os.environ.get("LEIBNIZ_HF_PROVER_MODELS", "").split(",") if m.strip()]
     if hf:
-        return [HuggingFaceProvider(model=m, meter=meter, max_tokens=max_tok) for m in hf]
-    models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
-    return [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
+        base = [HuggingFaceProvider(model=m, meter=meter, max_tokens=max_tok) for m in hf]
+    else:
+        models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
+        base = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
+    n_decomp = _env_int("LEIBNIZ_DECOMPOSE", 1)  # how many base provers to also run decomposed
+    if n_decomp > 0 and base:
+        base = base + [DecompositionProver(p) for p in base[:n_decomp]]
+    return base
 
 
 def _proof_verifier(cli_lean: LeanVerifier) -> LeanVerifier:
