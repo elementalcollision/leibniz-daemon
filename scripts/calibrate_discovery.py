@@ -116,6 +116,8 @@ def main() -> int:
             fr.update()
             if daemon.frontier_path:
                 fr.save(daemon.frontier_path)  # persist the learned band across runs
+        if nb is not None and daemon.notebook_path:
+            nb.save(daemon.notebook_path)  # ADR 0023: persist near-misses across runs
 
     elapsed = time.time() - t0
     cb = daemon.cost_budget
@@ -151,6 +153,10 @@ def main() -> int:
     if daemon.frontier is not None:
         print(f"  frontier band:   start 0.45 → {daemon.frontier.target:.2f} "
               f"(success rate {daemon.frontier.success_rate():.2f}, aim {daemon.frontier.aim:.2f})")
+    if daemon.notebook is not None:
+        nb = daemon.notebook
+        print(f"  notebook:        proven {len(nb.proven)}, too_hard {len(nb.too_hard)} "
+              f"(accumulating for weaken-and-retry), avoid {len(nb.avoid)}")
     if cb is not None:
         print(f"  cost:            ${cb.spent_usd:.4f} ({cb.input_tokens}+{cb.output_tokens} tok)")
 
