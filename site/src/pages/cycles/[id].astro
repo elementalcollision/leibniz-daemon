@@ -30,9 +30,16 @@ const reasons = Object.entries(d.by_reason || {}).sort((a, b) => b[1] - a[1]);
       <span class="rubric">CYCLE {d.cycle}</span>
       {d.created_at && <><span class="sep">·</span>{formatStamp(d.created_at)}</>}
       {d.domain && <><span class="sep">·</span>{d.domain.replace(/_/g, " ").toUpperCase()}</>}
+      {d.illustrative && <><span class="sep">·</span><span class="illustrative-tag">ILLUSTRATIVE</span></>}
     </div>
     <h1 class="page-title">Ciclo {d.roman || d.cycle}</h1>
 
+    {d.illustrative && (
+      <p class="illustrative-note">
+        This is an <strong>illustrative</strong> cycle showing the work-log format —
+        not a record of real daemon output.
+      </p>
+    )}
     {d.summary && <p class="lede">{d.summary}</p>}
 
     <div class="ledger-stats">
@@ -83,5 +90,12 @@ const reasons = Object.entries(d.by_reason || {}).sort((a, b) => b[1] - a[1]);
   .reason-list li { display: flex; align-items: baseline; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--rule); }
   .reason-n { font-family: var(--font-mono); color: var(--rubric); min-width: 2ch; }
   .reason-name { font-family: var(--font-sans); }
+  .illustrative-tag { color: var(--accent); }
+  .illustrative-note {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 4px; padding: var(--space-3) var(--space-4);
+    background: color-mix(in srgb, var(--accent) 7%, var(--paper));
+    color: var(--ink-soft); font-size: var(--fs-body-sm); margin: var(--space-5) 0;
+  }
   @media (max-width: 640px) { .ledger-stats { grid-template-columns: repeat(2, 1fr); } }
 </style>

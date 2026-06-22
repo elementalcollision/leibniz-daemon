@@ -7,7 +7,6 @@ import { glob } from "astro/loaders";
 const laws = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/laws" }),
   schema: z.object({
-    pid: z.string().default(""),
     statement: z.string(),                 // Enuntiatio — the human-readable claim
     claim_type: z.string().default(""),    // complexity_bound | correctness | …
     falsifiable_claim: z.string().default(""),
@@ -37,6 +36,7 @@ const cycles = defineCollection({
     promulgated: z.number().default(0),
     by_reason: z.record(z.number()).default({}),
     summary: z.string().default(""),
+    illustrative: z.boolean().default(false),  // a format demo, not real daemon output
   }),
 });
 

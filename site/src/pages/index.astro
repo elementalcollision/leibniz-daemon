@@ -4,9 +4,14 @@ import Ornament from "../components/Ornament.astro";
 import { getCollection } from "astro:content";
 import { formatStamp } from "../lib/format";
 
-const laws = (await getCollection("laws")).sort((a, b) => (b.data.published_at || "").localeCompare(a.data.published_at || ""));
+const laws = (await getCollection("laws")).sort((a, b) =>
+  (b.data.published_at || "").localeCompare(a.data.published_at || "") || a.id.localeCompare(b.id));
 const cycles = (await getCollection("cycles")).sort((a, b) => b.data.cycle - a.data.cycle);
-const latest = laws[0];
+// Only a genuine discovery (not a specimen) earns the "LATEST" banner; if every
+// published law is still a specimen, say so plainly instead of implying a find.
+const discoveries = laws.filter((l) => !l.data.specimen);
+const latest = discoveries[0];
+const allSpecimens = laws.length > 0 && discoveries.length === 0;
 
 const sections = [
   { href: "/laws", num: laws.length, it: "Le Leggi", en: "The Laws",
@@ -36,6 +41,15 @@ const sections = [
         <span class="live-dot"></span>LATEST <span class="sep">·</span>
         <span class="rubric">{latest.data.statement}</span>
         {latest.data.published_at && <><span class="sep">·</span>{formatStamp(latest.data.published_at)}</>}
+      </p>
+    )}
+
+    {allSpecimens && (
+      <p class="lede" style="margin-top:var(--space-6);color:var(--ink-soft)">
+        <strong>A note on what is here so far.</strong> Every law currently published
+        is a <em>specimen</em> — a well-known result, genuinely kernel-checked, shown
+        only to demonstrate the format while the daemon's discovery frontier matures.
+        None is a daemon discovery yet. See the <a href="/colophon">colophon</a>.
       </p>
     )}
 

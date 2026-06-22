@@ -11,7 +11,7 @@ const H = 600;
 
 type Node = { id: string; x: number; y: number; w: number; h: number; t: string; s: string[]; kind?: "accent" | "mint" };
 const nodes: Node[] = [
-  { id: "survey",     x: 60,  y: 80,  w: 240, h: 64, t: "SURVEY", s: ["Leonardo frontier + analogy"] },
+  { id: "survey",     x: 60,  y: 80,  w: 240, h: 64, t: "SURVEY", s: ["frontier + cross-domain analogy"] },
   { id: "conjecture", x: 60,  y: 190, w: 240, h: 64, t: "CONJECTURE", s: ["an LLM proposes a claim"] },
   { id: "formalize",  x: 60,  y: 300, w: 240, h: 64, t: "FORMALIZE", s: ["autoformalizer → Lean statement"] },
   { id: "gates",      x: 420, y: 80,  w: 250, h: 92, t: "Cheap gates — mechanical", s: ["Z3 refute · novelty corpus", "faithfulness · before proof compute"], kind: "accent" },

@@ -2,7 +2,7 @@
 import Page from "../../layouts/Page.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import { getCollection } from "astro:content";
-import { claimLabel, formatDate } from "../../lib/format";
+import { claimLabel, esc, formatDate } from "../../lib/format";
 
 const laws = (await getCollection("laws")).sort((a, b) =>
   (b.data.published_at || "").localeCompare(a.data.published_at || "") || a.id.localeCompare(b.id)
@@ -28,7 +28,7 @@ const laws = (await getCollection("laws")).sort((a, b) =>
             title={l.data.statement}
             summary={l.data.falsifiable_claim ? `Refuted by: ${l.data.falsifiable_claim}` : claimLabel(l.data.claim_type)}
             readLabel="Read the proof →"
-            eyebrow={`<span class="rubric">${claimLabel(l.data.claim_type)}</span>${l.data.published_at ? `<span class="sep">·</span>${formatDate(l.data.published_at)}` : ""}${l.data.specimen ? `<span class="sep">·</span>SPECIMEN` : ""}`}
+            eyebrow={`<span class="rubric">${esc(claimLabel(l.data.claim_type))}</span>${l.data.published_at ? `<span class="sep">·</span>${esc(formatDate(l.data.published_at))}` : ""}${l.data.specimen ? `<span class="sep">·</span>SPECIMEN` : ""}`}
           />
         ))}
       </div>

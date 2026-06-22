@@ -46,6 +46,18 @@ export function titleCase(s: string): string {
   return s.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Escape ledger-derived strings before they go into a set:html eyebrow. The
+// trust model treats ledger content as machine/LLM-generated and untrusted, so a
+// stray `<`, `&`, or quote must never break markup or inject elements.
+export function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Claim-type → display label. Mirrors leibniz.types.ClaimType.
 const CLAIM_LABELS: Record<string, string> = {
   complexity_bound: "Complexity bound",
