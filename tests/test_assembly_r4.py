@@ -25,12 +25,14 @@ def test_build_daemon_constructs_real_stack_without_network():
 
 def test_prover_ensemble_parsed_from_env(monkeypatch):
     monkeypatch.setenv("LEIBNIZ_PROVER_MODELS", "a/b, c/d ,e/f")
+    monkeypatch.setenv("LEIBNIZ_DECOMPOSE", "0")  # isolate model parsing (ADR 0024 variants off)
     assert [p.model for p in prover_ensemble()] == ["a/b", "c/d", "e/f"]
 
 
 def test_prover_ensemble_empty_without_env(monkeypatch):
     monkeypatch.delenv("LEIBNIZ_PROVER_MODELS", raising=False)
-    assert prover_ensemble() == []
+    monkeypatch.delenv("LEIBNIZ_HF_PROVER_MODELS", raising=False)
+    assert prover_ensemble() == []  # no base provers -> no decomposition variants either
 
 
 def test_conservative_judge_never_passes():
