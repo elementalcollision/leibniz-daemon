@@ -182,7 +182,15 @@ discovery-frontier push.
   identities/inequalities, and steers toward induction/case-analysis/lemma-requiring
   claims (divisibility/modular facts about non-linear expressions) — while keeping the
   in-DSL contract so faithfulness still certifies. Prompt-only; invariants byte-identical.
-  Pending a short validation run (fresh notebook/band) to measure the disposition shift.
+  **Validated** (4 cycles, 25 conjectured, fresh notebook/band, $2.16): the disposition
+  shifted decisively — **0 TRIVIAL** (the conjecturer left the ring-trivial space),
+  24/25 reached proof, **1 promulgated**, 1 gamed (the faithfulness gate caught it). The
+  one promulgation — `4 ∣ (2n)³·(2n+1)²`, proved `by use 2*n^3*(2*n+1)^2; ring` — is a
+  genuine divisibility fact (not one-shot-closable; needs a cofactor witness) and its
+  proof is now **persisted** (ADR 0025), shown in the ledger rather than `(none)`. So the
+  steering + integrity fixes work end-to-end; the binding blocker is now squarely **prover
+  reach**: 23/24 non-trivial conjectures reached the kernel but the ensemble + decomposition
+  could not close them → lever 3 (stronger/longer prover) + deeper decomposition.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 
