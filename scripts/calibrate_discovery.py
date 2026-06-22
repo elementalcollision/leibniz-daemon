@@ -69,6 +69,7 @@ def main() -> int:
     os.environ["LEIBNIZ_HF_PROVER_MODELS"] = _HF_PROVERS
     os.environ["LEIBNIZ_DAILY_USD_CAP"] = str(cap_usd)
     os.environ.setdefault("LEIBNIZ_PROOF_CONSENSUS", "2")
+    os.environ.setdefault("LEIBNIZ_PROVER_MAX_TOKENS", "4096")  # deeper proof-draft budget
 
     from leibniz.assembly import build_daemon  # noqa: E402
     from leibniz.calculemus import Calculemus, render_propositio  # noqa: E402
@@ -113,6 +114,8 @@ def main() -> int:
               f"spent ${row['spent_usd']}")
         if fr is not None:
             fr.update()
+            if daemon.frontier_path:
+                fr.save(daemon.frontier_path)  # persist the learned band across runs
 
     elapsed = time.time() - t0
     cb = daemon.cost_budget
@@ -156,10 +159,22 @@ def main() -> int:
     if total_promul:
         print(f"  • Discovery is live — {total_promul} law(s) promulgated to the Codex "
               f"(awaiting operator publish). Hold the band near {daemon.frontier.target:.2f}.")
+    elif total_proof == 0 and total_conj > 0:
+        # The decisive signal is reached_proof, NOT the disposition label: a
+        # faithfulness DEFER carries no FinishReason and surfaces as 'unproven', so
+        # reached_proof==0 means candidates die in the CHEAP GATES before any proving.
+        print("  • NOTHING reached proof (reached_proof=0): candidates die in the cheap "
+              "gates BEFORE proving — dominant outcome is faithfulness DEFER (the honest "
+              "gate cannot certify these contracts), surfacing as 'unproven'. Band/prover "
+              "tuning will NOT help; the blocker is upstream. Highest-leverage next step: "
+              "steer the conjecturer to emit FULLY-ENCODABLE arithmetic contracts "
+              "(claim_domain/claim_property/established_domain in the DSL: integer vars, "
+              "+ - *, constant ^ and mod/div, comparisons) and/or widen the DSL to "
+              "functions/symbolic exponents.")
     elif dom == "unproven":
-        print("  • Dominant outcome UNPROVEN → conjectures sit ABOVE the prover's reach. "
-              "Lower the frontier band (reduce target/floor + aim) and lean on weakening; "
-              "consider a stronger/longer prover budget.")
+        print("  • Conjectures REACH proof but the prover cannot close them (above its "
+              "reach). Lower the frontier band (target/aim), lean on weakening, and raise "
+              "the prover budget.")
     elif dom in ("known", "trivial"):
         print("  • Dominant outcome KNOWN/TRIVIAL → conjectures sit BELOW the frontier. "
               "Raise the band (increase aim/target) for harder, more novel claims.")

@@ -115,8 +115,18 @@ discovery-frontier push.
 - ✅ **Persist the frontier band** across runs (ADR 0019 follow-up) — `FrontierController.save/load`,
   wired through `build_daemon` + `run_cycles` (`.leibniz/frontier.json`), so calibration
   accumulates instead of resetting to the default band. Done.
-- **Deeper live calibration** — a ≥5-cycle run with a larger proof-draft budget once
-  faithfulness can certify enough candidates to reach proof.
+- ✅ **Deeper live calibration** (6 cycles, $1.97, 4096-tok proof budget) — done. Decisive
+  shift from the first run: **reached_proof 10 → 0**. The honest+widened faithfulness gate
+  no longer vacuously passes (it DEFERred 40/42, caught 1 unfaithful, killed 1 trivial),
+  so the binding blocker moved *upstream* to **faithfulness DEFER**: research-seeded
+  contracts exceed even the widened DSL. The band/controller/persistence all worked live
+  — it adapted 0.45→0.34→0.24→0.15(floor)→re-explored to 0.73, persisted at 0.625. So the
+  next lever is **conjecturer contract steering** (emit fully-encodable contracts so
+  candidates reach proof), not prover/band tuning.
+- **Conjecturer contract encodability** (new headline) — steer the autoformalizer/
+  conjecturer to emit `claim_domain`/`claim_property`/`established_domain` within the
+  faithfulness DSL, so claims can be honestly certified and reach proof. Highest-leverage
+  path to a first promulgation; pairs with the DSL-widening increment above.
 - **Decomposition** — lemma extraction (a deeper form of M3) for genuinely hard
   conjectures.
 
