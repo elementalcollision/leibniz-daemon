@@ -203,8 +203,15 @@ discovery-frontier push.
   the lemmas as separate declarations let a preamble poison elaboration via
   `attribute`/`notation`/`run_cmd` with no denylisted keyword; the hints redesign
   eliminates the vulnerability class rather than guarding it. Invariants byte-identical.
-  Pending a billable re-run to measure whether it closes the non-trivial conjectures the
-  ensemble could not.
+  **Measured (focused run, 2 cycles × 2 seeds, $1.01): 6 conjectured, 6 reached proof, 0
+  promulgated** — decomposition did NOT close any on this small sample (all 6 stayed
+  unproven; blocker still prover reach). **Inconclusive, with a measurement gap**: the
+  harness does not instrument decomposition, so it cannot distinguish "decomposition fired
+  but the sub-lemmas/composition also failed" from "decomposition silently no-op'd"
+  (bad-JSON / unprovable sub-lemmas). Small N (6) on a low base rate (prior: 1/25). Next:
+  instrument the decomposer (log decompositions attempted / sub-lemmas proven / composed
+  closes) before a larger run, and/or lever 3 (a stronger/longer prover) — the genuinely
+  non-trivial goals are hard even when split.
 
 ## Sequencing (as built)
 
