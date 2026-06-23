@@ -27,7 +27,11 @@ def _verify(theorem_src: str, proof: str) -> bool:
     from leibniz.verifiers import LeanVerifier
     backend = lean_repl.LeanReplBackend() if lean_repl.available() else LeanCliBackend()
     lean = LeanVerifier(backend)
-    expr = Expressio(theorem_src=theorem_src, imports=("Mathlib",))
+    # Re-verify with `Mathlib.Tactic`, not the root `Mathlib`: our Lean image ships the
+    # component oleans but not the root aggregate, and Aristotle's tactic-style proofs
+    # (norm_num/interval_cases/Nat lemmas) resolve under Mathlib.Tactic. (Building the root
+    # Mathlib.olean into the image is the durable fix for full-import coverage.)
+    expr = Expressio(theorem_src=theorem_src, imports=("Mathlib.Tactic",))
     demo = Demonstratio(proof_obligation="aristotle", proof_src=proof)
     ev = lean.discharge(expr, demo)   # sole kernel_verified writer
     return demo.kernel_verified and ev.verdict.name == "PASS"

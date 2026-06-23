@@ -56,6 +56,13 @@ def test_unavailable_without_key(monkeypatch):
     assert AristotleProver().available() is False
 
 
+def test_default_toolchain_matches_aristotles_deps(monkeypatch):
+    # live learning: Aristotle's Mathlib/Batteries are built for 4.28; submitting 4.31
+    # forced a self-correction. Default to 4.28 (the proof still re-verifies on our 4.31).
+    monkeypatch.delenv("LEIBNIZ_ARISTOTLE_TOOLCHAIN", raising=False)
+    assert AristotleProver().toolchain == "leanprover/lean4:v4.28.0"
+
+
 def test_non_proof_role_is_rejected(monkeypatch):
     monkeypatch.setenv("ARISTOTLE_API_KEY", "k")
     monkeypatch.setitem(sys.modules, "aristotlelib", _fake_lib())
