@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import tarfile
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -117,8 +118,14 @@ class AristotleProver:
         if task is None or str(getattr(task.status, "name", task.status)) != "COMPLETE":
             return ""  # no usable proof — Leibniz settles this candidate UNPROVEN
         with tempfile.TemporaryDirectory() as out:
-            got = await project.get_files(out)
-            return self._read_proof(got or out)
+            # get_files writes to a FILE path (a tarball, like the CLI's
+            # `download --destination result.tar.gz`) — NOT a directory.
+            dest = Path(out) / "aristotle_result.tar.gz"
+            try:
+                got = await project.get_files(str(dest))
+            except Exception:
+                got = None
+            return self._read_proof(got or dest, out)
 
     async def _await_task(self, project):
         """Get the agent task (create may auto-start it; else `ask`) and poll to terminal."""
@@ -138,11 +145,24 @@ class AristotleProver:
             await asyncio.sleep(self.poll_interval_s)
 
     @staticmethod
-    def _read_proof(path) -> str:
-        """Read the filled proof from the downloaded project (a dir or a .lean file)."""
+    def _read_proof(path, work=None) -> str:
+        """Read the filled proof from Aristotle's download — a tarball, a directory, or a
+        single .lean. Returns the first non-`sorry` proof body found; "" if none."""
         p = Path(path)
-        files = [p] if p.is_file() else sorted(p.rglob("*.lean"))
-        for f in files:
+        candidates: list[Path] = []
+        if p.is_file() and tarfile.is_tarfile(p):
+            ex = Path(work or p.parent) / "_extracted"
+            ex.mkdir(parents=True, exist_ok=True)
+            with tarfile.open(p) as tf:
+                tf.extractall(ex, filter="data")  # safe extraction (no path traversal)
+            candidates = sorted(ex.rglob("*.lean"))
+        elif p.is_file():
+            candidates = [p]
+        elif p.is_dir():
+            candidates = sorted(p.rglob("*.lean"))
+        if not candidates and work:  # fallback: scan the work dir broadly
+            candidates = sorted(Path(work).rglob("*.lean"))
+        for f in candidates:
             try:
                 proof = _extract_proof(f.read_text())
             except OSError:

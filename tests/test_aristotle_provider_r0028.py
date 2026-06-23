@@ -37,6 +37,18 @@ def test_read_proof_skips_sorry_and_reads_filled(tmp_path):
     assert AristotleProver._read_proof(tmp_path) == ""  # an unfilled sorry is not a proof
 
 
+def test_read_proof_extracts_from_tarball(tmp_path):
+    import io
+    import tarfile
+    tb = tmp_path / "result.tar.gz"
+    body = b"theorem t : True := by trivial\n"
+    with tarfile.open(tb, "w:gz") as tf:
+        info = tarfile.TarInfo(name="Thm.lean")
+        info.size = len(body)
+        tf.addfile(info, io.BytesIO(body))
+    assert AristotleProver._read_proof(tb, str(tmp_path)) == "by trivial"  # untars + reads
+
+
 # --- availability + role guard -----------------------------------------------
 
 def test_unavailable_without_key(monkeypatch):
@@ -93,7 +105,13 @@ def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp", captured=
             return _Task()
 
         async def get_files(self, dest):
-            (Path(dest) / "Thm.lean").write_text(filled + "\n")
+            import io
+            import tarfile
+            body = (filled + "\n").encode()  # real get_files writes a tarball at a FILE path
+            with tarfile.open(dest, "w:gz") as tf:
+                info = tarfile.TarInfo(name="Thm.lean")
+                info.size = len(body)
+                tf.addfile(info, io.BytesIO(body))
             return dest
 
     m.Project = _Project
