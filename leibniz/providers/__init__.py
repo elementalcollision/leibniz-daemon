@@ -18,6 +18,23 @@ class ProviderUnavailable(RuntimeError):
     no credentials). Callers/tests check ``available()`` first."""
 
 
+def repair_proof_prompt(theorem_src: str, failed_proof: str, error: str) -> str:
+    """The ADR 0029 proof-repair user prompt, shared by every repair-capable provider
+    (AnthropicProvider, OpenRouterProvider) so the two cannot drift. Requests a BARE ``by …``
+    script; the statement is fixed (changing it would 'prove' a different, weaker claim) and
+    the kernel re-checks whatever comes back — this only proposes."""
+    return (
+        "Your Lean 4 proof FAILED to verify. Repair it using the kernel's error. Output ONLY "
+        "the corrected proof — a tactic script starting with `by` — no prose, no backticks. Do "
+        "NOT change, restate, or weaken the theorem; fix only the proof. Toolchain is Lean 4.31 "
+        "+ current Mathlib (prefer `import Mathlib.Tactic` lemmas/tactics). You PROPOSE; the "
+        "Lean kernel DECIDES — do not claim the repair is correct.\n"
+        f"Theorem (do NOT change):\n{theorem_src}\n"
+        f"Failed proof:\n{failed_proof}\n"
+        f"Lean error:\n{error[:1500]}"
+    )
+
+
 def ssl_context():
     """An SSL context for the urllib-based providers (OpenRouter, HuggingFace).
 

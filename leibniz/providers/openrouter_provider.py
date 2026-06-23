@@ -13,7 +13,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-from leibniz.providers import USER_AGENT, ProviderUnavailable, ssl_context
+from leibniz.providers import USER_AGENT, ProviderUnavailable, repair_proof_prompt, ssl_context
 from leibniz.types import Role
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -46,20 +46,11 @@ class OpenRouterProvider:
         return self._complete(system, context)
 
     def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
-        """ADR 0029: repair a kernel-rejected proof given the error — same contract as
-        AnthropicProvider.repair_proof, so this class can serve as a failover frontier
-        reasoner in the repair loop. Returns ONLY a corrected `by ...` script; the kernel
-        re-checks it (this only proposes), and the statement must not change."""
-        prompt = (
-            "Your Lean 4 proof FAILED to verify. Repair it using the kernel's error. "
-            "Output ONLY the corrected proof — a tactic script starting with `by` — no "
-            "prose, no backticks. Do NOT change, restate, or weaken the theorem; fix only "
-            "the proof.\n"
-            f"Theorem (do NOT change):\n{theorem_src}\n"
-            f"Failed proof:\n{failed_proof}\n"
-            f"Lean error:\n{error[:1500]}"
-        )
-        return self._complete(_PROOF_SYSTEM, prompt)
+        """ADR 0029: repair a kernel-rejected proof given the error — same contract (and the
+        same shared prompt) as AnthropicProvider.repair_proof, so this class can serve as a
+        failover/panel frontier reasoner in the repair loop. Returns ONLY a corrected `by ...`
+        script; the kernel re-checks it (this only proposes), and the statement must not change."""
+        return self._complete(_PROOF_SYSTEM, repair_proof_prompt(theorem_src, failed_proof, error))
 
     def _complete(self, system: str, content: str) -> str:
         key = os.environ.get(self.api_key_env)
