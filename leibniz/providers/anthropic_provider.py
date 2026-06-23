@@ -10,7 +10,7 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-from leibniz.providers import ProviderUnavailable
+from leibniz.providers import ProviderUnavailable, repair_proof_prompt
 from leibniz.types import Role
 
 DEFAULT_MODEL = "claude-opus-4-8"
@@ -166,18 +166,9 @@ class AnthropicProvider:
         the PROOF — never the theorem statement (changing it would let a repair 'prove'
         a different, weaker claim). The kernel re-checks whatever this returns; this only
         proposes. Toolchain is Lean 4.31 + current Mathlib."""
-        prompt = (
-            "Your Lean 4 proof FAILED to verify. Repair it using the kernel's error. "
-            "Output ONLY the corrected proof — a tactic script starting with `by` — with "
-            "no prose and no backticks. Do NOT change, restate, or weaken the theorem; "
-            "fix only the proof. Toolchain is Lean 4.31 + current Mathlib (prefer "
-            "`import Mathlib.Tactic` lemmas/tactics). You PROPOSE; the Lean kernel "
-            "DECIDES — do not claim the repair is correct.\n"
-            f"Theorem (do NOT change):\n{theorem_src}\n"
-            f"Failed proof:\n{failed_proof}\n"
-            f"Lean error:\n{error[:1500]}"
-        )
-        return self._chat(prompt, system=_PROOF_SYSTEM)  # bare script, not JSON
+        # bare script, not JSON -> the proof system prompt (shared prompt: never drifts from
+        # OpenRouterProvider.repair_proof, since both repair-capable providers use it)
+        return self._chat(repair_proof_prompt(theorem_src, failed_proof, error), system=_PROOF_SYSTEM)
 
     def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
         """R4.2: hand a failed Lean compile back to the autoformalizer to fix the
