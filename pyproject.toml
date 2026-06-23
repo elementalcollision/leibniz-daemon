@@ -15,6 +15,7 @@ verify = [
 # Proposal-role models. Confined to drafting; never adjudicate.
 propose = [
     "anthropic>=0.40",
+    "aristotlelib",  # ADR 0028: Harmonic Aristotle prover agent (lever 3); proposal-only
 ]
 dev = [
     "pytest>=8.0",

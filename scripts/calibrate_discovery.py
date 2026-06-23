@@ -65,11 +65,17 @@ def main() -> int:
 
     from leibniz.env import load_env  # noqa: E402
     load_env(_REPO / ".env")
-    # Configure the run BEFORE build_daemon (it reads env): HF provers + USD cap.
-    os.environ["LEIBNIZ_HF_PROVER_MODELS"] = _HF_PROVERS
+    # Configure the run BEFORE build_daemon (it reads env): USD cap + the prover. Default
+    # to the HF ensemble, but DEFER to a pre-set alternative prover (harness A's
+    # LEIBNIZ_PROVER_MODELS/BASE_URL, or LEIBNIZ_ARISTOTLE) so wrappers like
+    # measure_goedel.py can swap the prover without this harness clobbering it.
+    if not (os.environ.get("LEIBNIZ_PROVER_MODELS") or os.environ.get("LEIBNIZ_PROVER_BASE_URL")):
+        os.environ.setdefault("LEIBNIZ_HF_PROVER_MODELS", _HF_PROVERS)
     os.environ["LEIBNIZ_DAILY_USD_CAP"] = str(cap_usd)
     os.environ.setdefault("LEIBNIZ_PROOF_CONSENSUS", "2")
     os.environ.setdefault("LEIBNIZ_PROVER_MAX_TOKENS", "4096")  # deeper proof-draft budget
+    _prover_desc = (os.environ.get("LEIBNIZ_PROVER_MODELS")
+                    or f"HF[{_HF_PROVERS.count(',') + 1}]")
 
     from leibniz.assembly import build_daemon  # noqa: E402
     from leibniz.calculemus import Calculemus, render_propositio  # noqa: E402
@@ -79,7 +85,8 @@ def main() -> int:
     records = feed.get("records", [])
     print(f"[calibrate] feed: {len(records)} records (run_date {feed.get('run_date')})")
     print(f"[calibrate] {cycles} cycles × {seeds_per_cycle} seeds; USD cap ${cap_usd:.2f}; "
-          f"consensus {os.environ['LEIBNIZ_PROOF_CONSENSUS']}; provers HF[{_HF_PROVERS.count(',')+1}]")
+          f"consensus {os.environ['LEIBNIZ_PROOF_CONSENSUS']}; prover {_prover_desc}"
+          f"{' + Aristotle' if os.environ.get('LEIBNIZ_ARISTOTLE', '') not in ('', '0') else ''}")
 
     daemon = build_daemon(frontier_limit=seeds_per_cycle, analogy_limit=0)
     daemon.survey = FeedSurvey(records, seeds_per_cycle)  # seed from the feed
