@@ -16,7 +16,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-from leibniz.providers import ProviderUnavailable, ssl_context
+from leibniz.providers import USER_AGENT, ProviderUnavailable, ssl_context
 from leibniz.types import Role
 
 HF_ROUTER_URL = "https://router.huggingface.co/v1/chat/completions"
@@ -60,7 +60,8 @@ class HuggingFaceProvider:
         req = urllib.request.Request(
             self.url,
             data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}",
+                     "User-Agent": USER_AGENT},  # avoid urllib's default UA being bot-blocked
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=self.timeout_s, context=ssl_context()) as resp:  # noqa: S310 (fixed gateway)
