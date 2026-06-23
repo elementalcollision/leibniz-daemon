@@ -31,8 +31,15 @@ def main() -> int:
     os.environ.setdefault("LEIBNIZ_PROVER_BASE_URL", "https://api.featherless.ai/v1/chat/completions")
     os.environ.setdefault("LEIBNIZ_PROVER_KEY_ENV", "FEATHERLESS_API_KEY")
     os.environ.setdefault("LEIBNIZ_DECOMPOSE", "0")  # isolate raw-model strength first
+    # A SINGLE model cannot satisfy N+1 (consensus counts distinct prover identities), so a
+    # one-Goedel measurement uses single-proof consensus — still kernel-verified (sound),
+    # just no independent-prover redundancy. Override LEIBNIZ_PROOF_CONSENSUS, or list two
+    # distinct models in LEIBNIZ_PROVER_MODELS (e.g. add Goedel-Prover-V2-8B), for real N+1.
+    os.environ.setdefault("LEIBNIZ_PROOF_CONSENSUS", "1")
     print(f"[measure_goedel] prover {os.environ['LEIBNIZ_PROVER_MODELS']} via "
-          f"{os.environ['LEIBNIZ_PROVER_BASE_URL']} (key env {os.environ['LEIBNIZ_PROVER_KEY_ENV']})")
+          f"{os.environ['LEIBNIZ_PROVER_BASE_URL']} (key env {os.environ['LEIBNIZ_PROVER_KEY_ENV']}); "
+          f"consensus {os.environ['LEIBNIZ_PROOF_CONSENSUS']}. NB: Featherless is flat-rate — "
+          f"the USD cap is advisory; bound the run by cycle count.")
     import calibrate_discovery
     return calibrate_discovery.main()
 
