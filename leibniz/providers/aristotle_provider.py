@@ -19,6 +19,7 @@ validates both end-to-end.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
 import time
@@ -87,37 +88,44 @@ class AristotleProver:
     def propose(self, role: Role, context: str) -> str:
         """For PROOF_DRAFT: submit `context` (a theorem statement) to Aristotle as a
         one-file Lean project, wait for the agent to fill the `sorry`, and return the
-        proof body. Other roles are unsupported (Aristotle is a prover)."""
+        proof body. Other roles are unsupported (Aristotle is a prover).
+
+        `aristotlelib` is async; `propose` is sync (the ProviderAdapter contract), so the
+        async flow runs in a fresh event loop. ProofConsensus calls provers in worker
+        threads, each of which gets its own loop, so this composes with the ensemble."""
         if role is not Role.PROOF_DRAFT:
             raise ProviderUnavailable(f"AristotleProver only handles PROOF_DRAFT, not {role}")
-        lib = self._lib()
+        return asyncio.run(self._aprove(context))
+
+    async def _aprove(self, context: str) -> str:
+        lib = self._lib()  # set_api_key is sync
         with tempfile.TemporaryDirectory() as work:
             src = "\n".join(f"import {m}" for m in self.imports) + "\n\n" + _strip_to_statement(context)
             (Path(work) / "Thm.lean").write_text(src + "\n")
-            project = lib.Project.create_from_directory(_FILL_PROMPT, work)
-            task = self._await_task(project)
-            if task is None or str(getattr(task.status, "name", task.status)) != "COMPLETE":
-                return ""  # no usable proof — Leibniz settles this candidate UNPROVEN
-            with tempfile.TemporaryDirectory() as out:
-                got = project.get_files(out)
-                return self._read_proof(got)
+            project = await lib.Project.create_from_directory(_FILL_PROMPT, work)
+        task = await self._await_task(project)
+        if task is None or str(getattr(task.status, "name", task.status)) != "COMPLETE":
+            return ""  # no usable proof — Leibniz settles this candidate UNPROVEN
+        with tempfile.TemporaryDirectory() as out:
+            got = await project.get_files(out)
+            return self._read_proof(got or out)
 
-    def _await_task(self, project):
+    async def _await_task(self, project):
         """Get the agent task (create may auto-start it; else `ask`) and poll to terminal."""
-        tasks, _ = project.get_tasks(limit=1)
-        task = tasks[0] if tasks else project.ask(_FILL_PROMPT)
+        tasks, _ = await project.get_tasks(limit=1)
+        task = tasks[0] if tasks else await project.ask(_FILL_PROMPT)
         start = time.time()
         while True:
-            task.refresh()
+            await task.refresh()
             if str(getattr(task.status, "name", task.status)) in _TERMINAL:
                 return task
             if time.time() - start > self.timeout_s:
                 try:
-                    task.cancel()
+                    await task.cancel()
                 except Exception:
                     pass
                 return None
-            time.sleep(self.poll_interval_s)
+            await asyncio.sleep(self.poll_interval_s)
 
     @staticmethod
     def _read_proof(path) -> str:

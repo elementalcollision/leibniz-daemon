@@ -57,6 +57,8 @@ def test_non_proof_role_is_rejected(monkeypatch):
 # --- submit -> poll -> get_files flow (fake aristotlelib) --------------------
 
 def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp"):
+    # aristotlelib is async: every Project/AgentTask method is a coroutine (set_api_key
+    # is sync). The fake mirrors that so the await path in AristotleProver is exercised.
     m = types.ModuleType("aristotlelib")
     m.set_api_key = lambda k: k
 
@@ -68,24 +70,24 @@ def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp"):
         def __init__(self):
             self.status = _Status(status)
 
-        def refresh(self):
+        async def refresh(self):
             pass
 
-        def cancel(self):
+        async def cancel(self):
             pass
 
     class _Project:
         @classmethod
-        def create_from_directory(cls, prompt, d, **kw):
+        async def create_from_directory(cls, prompt, d, **kw):
             return cls()
 
-        def get_tasks(self, limit=1):
+        async def get_tasks(self, limit=1):
             return ([_Task()], None)
 
-        def ask(self, prompt, **kw):
+        async def ask(self, prompt, **kw):
             return _Task()
 
-        def get_files(self, dest):
+        async def get_files(self, dest):
             (Path(dest) / "Thm.lean").write_text(filled + "\n")
             return dest
 
