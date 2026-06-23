@@ -81,11 +81,19 @@ def main() -> int:
         print("[measure_repair] ANTHROPIC_API_KEY not set (.env).")
         return 2
 
+    from leibniz.assembly import frontier_reasoner
+
     rounds = int(os.environ.get("LEIBNIZ_REPAIR_ROUNDS", "2") or 2)
     model = os.environ.get("LEIBNIZ_REPAIR_MODEL") or os.environ.get(
         "LEIBNIZ_CONJECTURE_MODEL", "claude-opus-4-8")
     meter = CostBudget.from_env()
-    provider = AnthropicProvider(model=model, meter=meter, max_tokens=4096)
+    # Frontier reasoner with failover (ADR 0029): Anthropic primary, OpenRouter backups when
+    # it is down. So this measures the SCAFFOLD's reach even during an Anthropic outage; the
+    # model that actually closes each goal is recorded (last_used).
+    primary = AnthropicProvider(model=model, meter=meter, max_tokens=4096)
+    provider = frontier_reasoner(primary, meter=meter)
+    chain = getattr(provider, "providers", [primary])
+    chain_desc = ", ".join(str(getattr(p, "model", type(p).__name__)) for p in chain)
     # The repairer discharges through (and reads kernel errors from) the SAME verifier the
     # daemon uses: REPL when available (import-cached), else the CLI kernel. discharge stays
     # the sole kernel_verified writer — every "closed" below is a real Q.E.D.
@@ -93,8 +101,9 @@ def main() -> int:
     lean = LeanVerifier(backend)
     repairer = ProofRepairer(provider=provider, lean=lean, max_rounds=rounds)
 
-    print(f"[measure_repair] in-house repair loop — model {model}, max_rounds {rounds}, "
-          f"backend {'REPL' if lean_repl.available() else 'CLI'}; {len(goals)} goal(s). BILLABLE.")
+    print(f"[measure_repair] in-house repair loop — reasoner chain [{chain_desc}], "
+          f"max_rounds {rounds}, backend {'REPL' if lean_repl.available() else 'CLI'}; "
+          f"{len(goals)} goal(s). BILLABLE.")
     closed = 0
     per_goal = []
     t0 = time.time()
@@ -114,12 +123,13 @@ def main() -> int:
             continue
         demo, ev = out
         rnd = repairer.stats.rounds_to_close[-1] if repairer.stats.rounds_to_close else None
+        used = getattr(provider, "last_used", None) or model  # which reasoner closed it
         closed += 1
         verb = "initial draft" if rnd == 0 else f"repair round {rnd}"
-        print(f"  → Q.E.D. via {verb} ({dt:.0f}s); kernel_verified={demo.kernel_verified}, "
-              f"verdict={ev.verdict.name}")
+        print(f"  → Q.E.D. via {verb} by {used} ({dt:.0f}s); "
+              f"kernel_verified={demo.kernel_verified}, verdict={ev.verdict.name}")
         print(f"     proof: {(demo.proof_src or '')[:200]}")
-        per_goal.append({"goal": goal, "closed": True, "round": rnd,
+        per_goal.append({"goal": goal, "closed": True, "round": rnd, "model": used,
                          "seconds": round(dt, 1), "proof": demo.proof_src})
 
     elapsed = time.time() - t0

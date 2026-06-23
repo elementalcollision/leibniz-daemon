@@ -42,6 +42,7 @@ from leibniz.proof_repair import ProofRepairer, RepairingDemonstrate
 from leibniz.providers.anthropic_provider import AnthropicProvider
 from leibniz.providers.aristotle_provider import AristotleProver
 from leibniz.providers.decomposition_prover import DecompositionProver
+from leibniz.providers.failover_provider import FailoverProvider
 from leibniz.providers.huggingface_provider import HuggingFaceProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
 from leibniz.runtime import PersistentRuntime
@@ -130,6 +131,27 @@ def prover_ensemble(meter: object | None = None) -> list:
     return base
 
 
+# The repair loop's frontier reasoner fails over to these OpenRouter-hosted backups when
+# the Anthropic primary is unavailable (outage/overload). Override via LEIBNIZ_REASONER_FALLBACKS.
+_DEFAULT_REASONER_FALLBACKS = "z-ai/glm-5.2,moonshotai/kimi-k2.6,openai/gpt-5.5"
+
+
+def frontier_reasoner(primary: object, meter: object | None = None) -> object:
+    """A frontier reasoner with failover for the proof roles (PROOF_DRAFT/repair_proof),
+    ADR 0029. The Anthropic `primary` drafts/repairs; if a call errors (outage/overload) it
+    fails over to OpenRouter-hosted backups in order (default GLM/Kimi/GPT). Backups are
+    added only when OPENROUTER_API_KEY is set and the list is non-empty; otherwise the
+    primary is returned unchanged (behaviour identical to before). All PROPOSE only — the
+    Lean kernel still decides every candidate, so failover only changes which model drafts."""
+    raw = os.environ.get("LEIBNIZ_REASONER_FALLBACKS", _DEFAULT_REASONER_FALLBACKS)
+    models = [m.strip() for m in raw.split(",") if m.strip()]
+    if not models or not os.environ.get("OPENROUTER_API_KEY"):
+        return primary
+    max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)
+    backups = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
+    return FailoverProvider([primary, *backups])
+
+
 def _proof_verifier(cli_lean: LeanVerifier) -> LeanVerifier:
     """The verifier the consensus ensemble discharges through (ADR 0011).
 
@@ -175,7 +197,9 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     # counts as ONE more distinct prover under N+1 (it never lowers the consensus bar).
     if _env_int("LEIBNIZ_PROOF_REPAIR", 0) > 0:
         repairer = ProofRepairer(
-            provider=autoformalizer,        # frontier reasoner; PROPOSES only
+            # frontier reasoner with failover to OpenRouter backups on an Anthropic outage
+            # (ADR 0029); PROPOSES only — the kernel still decides every candidate.
+            provider=frontier_reasoner(autoformalizer, meter=cost_budget),
             lean=consensus.lean,            # discharge + check_proof_with_error via the ensemble's verifier
             obligation=consensus.obligation,
             max_rounds=_env_int("LEIBNIZ_REPAIR_ROUNDS", 2),
