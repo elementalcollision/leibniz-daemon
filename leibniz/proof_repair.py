@@ -33,6 +33,24 @@ from leibniz.types import EdgeEvidence, Role, Verdict
 from leibniz.verifiers import LeanVerifier
 
 
+def _canonical_model(s: str) -> str:
+    """Canonicalize a prover identity / model id for N+1 distinctness (ADR 0024/0029).
+
+    The repair scaffold around model M is just "M trying harder with kernel feedback" — a
+    STRATEGY, so per ADR 0024 it is the SAME voter as a base prover running M, NOT a second
+    independent one. To dedupe across access paths (e.g. opus via Anthropic `claude-opus-4-8`
+    vs via OpenRouter `anthropic/claude-opus-4-8`), reduce to the bare model name. Non-model
+    identities (`obj:`/`repair:` with no resolved model) are kept verbatim, so they stay
+    distinct. Over-merging (two vendors sharing a bare name) is CONSERVATIVE — it can only
+    make consensus harder, never weaker."""
+    s = (s or "").strip()
+    if s.startswith("model:"):
+        s = s[len("model:"):]
+    if s.startswith(("obj:", "repair:")):
+        return s
+    return s.rsplit("/", 1)[-1].lower()
+
+
 @dataclass
 class RepairStats:
     """Instrumentation for measuring the lever (ADR 0029 validation plan). Counts are
@@ -68,8 +86,9 @@ class ProofRepairer:
     lean: LeanVerifier
     obligation: str = "claim"
     max_rounds: int = 2     # repair rounds AFTER the initial draft
-    identity: str = "repair:anthropic"   # distinct consensus identity for this scaffold
+    identity: str = "repair:frontier"   # fallback consensus identity when no model resolves
     stats: RepairStats = field(default_factory=RepairStats)
+    last_model: Optional[str] = None     # model that produced the most recent verified proof
 
     def prove(self, expr: Expressio) -> Optional[tuple[Demonstratio, EdgeEvidence]]:
         check = getattr(self.lean.backend, "check_proof_with_error", None)
@@ -90,6 +109,11 @@ class ProofRepairer:
                 demo = Demonstratio(proof_obligation=self.obligation, proof_src=candidate)
                 ev = self.lean.discharge(expr, demo)
                 if demo.kernel_verified:
+                    # Record WHICH model actually produced this proof (failover may have
+                    # used a backup), so consensus can dedupe it against same-model base
+                    # provers — ADR 0024: one model is one voter, however it proves.
+                    self.last_model = (getattr(self.provider, "last_used", None)
+                                       or getattr(self.provider, "model", None))
                     self.stats.closed += 1
                     self.stats.rounds_to_close.append(r)
                     return (demo, ev)
@@ -120,11 +144,14 @@ class RepairingDemonstrate:
     no double-recording. When ``decomposer`` is None this is just consensus -> repair.
 
     N+1 is preserved: repair runs only when the prior stages came up SHORT, and the
-    repaired proof counts as exactly ONE more *distinct* prover identity (``repairer.identity``,
-    which never collides with a base prover's ``model:``/``obj:`` identity). It promulgates
-    only if ``carried_distinct_count + 1 >= min_consensus`` — so at the default N+1=2 the
-    base ensemble must already have ONE distinct kernel proof for repair to supply the
-    second; a lone repaired proof never self-satisfies."""
+    repaired proof counts as ONE more *distinct* prover identity ONLY IF the model that
+    produced it is not already a base verifier. A repair by the SAME model as a base prover
+    (e.g. opus repairing what base-opus already drafted) is NOT a second independent vote
+    (ADR 0024: one model, one voter) — it is deduped by canonical model name, so it cannot
+    inflate the consensus count. It promulgates only if ``distinct >= min_consensus`` — so at
+    the default N+1=2 the base ensemble must already have ONE distinct kernel proof from a
+    DIFFERENT model for repair to supply the second; a lone repaired proof never
+    self-satisfies."""
 
     consensus: ProofConsensus
     repairer: ProofRepairer
@@ -145,16 +172,24 @@ class RepairingDemonstrate:
         repaired = self.repairer.prove(prop.expressio)
         if repaired is not None:
             demo, ev = repaired
-            combined = set(result.identities) | {self.repairer.identity}
-            if len(combined) >= self.consensus.min_consensus:
+            # Count the repair as an independent vote ONLY if its model differs from every
+            # base verifier (ADR 0024). last_model is the model that actually produced this
+            # proof (failover-aware); fall back to the scaffold identity if unresolved.
+            repair_canon = _canonical_model(
+                getattr(self.repairer, "last_model", None) or self.repairer.identity)
+            base_canon = {_canonical_model(i) for i in result.identities}
+            independent = repair_canon not in base_canon
+            distinct = len(result.identities) + (1 if independent else 0)
+            if distinct >= self.consensus.min_consensus:
                 self.repairer.stats.promulgated += 1
                 edge = EdgeEvidence(
                     edge=ev.edge,
                     tier=ev.tier,            # MECHANICAL, straight from discharge
                     verdict=Verdict.PASS,
-                    detail={**ev.detail, "consensus": len(combined),
-                            "required": self.consensus.min_consensus, "via": "repair"},
-                    cost_units=ev.cost_units * max(1, len(combined)),
+                    detail={**ev.detail, "consensus": distinct,
+                            "required": self.consensus.min_consensus, "via": "repair",
+                            "repair_model": repair_canon, "repair_independent": independent},
+                    cost_units=ev.cost_units * max(1, distinct),
                     producer=ev.producer,    # ADR 0013: preserve kernel provenance
                 )
                 prop.demonstratio = demo     # kernel-verified; attached only when promulgating
