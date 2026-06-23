@@ -107,6 +107,50 @@ def test_decomposer_handles_missing_hook_and_bad_json():
     assert LemmaDecomposer(_BadJson(), con).prove(Expressio(theorem_src="t")) is None
 
 
+# --- instrumentation: stats make decomposition visible (was a black box) ------
+
+def _stats_tuple(s):
+    return (s.attempted, s.planned, s.lemmas_proposed, s.lemmas_proven,
+            s.composed_attempts, s.closed)
+
+
+def test_stats_track_a_successful_decomposition():
+    plan = {"lemmas": [{"name": "aux1", "statement": "(n:Nat): True"}], "main_proof": "by trivial"}
+    dec = LemmaDecomposer(_Provider(plan), _FakeConsensus())
+    dec.prove(Expressio(theorem_src="theorem t : True", imports=("Mathlib.Tactic",)))
+    assert _stats_tuple(dec.stats) == (1, 1, 1, 1, 1, 1)
+
+
+def test_stats_when_all_lemmas_unsafe():
+    plan = {"lemmas": [{"name": "bad name", "statement": "(n:Nat): True"}], "main_proof": "by trivial"}
+    dec = LemmaDecomposer(_Provider(plan), _FakeConsensus())
+    assert dec.prove(Expressio(theorem_src="theorem t : True")) is None
+    assert _stats_tuple(dec.stats) == (1, 1, 0, 0, 0, 0)  # planned, but nothing usable
+
+
+def test_stats_when_no_decompose_hook():
+    class _NoDecompose:
+        pass
+    dec = LemmaDecomposer(_NoDecompose(), _FakeConsensus())
+    dec.prove(Expressio(theorem_src="t"))
+    assert (dec.stats.attempted, dec.stats.planned) == (1, 0)  # attempted, but no plan
+
+
+def test_stats_distinguish_lemma_proved_from_composed_closed():
+    # the key diagnostic: a sub-lemma proves but the composed main does NOT close.
+    class _LemmaPassMainFail:
+        obligation = "claim"
+
+        def prove(self, expr):
+            return _pass() if expr.theorem_src.startswith("lemma") else _fail()
+
+    plan = {"lemmas": [{"name": "aux1", "statement": "(n:Nat): True"}], "main_proof": "by trivial"}
+    dec = LemmaDecomposer(_Provider(plan), _LemmaPassMainFail())
+    result = dec.prove(Expressio(theorem_src="theorem t : True", imports=("Mathlib.Tactic",)))
+    assert result is not None and not result.reached
+    assert (dec.stats.lemmas_proven, dec.stats.composed_attempts, dec.stats.closed) == (1, 1, 0)
+
+
 # --- DecomposingDemonstrate (CI-safe) ----------------------------------------
 
 def _prop(theorem_src: str) -> Propositio:
