@@ -66,13 +66,15 @@ class AristotleProver:
     timeout_s: float = 1800.0           # Aristotle jobs run minutes→hours; bound it
     meter: Optional[object] = None      # Aristotle bills per job, not per token — not metered here
     # Aristotle ingests a Lean PROJECT and warns when no `lean-toolchain` is present; ship
-    # one. Defaults to OUR re-verification toolchain (4.31) so the returned proof is most
-    # likely to pass our kernel; override via LEIBNIZ_ARISTOTLE_TOOLCHAIN (Aristotle
-    # itself recommends leanprover/lean4:v4.28.0 — try that if 4.31 jobs error). Mathlib
-    # deps (the `.lake` warning) are resolved on Aristotle's side; we don't ship them.
+    # one. Default to Aristotle's OWN deps toolchain (v4.28.0): a first live run showed
+    # Aristotle's Mathlib/Batteries are built for 4.28, so submitting 4.31 forced it to
+    # self-correct down to 4.28 before it could build. The resulting proof still
+    # re-verifies cleanly on OUR 4.31 kernel (confirmed live), so 4.28 here is strictly
+    # better. Override via LEIBNIZ_ARISTOTLE_TOOLCHAIN. Mathlib deps (the `.lake` warning)
+    # are resolved on Aristotle's side; we don't ship them.
     toolchain: str = field(
         default_factory=lambda: os.environ.get("LEIBNIZ_ARISTOTLE_TOOLCHAIN")
-        or "leanprover/lean4:v4.31.0"
+        or "leanprover/lean4:v4.28.0"
     )
 
     def available(self) -> bool:

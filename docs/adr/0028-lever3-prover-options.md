@@ -63,14 +63,24 @@ solo-Aristotle experiment therefore needs `LEIBNIZ_PROOF_CONSENSUS=1` — still 
 kernel-verified, but without independent-prover redundancy. `try_aristotle.py` sidesteps
 this (it just submits + re-verifies, no consensus).
 
-## Open items (confirmed on first live run)
+## Confirmed live (2026-06-23) — end-to-end success ✅
 
-`aristotlelib`'s exact create→task→poll→retrieve flow has two spots pinned by
-introspection but only fully confirmable live (the dashboard docs are auth-gated): whether
-`create_from_directory` auto-starts the task (handled defensively via `get_tasks`/`ask`),
-and that `get_files` returns the filled `.lean` (assumed; parsed by `_read_proof`). Also
-unknown: whether Aristotle wants a bare `.lean` or a full lake project. The first
-`try_aristotle.py` run resolves all three.
+`scripts/try_aristotle.py "theorem t (n : Nat) : 6 ∣ n*(n+1)*(n+2)"` ran the full loop.
+Aristotle returned a complete proof (case analysis on `n % 6`, only the standard axioms
+`propext`/`Classical.choice`/`Quot.sound`, no `sorry`) and **our own Lean 4.31 kernel
+re-verified it (`kernel_ok=True`)** — the trust model demonstrated end to end: a hosted
+agent PROPOSES, our kernel DECIDES.
+
+Three live learnings, now fixed in code:
+- **`aristotlelib` is async** — every `Project`/`AgentTask` method is a coroutine;
+  `propose` drives them via `asyncio.run` (one loop per ProofConsensus worker thread).
+- **`get_files` writes a tarball at a FILE path** (like the CLI's `--destination
+  result.tar.gz`), not a directory; `_read_proof` extracts it (`extractall(filter='data')`).
+- **Aristotle's Mathlib/Batteries are built for v4.28.0** — submitting our 4.31 toolchain
+  forced Aristotle to self-correct down to 4.28 to build. The default submitted
+  `lean-toolchain` is now **4.28.0**; the 4.28-produced proof still re-verifies on our
+  4.31 kernel. Our re-verify uses `import Mathlib.Tactic` (our image lacks the root
+  `Mathlib.olean` aggregate — building it in is the durable fix for full-import coverage).
 
 ## Validation
 
