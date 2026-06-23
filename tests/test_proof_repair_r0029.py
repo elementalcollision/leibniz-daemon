@@ -284,12 +284,13 @@ def test_repair_runs_after_decomposition_also_comes_up_short():
 # --- AnthropicProvider.repair_proof prompt (statement-fixed, error-fed) -------
 
 def test_repair_proof_prompt_fixes_statement_and_feeds_error(monkeypatch):
-    from leibniz.providers.anthropic_provider import AnthropicProvider
+    from leibniz.providers.anthropic_provider import AnthropicProvider, _PROOF_SYSTEM
 
     captured = {}
 
-    def fake_chat(self, content):
+    def fake_chat(self, content, system=None):
         captured["content"] = content
+        captured["system"] = system
         return "by exact rfl"
 
     monkeypatch.setattr(AnthropicProvider, "_chat", fake_chat)
@@ -300,3 +301,21 @@ def test_repair_proof_prompt_fixes_statement_and_feeds_error(monkeypatch):
     assert "by sorry" in c
     # the reasoner is told to change only the proof, never the statement
     assert "do not change" in c.lower() or "do NOT change" in c
+    # and it must use the PROOF system prompt (bare script), NOT the JSON one — else the
+    # kernel gets `{"script": ...}` and can never elaborate it (ADR 0029 live-run bug).
+    assert captured["system"] == _PROOF_SYSTEM
+
+
+def test_proof_draft_uses_the_bare_script_system_not_json(monkeypatch):
+    from leibniz.providers.anthropic_provider import AnthropicProvider, _PROOF_SYSTEM, _SYSTEM
+
+    seen = {}
+
+    def fake_chat(self, content, system=None):
+        seen["system"] = system
+        return "by simp"
+
+    monkeypatch.setattr(AnthropicProvider, "_chat", fake_chat)
+    out = AnthropicProvider().propose(Role.PROOF_DRAFT, "theorem t : True")
+    assert out == "by simp"
+    assert seen["system"] == _PROOF_SYSTEM and seen["system"] != _SYSTEM

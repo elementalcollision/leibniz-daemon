@@ -1,0 +1,71 @@
+{
+  "closed": 0,
+  "total": 11,
+  "stats": {
+    "attempted": 11,
+    "closed": 0,
+    "repairs": 2,
+    "promulgated": 0,
+    "rounds_to_close": []
+  },
+  "per_goal": [
+    {
+      "goal": "theorem n_cubed_plus_five_n_div_six (n : Nat) : (n^3 + 5*n) % 6 = 0 := by sorry",
+      "closed": false,
+      "seconds": 0.8
+    },
+    {
+      "goal": "theorem prod_four_consecutive_even_start_div_four (n : \u2115) : 4 \u2223 (2*n)*(2*n+1)*(2*n+2)*(2*n+3) := by sorry",
+      "closed": false,
+      "seconds": 0.4
+    },
+    {
+      "goal": "theorem n_np1_2np1_div_six (n : Nat) : n * (n + 1) * (2 * n + 1) % 6 = 0 := by sorry",
+      "closed": false,
+      "seconds": 0.4
+    },
+    {
+      "goal": "theorem mul_three_consec_even_div_eight (n : \u2115) : (2*n) * (2*n+1) * (2*n+2) % 8 = 0 := by sorry",
+      "closed": false,
+      "seconds": 1.2
+    },
+    {
+      "goal": "theorem div_three (n : \u2115) : (n * (n + 1) * (n + 2) + 6) % 3 = 0 := by sorry",
+      "closed": false,
+      "seconds": 6.7
+    },
+    {
+      "goal": "theorem div24_consecutive (n : \u2115) : 24 \u2223 n*(n+1)*(n+2)*(n+3) := by sorry",
+      "closed": false,
+      "seconds": 0.7
+    },
+    {
+      "goal": "theorem dvd_n_mul_succ_mul_two_n_add_one (n : \u2115) : 6 \u2223 n * (n + 1) * (2 * n + 1) := by sorry",
+      "closed": false,
+      "seconds": 0.4
+    },
+    {
+      "goal": "theorem prod_three_consec_even_div24 (n : Nat) : (2*n) * (2*n+1) * (2*n+2) % 24 = 0 := by sorry",
+      "closed": false,
+      "seconds": 3.2
+    },
+    {
+      "goal": "theorem n_pow5_sub_n_div5 (n : \u2115) : (n^5 - n) % 5 = 0 := by sorry",
+      "closed": false,
+      "seconds": 0.6
+    },
+    {
+      "goal": "theorem n_cubed_minus_n_div_six (n : \u2115) : (n^3 - n) % 6 = 0 := by sorry",
+      "closed": false,
+      "seconds": 0.5
+    },
+    {
+      "goal": "theorem n_pow_five_sub_n_div_thirty (n : \u2115) : (n^5 - n) % 30 = 0 := by sorry",
+      "closed": false,
+      "seconds": 2.5
+    }
+  ],
+  "elapsed_s": 17.4,
+  "model": "claude-opus-4-8",
+  "cost_usd": 0.0239
+}
