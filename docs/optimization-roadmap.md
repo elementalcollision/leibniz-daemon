@@ -208,10 +208,12 @@ discovery-frontier push.
   unproven; blocker still prover reach). **Inconclusive, with a measurement gap**: the
   harness does not instrument decomposition, so it cannot distinguish "decomposition fired
   but the sub-lemmas/composition also failed" from "decomposition silently no-op'd"
-  (bad-JSON / unprovable sub-lemmas). Small N (6) on a low base rate (prior: 1/25). Next:
-  instrument the decomposer (log decompositions attempted / sub-lemmas proven / composed
-  closes) before a larger run, and/or lever 3 (a stronger/longer prover) — the genuinely
-  non-trivial goals are hard even when split.
+  (bad-JSON / unprovable sub-lemmas). Small N (6) on a low base rate (prior: 1/25).
+  ✅ **Decomposition is now INSTRUMENTED** (`DecompositionStats`: attempted / planned /
+  sub-lemmas proposed+proven / composed attempts+closed), printed in the calibration
+  summary and written to the report — so the next decomposition run is measurable, not a
+  black box. Remaining: a larger measurable run, and/or lever 3 (a stronger/longer
+  prover) — the genuinely non-trivial goals are hard even when split.
 
 ## Sequencing (as built)
 

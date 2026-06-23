@@ -157,6 +157,13 @@ def main() -> int:
         nb = daemon.notebook
         print(f"  notebook:        proven {len(nb.proven)}, too_hard {len(nb.too_hard)} "
               f"(accumulating for weaken-and-retry), avoid {len(nb.avoid)}")
+    dec = getattr(daemon.demonstrate, "decomposer", None)  # ADR 0027 instrumentation
+    decomp_stats = dec.stats.as_dict() if dec is not None and hasattr(dec, "stats") else None
+    if decomp_stats is not None:
+        s = decomp_stats
+        print(f"  decomposition:   attempted {s['attempted']}, planned {s['planned']}, "
+              f"sub-lemmas {s['lemmas_proven']}/{s['lemmas_proposed']} proven, "
+              f"composed {s['closed']}/{s['composed_attempts']} closed")
     if cb is not None:
         print(f"  cost:            ${cb.spent_usd:.4f} ({cb.input_tokens}+{cb.output_tokens} tok)")
 
@@ -197,6 +204,7 @@ def main() -> int:
     out = _REPO / "calibration_report.json"
     out.write_text(json.dumps({"rows": rows, "aggregate": agg, "elapsed_s": round(elapsed, 1),
                                "promulgated": total_promul, "kernel_verified": len(proven),
+                               "decomposition": decomp_stats,
                                "cost_usd": round(cb.spent_usd, 4) if cb else None}, indent=2) + "\n")
     print(f"\n[calibrate] wrote {out}")
     return 0
