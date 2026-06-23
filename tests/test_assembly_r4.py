@@ -63,5 +63,27 @@ def test_aristotle_appended_when_enabled(monkeypatch):
     assert not any(isinstance(p, AristotleProver) for p in prover_ensemble())
 
 
+def test_repair_panel_wired_from_env(monkeypatch):
+    # ADR 0029 v2: LEIBNIZ_REPAIR_PANEL builds distinct-model repairers, guarded by the key.
+    from leibniz.proof_repair import RepairingDemonstrate
+    monkeypatch.setenv("LEIBNIZ_PROOF_REPAIR", "1")
+    monkeypatch.setenv("LEIBNIZ_REPAIR_PANEL", "openai/gpt-5.5, z-ai/glm-5.2")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")     # panel built only when a key is present
+    d = build_daemon(frontier_limit=1, analogy_limit=1)
+    assert isinstance(d.demonstrate, RepairingDemonstrate)
+    assert [r.identity for r in d.demonstrate.panel] == ["repair:openai/gpt-5.5", "repair:z-ai/glm-5.2"]
+    assert [r.provider.model for r in d.demonstrate.panel] == ["openai/gpt-5.5", "z-ai/glm-5.2"]
+
+
+def test_repair_panel_empty_without_openrouter_key(monkeypatch):
+    # no key -> no panel (safe degrade to the single-reasoner v1 path), no crash.
+    from leibniz.proof_repair import RepairingDemonstrate
+    monkeypatch.setenv("LEIBNIZ_PROOF_REPAIR", "1")
+    monkeypatch.setenv("LEIBNIZ_REPAIR_PANEL", "openai/gpt-5.5")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    d = build_daemon(frontier_limit=1, analogy_limit=1)
+    assert isinstance(d.demonstrate, RepairingDemonstrate) and d.demonstrate.panel == ()
+
+
 def test_conservative_judge_never_passes():
     assert ConservativeJudge().round_trip_agrees(None) == 0.0

@@ -174,16 +174,29 @@ def main() -> int:
               f"sub-lemmas {s['lemmas_proven']}/{s['lemmas_proposed']} proven, "
               f"composed {s['closed']}/{s['composed_attempts']} closed")
     rep_stage = getattr(daemon.demonstrate, "repairer", None)  # ADR 0029 instrumentation
-    repair_stats = rep_stage.stats.as_dict() if rep_stage is not None and hasattr(rep_stage, "stats") else None
+    repair_stats = None
+    if rep_stage is not None and hasattr(rep_stage, "stats"):
+        # Aggregate the PANEL (ADR 0029 v2): the primary + each distinct-model member each run
+        # their own loop, so sum their reach. promulgated is recorded on the primary only (it is
+        # the stage's count, not per-member). rounds_to_close concatenates all members' wins.
+        members = [rep_stage, *getattr(daemon.demonstrate, "panel", ())]
+        repair_stats = {
+            "panel_size": len(members),
+            "attempted": sum(m.stats.attempted for m in members),
+            "closed": sum(m.stats.closed for m in members),
+            "repairs": sum(m.stats.repairs for m in members),
+            "promulgated": rep_stage.stats.promulgated,
+            "rounds_to_close": [r for m in members for r in m.stats.rounds_to_close],
+        }
     if repair_stats is not None:
         s = repair_stats
-        # `closed` is repair's RAW reach — goals the base ensemble + decomposition came up
-        # SHORT on, that the repair loop kernel-closed; `promulgated` is the N+1-gated subset
-        # (repair supplied the deciding distinct-prover vote). rounds_to_close shows whether
-        # the win came on the initial draft (0) or needed kernel-error repair (>=1).
-        print(f"  repair (0029):   attempted {s['attempted']}, closed {s['closed']} "
-              f"(promulgated {s['promulgated']}), repair-rounds spent {s['repairs']}; "
-              f"rounds_to_close {s['rounds_to_close']}")
+        # `closed` is repair's RAW reach — goals the base ensemble + decomposition came up SHORT
+        # on, that some repair reasoner kernel-closed; `promulgated` is the N+1-gated subset
+        # (>=2 DISTINCT models closed the same goal). rounds_to_close shows whether wins came on
+        # the initial draft (0) or needed kernel-error repair (>=1).
+        print(f"  repair (0029):   panel {s['panel_size']}, attempted {s['attempted']}, "
+              f"closed {s['closed']} (promulgated {s['promulgated']}), "
+              f"repair-rounds {s['repairs']}; rounds_to_close {s['rounds_to_close']}")
     if cb is not None:
         print(f"  cost:            ${cb.spent_usd:.4f} ({cb.input_tokens}+{cb.output_tokens} tok)")
 
