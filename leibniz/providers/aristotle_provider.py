@@ -61,6 +61,11 @@ class AristotleProver:
     """A prover-ensemble member backed by Harmonic Aristotle. Proposal-only."""
 
     api_key_env: str = "ARISTOTLE_API_KEY"
+    # Stable consensus identity (ADR 0024/0029): `_prover_identity` keys on `.model`, so this
+    # makes Aristotle a STABLE, readable, distinct N+1 voter ("model:harmonic-aristotle")
+    # rather than a per-instance `obj:<id>`. It is an identity label, NOT an API model id —
+    # Aristotle is project-based and makes no model-keyed call.
+    model: str = "harmonic-aristotle"
     imports: tuple[str, ...] = ("Mathlib",)
     poll_interval_s: float = 10.0
     timeout_s: float = 1800.0           # Aristotle jobs run minutes→hours; bound it
