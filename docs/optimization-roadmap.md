@@ -217,11 +217,16 @@ discovery-frontier push.
       model** — Aristotle and the in-house repair loop both close goals the ensemble misses
       (~50% reach), while a stronger raw open model (Goedel) was marginal. **But reach ≠
       promulgation:** under N+1=2 a promulgation needs two *independent* models on the *same*
-      goal, which the current ensembles rarely achieve. So the repair loop is the right
-      **reach** engine; the **promulgation** unlock is a v2 — **two distinct repair reasoners
-      voting** (e.g. opus + gpt-5.5 as a panel via the failover chain) so repair alone
-      satisfies N+1 with two independent closers — and/or lean on Aristotle as a second
-      independent proposer. Raw-model swaps (A) stay deprioritized.
+      goal, which a single reasoner can't supply.
+    - ✅ **(C-v2) Repair PANEL — built + demonstrated.** The repair stage now runs a panel of
+      distinct reasoners (`LEIBNIZ_REPAIR_PANEL`) and counts *distinct* closers, so two
+      independent models closing the same goal satisfy N+1 by themselves (#65,
+      `scripts/measure_panel.py`). **Demonstrated 2/2:** panel `[opus, gpt-5.5]` with an empty
+      base promulgated two known-non-trivial goals at consensus=2 — each independently
+      kernel-verified (Q.E.D.), `repair_models=[claude-opus-4-8, gpt-5.5]`, $0.15. This
+      converts the measured ~50% reach into **sound** promulgations. Next: run the panel
+      through the live discovery funnel for a first *organic* promulgation; Aristotle remains
+      a candidate second independent proposer. Raw-model swaps (A) stay deprioritized.
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
