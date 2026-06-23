@@ -66,6 +66,8 @@ class ConsensusResult:
     attempts: int              # provers actually consulted
     edge: EdgeEvidence         # the PROOF_EDGE to record (PASS iff consensus)
     proof: Optional[Demonstratio]  # a kernel-verified proof, if consensus reached
+    identities: frozenset = frozenset()  # the DISTINCT prover identities that verified
+    verified_proof: Optional[Demonstratio] = None  # first kernel proof even when short
 
     @property
     def reached(self) -> bool:
@@ -120,7 +122,8 @@ class ProofConsensus:
         # consensus is about INDEPENDENT provers (ADR 0006/0024 review). A model that
         # proves the goal by two strategies (e.g. one-shot + decomposition) is ONE voter,
         # so a single model can never self-satisfy the threshold.
-        count = len({_prover_identity(p) for p, _ in verified})
+        identities = frozenset(_prover_identity(p) for p, _ in verified)
+        count = len(identities)
         first_proof, first_pass = (verified[0][1][0], verified[0][1][1]) if verified else (None, None)
         reached = count >= self.min_consensus
         if reached and first_pass is not None:
@@ -148,6 +151,7 @@ class ProofConsensus:
         return ConsensusResult(
             count=count, required=self.min_consensus, attempts=attempts,
             edge=edge, proof=first_proof if reached else None,
+            identities=identities, verified_proof=first_proof,
         )
 
 
