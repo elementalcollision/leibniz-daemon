@@ -39,6 +39,7 @@ from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
 from leibniz.providers.anthropic_provider import AnthropicProvider
+from leibniz.providers.aristotle_provider import AristotleProver
 from leibniz.providers.decomposition_prover import DecompositionProver
 from leibniz.providers.huggingface_provider import HuggingFaceProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
@@ -100,17 +101,31 @@ def prover_ensemble(meter: object | None = None) -> list:
     ADR 0024: also add `LEIBNIZ_DECOMPOSE` lemma-decomposition variants of the first
     base provers (default 1) — a distinct proving STRATEGY (structured `have`/`suffices`
     proofs) that closes goals one-shot drafts miss. The kernel still solely decides; each
-    variant is just another independent attempt under N+1 consensus."""
+    variant is just another independent attempt under N+1 consensus.
+
+    Lever 3 knobs: the OpenAI-compatible path takes `LEIBNIZ_PROVER_BASE_URL` +
+    `LEIBNIZ_PROVER_KEY_ENV` so a STRONGER open model (e.g. Goedel-Prover-V2 via
+    Featherless or a self-hosted vLLM endpoint, harness A) drops in by config; and
+    `LEIBNIZ_ARISTOTLE` appends the Harmonic Aristotle agent prover (ADR 0028). Both still
+    only PROPOSE — our kernel re-verifies every draft under N+1 consensus."""
     max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)  # proof-draft budget
     hf = [m.strip() for m in os.environ.get("LEIBNIZ_HF_PROVER_MODELS", "").split(",") if m.strip()]
     if hf:
         base = [HuggingFaceProvider(model=m, meter=meter, max_tokens=max_tok) for m in hf]
     else:
         models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
-        base = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
+        # Lever 3 / harness A: point the OpenAI-compatible client at any gateway (default
+        # OpenRouter) so a stronger model is reachable without code — Featherless, a
+        # self-hosted vLLM, etc. The model id(s) come from LEIBNIZ_PROVER_MODELS.
+        base_url = os.environ.get("LEIBNIZ_PROVER_BASE_URL") or OpenRouterProvider.url
+        key_env = os.environ.get("LEIBNIZ_PROVER_KEY_ENV") or "OPENROUTER_API_KEY"
+        base = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok,
+                                   url=base_url, api_key_env=key_env) for m in models]
     n_decomp = _env_int("LEIBNIZ_DECOMPOSE", 1)  # how many base provers to also run decomposed
     if n_decomp > 0 and base:
         base = base + [DecompositionProver(p) for p in base[:n_decomp]]
+    if os.environ.get("LEIBNIZ_ARISTOTLE", "").strip() not in ("", "0"):  # ADR 0028 (lever 3)
+        base = base + [AristotleProver(meter=meter)]
     return base
 
 
