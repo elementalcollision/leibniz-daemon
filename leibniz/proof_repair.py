@@ -39,14 +39,19 @@ def _canonical_model(s: str) -> str:
     The repair scaffold around model M is just "M trying harder with kernel feedback" — a
     STRATEGY, so per ADR 0024 it is the SAME voter as a base prover running M, NOT a second
     independent one. To dedupe across access paths (e.g. opus via Anthropic `claude-opus-4-8`
-    vs via OpenRouter `anthropic/claude-opus-4-8`), reduce to the bare model name. Non-model
-    identities (`obj:`/`repair:` with no resolved model) are kept verbatim, so they stay
-    distinct. Over-merging (two vendors sharing a bare name) is CONSERVATIVE — it can only
-    make consensus harder, never weaker."""
+    vs via OpenRouter `anthropic/claude-opus-4-8`), reduce to the bare model name. A
+    `repair:<model>` identity (the panel fallback when a member's actual model didn't resolve)
+    MUST canonicalize to that bare model too — else a repair by a model already in the base
+    would be miscounted as a second voter (the audit's critical finding). `obj:` (hosted
+    client, no bare model) stays verbatim so distinct clients stay distinct. Over-merging (two
+    vendors sharing a bare name, or a repair colliding with its base model) is CONSERVATIVE —
+    it can only make consensus HARDER, never weaker."""
     s = (s or "").strip()
-    if s.startswith("model:"):
-        s = s[len("model:"):]
-    if s.startswith(("obj:", "repair:")):
+    for prefix in ("model:", "repair:"):
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+            break
+    if s.startswith("obj:"):
         return s
     return s.rsplit("/", 1)[-1].lower()
 
