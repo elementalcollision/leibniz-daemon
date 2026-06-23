@@ -85,5 +85,18 @@ def test_repair_panel_empty_without_openrouter_key(monkeypatch):
     assert isinstance(d.demonstrate, RepairingDemonstrate) and d.demonstrate.panel == ()
 
 
+def test_aristotle_is_a_stable_distinct_consensus_voter():
+    # ADR 0028/0029: Aristotle is a real INDEPENDENT N+1 voter with a STABLE, readable
+    # identity (not a per-instance obj:<id>), distinct from the base provers' model: ids.
+    from leibniz.consensus import _prover_identity
+    from leibniz.providers.aristotle_provider import AristotleProver
+    from leibniz.providers.openrouter_provider import OpenRouterProvider
+    a1, a2 = AristotleProver(), AristotleProver()
+    assert _prover_identity(a1) == "model:harmonic-aristotle"     # stable + readable
+    assert _prover_identity(a1) == _prover_identity(a2)           # stable across instances
+    other = _prover_identity(OpenRouterProvider(model="deepseek/deepseek-prover-v2"))
+    assert _prover_identity(a1) != other                          # a genuinely distinct voter
+
+
 def test_conservative_judge_never_passes():
     assert ConservativeJudge().round_trip_agrees(None) == 0.0
