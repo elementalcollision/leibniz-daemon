@@ -6,6 +6,12 @@ intelligence.** A weak prover behind a sound gate produces few but trustworthy
 laws; a strong prover behind a weak gate produces a polluted ledger. We build the
 gate first.
 
+> **STATUS (2026-06-23):** R0–R6 are substantially built; the project is in **post-R6
+> optimization** (`docs/optimization-roadmap.md`). One divergence from the plan below: **R1
+> shipped via Docker, not LeanDojo** (`backends/lean_cli.py` / `lean_repl.py` against a pinned
+> Lean 4.31 + Mathlib container; ADR 0003/0011). All exit tests below remain valid as
+> regressions. `LeanVerifier.discharge` is still the sole `kernel_verified` writer.
+
 ---
 
 ### R0 — Scaffold (this repository)
@@ -26,10 +32,11 @@ reason. *(Met 2026-06-21: scaffold assembled into the `leibniz/` package;
 
 ---
 
-### R1 — Real kernel (the judge comes online)
+### R1 — Real kernel (the judge comes online) — ✅ DONE (via Docker, not LeanDojo)
 
-Replace `FakeLean` with a Lean 4 + Mathlib toolchain behind `LeanBackend`, via
-LeanDojo for proof-state access.
+Replace `FakeLean` with a Lean 4 + Mathlib toolchain behind `LeanBackend`. *(Shipped via a
+pinned Lean 4.31 + Mathlib **Docker** container — `backends/lean_cli.py` / `lean_repl.py`,
+ADR 0003/0011 — not LeanDojo as originally planned.)*
 
 - `compile_statement` → real elaboration (syntactic validity for free)
 - `check_proof` → real kernel verification; this is the only thing that may set
@@ -43,7 +50,7 @@ is `UNPROVEN`; a tautology is `TRIVIAL`.
 
 ---
 
-### R2 — Faithfulness hardening (close the residual)
+### R2 — Faithfulness hardening (close the residual) — ✅ DONE
 
 The research-hard rung. Make the gaming-witness real and write the first
 claim-type probes.
@@ -62,7 +69,7 @@ claim-type probes.
 
 ---
 
-### R3 — Novelty corpus (stop rediscovering textbooks)
+### R3 — Novelty corpus (stop rediscovering textbooks) — ✅ live
 
 Stand up the known-results corpus as a real promotion gate.
 
@@ -77,7 +84,7 @@ as `KNOWN`.
 
 ---
 
-### R4 — Proposal models (the variation operator)
+### R4 — Proposal models (the variation operator) — ✅ DONE (ensemble + ADR 0028/0029)
 
 Replace `FakeProvider` with real proposal-role models behind `ProviderAdapter`.
 
@@ -93,7 +100,7 @@ theorem end-to-end with no human in the loop on the critical path.
 
 ---
 
-### R5 — Selection & open-endedness (sustained novelty)
+### R5 — Selection & open-endedness (sustained novelty) — ✅ DONE
 
 Make KFM and the archive do real work so the search keeps finding new ground.
 
@@ -109,7 +116,7 @@ multiple sub-areas rather than clustering.
 
 ---
 
-### R6 — The reading-room (*Calculemus*) + operator tier
+### R6 — The reading-room (*Calculemus*) + operator tier — ✅ present
 
 Promotion ≠ publication. Stand up the public ledger and the operator-tier gate
 that decides what leaves the building.
