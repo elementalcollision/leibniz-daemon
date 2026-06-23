@@ -63,19 +63,29 @@ not just draft; the model that closed each goal is recorded for measurement hone
 ## Why this preserves N+1 (the load-bearing decision)
 
 A naive repair fallback would let a single repaired proof produce a PASS proof edge,
-silently dropping the promulgation bar from N+1 to 1. We do **not** do that. The repaired
-proof counts as exactly **one more distinct prover identity** (`repairer.identity =
-"repair:anthropic"`, which by construction never collides with a base prover's `model:` /
-`obj:` identity from `_prover_identity`). Repair runs only when the prior layers came up
-**short**, and it promulgates only if:
+silently dropping the promulgation bar from N+1 to 1. We do **not** do that. Repair runs
+only when the prior layers came up **short**, and the repaired proof counts as one more
+distinct prover identity **only if the model that produced it differs from every base
+verifier**:
 
-    len(carried_distinct_identities ∪ {repair_identity}) >= min_consensus
+    distinct = len(carried_identities) + (1 if canonical(repair_model) ∉ {canonical(i) for i in carried} else 0)
+    promulgate iff distinct >= min_consensus
+
+The dedup is load-bearing and was added after the **first live run (A) exposed the gap**:
+the base ensemble included opus *and* the repair reasoner's primary is opus, so a fixed
+`"repair:*"` identity would have counted **base-opus + repair-opus as two voters when it is
+one model** — exactly the double-count ADR 0024 fixed for `DecompositionProver` (a model's
+strategies are one voter; the repair scaffold is a strategy). `ProofRepairer.last_model`
+records which model actually produced the proof (failover-aware), and `_canonical_model`
+reduces identities to a bare model name so the same model via different gateways
+(`claude-opus-4-8` vs `anthropic/claude-opus-4-8`) collapses. Over-merging is conservative —
+it can only make consensus harder.
 
 So at the default N+1=2 the base ensemble must already hold **one** distinct kernel proof
-for repair to supply the second — a lone repaired proof can never self-satisfy. At
-`min_consensus == 1` the operator has explicitly opted into single-proof promulgation
-(exactly as for any single prover). `ConsensusResult` gained an additive `identities`
-(and `verified_proof`) field to make this counting exact rather than count-based.
+**from a different model** for repair to supply the second — a lone repaired proof, or a
+repair by a model already counted, can never self-satisfy. At `min_consensus == 1` the
+operator has explicitly opted into single-proof promulgation. `ConsensusResult` gained an
+additive `identities` (and `verified_proof`) field to make this counting exact.
 
 ## Why this stays trust-safe (CLAUDE.md invariants 1, 2, 7)
 

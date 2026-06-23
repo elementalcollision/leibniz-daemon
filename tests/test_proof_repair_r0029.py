@@ -17,7 +17,12 @@ from dataclasses import dataclass, field
 
 from leibniz.consensus import ConsensusResult
 from leibniz.propositio import Demonstratio, Enuntiatio, Expressio, Propositio
-from leibniz.proof_repair import ProofRepairer, RepairingDemonstrate, RepairStats
+from leibniz.proof_repair import (
+    ProofRepairer,
+    RepairingDemonstrate,
+    RepairStats,
+    _canonical_model,
+)
 from leibniz.trust import KERNEL_PRODUCER, PROOF_EDGE
 from leibniz.types import ClaimType, EdgeEvidence, Role, TrustTier, Verdict
 from leibniz.verifiers import LeanVerifier
@@ -152,7 +157,8 @@ class _FakeConsensus:
 @dataclass
 class _StubRepairer:
     result: object                      # (demo, edge) or None
-    identity: str = "repair:anthropic"
+    identity: str = "repair:frontier"
+    last_model: object = None           # model that produced the proof (failover-aware)
     stats: RepairStats = field(default_factory=RepairStats)
 
     def prove(self, expr):
@@ -279,6 +285,37 @@ def test_repair_runs_after_decomposition_also_comes_up_short():
     out = RepairingDemonstrate(con, rep, decomposer=_Decomposer()).run(_prop())
     edges = _proof_edges(out)
     assert len(edges) == 1 and edges[0].verdict is Verdict.PASS and edges[0].detail["via"] == "repair"
+
+
+# --- N+1 integrity: a repair by the SAME model as a base prover is NOT a 2nd voter ----
+# (the bug the live run A surfaced: base-opus + repair-opus must not count as two)
+
+def test_repair_same_model_as_base_prover_does_not_double_count():
+    # base ensemble's lone verifier is opus (via OpenRouter slug); repair also used opus.
+    con = _FakeConsensus(_consensus_result(1, identities=frozenset({"model:anthropic/claude-opus-4-8"})))
+    rep = _StubRepairer(_repair_pass(), last_model="claude-opus-4-8")  # same model, other gateway
+    out = RepairingDemonstrate(con, rep).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.FAIL   # NOT promulgated — one model only
+    assert rep.stats.promulgated == 0
+
+
+def test_repair_by_different_model_supplies_an_independent_vote():
+    con = _FakeConsensus(_consensus_result(1, identities=frozenset({"model:deepseek/deepseek-prover-v2"})))
+    rep = _StubRepairer(_repair_pass(), last_model="anthropic/claude-opus-4-8")  # distinct model
+    out = RepairingDemonstrate(con, rep).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.PASS
+    assert edges[0].detail["consensus"] == 2 and edges[0].detail["repair_independent"] is True
+    assert edges[0].detail["repair_model"] == "claude-opus-4-8"
+
+
+def test_canonical_model_dedupes_across_gateways_keeps_nonmodels_distinct():
+    assert _canonical_model("model:anthropic/claude-opus-4-8") == "claude-opus-4-8"
+    assert _canonical_model("claude-opus-4-8") == "claude-opus-4-8"          # same as via slug
+    assert _canonical_model("model:deepseek/deepseek-prover-v2") == "deepseek-prover-v2"
+    assert _canonical_model("obj:140234") == "obj:140234"                    # hosted client: kept
+    assert _canonical_model("repair:frontier") == "repair:frontier"         # unresolved: kept
 
 
 # --- AnthropicProvider.repair_proof prompt (statement-fixed, error-fed) -------
