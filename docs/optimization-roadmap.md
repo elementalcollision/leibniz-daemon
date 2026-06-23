@@ -164,7 +164,16 @@ discovery-frontier push.
     (`discharge` untouched); composes with N+1 consensus; `LEIBNIZ_DECOMPOSE` (default 1).
     Proposal-side; invariants byte-identical. Deferred to a future guarded-core ADR:
     *independent* sub-lemma proving + a verified preamble for reuse as stepping stones.
-  - **Lever 3 — stronger/longer prover**: more consensus depth / tokens per attempt.
+  - 🔶 **Lever 3 — stronger prover (ADR 0028/0029, in progress)**: researched the
+    current Lean-4 landscape and wired the access paths (all proposal-side; our kernel
+    re-verifies under N+1). **(A)** OpenAI-compatible client now takes
+    `LEIBNIZ_PROVER_BASE_URL`/`LEIBNIZ_PROVER_KEY_ENV` so Goedel-Prover-V2 (beats
+    DeepSeek-Prover-V2-671B) drops in by config — `scripts/measure_goedel.py`. **(B)**
+    `AristotleProver` (Harmonic Aristotle agent) + `scripts/try_aristotle.py` (submits a
+    goal, **our kernel re-verifies** the returned proof) — env-gated `LEIBNIZ_ARISTOTLE`.
+    **(C)** agentic proof-repair loop (frontier reasoner + kernel-error feedback +
+    retrieval; HILBERT/LEAP pattern) **drafted in ADR 0029** — the highest-leverage path,
+    to build after A/B measure the baseline. Pending live runs (billable).
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
