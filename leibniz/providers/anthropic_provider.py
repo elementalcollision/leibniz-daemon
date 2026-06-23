@@ -20,6 +20,15 @@ _SYSTEM = (
     "of algorithms. You PROPOSE; a Lean kernel and mechanical gates DECIDE. Never "
     "claim something is proven. Respond with ONLY the requested JSON, no prose."
 )
+# PROOF_DRAFT / repair_proof must return a BARE Lean tactic script — NOT JSON. The default
+# _SYSTEM forces JSON (right for CONJECTURE/FORMALIZE, which are parsed as JSON), so the
+# proof roles use this proof-system prompt instead, or the kernel gets `{"script": ...}`
+# and can never elaborate it (caught by the ADR 0029 live measurement).
+_PROOF_SYSTEM = (
+    "You draft and repair Lean 4 tactic scripts for a theorem daemon. Output ONLY the "
+    "proof term/script (e.g. starting with `by`), no prose, no backticks, no JSON. You "
+    "PROPOSE; a Lean kernel DECIDES — never claim the proof is correct."
+)
 
 # ADR 0022: the faithfulness checker can only certify a contract whose predicates
 # live in this sound, Z3-decidable arithmetic DSL (ADR 0021). A contract outside it
@@ -96,6 +105,7 @@ class AnthropicProvider:
     api_key_env: str = "ANTHROPIC_API_KEY"
     max_tokens: int = 2048
     meter: Optional[object] = None  # ADR 0014: has .record_usage(model, in, out)
+    max_retries: int = 5  # SDK retries transient 429/5xx with backoff (live runs hit bursts)
 
     def available(self) -> bool:
         if not os.environ.get(self.api_key_env):
@@ -106,7 +116,7 @@ class AnthropicProvider:
         except ImportError:
             return False
 
-    def _chat(self, user_content: str) -> str:
+    def _chat(self, user_content: str, system: Optional[str] = None) -> str:
         try:
             import anthropic
         except ImportError as e:  # pragma: no cover
@@ -114,11 +124,11 @@ class AnthropicProvider:
         key = os.environ.get(self.api_key_env)
         if not key:
             raise ProviderUnavailable(f"{self.api_key_env} not set")
-        client = anthropic.Anthropic(api_key=key)
+        client = anthropic.Anthropic(api_key=key, max_retries=self.max_retries)
         msg = client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
-            system=_SYSTEM,
+            system=system or _SYSTEM,
             messages=[{"role": "user", "content": user_content}],
         )
         self._meter(msg)
@@ -144,7 +154,9 @@ class AnthropicProvider:
         template = _PROMPTS.get(role)
         if template is None:
             raise ProviderUnavailable(f"AnthropicProvider does not handle role {role}")
-        return self._chat(template.format(context=context))
+        # PROOF_DRAFT must come back as a BARE tactic script; CONJECTURE/FORMALIZE as JSON.
+        system = _PROOF_SYSTEM if role is Role.PROOF_DRAFT else None
+        return self._chat(template.format(context=context), system=system)
 
     def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
         """ADR 0029: the kernel rejected this proof; repair it given the actual error.
@@ -164,7 +176,7 @@ class AnthropicProvider:
             f"Failed proof:\n{failed_proof}\n"
             f"Lean error:\n{error[:1500]}"
         )
-        return self._chat(prompt)
+        return self._chat(prompt, system=_PROOF_SYSTEM)  # bare script, not JSON
 
     def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
         """R4.2: hand a failed Lean compile back to the autoformalizer to fix the

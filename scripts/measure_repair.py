@@ -136,6 +136,13 @@ def main() -> int:
     print(f"  elapsed: {elapsed:.0f}s")
     if meter is not None:
         print(f"  cost: ${meter.spent_usd:.4f} ({meter.input_tokens}+{meter.output_tokens} tok)")
+    # Guard against a silent provider failure being misread as "repair can't prove these":
+    # the loop swallows provider exceptions (defensive), so 0 closed + 0 tokens means the
+    # reasoner never actually answered (auth / transient API outage), NOT a reach result.
+    if s["attempted"] > 0 and meter is not None and meter.input_tokens == 0:
+        print("  ⚠ WARNING: 0 tokens spent across all attempts — the reasoner made NO "
+              "successful calls (API/key/transient failure). This is NOT a reach result; "
+              "re-run before interpreting.")
 
     import json
     rep = _REPO / "repair_reach_report.json"
