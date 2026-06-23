@@ -23,7 +23,7 @@ import asyncio
 import os
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -64,6 +64,15 @@ class AristotleProver:
     poll_interval_s: float = 10.0
     timeout_s: float = 1800.0           # Aristotle jobs run minutes→hours; bound it
     meter: Optional[object] = None      # Aristotle bills per job, not per token — not metered here
+    # Aristotle ingests a Lean PROJECT and warns when no `lean-toolchain` is present; ship
+    # one. Defaults to OUR re-verification toolchain (4.31) so the returned proof is most
+    # likely to pass our kernel; override via LEIBNIZ_ARISTOTLE_TOOLCHAIN (Aristotle
+    # itself recommends leanprover/lean4:v4.28.0 — try that if 4.31 jobs error). Mathlib
+    # deps (the `.lake` warning) are resolved on Aristotle's side; we don't ship them.
+    toolchain: str = field(
+        default_factory=lambda: os.environ.get("LEIBNIZ_ARISTOTLE_TOOLCHAIN")
+        or "leanprover/lean4:v4.31.0"
+    )
 
     def available(self) -> bool:
         if not os.environ.get(self.api_key_env):
@@ -100,6 +109,7 @@ class AristotleProver:
     async def _aprove(self, context: str) -> str:
         lib = self._lib()  # set_api_key is sync
         with tempfile.TemporaryDirectory() as work:
+            (Path(work) / "lean-toolchain").write_text(self.toolchain + "\n")  # Aristotle wants this
             src = "\n".join(f"import {m}" for m in self.imports) + "\n\n" + _strip_to_statement(context)
             (Path(work) / "Thm.lean").write_text(src + "\n")
             project = await lib.Project.create_from_directory(_FILL_PROMPT, work)

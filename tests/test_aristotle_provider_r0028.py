@@ -56,9 +56,10 @@ def test_non_proof_role_is_rejected(monkeypatch):
 
 # --- submit -> poll -> get_files flow (fake aristotlelib) --------------------
 
-def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp"):
+def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp", captured=None):
     # aristotlelib is async: every Project/AgentTask method is a coroutine (set_api_key
     # is sync). The fake mirrors that so the await path in AristotleProver is exercised.
+    # `captured` (a dict) records what was submitted, so tests can assert the project shape.
     m = types.ModuleType("aristotlelib")
     m.set_api_key = lambda k: k
 
@@ -79,6 +80,10 @@ def _fake_lib(status="COMPLETE", filled="theorem t : True := by simp"):
     class _Project:
         @classmethod
         async def create_from_directory(cls, prompt, d, **kw):
+            if captured is not None:
+                captured["files"] = sorted(p.name for p in Path(d).iterdir())
+                tc = Path(d) / "lean-toolchain"
+                captured["toolchain"] = tc.read_text() if tc.exists() else None
             return cls()
 
         async def get_tasks(self, limit=1):
@@ -107,3 +112,15 @@ def test_propose_returns_empty_on_failed(monkeypatch):
     monkeypatch.setitem(sys.modules, "aristotlelib", _fake_lib("FAILED", "irrelevant"))
     out = AristotleProver(poll_interval_s=0).propose(Role.PROOF_DRAFT, "theorem t : True")
     assert out == ""  # a non-COMPLETE task yields no proof -> candidate settles UNPROVEN
+
+
+def test_submitted_project_ships_a_lean_toolchain(monkeypatch):
+    # Aristotle warns without a lean-toolchain; the submitted project must include one,
+    # honoring the env override.
+    monkeypatch.setenv("ARISTOTLE_API_KEY", "k")
+    monkeypatch.setenv("LEIBNIZ_ARISTOTLE_TOOLCHAIN", "leanprover/lean4:v4.28.0")
+    cap: dict = {}
+    monkeypatch.setitem(sys.modules, "aristotlelib", _fake_lib(captured=cap))
+    AristotleProver(poll_interval_s=0).propose(Role.PROOF_DRAFT, "theorem t : True")
+    assert "lean-toolchain" in cap["files"] and "Thm.lean" in cap["files"]
+    assert cap["toolchain"].strip() == "leanprover/lean4:v4.28.0"
