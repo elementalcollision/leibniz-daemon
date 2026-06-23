@@ -94,7 +94,49 @@ def test_constant_power_and_modulo_encode_soundly():
     assert _backend().find_counterexample("(n * (n + 1)) % 2 != 0") is None  # n(n+1) is even
 
 
-def test_symbolic_exponent_and_functions_stay_unencodable():
+def test_symbolic_exponent_and_other_functions_stay_unencodable():
     # No vacuous certification of what Z3 cannot decide -> degrade to no witness.
     assert _backend().find_counterexample("n < 2 ^ n") is None             # symbolic exponent
-    assert _backend().find_counterexample("Nat.log(2, n) > n") is None     # function call
+    assert _backend().find_counterexample("Nat.log(2, n) > n") is None     # function call (not whitelisted)
+
+
+# --- ADR 0030 Tier A: min / max (exact via z3.If) --------------------------------
+
+def test_min_max_encode_exactly():
+    b = _backend()
+    # min/max are bounded by their args, in both directions -> these refutations are UNSAT.
+    assert b.find_counterexample("min(a, b) > a") is None      # min <= a always
+    assert b.find_counterexample("min(a, b) > b") is None      # min <= b always
+    assert b.find_counterexample("max(a, b) < a") is None      # max >= a always
+    assert b.find_counterexample("min(a, b) > max(a, b)") is None
+    # min/max is ALWAYS one of the arguments (no spurious third value):
+    assert b.find_counterexample("min(a, b) != a and min(a, b) != b") is None
+    assert b.find_counterexample("max(a, b) != a and max(a, b) != b") is None
+
+
+def test_min_max_identities_pin_exactness():
+    b = _backend()
+    # max+min == a+b and max*min == a*b hold IFF the encoding is exactly min/max — a strong
+    # exactness cross-check over the whole bounded box (UNSAT = identity holds everywhere).
+    assert b.find_counterexample("max(a, b) + min(a, b) != a + b") is None
+    assert b.find_counterexample("max(a, b) * min(a, b) != a * b") is None
+    # n-ary: min/max of three is bounded by each argument.
+    assert b.find_counterexample("min(a, b, c) > a") is None
+    assert b.find_counterexample("max(a, b, c) < c") is None
+
+
+def test_min_max_not_vacuous_a_false_claim_yields_a_witness():
+    # Guard against a wrong-UNSAT: "min(a,b) == a" is FALSE when a>b, so its negation MUST
+    # be SAT (a real witness), not vacuously UNSAT.
+    m = _backend().find_counterexample("min(a, b) != a")
+    assert m is not None and min(m.get("a", 0), m.get("b", 0)) != m.get("a", 0)
+    assert _backend().encodable("min(a, b) >= 0") is True       # genuinely encodable now
+
+
+def test_unsafe_or_unwhitelisted_calls_still_degrade_to_no_witness():
+    b = _backend()
+    assert b.find_counterexample("gcd(a, b) > 0") is None            # not whitelisted
+    assert b.find_counterexample("math.min(a, b) < 0") is None       # attribute call -> rejected
+    assert b.find_counterexample("min(a, key=b) > 0") is None        # keyword arg -> rejected
+    assert b.find_counterexample("min(a) > 0") is None               # arity < 2 -> rejected
+    assert b.encodable("gcd(a, b) == 1") is False
