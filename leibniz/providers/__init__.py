@@ -6,6 +6,13 @@ and makes no network call until credentials are configured.
 """
 
 
+# A descriptive User-Agent for the urllib-based providers. Python-urllib's default UA is
+# blocked by some Cloudflare-fronted gateways (e.g. Featherless returns 403 "error code:
+# 1010" — banned-by-signature); an honest non-default UA passes the bot check. Not
+# deceptive — we are a real client with a valid key.
+USER_AGENT = "leibniz-daemon/0.1 (+https://github.com/elementalcollision/leibniz-daemon)"
+
+
 class ProviderUnavailable(RuntimeError):
     """Raised when a provider is asked to propose but is not configured (no SDK or
     no credentials). Callers/tests check ``available()`` first."""
