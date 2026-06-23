@@ -143,18 +143,20 @@ class RepairingDemonstrate:
     ``decomposer.prove`` records an edge — so layering repair on top of decomposition adds
     no double-recording. When ``decomposer`` is None this is just consensus -> repair.
 
-    N+1 is preserved: repair runs only when the prior stages came up SHORT, and the
-    repaired proof counts as ONE more *distinct* prover identity ONLY IF the model that
-    produced it is not already a base verifier. A repair by the SAME model as a base prover
-    (e.g. opus repairing what base-opus already drafted) is NOT a second independent vote
-    (ADR 0024: one model, one voter) — it is deduped by canonical model name, so it cannot
-    inflate the consensus count. It promulgates only if ``distinct >= min_consensus`` — so at
-    the default N+1=2 the base ensemble must already have ONE distinct kernel proof from a
-    DIFFERENT model for repair to supply the second; a lone repaired proof never
-    self-satisfies."""
+    N+1 is preserved. Repair runs only when the prior stages came up SHORT. The repair
+    PANEL (ADR 0029 v2) is `[repairer, *panel]` — independent reasoners, each running its own
+    draft→repair loop. A panel member's proof counts as one more *distinct* prover identity
+    ONLY IF the model that produced it is not already a base verifier or an earlier panel
+    closer (ADR 0024: one model, one voter — deduped by canonical model name). It promulgates
+    only if ``len(distinct base verifiers) + len(distinct panel closers) >= min_consensus`` —
+    so a single reasoner repairing what base-opus already drafted adds nothing, while two
+    DISTINCT panel reasoners both closing the goal can satisfy N+1 on their own (each kernel-
+    verified via `discharge`). A lone repaired proof never self-satisfies at N+1=2. With an
+    empty panel this is exactly the single-reasoner v1 behaviour."""
 
     consensus: ProofConsensus
     repairer: ProofRepairer
+    panel: tuple = ()           # ADR 0029 v2: additional DISTINCT-model repairers (independent votes)
     decomposer: object = None   # optional LemmaDecomposer (ADR 0027); .prove(expr)->ConsensusResult|None
 
     def run(self, prop):
@@ -169,32 +171,39 @@ class RepairingDemonstrate:
             prop.record(result.edge)
             return prop
 
-        repaired = self.repairer.prove(prop.expressio)
-        if repaired is not None:
-            demo, ev = repaired
-            # Count the repair as an independent vote ONLY if its model differs from every
-            # base verifier (ADR 0024). last_model is the model that actually produced this
-            # proof (failover-aware); fall back to the scaffold identity if unresolved.
-            repair_canon = _canonical_model(
-                getattr(self.repairer, "last_model", None) or self.repairer.identity)
-            base_canon = {_canonical_model(i) for i in result.identities}
-            independent = repair_canon not in base_canon
-            distinct = len(result.identities) + (1 if independent else 0)
-            if distinct >= self.consensus.min_consensus:
-                self.repairer.stats.promulgated += 1
-                edge = EdgeEvidence(
-                    edge=ev.edge,
-                    tier=ev.tier,            # MECHANICAL, straight from discharge
-                    verdict=Verdict.PASS,
-                    detail={**ev.detail, "consensus": distinct,
-                            "required": self.consensus.min_consensus, "via": "repair",
-                            "repair_model": repair_canon, "repair_independent": independent},
-                    cost_units=ev.cost_units * max(1, distinct),
-                    producer=ev.producer,    # ADR 0013: preserve kernel provenance
-                )
-                prop.demonstratio = demo     # kernel-verified; attached only when promulgating
-                prop.record(edge)
-                return prop
+        # Repair panel: run each independent reasoner until enough DISTINCT models have a
+        # kernel-verified proof of THIS goal to satisfy N+1 (early-exit bounds the spend).
+        min_c = self.consensus.min_consensus
+        base_canon = {_canonical_model(i) for i in result.identities}
+        closers: dict[str, tuple] = {}   # canonical model -> (demo, ev); deduped vs base + each other
+        for r in (self.repairer, *self.panel):
+            if len(base_canon) + len(closers) >= min_c:
+                break
+            out = r.prove(prop.expressio)
+            if out is None:
+                continue
+            demo, ev = out
+            model = _canonical_model(getattr(r, "last_model", None) or r.identity)
+            if model in base_canon or model in closers:
+                continue        # same model as a base verifier / earlier closer -> not a new vote
+            closers[model] = (demo, ev)
+        distinct = len(base_canon) + len(closers)
+        if closers and distinct >= min_c:
+            self.repairer.stats.promulgated += 1
+            demo, ev = next(iter(closers.values()))   # attach one kernel-verified proof
+            edge = EdgeEvidence(
+                edge=ev.edge,
+                tier=ev.tier,            # MECHANICAL, straight from discharge
+                verdict=Verdict.PASS,
+                detail={**ev.detail, "consensus": distinct,
+                        "required": min_c, "via": "repair",
+                        "repair_models": sorted(closers)},
+                cost_units=ev.cost_units * max(1, distinct),
+                producer=ev.producer,    # ADR 0013: preserve kernel provenance
+            )
+            prop.demonstratio = demo     # kernel-verified; attached only when promulgating
+            prop.record(edge)
+            return prop
 
         # No promulgation: record the prior (short) result. A repaired-but-not-promulgated
         # proof is captured in repairer.stats (measurement), but is NOT attached as a

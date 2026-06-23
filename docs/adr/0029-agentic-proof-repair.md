@@ -108,10 +108,12 @@ additive `identities` (and `verified_proof`) field to make this counting exact.
 - **Repair model:** frontier reasoner (Claude) for both draft and repair in v1 — it is a
   distinct consensus identity from the specialized base provers and is the bigger lever per
   HILBERT. **Measured caveat (see Validation):** to *promulgate* under N+1=2 the repair model
-  must be distinct from the base AND a second model must close the same goal; the strongest
-  v2 is therefore **two distinct repair reasoners voting** (e.g. opus + gpt-5.5 via the
-  failover chain repurposed as a panel) so repair alone can satisfy N+1 with two independent
-  closers. A specialized-prover drafter + frontier repairer is another v2.
+  must be distinct from the base AND a second model must close the same goal. **v2 implemented
+  — the repair PANEL** (`LEIBNIZ_REPAIR_PANEL`, comma-separated OpenRouter models): the stage
+  runs `[primary, *panel]` as independent reasoners and counts *distinct* closers (canonical
+  dedup), so two distinct models both closing a goal satisfy N+1 **on their own** — even with
+  an empty base. Early-exits once enough distinct closers exist. A specialized-prover drafter
+  + frontier repairer is another possible variant.
 - **Premise retrieval:** deferred. v1 is error-feedback only (the cheaper, larger lever);
   retrieval can phase in later behind the same loop.
 - **Cost/latency:** bounded rounds (default 2); the REPL import cache (ADR 0011) keeps
