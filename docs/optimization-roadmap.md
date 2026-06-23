@@ -171,13 +171,24 @@ discovery-frontier push.
     DeepSeek-Prover-V2-671B) drops in by config — `scripts/measure_goedel.py`. **(B)**
     `AristotleProver` (Harmonic Aristotle agent) + `scripts/try_aristotle.py` (submits a
     goal, **our kernel re-verifies** the returned proof) — env-gated `LEIBNIZ_ARISTOTLE`.
-    **(C)** agentic proof-repair loop (frontier reasoner + kernel-error feedback +
-    retrieval; HILBERT/LEAP pattern) **drafted in ADR 0029** — the highest-leverage path.
+    **(C)** agentic proof-repair loop (frontier reasoner + kernel-error feedback;
+    HILBERT/LEAP pattern) **built in ADR 0029** (`leibniz/proof_repair.py`) — the
+    highest-leverage path — opt-in via `LEIBNIZ_PROOF_REPAIR`, layered as the outermost
+    DEMONSTRATE fallback (consensus → decomposition → repair). N+1 is preserved: a repaired
+    proof counts as one more *distinct* prover identity, so it can supply a deciding vote
+    but never lowers the bar; `discharge` stays the sole stamper. CI-safe unit tests green;
+    gated/live measurement pending.
 
     **Measured (live):**
-    - **(B) Aristotle — works.** `try_aristotle.py` on `6 ∣ n(n+1)(n+2)`: Aristotle
-      returned a complete proof and **our 4.31 kernel re-verified it** (Q.E.D.). A hosted
-      *agentic* prover closes our non-trivial goals.
+    - **(B) Aristotle — works, on our OWN near-misses.** `try_aristotle.py` on
+      `6 ∣ n(n+1)(n+2)`: Aristotle returned a complete proof and **our 4.31 kernel
+      re-verified it** (Q.E.D.). Then a harvest of **3 real daemon near-misses** (Lean
+      goals the ensemble formalized but never closed) — `(n³+5n)%6=0`,
+      `4 ∣ (2n)(2n+1)(2n+2)(2n+3)`, `n(n+1)(2n+1)%6=0` — came back **3/3 closed AND
+      re-verified by our kernel** (≈6–7 min each; tactics like `norm_num … interval_cases
+      n%6` and `grind`). A hosted *agentic* prover closes the exact non-trivial goals our
+      ensemble misses — the trust boundary holds end-to-end (proposer's output is worthless
+      until our kernel re-checks it).
     - **(A) Goedel-V2-32B — marginal.** 3 cycles, 12 conjectured, 11 reached proof,
       **1 promulgated** (`(n²+n+2) % 2 = 0`, proof persisted). But that run used
       consensus=1 (single model), so the lone promulgation is partly a lower-bar artifact;

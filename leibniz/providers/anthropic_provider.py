@@ -146,6 +146,26 @@ class AnthropicProvider:
             raise ProviderUnavailable(f"AnthropicProvider does not handle role {role}")
         return self._chat(template.format(context=context))
 
+    def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
+        """ADR 0029: the kernel rejected this proof; repair it given the actual error.
+
+        Returns ONLY a corrected `by ...` tactic script. The reasoner may change only
+        the PROOF — never the theorem statement (changing it would let a repair 'prove'
+        a different, weaker claim). The kernel re-checks whatever this returns; this only
+        proposes. Toolchain is Lean 4.31 + current Mathlib."""
+        prompt = (
+            "Your Lean 4 proof FAILED to verify. Repair it using the kernel's error. "
+            "Output ONLY the corrected proof — a tactic script starting with `by` — with "
+            "no prose and no backticks. Do NOT change, restate, or weaken the theorem; "
+            "fix only the proof. Toolchain is Lean 4.31 + current Mathlib (prefer "
+            "`import Mathlib.Tactic` lemmas/tactics). You PROPOSE; the Lean kernel "
+            "DECIDES — do not claim the repair is correct.\n"
+            f"Theorem (do NOT change):\n{theorem_src}\n"
+            f"Failed proof:\n{failed_proof}\n"
+            f"Lean error:\n{error[:1500]}"
+        )
+        return self._chat(prompt)
+
     def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
         """R4.2: hand a failed Lean compile back to the autoformalizer to fix the
         imports/statement, given the kernel's actual error. Returns corrected JSON."""

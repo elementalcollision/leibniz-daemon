@@ -125,6 +125,22 @@ class LeanReplBackend:
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
         return self._kernel_ok(self._run(_join_proof(expr.theorem_src, proof_src), expr.imports))
 
+    def check_proof_with_error(self, expr: Expressio, proof_src: str):
+        """Like check_proof, but also surface the kernel diagnostics (ADR 0029).
+
+        Returns (ok, error_text). This is an OPTIONAL backend method used only by the
+        agentic repair loop to feed the kernel's complaint back to the reasoner; it does
+        NOT write kernel_verified — that stays solely with LeanVerifier.discharge, which
+        re-checks any candidate this surfaces as ok before stamping it."""
+        resp = self._run(_join_proof(expr.theorem_src, proof_src), expr.imports)
+        if resp is None:
+            return (False, "lean backend unavailable")
+        msgs = resp.get("messages", []) or []
+        errors = [str(m.get("data", "") or "") for m in msgs if m.get("severity") == "error"]
+        sorry = [str(m.get("data", "") or "") for m in msgs if "sorry" in (m.get("data", "") or "")]
+        ok = (not errors) and (not sorry)
+        return (ok, "\n".join(errors) or ("proof still contains `sorry`" if sorry else ""))
+
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:
             if self._kernel_ok(self._run(_join_proof(expr.theorem_src, f"by {tac}"), expr.imports)):
