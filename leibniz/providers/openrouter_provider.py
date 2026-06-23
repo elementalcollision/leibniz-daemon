@@ -42,16 +42,35 @@ class OpenRouterProvider:
         return bool(os.environ.get(self.api_key_env))
 
     def propose(self, role: Role, context: str) -> str:
+        system = _PROOF_SYSTEM if role is Role.PROOF_DRAFT else _GENERIC_SYSTEM
+        return self._complete(system, context)
+
+    def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
+        """ADR 0029: repair a kernel-rejected proof given the error — same contract as
+        AnthropicProvider.repair_proof, so this class can serve as a failover frontier
+        reasoner in the repair loop. Returns ONLY a corrected `by ...` script; the kernel
+        re-checks it (this only proposes), and the statement must not change."""
+        prompt = (
+            "Your Lean 4 proof FAILED to verify. Repair it using the kernel's error. "
+            "Output ONLY the corrected proof — a tactic script starting with `by` — no "
+            "prose, no backticks. Do NOT change, restate, or weaken the theorem; fix only "
+            "the proof.\n"
+            f"Theorem (do NOT change):\n{theorem_src}\n"
+            f"Failed proof:\n{failed_proof}\n"
+            f"Lean error:\n{error[:1500]}"
+        )
+        return self._complete(_PROOF_SYSTEM, prompt)
+
+    def _complete(self, system: str, content: str) -> str:
         key = os.environ.get(self.api_key_env)
         if not key:
             raise ProviderUnavailable(f"{self.api_key_env} not set")
-        system = _PROOF_SYSTEM if role is Role.PROOF_DRAFT else _GENERIC_SYSTEM
         payload = {
             "model": self.model,
             "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": system},
-                {"role": "user", "content": context},
+                {"role": "user", "content": content},
             ],
         }
         req = urllib.request.Request(

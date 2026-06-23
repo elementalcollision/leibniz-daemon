@@ -47,6 +47,19 @@ Wired in `assembly.build_daemon`: `LEIBNIZ_PROOF_REPAIR>0` selects `RepairingDem
 `LEIBNIZ_REPAIR_ROUNDS` sets the round bound. Off by default — today's behaviour is
 unchanged unless the operator opts in.
 
+## Resilience — failover frontier reasoners
+
+A single reasoner is a single point of failure: the first live measurement stalled when
+Anthropic was mid-outage (opus 500s, sonnet 529s). The repairer's reasoner is therefore a
+`FailoverProvider` — an ordered chain that returns the first non-empty success: the
+Anthropic primary, then OpenRouter-hosted backups (`LEIBNIZ_REASONER_FALLBACKS`, default
+`z-ai/glm-5.2, moonshotai/kimi-k2.6, openai/gpt-5.5`). Failover is transparent when the
+primary is healthy (no behaviour/cost change) and only triggers on an exception or empty
+output. Backups are added only when `OPENROUTER_API_KEY` is set. This changes only WHICH
+frontier model drafts/repairs — every candidate still goes through `discharge`, so the
+kernel decides regardless. `OpenRouterProvider` gained `repair_proof` so a backup can repair,
+not just draft; the model that closed each goal is recorded for measurement honesty.
+
 ## Why this preserves N+1 (the load-bearing decision)
 
 A naive repair fallback would let a single repaired proof produce a PASS proof edge,
