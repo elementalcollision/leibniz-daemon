@@ -1,6 +1,7 @@
 # ADR 0030 — Faithfulness DSL increment: bounded definitional encodings (Proposed)
 
-- Status: **Proposed** (2026-06-23) — design only; approve before implementing.
+- Status: **Tier A implemented** (2026-06-23); Tiers B/C **Proposed** — approve before
+  implementing each.
 - Date: 2026-06-23
 - Related: ADR 0002 (faithfulness gate), ADR 0004 (structured contract), ADR 0020 (refuse
   vacuous passes), ADR 0021 (widen the DSL — multi-var, constant powers, constant mod/div),
@@ -35,12 +36,19 @@ pure, total functions enumerated below. `gates/` and `tests/test_invariants.py` 
 
 ## Decision — three tiers, gated by soundness + cost, shipped in order
 
-### Tier A — `min` / `max` (trivial, exact, ship first)
+### Tier A — `min` / `max` (trivial, exact) — **IMPLEMENTED**
 
 Whitelist `min(a, b)` and `max(a, b)` in the `ast.Call` handler, encoding to
 `z3.If(a < b, a, b)` / `z3.If(a > b, a, b)` (n-ary via fold). Exact for all integers, no
-bound interaction, no blow-up. Reject any other call shape (attributes, keywords, wrong
-arity). This is the cheapest, highest-confidence win.
+bound interaction, no blow-up. Reject any other call shape (attributes, keywords, starred
+args, other names, arity < 2). The cheapest, highest-confidence win.
+
+**Shipped** in `smt_z3.py` (`_conv` `ast.Call` branch) + the conjecturer `_DSL` prompt
+(min/max moved from forbidden to allowed). Property tests pin exactness over the box
+(`max+min == a+b`, `min ∈ {a,b}`, n-ary bounds), reject cases degrade to DEFER, and a
+wrong-UNSAT regression confirms a false claim yields a real witness. An independent
+adversarial review (soundness + security of the new `ast.Call` surface) returned SOUND —
+no eval/import/attribute reachable; encoding exactly equals Python min/max.
 
 ### Tier B — symbolic exponents `base ^ exp` (bounded If-chain)
 
