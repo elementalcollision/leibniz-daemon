@@ -196,15 +196,34 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     # draft against the kernel's actual error, a few bounded rounds. The repaired proof
     # counts as ONE more distinct prover under N+1 (it never lowers the consensus bar).
     if _env_int("LEIBNIZ_PROOF_REPAIR", 0) > 0:
+        rounds = _env_int("LEIBNIZ_REPAIR_ROUNDS", 2)
         repairer = ProofRepairer(
             # frontier reasoner with failover to OpenRouter backups on an Anthropic outage
             # (ADR 0029); PROPOSES only — the kernel still decides every candidate.
             provider=frontier_reasoner(autoformalizer, meter=cost_budget),
             lean=consensus.lean,            # discharge + check_proof_with_error via the ensemble's verifier
             obligation=consensus.obligation,
-            max_rounds=_env_int("LEIBNIZ_REPAIR_ROUNDS", 2),
+            max_rounds=rounds,
         )
-        demonstrate = RepairingDemonstrate(consensus, repairer, decomposer=decomposer)
+        # ADR 0029 v2: a repair PANEL of additional DISTINCT-model reasoners (OpenRouter), so
+        # repair can satisfy N+1 on its own when two independent models close the same goal.
+        # Each is a distinct consensus identity; the canonical-model dedup prevents any overlap
+        # with the primary/base from double-counting. Opt-in via LEIBNIZ_REPAIR_PANEL.
+        panel_models = [m.strip() for m in os.environ.get("LEIBNIZ_REPAIR_PANEL", "").split(",") if m.strip()]
+        panel = ()
+        if panel_models and os.environ.get("OPENROUTER_API_KEY"):
+            max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)
+            panel = tuple(
+                ProofRepairer(
+                    provider=OpenRouterProvider(model=m, meter=cost_budget, max_tokens=max_tok),
+                    lean=consensus.lean,
+                    obligation=consensus.obligation,
+                    max_rounds=rounds,
+                    identity=f"repair:{m}",
+                )
+                for m in panel_models
+            )
+        demonstrate = RepairingDemonstrate(consensus, repairer, panel=panel, decomposer=decomposer)
     elif decomposer is not None:
         demonstrate = DecomposingDemonstrate(consensus, decomposer)
     else:
