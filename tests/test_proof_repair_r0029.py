@@ -356,12 +356,27 @@ def test_panel_early_exits_once_enough_distinct_closers():
     assert primary.calls == 1 and member.calls == 0   # early-exit: member never ran
 
 
-def test_canonical_model_dedupes_across_gateways_keeps_nonmodels_distinct():
+def test_canonical_model_dedupes_across_gateways_and_repair_prefix():
     assert _canonical_model("model:anthropic/claude-opus-4-8") == "claude-opus-4-8"
     assert _canonical_model("claude-opus-4-8") == "claude-opus-4-8"          # same as via slug
     assert _canonical_model("model:deepseek/deepseek-prover-v2") == "deepseek-prover-v2"
     assert _canonical_model("obj:140234") == "obj:140234"                    # hosted client: kept
-    assert _canonical_model("repair:frontier") == "repair:frontier"         # unresolved: kept
+    # a repair:<model> fallback identity MUST reduce to the bare model so it dedupes against
+    # the same model in the base ensemble (the audit's critical N+1 over-count finding):
+    assert _canonical_model("repair:z-ai/glm-5.2") == "glm-5.2"
+    assert _canonical_model("repair:anthropic/claude-opus-4-8") == "claude-opus-4-8"
+
+
+def test_panel_member_fallback_identity_dedupes_against_same_base_model():
+    # provider lacks model/last_used -> last_model stays None -> dedup falls back to the
+    # member's identity "repair:z-ai/glm-5.2", which must canonicalize to the base's "glm-5.2"
+    # and NOT add a second vote for the same model. (Audit finding: repair_dedup_mismatch.)
+    con = _FakeConsensus(_consensus_result(1, identities=frozenset({"model:z-ai/glm-5.2"})))
+    member = _StubRepairer(_repair_pass(), identity="repair:z-ai/glm-5.2", last_model=None)
+    out = RepairingDemonstrate(con, member).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.FAIL   # same model -> no 2nd vote
+    assert member.stats.promulgated == 0
 
 
 # --- AnthropicProvider.repair_proof prompt (statement-fixed, error-fed) -------
