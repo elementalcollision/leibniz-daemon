@@ -172,8 +172,22 @@ discovery-frontier push.
     `AristotleProver` (Harmonic Aristotle agent) + `scripts/try_aristotle.py` (submits a
     goal, **our kernel re-verifies** the returned proof) — env-gated `LEIBNIZ_ARISTOTLE`.
     **(C)** agentic proof-repair loop (frontier reasoner + kernel-error feedback +
-    retrieval; HILBERT/LEAP pattern) **drafted in ADR 0029** — the highest-leverage path,
-    to build after A/B measure the baseline. Pending live runs (billable).
+    retrieval; HILBERT/LEAP pattern) **drafted in ADR 0029** — the highest-leverage path.
+
+    **Measured (live):**
+    - **(B) Aristotle — works.** `try_aristotle.py` on `6 ∣ n(n+1)(n+2)`: Aristotle
+      returned a complete proof and **our 4.31 kernel re-verified it** (Q.E.D.). A hosted
+      *agentic* prover closes our non-trivial goals.
+    - **(A) Goedel-V2-32B — marginal.** 3 cycles, 12 conjectured, 11 reached proof,
+      **1 promulgated** (`(n²+n+2) % 2 = 0`, proof persisted). But that run used
+      consensus=1 (single model), so the lone promulgation is partly a lower-bar artifact;
+      the apples-to-apples metric — the decomposition funnel — is essentially unchanged vs
+      the HF ensemble (sub-lemmas **2/17** proven ≈ 12% vs 3/22 ≈ 14%; composed **0/2**).
+      So a stronger *open model* is an **incremental** lift, not the unlock.
+    - **Conclusion (confirms HILBERT/LEAP):** the lever is the **scaffold, not the raw
+      model**. Aristotle (an agentic Lean-feedback prover) closes goals Goedel-alone
+      doesn't — so **build option C** (in-house agentic repair loop), and/or lean on
+      Aristotle as a proposer. Raw-model swaps (A) are deprioritized.
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
