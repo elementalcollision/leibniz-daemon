@@ -1,16 +1,34 @@
 # Leibniz · *Calculemus* — Handoff & Porting Manual
 
 **Audience:** Claude Code (and the operator directing it).
-**State (updated 2026-06-21):** R0 is **assembled and green**. The code originally
-arrived *unassembled* (flat in `files/`, no package, no `pyproject.toml`), so
-`pytest` collected 0 tests despite the docs claiming "complete and green." It has
-since been laid out as the `leibniz/` package with zero source edits; now
-`pip install -e ".[dev]"` then `pytest -q` passes 11 trust-invariant tests and
-`python demo.py` turns one circadian cycle (one `Q.E.D.` + one each of
-refuted/known/trivial/gamed). Tracked at
-`github.com/elementalcollision/leibniz-daemon` with branch protection on `main`,
-a PreToolUse trust-edge hook, and CI (see §4). What is actually next is in §12.
-**Goal of the port:** climb the capability ladder R1 → R6, replacing marked seams
+**State (updated 2026-06-23):** the rung climb **R1 → R6 is substantially complete**; the
+project is now in the **post-R6 optimization phase** (discovery yield — see
+`docs/optimization-roadmap.md`, the live work plan). The original assembly note is kept in §12
+for history. Capsule of what is real now (all behind the unchanged trust boundary):
+- **R1 — real kernel: DONE, but via Docker, NOT LeanDojo.** The `LeanBackend` is
+  `backends/lean_cli.py` + `backends/lean_repl.py`, shelling out to a pinned Lean 4.31 +
+  Mathlib container (`leibniz-lean:v4.31.0` / `leibniz-lean-repl:v4.31.0`), per ADR 0003/0011.
+  `lean-dojo` in `pyproject` is vestigial — the §6 table below said "via LeanDojo"; that plan
+  was superseded. `LeanVerifier.discharge` is still the sole `kernel_verified` writer.
+- **R2 — faithfulness: DONE.** Z3 backend (`backends/smt_z3.py`) + the bounded, sound DSL
+  (ADR 0021/0022, min/max added ADR 0030), gaming-witness search, claim probes, and the
+  budget-bounded OPEN_FORM judged fallback.
+- **R3 — novelty: live** (retrieval + decision procedure; KNOWN dispositions fire).
+- **R4 — proposal models: DONE.** Anthropic CONJECTURE/FORMALIZE; a prover ensemble
+  (DeepSeek-Prover-V2 / Goedel / OpenRouter / HF) under N+1 consensus; the Harmonic Aristotle
+  agent (ADR 0028); the ADR 0029 agentic **repair loop + distinct-reasoner panel** with
+  failover. Exit test (≥1 novel non-trivial theorem, no human on the path): the panel produces
+  N+1-sound promulgations (measurement runs audited — each close re-discharged +
+  non-triviality-checked); a first **organic** funnel promulgation is being validated.
+- **R5 — selection: DONE.** KFM + MAP-Elites archive (`selection.py`: descriptor, curiosity,
+  recombination).
+- **R6 — reading-room (*Calculemus*) + operator publish gate:** present (promotion ≠
+  publication; the daemon never auto-publishes).
+Tracked at `github.com/elementalcollision/leibniz-daemon`, branch protection on `main`, a
+PreToolUse trust-edge hook, and CI (see §4). **The live work plan is now
+`docs/optimization-roadmap.md`, not §8** — §8's rung tickets are retained as the original
+climb plan (with status notes).
+**Goal (achieved through R6; ongoing in optimization):** climb R1 → R6 replacing marked seams
 with real backends, **without ever weakening the trust boundary**.
 
 This document is the porting manual and work plan. It deliberately lives *outside*
@@ -144,9 +162,12 @@ leibniz-daemon/
 Each seam is a `Protocol`; the scaffold runs against fakes (`demo.py`). Implement
 these concrete classes behind the Protocols. Listed with the rung that needs them.
 
+**Status (2026-06-23): R1/R2/R4/R5 seams DONE; R3 live. The R1 backend ships via Docker, NOT
+LeanDojo (the "Real backend" cell below is the original plan).** Table kept for reference.
+
 | Protocol | File | Methods to implement | Real backend | Rung |
 |---|---|---|---|---|
-| `LeanBackend` | `verifiers.py` | `compile_statement`, `check_proof`, `closed_by_decision_procedure` | Lean 4 + Mathlib via LeanDojo | **R1** |
+| `LeanBackend` | `verifiers.py` (impl `backends/lean_cli.py`, `backends/lean_repl.py`) | `compile_statement`, `check_proof`, `closed_by_decision_procedure` | ✅ Lean 4.31 + Mathlib via **Docker** (superseded LeanDojo) | **R1** |
 | `SMTBackend` | `verifiers.py` | `find_counterexample`, `find_gaming_witness` | Z3 (`z3-solver`) | **R2** |
 | `ClaimProbe` table + `_negate` | `gates/faithfulness.py` | one probe per `ClaimType`; real `_negate` | Z3/Lean predicate compilation | **R2** |
 | `FaithfulnessJudge` | `gates/faithfulness.py` | `round_trip_agrees` | bounded LLM (OPEN_FORM only) | **R2** |
@@ -202,6 +223,13 @@ reversible choice silently.
 ---
 
 ## 8. Work plan — rung tickets
+
+> **STATUS (2026-06-23): R1–R6 are substantially built (see the State capsule at the top).**
+> These tickets are the *original* climb plan, retained for context + exit tests. R1 shipped
+> via **Docker, not LeanDojo**. The **live work plan is now `docs/optimization-roadmap.md`**
+> (post-R6 discovery-yield optimization: faithfulness DSL, weaken-retry, decomposition, the
+> lever-3 prover work — Aristotle + the ADR 0029 repair panel). Treat the per-rung text below
+> as the spec each seam was built to, with the exit tests still valid as regressions.
 
 Do them in order. Each leaves the daemon working. **Principle: the gate exists
 before the firehose** — stand up and harden the trust boundary (R1–R3) before
