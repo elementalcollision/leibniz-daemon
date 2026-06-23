@@ -107,7 +107,11 @@ additive `identities` (and `verified_proof`) field to make this counting exact.
 
 - **Repair model:** frontier reasoner (Claude) for both draft and repair in v1 — it is a
   distinct consensus identity from the specialized base provers and is the bigger lever per
-  HILBERT. A specialized-prover drafter + frontier repairer is a possible v2.
+  HILBERT. **Measured caveat (see Validation):** to *promulgate* under N+1=2 the repair model
+  must be distinct from the base AND a second model must close the same goal; the strongest
+  v2 is therefore **two distinct repair reasoners voting** (e.g. opus + gpt-5.5 via the
+  failover chain repurposed as a panel) so repair alone can satisfy N+1 with two independent
+  closers. A specialized-prover drafter + frontier repairer is another v2.
 - **Premise retrieval:** deferred. v1 is error-feedback only (the cheaper, larger lever);
   retrieval can phase in later behind the same loop.
 - **Cost/latency:** bounded rounds (default 2); the REPL import cache (ADR 0011) keeps
@@ -120,10 +124,38 @@ additive `identities` (and `verified_proof`) field to make this counting exact.
 - **Unit (CI-safe, done):** `tests/test_proof_repair_r0029.py` — the loop drafts →
   diagnoses → repairs → re-checks with a faked prover + kernel (no network/docker); the
   statement is never mutated; rounds are bounded; provider errors never block; one proof
-  edge is recorded; a lone repair cannot self-satisfy N+1; repair supplies the deciding
-  vote only when one short; degrades to a safe no-op when the backend can't surface errors.
-  `discharge` remains the sole stamper; `test_invariants.py` unchanged.
-- **Gated (real kernel):** a goal that fails one-shot but closes after a repair round
-  (`check_proof_with_error` exercised end-to-end). Pending image run.
-- **Live (billable):** a calibration with `LEIBNIZ_PROOF_REPAIR=1` vs the ADR 0027 baseline
-  — does the non-trivial close rate rise, and at what round distribution (`RepairStats`)?
+  edge is recorded; a lone repair cannot self-satisfy N+1; **a same-model repair adds no
+  vote and a distinct-model repair supplies exactly one** (`_canonical_model` dedup);
+  degrades to a safe no-op when the backend can't surface errors. `discharge` remains the
+  sole stamper; `test_invariants.py` unchanged.
+
+- **Targeted reach (live, `scripts/measure_repair.py`):** the in-house loop run directly on
+  the daemon's real Lean near-misses (goals the ensemble formalized but never closed) — the
+  head-to-head with Aristotle's 3/3 harvest. The scaffold closes **~half**: opus **6/11**,
+  and during an Anthropic outage the failover backups **5/11** (by glm-5.2 / gpt-5.5 /
+  kimi-k2.6, plus opus once it recovered) — **union 7/11**. **Every closed proof was
+  independently re-verified — kernel PASS *and* non-trivial.** Round distributions
+  (`[1,1,0,1,0,1]`, `[2,0,0,2,1]`) show **~half the wins come *from* repair rounds**, not
+  the initial draft — the kernel-error feedback is the lever (HILBERT/LEAP confirmed).
+
+- **Integrated funnel (live calibration, `LEIBNIZ_PROOF_REPAIR=1`):** repair fires as the
+  outermost DEMONSTRATE fallback and **closes ~47% of the goals the ensemble + decomposition
+  came up short on** (14/30, 19/39 across runs; ~half via repair rounds). The first such run
+  **surfaced the N+1 integrity bug we then fixed** (a fixed `repair:*` identity double-counted
+  base-opus + repair-opus — see "Why this preserves N+1"); the dedup is now load-bearing.
+
+- **N+1 promulgation — the honest finding:** with the dedup, **sound repair promulgations at
+  N+1=2 are ≈0** in the configs measured. Not because repair is weak (its reach is high), but
+  because promulgation needs **two distinct models to close the *same* goal**: when opus is
+  also a base prover the repair correctly adds nothing, and when the base is distinct
+  (deepseek + glm) the specialized provers rarely close the *same* hard goals repair closes,
+  so repair is the lone closer (1 < 2). **Takeaway:** repair is a large **reach** lever but
+  not, on its own, a **promulgation** lever under N+1=2. The unlock is a *second distinct
+  repair reasoner* (two independent repair votes — e.g. opus + gpt-5.5) or an operator
+  lowering consensus — deferred to a v2 (N-of-M repair consensus). NB: a pre-fix calibration
+  reported 9 "promulgations" that were the opus+opus double-count artifact and must be
+  disregarded; the proofs were kernel-true but did not meet independent N+1.
+
+- **Resilience (live):** an Anthropic outage mid-measurement (opus 500s, sonnet 529s)
+  exercised `FailoverProvider` end-to-end — all four reasoners (opus/glm/kimi/gpt) closed
+  goals; failover is transparent when the primary is healthy.

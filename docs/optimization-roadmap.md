@@ -175,9 +175,11 @@ discovery-frontier push.
     HILBERT/LEAP pattern) **built in ADR 0029** (`leibniz/proof_repair.py`) — the
     highest-leverage path — opt-in via `LEIBNIZ_PROOF_REPAIR`, layered as the outermost
     DEMONSTRATE fallback (consensus → decomposition → repair). N+1 is preserved: a repaired
-    proof counts as one more *distinct* prover identity, so it can supply a deciding vote
-    but never lowers the bar; `discharge` stays the sole stamper. CI-safe unit tests green;
-    gated/live measurement pending.
+    proof counts as one more *distinct* prover identity **only if its model differs from every
+    base verifier** (canonical model-name dedup, ADR 0024) — so it can supply a deciding vote
+    but never lowers the bar; `discharge` stays the sole stamper. Now **measured live** (C,
+    below), including a frontier-reasoner **failover** chain (opus → glm-5.2 → kimi-k2.6 →
+    gpt-5.5) added after an Anthropic outage stalled the first run.
 
     **Measured (live):**
     - **(B) Aristotle — works, on our OWN near-misses.** `try_aristotle.py` on
@@ -195,10 +197,31 @@ discovery-frontier push.
       the apples-to-apples metric — the decomposition funnel — is essentially unchanged vs
       the HF ensemble (sub-lemmas **2/17** proven ≈ 12% vs 3/22 ≈ 14%; composed **0/2**).
       So a stronger *open model* is an **incremental** lift, not the unlock.
+    - **(C) In-house repair loop — strong on REACH, gated on PROMULGATION.** Measured two
+      ways. *Targeted* (`scripts/measure_repair.py`, the in-house Claude+kernel loop run
+      directly on the daemon's real Lean near-misses — head-to-head with Aristotle's 3/3):
+      the scaffold closes **~half** — opus **6/11**, and during an Anthropic outage the
+      failover backups **5/11** (glm-5.2 / gpt-5.5 / kimi-k2.6 + opus), **union 7/11**;
+      **every closed proof re-verified by our kernel AND non-trivial**; round distributions
+      (`[1,1,0,1,0,1]`, `[2,0,0,2,1]`) show **~half the wins come *from* repair rounds**, not
+      the draft. *Integrated* (calibration, `LEIBNIZ_PROOF_REPAIR=1`): repair closes **~47%**
+      of goals the ensemble+decomposition missed (14/30, 19/39). **But sound N+1=2
+      promulgations ≈ 0**: promulgation needs *two distinct models to close the same goal* —
+      when opus is also a base prover the repair correctly adds nothing (the dedup that fixed
+      a real double-count bug; a pre-fix run's "9 promulgations" were the opus+opus artifact),
+      and when the base is distinct (deepseek+glm) the specialized provers rarely close the
+      *same* hard goals repair closes, so repair is the lone closer (1<2). The live run also
+      exposed three integration bugs unit tests missed (proof roles returned JSON not bare
+      scripts; no failover; the N+1 double-count) — all fixed (#60/#62/#63).
     - **Conclusion (confirms HILBERT/LEAP):** the lever is the **scaffold, not the raw
-      model**. Aristotle (an agentic Lean-feedback prover) closes goals Goedel-alone
-      doesn't — so **build option C** (in-house agentic repair loop), and/or lean on
-      Aristotle as a proposer. Raw-model swaps (A) are deprioritized.
+      model** — Aristotle and the in-house repair loop both close goals the ensemble misses
+      (~50% reach), while a stronger raw open model (Goedel) was marginal. **But reach ≠
+      promulgation:** under N+1=2 a promulgation needs two *independent* models on the *same*
+      goal, which the current ensembles rarely achieve. So the repair loop is the right
+      **reach** engine; the **promulgation** unlock is a v2 — **two distinct repair reasoners
+      voting** (e.g. opus + gpt-5.5 as a panel via the failover chain) so repair alone
+      satisfies N+1 with two independent closers — and/or lean on Aristotle as a second
+      independent proposer. Raw-model swaps (A) stay deprioritized.
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
