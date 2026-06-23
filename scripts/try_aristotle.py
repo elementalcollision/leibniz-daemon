@@ -7,7 +7,8 @@ agent's output is worthless to us unless OUR kernel re-checks it.
 
 Usage (needs ARISTOTLE_API_KEY in .env; BILLABLE — Aristotle runs minutes→hours):
     python scripts/try_aristotle.py "theorem t (n : Nat) : 6 ∣ n*(n+1)*(n+2)"
-    python scripts/try_aristotle.py --from-notebook 3   # pull N too-hard near-misses
+    python scripts/try_aristotle.py --from-memory 3     # N LEAN near-misses the kernel couldn't close
+    python scripts/try_aristotle.py --from-notebook 3   # N human-prose near-misses (NL; needs formalize)
 """
 from __future__ import annotations
 
@@ -38,8 +39,25 @@ def _verify(theorem_src: str, proof: str) -> bool:
 
 
 def _goals(argv: list[str]) -> list[str]:
+    if len(argv) >= 2 and argv[0] == "--from-memory":
+        # The daemon's LEAN near-misses: recent candidates that reached formalization but
+        # the kernel never closed. This is what Aristotle needs (valid Lean theorem_src),
+        # unlike --from-notebook (human prose). Most-recent-first, deduped.
+        from leibniz.runtime import PersistentRuntime
+        n = int(argv[1])
+        seen: set[str] = set()
+        out: list[str] = []
+        for p in PersistentRuntime().recall_recent(200):
+            ts = p.expressio.theorem_src if p.expressio else None
+            if not ts or ts in seen or (p.demonstratio and p.demonstratio.kernel_verified):
+                continue
+            seen.add(ts)
+            out.append(ts)
+            if len(out) >= n:
+                break
+        return out
     if len(argv) >= 2 and argv[0] == "--from-notebook":
-        import json
+        import json  # NB: notebook holds HUMAN statements (NL) — only usable if Aristotle formalizes
         n = int(argv[1])
         nb = json.loads((_REPO / ".leibniz" / "notebook.json").read_text())
         return [f"theorem t : {s}" if not s.strip().startswith(("theorem", "lemma")) else s
