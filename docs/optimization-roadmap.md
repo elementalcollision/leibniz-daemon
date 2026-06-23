@@ -209,11 +209,23 @@ discovery-frontier push.
   harness does not instrument decomposition, so it cannot distinguish "decomposition fired
   but the sub-lemmas/composition also failed" from "decomposition silently no-op'd"
   (bad-JSON / unprovable sub-lemmas). Small N (6) on a low base rate (prior: 1/25).
-  ✅ **Decomposition is now INSTRUMENTED** (`DecompositionStats`: attempted / planned /
-  sub-lemmas proposed+proven / composed attempts+closed), printed in the calibration
-  summary and written to the report — so the next decomposition run is measurable, not a
-  black box. Remaining: a larger measurable run, and/or lever 3 (a stronger/longer
-  prover) — the genuinely non-trivial goals are hard even when split.
+  ✅ **Decomposition is now INSTRUMENTED** (`DecompositionStats`), and the larger
+  measurable run (3 cycles × 2 seeds, 12 conjectured, $2.12) gave a **decisive diagnosis**
+  via the funnel `attempted 11 · planned 11 · sub-lemmas 3/22 proven · composed 0/3 closed`:
+  - decomposition **fires and works mechanically** — 11/11 produced a valid, parsed plan
+    (no silent no-op; the prompt/JSON path is sound);
+  - the wall is **sub-lemma provability**: only **3 of 22** proposed sub-lemmas proved
+    independently (~14%) — the pieces are about as hard as the whole, so decomposition
+    isn't finding *easier* sub-goals;
+  - and the 3 composed attempts (≥1 lemma proven) **closed 0** — partial decomposition
+    doesn't suffice.
+
+  Conclusion: decomposition is a sound multiplier but is **bottlenecked on PROVER REACH** —
+  the HF ensemble reliably closes only decision-procedure-trivial goals (it closed 32
+  ring-trivia in the lever-1 run), which the non-triviality gate (correctly) filters; for
+  genuinely non-trivial goals it closes ~0–1 per run, and even their sub-lemmas at ~14%.
+  The binding constraint is now squarely **lever 3 (a stronger prover)** — largely an
+  infra/model question, not more proposal-side code.
 
 ## Sequencing (as built)
 
