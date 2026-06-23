@@ -148,6 +148,18 @@ class LeanCliBackend:
         res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
         return res is not None and res.kernel_ok
 
+    def check_proof_with_error(self, expr: Expressio, proof_src: str) -> tuple[bool, str]:
+        """Like check_proof, but also return the kernel diagnostics (ADR 0029).
+
+        Powers the agentic repair loop, mirroring compile_with_error: a failed check
+        hands the kernel's complaint back to the reasoner to repair. It only REPORTS;
+        kernel_verified is still written solely by LeanVerifier.discharge, which
+        re-checks any ok candidate before stamping it."""
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
+        if res is None:
+            return (False, "lean backend unavailable")
+        return (res.kernel_ok, res.output)
+
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:
             res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, f"by {tac}")))

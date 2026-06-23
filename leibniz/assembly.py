@@ -38,6 +38,7 @@ from leibniz.lemma_decomposition import DecomposingDemonstrate, LemmaDecomposer
 from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
+from leibniz.proof_repair import ProofRepairer, RepairingDemonstrate
 from leibniz.providers.anthropic_provider import AnthropicProvider
 from leibniz.providers.aristotle_provider import AristotleProver
 from leibniz.providers.decomposition_prover import DecompositionProver
@@ -162,12 +163,26 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
         lean=_proof_verifier(lean),  # ADR 0011: REPL (import-cached) when available
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
-    # ADR 0027: deeper decomposition — when normal consensus fails, prove helper lemmas
-    # independently, then re-prove the main with them offered as `have` hints (the kernel
-    # still checks one self-contained declaration; hints never enter the Lean source).
-    if _env_int("LEIBNIZ_LEMMA_DECOMPOSE", 1) > 0:
-        demonstrate = DecomposingDemonstrate(
-            consensus, LemmaDecomposer(provider=autoformalizer, consensus=consensus))
+    # DEMONSTRATE fallback ladder: N+1 consensus -> (ADR 0027) decomposition -> (ADR 0029)
+    # repair. Each layer is opt-in by env and records exactly one proof edge.
+    # ADR 0027: when normal consensus fails, prove helper lemmas independently, then
+    # re-prove the main with them offered as `have` hints (the kernel still checks one
+    # self-contained declaration; hints never enter the Lean source).
+    decomposer = (LemmaDecomposer(provider=autoformalizer, consensus=consensus)
+                  if _env_int("LEIBNIZ_LEMMA_DECOMPOSE", 1) > 0 else None)
+    # ADR 0029: when the prior layers still come up short, a frontier reasoner repairs a
+    # draft against the kernel's actual error, a few bounded rounds. The repaired proof
+    # counts as ONE more distinct prover under N+1 (it never lowers the consensus bar).
+    if _env_int("LEIBNIZ_PROOF_REPAIR", 0) > 0:
+        repairer = ProofRepairer(
+            provider=autoformalizer,        # frontier reasoner; PROPOSES only
+            lean=consensus.lean,            # discharge + check_proof_with_error via the ensemble's verifier
+            obligation=consensus.obligation,
+            max_rounds=_env_int("LEIBNIZ_REPAIR_ROUNDS", 2),
+        )
+        demonstrate = RepairingDemonstrate(consensus, repairer, decomposer=decomposer)
+    elif decomposer is not None:
+        demonstrate = DecomposingDemonstrate(consensus, decomposer)
     else:
         demonstrate = ConsensusDemonstrate(consensus)
     policy = TrustPolicy()
