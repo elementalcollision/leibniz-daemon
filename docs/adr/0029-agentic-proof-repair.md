@@ -154,9 +154,17 @@ additive `identities` (and `verified_proof`) field to make this counting exact.
   so repair is the lone closer (1 < 2). **Takeaway:** repair is a large **reach** lever but
   not, on its own, a **promulgation** lever under N+1=2. The unlock is a *second distinct
   repair reasoner* (two independent repair votes — e.g. opus + gpt-5.5) or an operator
-  lowering consensus — deferred to a v2 (N-of-M repair consensus). NB: a pre-fix calibration
-  reported 9 "promulgations" that were the opus+opus double-count artifact and must be
-  disregarded; the proofs were kernel-true but did not meet independent N+1.
+  lowering consensus. NB: a pre-fix calibration reported 9 "promulgations" that were the
+  opus+opus double-count artifact and must be disregarded; the proofs were kernel-true but
+  did not meet independent N+1.
+
+- **Panel (v2) — the promulgation unlock, demonstrated (`scripts/measure_panel.py`):** with
+  the panel `[opus, gpt-5.5]` and an empty base (so the panel must supply both votes), **2/2
+  known-non-trivial goals promulgated at consensus=2** — each closed *independently* by both
+  reasoners, each proof re-verified by `discharge` (Q.E.D.), edge `repair_models =
+  [claude-opus-4-8, gpt-5.5]`, $0.15 total. This is genuine N+1=2 (two distinct models on the
+  same goal) reached by repair alone — converting the measured ~50% reach into sound
+  promulgations.
 
 - **Resilience (live):** an Anthropic outage mid-measurement (opus 500s, sonnet 529s)
   exercised `FailoverProvider` end-to-end — all four reasoners (opus/glm/kimi/gpt) closed
