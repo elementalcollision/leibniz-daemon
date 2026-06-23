@@ -160,8 +160,10 @@ class _StubRepairer:
     identity: str = "repair:frontier"
     last_model: object = None           # model that produced the proof (failover-aware)
     stats: RepairStats = field(default_factory=RepairStats)
+    calls: int = 0
 
     def prove(self, expr):
+        self.calls += 1
         return self.result
 
 
@@ -306,8 +308,52 @@ def test_repair_by_different_model_supplies_an_independent_vote():
     out = RepairingDemonstrate(con, rep).run(_prop())
     edges = _proof_edges(out)
     assert len(edges) == 1 and edges[0].verdict is Verdict.PASS
-    assert edges[0].detail["consensus"] == 2 and edges[0].detail["repair_independent"] is True
-    assert edges[0].detail["repair_model"] == "claude-opus-4-8"
+    assert edges[0].detail["consensus"] == 2
+    assert edges[0].detail["repair_models"] == ["claude-opus-4-8"]
+
+
+# --- ADR 0029 v2: the repair PANEL (two distinct reasoners can satisfy N+1 alone) ----
+
+def test_panel_two_distinct_closers_satisfy_n_plus_one_with_empty_base():
+    # base ensemble closed NOTHING; two distinct repair reasoners each close it -> N+1 met.
+    con = _FakeConsensus(_consensus_result(0, identities=frozenset()))
+    primary = _StubRepairer(_repair_pass(), last_model="anthropic/claude-opus-4-8")
+    member = _StubRepairer(_repair_pass(), last_model="openai/gpt-5.5")
+    out = RepairingDemonstrate(con, primary, panel=(member,)).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.PASS and edges[0].detail["via"] == "repair"
+    assert edges[0].detail["consensus"] == 2
+    assert edges[0].detail["repair_models"] == ["claude-opus-4-8", "gpt-5.5"]
+    assert out.demonstratio.kernel_verified and primary.stats.promulgated == 1
+
+
+def test_panel_single_closer_with_empty_base_does_not_promulgate():
+    con = _FakeConsensus(_consensus_result(0, identities=frozenset()))
+    primary = _StubRepairer(_repair_pass(), last_model="anthropic/claude-opus-4-8")
+    member = _StubRepairer(None, last_model="openai/gpt-5.5")  # panel member closes nothing
+    out = RepairingDemonstrate(con, primary, panel=(member,)).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.FAIL   # one distinct closer < required 2
+
+
+def test_panel_same_model_members_are_deduped():
+    con = _FakeConsensus(_consensus_result(0, identities=frozenset()))
+    primary = _StubRepairer(_repair_pass(), last_model="anthropic/claude-opus-4-8")
+    member = _StubRepairer(_repair_pass(), last_model="claude-opus-4-8")  # SAME model, other gateway
+    out = RepairingDemonstrate(con, primary, panel=(member,)).run(_prop())
+    edges = _proof_edges(out)
+    assert len(edges) == 1 and edges[0].verdict is Verdict.FAIL   # still one distinct model only
+
+
+def test_panel_early_exits_once_enough_distinct_closers():
+    # base has one distinct verifier; the primary repair supplies the 2nd -> panel not consulted.
+    con = _FakeConsensus(_consensus_result(1, identities=frozenset({"model:deepseek/deepseek-prover-v2"})))
+    primary = _StubRepairer(_repair_pass(), last_model="anthropic/claude-opus-4-8")
+    member = _StubRepairer(_repair_pass(), last_model="openai/gpt-5.5")
+    out = RepairingDemonstrate(con, primary, panel=(member,)).run(_prop())
+    edges = _proof_edges(out)
+    assert edges[0].verdict is Verdict.PASS and edges[0].detail["consensus"] == 2
+    assert primary.calls == 1 and member.calls == 0   # early-exit: member never ran
 
 
 def test_canonical_model_dedupes_across_gateways_keeps_nonmodels_distinct():
