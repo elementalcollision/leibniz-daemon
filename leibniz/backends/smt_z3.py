@@ -118,6 +118,24 @@ def _conv(node: ast.AST, env: dict):
                 raise PredicateError(f"compare op {type(op).__name__}")
             clauses.append(fn(terms[i], terms[i + 1]))
         return z3.And(*clauses) if len(clauses) > 1 else clauses[0]
+    if isinstance(node, ast.Call):
+        # ADR 0030 Tier A: a FIXED whitelist of pure, total, integer functions — only
+        # min/max, which encode EXACTLY as nested z3.If (no bound interaction, sound for all
+        # integers). Reject attribute calls (`Nat.min`), keyword/star args, and any other
+        # name, so the `ast.Call` allowance opens no eval/import surface.
+        if (not isinstance(node.func, ast.Name) or node.keywords
+                or any(isinstance(a, ast.Starred) for a in node.args)):
+            raise PredicateError("only bare min()/max() calls are allowed")
+        name = node.func.id
+        if name in ("min", "max") and len(node.args) >= 2:
+            args = [_conv(a, env) for a in node.args]
+            pick = ((lambda x, y: z3.If(x < y, x, y)) if name == "min"
+                    else (lambda x, y: z3.If(x > y, x, y)))
+            out = args[0]
+            for a in args[1:]:
+                out = pick(out, a)
+            return out
+        raise PredicateError(f"unsupported call: {name}/{len(node.args)}")
     if isinstance(node, ast.Name):
         return env.setdefault(node.id, z3.Int(node.id))  # integer var, on demand
     val = _const_int(node)
