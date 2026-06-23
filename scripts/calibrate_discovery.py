@@ -84,9 +84,11 @@ def main() -> int:
     feed = json.loads(_FEED.read_text())
     records = feed.get("records", [])
     print(f"[calibrate] feed: {len(records)} records (run_date {feed.get('run_date')})")
+    _repair_on = os.environ.get("LEIBNIZ_PROOF_REPAIR", "") not in ("", "0")
     print(f"[calibrate] {cycles} cycles × {seeds_per_cycle} seeds; USD cap ${cap_usd:.2f}; "
           f"consensus {os.environ['LEIBNIZ_PROOF_CONSENSUS']}; prover {_prover_desc}"
-          f"{' + Aristotle' if os.environ.get('LEIBNIZ_ARISTOTLE', '') not in ('', '0') else ''}")
+          f"{' + Aristotle' if os.environ.get('LEIBNIZ_ARISTOTLE', '') not in ('', '0') else ''}"
+          f"{' + repair(0029)' if _repair_on else ''}")
 
     daemon = build_daemon(frontier_limit=seeds_per_cycle, analogy_limit=0)
     daemon.survey = FeedSurvey(records, seeds_per_cycle)  # seed from the feed
@@ -171,6 +173,17 @@ def main() -> int:
         print(f"  decomposition:   attempted {s['attempted']}, planned {s['planned']}, "
               f"sub-lemmas {s['lemmas_proven']}/{s['lemmas_proposed']} proven, "
               f"composed {s['closed']}/{s['composed_attempts']} closed")
+    rep_stage = getattr(daemon.demonstrate, "repairer", None)  # ADR 0029 instrumentation
+    repair_stats = rep_stage.stats.as_dict() if rep_stage is not None and hasattr(rep_stage, "stats") else None
+    if repair_stats is not None:
+        s = repair_stats
+        # `closed` is repair's RAW reach — goals the base ensemble + decomposition came up
+        # SHORT on, that the repair loop kernel-closed; `promulgated` is the N+1-gated subset
+        # (repair supplied the deciding distinct-prover vote). rounds_to_close shows whether
+        # the win came on the initial draft (0) or needed kernel-error repair (>=1).
+        print(f"  repair (0029):   attempted {s['attempted']}, closed {s['closed']} "
+              f"(promulgated {s['promulgated']}), repair-rounds spent {s['repairs']}; "
+              f"rounds_to_close {s['rounds_to_close']}")
     if cb is not None:
         print(f"  cost:            ${cb.spent_usd:.4f} ({cb.input_tokens}+{cb.output_tokens} tok)")
 
@@ -211,7 +224,7 @@ def main() -> int:
     out = _REPO / "calibration_report.json"
     out.write_text(json.dumps({"rows": rows, "aggregate": agg, "elapsed_s": round(elapsed, 1),
                                "promulgated": total_promul, "kernel_verified": len(proven),
-                               "decomposition": decomp_stats,
+                               "decomposition": decomp_stats, "repair": repair_stats,
                                "cost_usd": round(cb.spent_usd, 4) if cb else None}, indent=2) + "\n")
     print(f"\n[calibrate] wrote {out}")
     return 0
