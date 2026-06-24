@@ -1,6 +1,7 @@
 # ADR 0031 — Novelty: catch known results by equivalence, not just exact hash (Proposed)
 
-- Status: **Proposed** (2026-06-23) — design only; approve before implementing.
+- Status: **Layers 1 + 2 implemented** (2026-06-23); Layer 3 **Proposed**. Layer 2 ships as a
+  bounded, reversible heuristic (see its section); a period-aware rigorous bound is a follow-up.
 - Date: 2026-06-23
 - Related: ADR 0001 (novelty = retrieval + decision procedure, NEVER a judge), ADR 0004
   (structured contract), ADR 0021/0030 (the Z3 DSL the equivalence check reuses), ADR 0026
@@ -65,7 +66,20 @@ for small primes), the power-residue divisibilities (`n^k − n ≡ 0 mod m` for
 (`k! ∣ product of k consecutive`). Extend `scripts/build_corpus.py` to emit them. This is the
 stopgap — it makes exact-hash catch the *canonical* forms immediately.
 
-### Layer 2 — Equivalence by decision procedure (the principled fix)
+### Layer 2 — Equivalence by decision procedure (the principled fix) — **IMPLEMENTED**
+
+> **Shipped** in `Z3Backend.equivalent`, `CorpusBackend.equivalent_known`, and the
+> `NoveltyGate` pass (wired with the existing `SMTVerifier`). An adversarial review confirmed
+> the trust posture (no eval surface; only *demotes*, never a false promulgation; inconclusive
+> → NOVEL) and found the expected residual: box-equivalence is exact for the natural modular
+> class (periodicity) but a contrived predicate diverging only *beyond* the box could
+> false-KNOWN. Mitigated by raising the default bound to **1024** (far past any constant the
+> conjecturer emits; the in-box divergence is then found and rejected) — verified by a
+> regression test. The residual error is one-directional (false-KNOWN only) and REVERSIBLE
+> (quarantine, not delete), which is why a heuristic is acceptable here. A rigorous period-aware
+> bound (lcm of the moduli) is the follow-up. Inert until the corpus JSON is rebuilt with the
+> Layer-1 predicates.
+
 
 Give each corpus entry a DSL predicate (`claim_domain`, `claim_property`) and add to
 `contains_equivalent`: a candidate is KNOWN if its contract predicate is **Z3-equivalent over

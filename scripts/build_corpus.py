@@ -133,37 +133,53 @@ CURATED = [
     # ℕ-mod forms the conjecturer emits, so their structural hashes match a re-conjecture and
     # the novelty gate says KNOWN. (Restatements like `(n^5+4n)%5==0` need ADR 0031 Layer 2's
     # decision-procedure equivalence — out of scope here.) All are true.
-    # Fermat's little theorem: n^p ≡ n (mod p) for prime p.
+    # Fermat's little theorem: n^p ≡ n (mod p) for prime p. (8-tuples: + DSL claim_domain,
+    # claim_property for ADR 0031 Layer 2 equivalence — uses `==`, the DSL equality.)
     ("fermat_little_2", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_2 : forall n : Nat, n ^ 2 % 2 = n % 2", ("Mathlib.Tactic",)),
+     "theorem fermat_little_2 : forall n : Nat, n ^ 2 % 2 = n % 2", ("Mathlib.Tactic",),
+     "n >= 0", "n^2 % 2 == n % 2"),
     ("fermat_little_3", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_3 : forall n : Nat, n ^ 3 % 3 = n % 3", ("Mathlib.Tactic",)),
+     "theorem fermat_little_3 : forall n : Nat, n ^ 3 % 3 = n % 3", ("Mathlib.Tactic",),
+     "n >= 0", "n^3 % 3 == n % 3"),
     ("fermat_little_5", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_5 : forall n : Nat, n ^ 5 % 5 = n % 5", ("Mathlib.Tactic",)),
+     "theorem fermat_little_5 : forall n : Nat, n ^ 5 % 5 = n % 5", ("Mathlib.Tactic",),
+     "n >= 0", "n^5 % 5 == n % 5"),
     ("fermat_little_7", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_7 : forall n : Nat, n ^ 7 % 7 = n % 7", ("Mathlib.Tactic",)),
+     "theorem fermat_little_7 : forall n : Nat, n ^ 7 % 7 = n % 7", ("Mathlib.Tactic",),
+     "n >= 0", "n^7 % 7 == n % 7"),
     ("fermat_little_11", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_11 : forall n : Nat, n ^ 11 % 11 = n % 11", ("Mathlib.Tactic",)),
+     "theorem fermat_little_11 : forall n : Nat, n ^ 11 % 11 = n % 11", ("Mathlib.Tactic",),
+     "n >= 0", "n^11 % 11 == n % 11"),
     ("fermat_little_13", "invariant", "number_theory", "fermat_little",
-     "theorem fermat_little_13 : forall n : Nat, n ^ 13 % 13 = n % 13", ("Mathlib.Tactic",)),
+     "theorem fermat_little_13 : forall n : Nat, n ^ 13 % 13 = n % 13", ("Mathlib.Tactic",),
+     "n >= 0", "n^13 % 13 == n % 13"),
     # Power-residue n^k ≡ n divisibilities (Fermat-derived; both mod- and minus-forms).
     ("cube_residue_mod_six", "invariant", "number_theory", "power_residue",
-     "theorem cube_residue_mod_six : forall n : Nat, n ^ 3 % 6 = n % 6", ("Mathlib.Tactic",)),
+     "theorem cube_residue_mod_six : forall n : Nat, n ^ 3 % 6 = n % 6", ("Mathlib.Tactic",),
+     "n >= 0", "n^3 % 6 == n % 6"),
     ("cube_minus_self_div_six", "invariant", "number_theory", "power_residue",
-     "theorem cube_minus_self_div_six : forall n : Nat, (n ^ 3 - n) % 6 = 0", ("Mathlib.Tactic",)),
+     "theorem cube_minus_self_div_six : forall n : Nat, (n ^ 3 - n) % 6 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "(n^3 - n) % 6 == 0"),
     ("pow5_minus_self_div_thirty", "invariant", "number_theory", "power_residue",
-     "theorem pow5_minus_self_div_thirty : forall n : Nat, (n ^ 5 - n) % 30 = 0", ("Mathlib.Tactic",)),
+     "theorem pow5_minus_self_div_thirty : forall n : Nat, (n ^ 5 - n) % 30 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "(n^5 - n) % 30 == 0"),
     ("pow7_minus_self_div_42", "invariant", "number_theory", "power_residue",
-     "theorem pow7_minus_self_div_42 : forall n : Nat, (n ^ 7 - n) % 42 = 0", ("Mathlib.Tactic",)),
+     "theorem pow7_minus_self_div_42 : forall n : Nat, (n ^ 7 - n) % 42 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "(n^7 - n) % 42 == 0"),
     # Consecutive-product divisibilities: k! divides any k consecutive integers.
     ("two_consec_div_two", "invariant", "number_theory", "consecutive_product",
-     "theorem two_consec_div_two : forall n : Nat, n * (n + 1) % 2 = 0", ("Mathlib.Tactic",)),
+     "theorem two_consec_div_two : forall n : Nat, n * (n + 1) % 2 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) % 2 == 0"),
     ("three_consec_div_six", "invariant", "number_theory", "consecutive_product",
-     "theorem three_consec_div_six : forall n : Nat, n * (n + 1) * (n + 2) % 6 = 0", ("Mathlib.Tactic",)),
+     "theorem three_consec_div_six : forall n : Nat, n * (n + 1) * (n + 2) % 6 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) * (n + 2) % 6 == 0"),
     ("four_consec_div_24", "invariant", "number_theory", "consecutive_product",
-     "theorem four_consec_div_24 : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 24 = 0", ("Mathlib.Tactic",)),
+     "theorem four_consec_div_24 : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 24 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) * (n + 2) * (n + 3) % 24 == 0"),
+    # The cycle-5 "8 ∣ (2n)(2n+2)" — its DSL contract form is the mod predicate (∣ is not DSL).
     ("even_pair_div_eight", "invariant", "number_theory", "divisibility",
-     "theorem even_pair_div_eight : forall n : Nat, 8 ∣ (2 * n) * (2 * n + 2)", ("Mathlib.Tactic",)),
+     "theorem even_pair_div_eight : forall n : Nat, 8 ∣ (2 * n) * (2 * n + 2)", ("Mathlib.Tactic",),
+     "n >= 0", "(2 * n) * (2 * n + 2) % 8 == 0"),
 ]
 
 
@@ -174,13 +190,17 @@ def main() -> int:
     backend = LeanCliBackend(persistent=True)
     entries = []
     try:
-        for name, ctype, subject, relation, src, imports in CURATED:
+        for entry in CURATED:
+            name, ctype, subject, relation, src, imports = entry[:6]
+            # ADR 0031 Layer 2: optional 7th/8th = (claim_domain, claim_property) DSL predicate
+            claim_domain = entry[6] if len(entry) > 6 else None
+            claim_property = entry[7] if len(entry) > 7 else None
             expr = Expressio(theorem_src=src, imports=imports)
             h = backend.normalize_statement(expr)
             if h is None:
                 print(f"WARNING: {name} did not elaborate; skipping", file=sys.stderr)
                 continue
-            entries.append({
+            rec = {
                 "name": name,
                 "claim_type": ctype,
                 "subject": subject,
@@ -188,7 +208,11 @@ def main() -> int:
                 "theorem_src": src,
                 "imports": list(imports),
                 "formal_hash": h,
-            })
+            }
+            if claim_property:
+                rec["claim_domain"] = claim_domain
+                rec["claim_property"] = claim_property
+            entries.append(rec)
             print(f"  {name}: {h}")
     finally:
         backend.close()

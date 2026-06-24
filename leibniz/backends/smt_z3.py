@@ -227,6 +227,17 @@ class Z3Backend:
             return False
         return None
 
+    def equivalent(self, p: str, q: str, bound: int = 0) -> Optional[bool]:
+        """Tri-state predicate equivalence over the box (ADR 0031 Layer 2): True iff p and q
+        agree at EVERY point (no witness where they differ), False iff they differ somewhere,
+        None iff undecided/un-encodable. Used by the novelty gate to demote a restatement of a
+        known result to KNOWN — but ONLY on a conclusive True (None/False stay NOVEL, so an
+        un-encodable or undecided search never wrongly suppresses a genuine discovery). For
+        bounded-modulus arithmetic the box spans a full period, so True is genuine equivalence.
+        Variable names must match for two predicates to compare as the same n; a mismatch
+        reads as SAT -> not equivalent -> conservatively NOVEL."""
+        return self.decide_unsat([f"({p}) != ({q})"], bound or self.default_bound)
+
     # --- SMTBackend Protocol --------------------------------------------------
     def find_counterexample(self, claim: str, bound: int = 0) -> Optional[dict]:
         # Only a *conclusive* model kills (undecided/un-encodable -> no refutation).

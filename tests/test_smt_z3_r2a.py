@@ -133,6 +133,18 @@ def test_min_max_not_vacuous_a_false_claim_yields_a_witness():
     assert _backend().encodable("min(a, b) >= 0") is True       # genuinely encodable now
 
 
+def test_equivalent_tri_state_over_the_box():
+    b = _backend()
+    # a true restatement: (n^5+4n)%5==0 <-> Fermat n^5%5==n%5 (both <=> n^5 ≡ n mod 5)
+    assert b.equivalent("(n^5 + 4*n) % 5 == 0", "n^5 % 5 == n % 5") is True
+    assert b.equivalent("n^3 % 6 == n % 6", "(n^3 - n) % 6 == 0") is True
+    # genuinely different claims differ somewhere -> False (NOT wrongly merged)
+    assert b.equivalent("n^4 % 7 == n % 7", "n^7 % 7 == n % 7") is False
+    assert b.equivalent("n % 2 == 0", "n % 3 == 0") is False
+    # un-encodable -> None (inconclusive; a caller must NOT treat this as equivalent)
+    assert b.equivalent("Nat.log(2, n) > 0", "n > 0") is None
+
+
 def test_unsafe_or_unwhitelisted_calls_still_degrade_to_no_witness():
     b = _backend()
     assert b.find_counterexample("gcd(a, b) > 0") is None            # not whitelisted
