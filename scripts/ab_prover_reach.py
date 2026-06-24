@@ -116,11 +116,20 @@ def _goals_from_db(db_path: str, n: int) -> list[str]:
 
 
 def _build_ensemble(models: str, meter):
-    """Build one arm's prover ensemble (no I/O; may raise ProviderUnavailable if a referenced
-    `@gateway` has no URL set — a fail-closed pre-flight signal, before any billable call)."""
+    """Build one arm's prover ensemble as EXACTLY the listed provers — no I/O; may raise
+    ProviderUnavailable if a referenced `@gateway` has no URL set (a fail-closed pre-flight
+    signal, before any billable call).
+
+    Decomposition + Aristotle are forced OFF here so the A/B compares PROVERS, not strategies:
+    `LEIBNIZ_DECOMPOSE` wraps `base[0]`, which DIFFERS between arms (it followed the first model
+    in each list), so leaving it on confounds the comparison — that exact asymmetry made an
+    earlier tiered run read opus as degraded in the 2-prover arm. `LEIBNIZ_ARISTOTLE` would also
+    silently add a voter to both arms. A clean reach A/B = only the models in LEIBNIZ_AB_PROVERS_*."""
     from leibniz.assembly import prover_ensemble
     os.environ["LEIBNIZ_PROVER_MODELS"] = models
     os.environ.pop("LEIBNIZ_HF_PROVER_MODELS", None)  # force the OpenRouter/generic path
+    os.environ["LEIBNIZ_DECOMPOSE"] = "0"             # no strategy-wrapper (arm-asymmetric confound)
+    os.environ.pop("LEIBNIZ_ARISTOTLE", None)          # compare ONLY the listed provers
     return prover_ensemble(meter=meter)
 
 
