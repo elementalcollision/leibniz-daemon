@@ -176,6 +176,23 @@ CURATED = [
     ("four_consec_div_24", "invariant", "number_theory", "consecutive_product",
      "theorem four_consec_div_24 : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 24 = 0", ("Mathlib.Tactic",),
      "n >= 0", "n * (n + 1) * (n + 2) * (n + 3) % 24 == 0"),
+    # Weaker-modulus restatements of the same four-consecutive fact (÷24 ⇒ ÷8, ÷4). The
+    # form-matcher cannot infer ÷m from ÷24 (that would be truth-implication, the retracted
+    # ADR 0031 L2), so the genre the daemon keeps rediscovering at these moduli (organic3 #4/#9
+    # mod 8, #5 mod 4) needs its own KNOWN signature. Each is true + textbook; distinct modulus
+    # ⇒ distinct signature, so no false-KNOWN of a different polynomial.
+    ("four_consec_div_eight", "invariant", "number_theory", "consecutive_product",
+     "theorem four_consec_div_eight : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 8 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) * (n + 2) * (n + 3) % 8 == 0"),
+    ("four_consec_div_four", "invariant", "number_theory", "consecutive_product",
+     "theorem four_consec_div_four : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 4 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) * (n + 2) * (n + 3) % 4 == 0"),
+    # Sum-of-first-n-squares numerator is divisible by 6 (n(n+1)(2n+1)/6 ∈ ℤ) — textbook, and the
+    # base of organic3 #0/#7/#11/#13. Catches those (and their vacuous-offset/loose restatements
+    # via the ADR 0032 follow-up canonicalization) as KNOWN.
+    ("sumsq_numerator_div_six", "invariant", "number_theory", "sum_of_squares",
+     "theorem sumsq_numerator_div_six : forall n : Nat, n * (n + 1) * (2 * n + 1) % 6 = 0", ("Mathlib.Tactic",),
+     "n >= 0", "n * (n + 1) * (2 * n + 1) % 6 == 0"),
     # The cycle-5 "8 ∣ (2n)(2n+2)" — its DSL contract form is the mod predicate (∣ is not DSL).
     ("even_pair_div_eight", "invariant", "number_theory", "divisibility",
      "theorem even_pair_div_eight : forall n : Nat, 8 ∣ (2 * n) * (2 * n + 2)", ("Mathlib.Tactic",),
