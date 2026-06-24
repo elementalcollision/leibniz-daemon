@@ -86,6 +86,34 @@ def test_preflight_aborts_when_an_arm_cannot_reach_consensus():
     assert any("arm A has only 1 available distinct voter" in p for p in probs)
 
 
+def test_liveness_all_alive_no_problems():
+    res = {"anthropic/claude-opus-4-8": (True, "12 chars"),
+           "Goedel-LM/Goedel-Prover-V2-32B": (True, "10 chars")}
+    assert ab.liveness_problems(res, CAND) == []
+
+
+def test_liveness_dead_candidate_is_fatal():
+    res = {"anthropic/claude-opus-4-8": (True, "ok"),
+           "Goedel-LM/Goedel-Prover-V2-32B": (False, "HTTPError: 404")}
+    probs = ab.liveness_problems(res, CAND)
+    assert len(probs) == 1 and "CANDIDATE" in probs[0] and "Goedel" in probs[0]
+
+
+def test_liveness_dead_incumbent_is_also_flagged():
+    # deepseek-prover-v2 404 (the real bug) must be flagged even when it isn't the candidate.
+    res = {"deepseek/deepseek-prover-v2": (False, "HTTPError: 404 Not Found"),
+           "anthropic/claude-opus-4-8": (True, "ok")}
+    probs = ab.liveness_problems(res, CAND)
+    assert any("deepseek/deepseek-prover-v2" in p and "404" in p for p in probs)
+    assert all("CANDIDATE" not in p for p in probs)  # not tagged candidate (it isn't one)
+
+
+def test_default_arms_drop_deepseek_and_test_goedel():
+    # the post-mortem default: control = opus alone, treatment adds Goedel; candidate = {Goedel}
+    assert ab._candidate_models(ab._DEFAULT_A, ab._DEFAULT_B) == {"Goedel-LM/Goedel-Prover-V2-32B"}
+    assert "deepseek" not in ab._DEFAULT_A and "deepseek" not in ab._DEFAULT_B
+
+
 def test_useless_candidate_shows_zero_unlocks():
     # If the candidate never closes anything A didn't already, the A/B says so plainly.
     rows = [

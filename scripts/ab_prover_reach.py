@@ -12,14 +12,21 @@ textbook UAT experiment: run it on the isolated UAT instance; PROD's ledger is n
 
 Goals: formalized `theorem_src` pulled from a prior run's ledger (the real conjecture mix).
 
-Usage (needs the Lean image + creds; extras: propose,verify):
-    LEIBNIZ_AB_PROVERS_A="deepseek/deepseek-prover-v2,deepseek/deepseek-prover-v2,anthropic/claude-opus-4-8" \\
-    LEIBNIZ_AB_PROVERS_B="deepseek/deepseek-prover-v2,Goedel-LM/Goedel-Prover-V2-32B@featherless,anthropic/claude-opus-4-8" \\
-    LEIBNIZ_GATEWAY_FEATHERLESS_URL=https://api.featherless.ai/v1/chat/completions \\
-    python scripts/ab_prover_reach.py /tmp/organic3_memory.db 12
+A per-prover LIVENESS probe runs first (one tiny call each) and aborts before the billable loop
+if any prover is dead/404 — the first A/B was an ambiguous null because deepseek-prover-v2 404'd
+on OpenRouter (unseen). Defaults now drop that dead model: control = opus alone, treatment adds
+Goedel on Featherless. That's a REACH comparison, so set LEIBNIZ_PROOF_CONSENSUS=1 (a 1-voter
+control can't reach N+1=2).
 
-Env: LEIBNIZ_PROOF_CONSENSUS (default 2); FEATHERLESS_API_KEY in .env. One trial per goal per
-arm — the close-RATE over N goals averages prover stochasticity across goals, not within one.
+Usage (needs the Lean image + creds; extras: propose,verify):
+    LEIBNIZ_GATEWAY_FEATHERLESS_URL=https://api.featherless.ai/v1/chat/completions \\
+    LEIBNIZ_PROOF_CONSENSUS=1 \\
+    python scripts/ab_prover_reach.py /tmp/organic3_memory.db 20
+    # control=opus, treatment=Goedel@featherless+opus by default; override via LEIBNIZ_AB_PROVERS_A/_B
+
+Env: LEIBNIZ_PROOF_CONSENSUS (default 2; use 1 for the reach test above); FEATHERLESS_API_KEY in
+.env. One trial per goal per arm — the close-RATE over N goals averages prover stochasticity
+across goals, not within one.
 """
 from __future__ import annotations
 
@@ -33,11 +40,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 _REPO = Path(__file__).resolve().parent.parent
 
-# Default arms: the control is the current organic config (deepseek twice + opus = 2 voters);
-# the treatment swaps the redundant deepseek for Goedel on Featherless (3 distinct voters).
-_DEFAULT_A = "deepseek/deepseek-prover-v2,deepseek/deepseek-prover-v2,anthropic/claude-opus-4-8"
-_DEFAULT_B = ("deepseek/deepseek-prover-v2,Goedel-LM/Goedel-Prover-V2-32B@featherless,"
-              "anthropic/claude-opus-4-8")
+# Default arms (2026-06-24): the first A/B exposed that deepseek-prover-v2 404s on OpenRouter
+# (dead in every organic run), so the control is now opus alone — the actual working base prover
+# — and the treatment adds Goedel-Prover-V2 on Featherless. This measures REACH (does Goedel
+# close goals opus misses), so run it with LEIBNIZ_PROOF_CONSENSUS=1 (a 1-voter control can't
+# reach N+1=2). Override either arm via LEIBNIZ_AB_PROVERS_A / _B.
+_DEFAULT_A = "anthropic/claude-opus-4-8"
+_DEFAULT_B = "Goedel-LM/Goedel-Prover-V2-32B@featherless,anthropic/claude-opus-4-8"
 
 
 def _candidate_models(arm_a: str, arm_b: str) -> set[str]:
@@ -154,6 +163,43 @@ def preflight(avail_a: set[str], avail_b: set[str], candidates: set[str], requir
     return problems
 
 
+def liveness_probe(ensembles: list, goal: str = "theorem _lp (n : Nat) : n + 0 = n") -> dict:
+    """One trivial-goal draft per DISTINCT prover across the arms — catches a dead/404/empty
+    prover (e.g. deepseek-prover-v2 404ing on OpenRouter) BEFORE the long billable loop, the
+    lesson from the first A/B where a dead prover produced an ambiguous null. Returns
+    {model: (ok, detail)}; a prover is alive iff it returns a non-empty normalized draft.
+    BILLABLE (one tiny call per distinct prover). It checks the prover RESPONDS, not that the
+    proof is correct (the kernel decides that later)."""
+    from leibniz.consensus import _prover_identity, normalize_proof
+    from leibniz.types import Role
+
+    probed: dict = {}
+    for ens in ensembles:
+        for p in ens:
+            ident = _prover_identity(p)
+            if not ident.startswith("model:") or ident in probed:
+                continue
+            try:
+                out = normalize_proof(p.propose(Role.PROOF_DRAFT, goal))
+                probed[ident] = (bool(out.strip()), f"{len(out)} chars: {out[:48]!r}")
+            except Exception as e:
+                probed[ident] = (False, f"{type(e).__name__}: {str(e)[:90]}")
+    return {ident.split("model:", 1)[1]: v for ident, v in probed.items()}
+
+
+def liveness_problems(results: dict, candidates: set) -> list[str]:
+    """Pure (CI-tested): which liveness failures are fatal to the A/B. ANY dead prover invalidates
+    its arm (it can never contribute), and a dead CANDIDATE makes the whole test pointless."""
+    problems: list[str] = []
+    for model, (ok, detail) in sorted(results.items()):
+        if ok:
+            continue
+        tag = "CANDIDATE " if model in candidates else ""
+        problems.append(f"{tag}prover {model} failed liveness ({detail}) — it cannot contribute; "
+                        f"fix its gateway/model-id or drop it before running the A/B")
+    return problems
+
+
 def _run_arm(ensemble, goals: list[str], lean, min_consensus: int) -> list[dict]:
     """Run every goal through N+1 consensus on a prebuilt ensemble; return per-goal rows."""
     from leibniz.consensus import ProofConsensus
@@ -215,6 +261,19 @@ def main() -> int:
     if problems:
         print("[ab_prover] PRE-FLIGHT FAILED (no billable calls made):")
         for p in problems:
+            print(f"  - {p}")
+        return 2
+
+    # LIVENESS (tiny billable probe): confirm every distinct prover actually RESPONDS with a
+    # draft before the long loop — a 404/dead/empty prover otherwise yields an ambiguous null.
+    print("[ab_prover] liveness probe (1 trivial call per distinct prover)…")
+    live = liveness_probe([a_ens, b_ens])
+    for model, (ok, detail) in sorted(live.items()):
+        print(f"  {'ALIVE' if ok else 'DEAD '} {model}: {detail}")
+    live_problems = liveness_problems(live, candidates)
+    if live_problems:
+        print("[ab_prover] LIVENESS FAILED (aborting before the A/B loop):")
+        for p in live_problems:
             print(f"  - {p}")
         return 2
 
