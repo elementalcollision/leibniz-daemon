@@ -23,6 +23,12 @@ lean-project/.lake/
 
 # Persistent runtime memory (ADR 0016) — SQLite ledger, per-machine, never committed
 .leibniz/
+# Per-instance state dirs (ADR 0033): UAT/dev ledgers + provenance, never committed
+.leibniz-uat/
+.leibniz-dev/
+
+# Filled deploy profiles (ADR 0033) — operator-specific; only the *.env.example templates ship
+deploy/profiles/*.env
 
 # Live-calibration run artifacts — regenerated each run
 calibration_report.json
