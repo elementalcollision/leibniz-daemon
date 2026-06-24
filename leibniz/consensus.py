@@ -31,9 +31,14 @@ def normalize_proof(text: str) -> str:
     s = (text or "").strip()
     if "```" in s:
         body = s.split("```", 1)[1].split("```", 1)[0]
-        if "\n" in body:  # drop a leading ```lean / ``` language-tag line
+        if "\n" in body:  # drop a leading ```lean4 / ```lean / ``` language-tag line
             head, rest = body.split("\n", 1)
-            if head.strip() == "" or head.strip().isalpha():
+            # Match KNOWN fence languages only. `isalpha()` failed here twice: it missed
+            # `lean4` (the digit makes it non-alpha, so a Goedel-style ```lean4 block left a
+            # bare `lean4` token that fails to elaborate) AND it would wrongly drop a proof
+            # whose first line is the bare keyword `by`/`from` (those are alpha). A fixed set
+            # is precise: it strips real language tags without ever eating a tactic line.
+            if head.strip().lower() in ("", "lean", "lean4"):
                 body = rest
         s = body.strip()
     cut = s.find(":=")
