@@ -21,7 +21,7 @@ procedure, per the trust policy.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Optional, Protocol
 
 from leibniz.propositio import Propositio
 from leibniz.types import ClaimSignature, EdgeEvidence, FinishReason, TrustTier, Verdict
@@ -40,6 +40,7 @@ class KnownCorpus(Protocol):
 class NoveltyGate:
     corpus: KnownCorpus
     lean: LeanVerifier
+    smt: Optional[object] = None   # SMTVerifier (ADR 0031 L2); has .backend.equivalent
 
     def check(self, prop: Propositio) -> EdgeEvidence:
         assert prop.expressio is not None and prop.signature is not None
@@ -70,6 +71,28 @@ class NoveltyGate:
                 cost_units=1.0,
                 producer="CorpusBackend",  # ADR 0013 §2
             )
+
+        # ADR 0031 Layer 2: a RESTATEMENT the exact hash missed — decision-procedure
+        # equivalence to a curated known predicate (mechanical, no judge; conclusive-only, so
+        # it never demotes a genuine novelty on doubt). Needs the structured contract + a Z3
+        # backend; absent either, this is a no-op and the candidate stays NOVEL.
+        equivalent_known = getattr(self.corpus, "equivalent_known", None)
+        en = prop.enuntiatio
+        if self.smt is not None and callable(equivalent_known) and en is not None:
+            match = equivalent_known(
+                en.claim_domain, en.claim_property, self.smt.backend,
+                claim_type=en.claim_type.value,
+            )
+            if match:
+                prop.quarantine(FinishReason.KNOWN)
+                return EdgeEvidence(
+                    edge=NOVELTY_EDGE,
+                    tier=TrustTier.MECHANICAL,
+                    verdict=Verdict.FAIL,
+                    detail={"reason": "decision-procedure equivalence to known", "match": match},
+                    cost_units=1.0,
+                    producer="CorpusBackend.equivalent_known",  # ADR 0013 §2
+                )
 
         return EdgeEvidence(
             edge=NOVELTY_EDGE,
