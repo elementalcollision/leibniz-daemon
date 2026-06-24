@@ -86,6 +86,19 @@ def test_preflight_aborts_when_an_arm_cannot_reach_consensus():
     assert any("arm A has only 1 available distinct voter" in p for p in probs)
 
 
+def test_build_ensemble_is_pure_prover_set_no_decomp_no_aristotle(monkeypatch):
+    # The A/B must compare PROVERS, not strategies: even with LEIBNIZ_DECOMPOSE / LEIBNIZ_ARISTOTLE
+    # set in the env, _build_ensemble forces them off so the ensemble is exactly the listed models.
+    from leibniz.providers.decomposition_prover import DecompositionProver
+    monkeypatch.setenv("LEIBNIZ_DECOMPOSE", "1")
+    monkeypatch.setenv("LEIBNIZ_ARISTOTLE", "1")
+    monkeypatch.delenv("LEIBNIZ_HF_PROVER_MODELS", raising=False)
+    ens = ab._build_ensemble("anthropic/claude-opus-4-8,deepseek/deepseek-prover-v2", meter=None)
+    assert len(ens) == 2                                  # exactly the 2 listed — no decomp/Aristotle voter
+    assert not any(isinstance(p, DecompositionProver) for p in ens)
+    assert {p.model for p in ens} == {"anthropic/claude-opus-4-8", "deepseek/deepseek-prover-v2"}
+
+
 def test_liveness_all_alive_no_problems():
     res = {"anthropic/claude-opus-4-8": (True, "12 chars"),
            "Goedel-LM/Goedel-Prover-V2-32B": (True, "10 chars")}
