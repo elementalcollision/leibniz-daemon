@@ -149,29 +149,41 @@ class Leibniz:
 
     def _run_seeds(self, seeds: list[str], report: CycleReport) -> None:
         for seed in seeds:
-            # ADR 0018 M1/M2: condition the conjecture on ledger lessons + the target
-            # difficulty band (a no-op until the notebook/frontier have learned).
-            prop = self.conjecture.run(steer(seed, self.notebook, self.frontier))
-            report.conjectured += 1
+            try:
+                # ADR 0018 M1/M2: condition the conjecture on ledger lessons + the target
+                # difficulty band (a no-op until the notebook/frontier have learned).
+                prop = self.conjecture.run(steer(seed, self.notebook, self.frontier))
+                report.conjectured += 1
 
-            survivor = self.formalize.run(prop)  # cheap gates run inside
-            if survivor is None:
-                self._settle(prop, report)
+                survivor = self.formalize.run(prop)  # cheap gates run inside
+                if survivor is None:
+                    self._settle(prop, report)
+                    continue
+
+                survivor = self.derive.run(survivor)        # expensive: proof draft
+                survivor = self.demonstrate.run(survivor)   # kernel check
+                report.reached_proof += 1
+
+                promotable = self.verification.is_promotable(survivor)
+                # R2c: even a promotable candidate is refused if its faithfulness edge
+                # is JUDGED and admitting it would breach the trust budget.
+                if promotable and self.budget is not None:
+                    if not self.budget.try_admit(survivor.edges):
+                        survivor.quarantine(FinishReason.OVER_BUDGET)
+                        promotable = False
+                self.promulgate.run(survivor, promotable)
+                self._settle(survivor, report)
+            except Exception as exc:  # noqa: BLE001 — resilience boundary (ADR 0029)
+                # A transient provider/infra failure (e.g. a SUSTAINED Anthropic 529 that
+                # outlasts both the SDK retries and the autoformalizer's failover backups)
+                # on ONE seed must NOT crash a multi-cycle, hours-long run. Record it and
+                # move to the next seed. KeyboardInterrupt/SystemExit are not Exception, so
+                # an operator Ctrl-C still stops the run. The kernel/trust path is untouched —
+                # a skipped seed simply yields no candidate.
+                report.by_reason["errored"] = report.by_reason.get("errored", 0) + 1
+                print(f"[daemon] seed errored ({type(exc).__name__}: {str(exc)[:140]}); "
+                      f"skipping to next seed", flush=True)
                 continue
-
-            survivor = self.derive.run(survivor)        # expensive: proof draft
-            survivor = self.demonstrate.run(survivor)   # kernel check
-            report.reached_proof += 1
-
-            promotable = self.verification.is_promotable(survivor)
-            # R2c: even a promotable candidate is refused if its faithfulness edge
-            # is JUDGED and admitting it would breach the trust budget.
-            if promotable and self.budget is not None:
-                if not self.budget.try_admit(survivor.edges):
-                    survivor.quarantine(FinishReason.OVER_BUDGET)
-                    promotable = False
-            self.promulgate.run(survivor, promotable)
-            self._settle(survivor, report)
 
     def _settle(self, prop: Propositio, report: CycleReport) -> None:
         """Persist, tally, and hand to KFM for kill/recombine/commit."""

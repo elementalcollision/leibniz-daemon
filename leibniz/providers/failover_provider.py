@@ -70,3 +70,20 @@ class FailoverProvider:
 
     def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
         return self._try("repair_proof", theorem_src, failed_proof, error)
+
+    # ADR 0029: the autoformalizer surface, so a failover-wrapped autoformalizer keeps its
+    # CONJECTURE/FORMALIZE repair + decomposition loops (the pipeline looks these up via
+    # getattr — omitting them would silently DISABLE those loops). Each delegates down the
+    # chain: the primary serves them when up, a backup when it is overloaded.
+    def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
+        return self._try("repair_formalization", statement, prior_src, error)
+
+    def repair_contract(
+        self, statement: str, claim_domain: str, claim_property: str,
+        established_domain: str, problems: list,
+    ) -> str:
+        return self._try(
+            "repair_contract", statement, claim_domain, claim_property, established_domain, problems)
+
+    def decompose(self, theorem_src: str) -> str:
+        return self._try("decompose", theorem_src)

@@ -60,6 +60,24 @@ frontier model drafts/repairs — every candidate still goes through `discharge`
 kernel decides regardless. `OpenRouterProvider` gained `repair_proof` so a backup can repair,
 not just draft; the model that closed each goal is recorded for measurement honesty.
 
+### Extension (2026-06-24): proposal-side failover + per-seed resilience
+
+A later organic run crashed mid-cycle on a **sustained** Anthropic 529 in the **CONJECTURE**
+role — failover covered the proof roles but not the proposal side, and `max_retries=5` (SDK
+backoff) was outlasted by the overload. Two additions close the gap:
+
+1. **Conjecture/formalize failover.** `build_daemon` now wraps the autoformalizer in
+   `autoformalizer_with_failover` (same OpenRouter backups). The CONJECTURE/FORMALIZE prompts +
+   the contract/import-repair + decomposition prompts moved to `providers/__init__.py` as the
+   single source, so a backup builds **byte-identical** prompts (no drift); `FailoverProvider`
+   gained `repair_formalization`/`repair_contract`/`decompose` so wrapping the autoformalizer
+   keeps those loops. Still proposal-only — the gates + kernel decide. The proof-role repairer
+   wraps the **bare** primary, so failover never nests. No backups configured → primary unchanged.
+2. **Per-seed resilience.** `Leibniz._run_seeds` wraps each seed in a `try/except`: a transient
+   failure that outlasts even the failover backups records the seed as `errored` and continues,
+   instead of crashing a multi-cycle run. `KeyboardInterrupt`/`SystemExit` still propagate; the
+   kernel/trust path is untouched (a skipped seed simply yields no candidate).
+
 ## Why this preserves N+1 (the load-bearing decision)
 
 A naive repair fallback would let a single repaired proof produce a PASS proof edge,
