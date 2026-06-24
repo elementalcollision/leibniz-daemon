@@ -106,6 +106,22 @@ leibniz.deploy` — refuses a non-prod profile that points at prod state, or a p
 that points at UAT state), then execs the command. The runtime write-barrier remains the
 backstop if the guard is ever bypassed.
 
+**Before you launch — prerequisites the guard CANNOT enforce for you.** The guard checks
+*state* isolation (the contamination boundary); these are operational prerequisites it can only
+*warn* about:
+
+- **Separately-scoped credentials.** `.leibniz-uat/.env` must hold UAT-only API keys with their
+  own budget — the blast-radius boundary. Nothing in code can verify your keys differ from
+  PROD's; the guard emits a ⚠ reminder, but it is on you.
+- **A bounded spend ceiling.** Set a positive `LEIBNIZ_DAILY_USD_CAP` in `uat.env` (the example
+  ships `40`). `CostBudget` treats `0`/unset as **unlimited**; the guard ⚠-warns on an unbounded
+  cap, but will not block — an uncapped soak can run the budget away.
+- **Lean kernel images present.** Kernel-verified laws require the Docker images
+  (`leibniz-lean*:v4.31.0`, or whatever UAT pins via `LEIBNIZ_LEAN_IMAGE`) built locally in the
+  UAT checkout — `available()` fails closed (silently skips Lean) if absent.
+- **The conjecture feed path** (`scripts/calibrate_discovery.py`) is currently host-specific;
+  confirm it resolves for the UAT host/instance before an organic soak.
+
 For a long unattended soak (same pattern as the organic runs):
 
 ```bash
