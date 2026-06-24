@@ -90,6 +90,40 @@ the *unrelated* `n+0==n`. The structural matcher matches the former and rejects 
 - It is a *recall* tool with perfect precision by construction; missed restatements outside the
   recognized shapes are the residual (safe).
 
+## Status note — multivariate extension (2026-06-24, additive, DORMANT)
+
+`leibniz/structural.py` now also signs **multivariate** polynomial congruences (a 2nd distinct
+variable no longer forces `None`). This is the additive widening the original scope note
+anticipated, done SOUNDLY and conservatively:
+
+- **Monomial = sorted tuple of `(variable_name, exponent)`**; signature =
+  `(relop, m, tuple(sorted((monomial, coeff_mod_m))))`. The constant monomial is `()`.
+- **Match keys on the LITERAL variable names — NO variable-renaming canonicalization.** Mapping
+  `a,b → x,y` is a permutation-canonical-form problem; a wrong canonical choice would collapse two
+  genuinely different congruences into one signature — a **false-KNOWN**, the one forbidden bug.
+  We refuse it. Consequence: `a*b % 2 == 0` matches a corpus `a*b % 2 == 0` but NOT `x*y % 2 == 0`
+  (a rename). That miss is a **false-NOVEL** — safe (lower recall, never a wrong KNOWN).
+- **Univariate behavior is byte-identical.** The single-variable claim is the special case: it
+  still renders the legacy `(exponent, coeff)` signature and still applies prime-`m` unit
+  (monic) normalization. Multivariate **skips** unit normalization — unit-normalization across
+  several variables is ambiguous (which leading term?), so we skip it (lower recall, never wrong).
+  The two render shapes are disjoint (int exponent keys vs `(name,exp)`-tuple monomial keys), so a
+  univariate signature and a multivariate signature can never coincide.
+- **No false-KNOWN, by construction.** A different monomial set — different variable *names*,
+  different exponents, a different *number* of variables, or a different coefficient mod `m` —
+  yields a different signature. Coefficient reduction mod `m` is exact in `(ℤ/mℤ)[vars]`; truth is
+  never consulted. The prototype-era bug (`a*b` colliding with `a^2`) cannot recur: `a*b`'s key is
+  the tuple `((('a',1),('b',1)),1)` while `a^2`'s univariate key is `((2,1))` — structurally
+  distinct. (Note a benign edge: a *syntactically present but cancelled* variable, e.g.
+  `(n + m - m) % 3 == 0`, is treated as multivariate and so does NOT collapse onto pure `n % 3 ==
+  0` — a conservative miss, never a wrong match.)
+- **DORMANT until corpus has multivariate entries.** The matcher only demotes to KNOWN against a
+  curated corpus signature; `corpus/known_results.json` currently has **no** multivariate
+  `claim_property`, so this path matches nothing in production today. It only *prepares* the
+  matcher; a future `build_corpus` run that adds multivariate knowns activates it. Until then the
+  behavior change is invisible at the gate (multivariate candidates still survive as NOVEL — they
+  just now carry a signature instead of `None`).
+
 ## Integration
 
 - `corpus.CorpusBackend`: precompute `{signature: name}` from entries' `claim_property` at load;
