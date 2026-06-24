@@ -23,12 +23,13 @@ def _law(stmt: str, name: str, *, verified: bool = True, consensus: int = 2) -> 
     return p
 
 
-def test_only_published_laws_appear_in_laws():
+def test_only_published_laws_appear_in_laws(monkeypatch):
+    monkeypatch.setenv("LEIBNIZ_INSTANCE", "prod")  # ADR 0033: publish is PROD-only + confirmed
     cx = Calculemus()
     a, b = _law("Addition commutes", "add_comm"), _law("Multiplication commutes", "mul_comm")
     cx.promulgate(a)
     cx.promulgate(b)
-    cx.publish(a.pid, operator_approved=True)  # only `a` is published
+    cx.publish(a.pid, operator_approved=True, confirm_instance="prod")  # only `a` is published
 
     led = ledger_payload(cx)
     assert [law["statement"] for law in led["laws"]] == ["Addition commutes"]
