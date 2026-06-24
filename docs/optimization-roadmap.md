@@ -227,6 +227,26 @@ discovery-frontier push.
       converts the measured ~50% reach into **sound** promulgations. Next: run the panel
       through the live discovery funnel for a first *organic* promulgation; Aristotle remains
       a candidate second independent proposer. Raw-model swaps (A) stay deprioritized.
+    - ✅ **(C-v2) Organic funnel run — the panel works end-to-end.** Full live calibration,
+      panel `[opus, gpt-5.5, glm-5.2]`, isolated state (8 cycles, 61 conjectured, $23.44,
+      ~3.6 h): **42 reached proof (69%), 12 promulgated, all kernel-verified.** The repair
+      panel is the whole engine — decomposition closed **0/85** sub-lemmas (still
+      reach-bottlenecked), repair **closed 17, promulgated 12** (N+1 filtered the 5 closes that
+      lacked a 2nd distinct closer); `rounds_to_close` = **8 initial-draft, 9 via repair
+      rounds**. The faithfulness gate caught **16 gamed**; the band thermostat walked
+      0.45→0.18→0.26. **Audit of all 12: SOUND 12/12 (re-discharged Q.E.D.), NON-TRIVIAL
+      12/12, but NOVEL 0/12** — every one is Fermat's little theorem (p=3,5,7) or an elementary
+      divisibility. So the mission MECHANISM is proven (sound N+1 promulgation, no human on the
+      path) but the **novelty filter is the binding gap** (the daemon rediscovers textbooks).
+    - 🔶 **Novelty hardening (ADR 0031), partial.** L1 (corpus broadened 34→48 with the
+      elementary-NT families; seeded hashes match the run's canonical promulgations) + L3
+      (conjecturer steered off the classic families) shipped and are **sound**. **L2
+      (decision-procedure equivalence) was implemented then RETRACTED same-day as unsound** —
+      every theorem's property is a tautology over its domain, so box-equivalence matched *any*
+      true claim to a tautological known (would suppress all novelty). Net: exact re-conjectures
+      of seeded knowns + the common families are now caught/steered; catching arbitrary
+      *restatements* needs a future **structural** canonicalizer (not truth-equivalence) — the
+      open novelty work.
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
@@ -286,8 +306,13 @@ discovery-frontier push.
   the HF ensemble reliably closes only decision-procedure-trivial goals (it closed 32
   ring-trivia in the lever-1 run), which the non-triviality gate (correctly) filters; for
   genuinely non-trivial goals it closes ~0–1 per run, and even their sub-lemmas at ~14%.
-  The binding constraint is now squarely **lever 3 (a stronger prover)** — largely an
-  infra/model question, not more proposal-side code.
+  The binding constraint *was* **lever 3 (a stronger prover)** — now **resolved**: the ADR 0029
+  repair panel closes ~50% of missed goals and, in the organic funnel run, produced **12 sound
+  N+1 promulgations with no human on the path** (decomposition still contributes ~0; the panel
+  is the engine). **The binding constraint has moved to NOVELTY:** the daemon now proves things
+  but rediscovers textbooks (all 12 were Fermat-family / elementary divisibility). ADR 0031
+  hardened the cheap cases (corpus broadening + steering) but the open work is a sound
+  **structural** novelty matcher to catch *restatements* of known results — the next lever.
 
 ## Sequencing (as built)
 
