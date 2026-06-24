@@ -34,6 +34,7 @@ from leibniz.discovery import (
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
 from leibniz.gates.verification import VerificationGate
+from leibniz.instance_config import InstanceConfig, resolve_instance_config
 from leibniz.lemma_decomposition import DecomposingDemonstrate, LemmaDecomposer
 from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
@@ -152,25 +153,38 @@ def frontier_reasoner(primary: object, meter: object | None = None) -> object:
     return FailoverProvider([primary, *backups])
 
 
-def _proof_verifier(cli_lean: LeanVerifier) -> LeanVerifier:
+def _proof_verifier(cli_lean: LeanVerifier, repl_image: str | None = None) -> LeanVerifier:
     """The verifier the consensus ensemble discharges through (ADR 0011).
 
     Prefer the REPL backend — Mathlib loads once per import-set instead of once per
     check (~3x throughput on Mathlib checks), which matters because the ensemble
     issues many checks per cycle. Fall back to the CLI verifier when the REPL image
     is absent, or when the operator pins it off via LEIBNIZ_LEAN_REPL=0. Either way
-    `LeanVerifier.discharge` is the sole kernel_verified writer (CLAUDE.md inv. 1)."""
-    if os.environ.get("LEIBNIZ_LEAN_REPL", "1") != "0" and lean_repl.available():
-        return LeanVerifier(lean_repl.LeanReplBackend())
+    `LeanVerifier.discharge` is the sole kernel_verified writer (CLAUDE.md inv. 1).
+
+    ADR 0033: the REPL image is pinned per instance (`repl_image`) so PROD/UAT run their
+    resolved kernel; absent, the audited default."""
+    image = repl_image or lean_repl.REPL_IMAGE
+    if os.environ.get("LEIBNIZ_LEAN_REPL", "1") != "0" and lean_repl.available(image):
+        return LeanVerifier(lean_repl.LeanReplBackend(image=image))
     return cli_lean
 
 
-def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
+def build_daemon(
+    *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
+) -> Leibniz:
     """Assemble the real daemon. Makes no network calls; configure creds via env
-    (load_env() first). frontier/analogy limits bound how many seeds a cycle runs."""
-    lean = LeanVerifier(LeanCliBackend())
+    (load_env() first). frontier/analogy limits bound how many seeds a cycle runs.
+
+    ADR 0033: `config` pins the per-instance Lean image (CLI + REPL) and corpus; when None
+    it is resolved from LEIBNIZ_INSTANCE (PROD pins the audited artifacts, UAT/dev may
+    override). build_daemon stays construct-only — the run entrypoint records provenance via
+    `instance_config.write_provenance`."""
+    cfg = config or resolve_instance_config()
+    lean = LeanVerifier(LeanCliBackend(image=cfg.lean_image))
     smt = SMTVerifier(Z3Backend())
-    novelty = NoveltyGate(CorpusBackend.from_json(), lean)  # ADR 0031 L2 retracted; exact-hash novelty
+    # ADR 0033: pin the corpus per instance (PROD: audited; UAT/dev: may override).
+    novelty = NoveltyGate(CorpusBackend.from_json(cfg.corpus_path), lean)  # ADR 0031 L2 retracted; exact-hash novelty
     faithfulness = FaithfulnessGate(smt=smt, probes=default_probes(smt), judge=ConservativeJudge())
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
@@ -182,7 +196,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     )
     consensus = ProofConsensus(
         provers=prover_ensemble(meter=cost_budget),
-        lean=_proof_verifier(lean),  # ADR 0011: REPL (import-cached) when available
+        lean=_proof_verifier(lean, repl_image=cfg.lean_repl_image),  # ADR 0011 REPL; ADR 0033 pinned
         min_consensus=int(os.environ.get("LEIBNIZ_PROOF_CONSENSUS", "2")),
     )
     # DEMONSTRATE fallback ladder: N+1 consensus -> (ADR 0027) decomposition -> (ADR 0029)

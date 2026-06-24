@@ -1,8 +1,8 @@
 # ADR 0033 — UAT / Production instance isolation (the trust-safe fork)
 
-- Status: **Accepted** (2026-06-24) — design decided; implementation **staged** (Slice 1,
-  instance-tag + write-barrier, in progress). The broader fork (separate checkout + deploy
-  profiles) follows the slices below.
+- Status: **Accepted** (2026-06-24) — design decided; implementation **staged**. Slices 1–3
+  landed (instance-tag + write-barrier; publish guard; per-instance kernel/corpus pinning).
+  Slice 4 (the separate checkout + deploy profiles) follows.
 - Date: 2026-06-24
 - Related: ADR 0001 (charter & trust hierarchy), ADR 0008 (promotion ≠ publication), ADR 0013
   (edge provenance), ADR 0016 (persistent runtime), ADR 0025 (proof persistence / DB
@@ -76,13 +76,18 @@ which is frozen anyway (5).
 
 ## Implementation plan (staged)
 
-- **Slice 1 (now): instance-tag + write-barrier** — `LEIBNIZ_INSTANCE`; idempotent
+- **Slice 1 (done): instance-tag + write-barrier** — `LEIBNIZ_INSTANCE`; idempotent
   `ADD COLUMN instance` migration (ADR 0025 pattern); stamp on `remember()`; barrier on init.
   Pure SQLite/Python; `test_invariants.py` untouched.
-- **Slice 2: publish guard** — `Calculemus.publish` PROD-only + instance confirmation + colophon
-  instance line.
-- **Slice 3: per-instance kernel + corpus pinning** — `build_daemon(instance=…)` selects image
-  tag / corpus; record versions.
+- **Slice 2 (done): publish guard** — `Calculemus.publish` PROD-only + instance confirmation +
+  colophon instance line.
+- **Slice 3 (done): per-instance kernel + corpus pinning** — `instance_config.resolve_instance_config`
+  pins the Lean CLI/REPL image + corpus per instance; `build_daemon(config=…)` threads them into
+  the backends; PROD uses the audited code-pinned defaults and **refuses** an experimental
+  `LEIBNIZ_LEAN_IMAGE`/`LEIBNIZ_LEAN_REPL_IMAGE`/`LEIBNIZ_CORPUS_PATH` override (logged, fail-safe),
+  while UAT/dev honour them. The resolved images + a corpus content hash are recorded per instance
+  (`write_provenance` → `.leibniz/provenance-<instance>.jsonl`, append-only), called from the run
+  entrypoint (build_daemon stays construct-only). `test_invariants.py` untouched.
 - **Slice 4: the fork itself** — `leibniz-uat/` checkout, deploy profiles, a `UAT_PLAN.md`-style
   runbook, scoped credentials.
 
@@ -110,3 +115,7 @@ which is frozen anyway (5).
 - Cryptographic promulgation seal (HMAC over `kernel_verified`+proof) vs the plain `instance` tag
   — the tag + write-barrier + publish guard suffice for accidental contamination; a seal would
   additionally defend a *tampered* DB. Deferred unless a threat model requires it.
+- Slice 3 makes PROD *refuse* an experimental image/corpus env override (fail-safe): to change
+  PROD's pin you bump the code default (auditable). This removes an emergency "swap PROD's kernel
+  without a deploy" lever. If one is ever needed, add an explicit acknowledged override
+  (e.g. `LEIBNIZ_PROD_IMAGE_OVERRIDE_ACK=1`) rather than honouring the bare env var. Deferred.
