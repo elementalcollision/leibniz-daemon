@@ -1,0 +1,18 @@
+{
+  "cycle": 2,
+  "roman": "II",
+  "created_at": "2026-06-24T00:00:00Z",
+  "domain": "arithmetic_and_number_theory",
+  "seeds": 61,
+  "conjectured": 61,
+  "reached_proof": 34,
+  "promulgated": 10,
+  "by_reason": {
+    "promulgated": 10,
+    "known": 3,
+    "gamed": 19,
+    "unproven": 29
+  },
+  "summary": "First live cycle with the novelty gate hardened — form-canonicalisation plus a grown corpus of known results. Sixty-one conjectures over eight sub-cycles produced ten kernel-verified laws (all re-discharged against the kernel) and, for the first time, demoted three restatements as KNOWN — including a loosely-phrased cube-residue fact an earlier run had waved through. The promulgated laws remain classical (quartic identities and residues): with its habitual genre now recognised, the conjecturer migrated to a fresh textbook genre rather than to genuine novelty — locating the frontier upstream, in the proposer, not the checker.",
+  "illustrative": false
+}
