@@ -34,6 +34,7 @@ deploy/profiles/*.env
 calibration_report.json
 repair_reach_report.json
 ab_prover_reach_report.json
+ab_prover_tiers_report.json
 
 # OS
 .DS_Store

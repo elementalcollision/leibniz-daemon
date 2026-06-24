@@ -1,0 +1,110 @@
+{
+  "_meta": {
+    "note": "STARTER set — kernel-verified statements only (elaborates with ':= by sorry'). These are original goals curated for the prover plateau experiment. They are NOT imported from miniF2F or PutnamBench. Importing those full benchmarks is a follow-up task.",
+    "format": "Each entry: {theorem_src, imports}. theorem_src is a Lean 4 statement header (no proof body). The prover A/B runner appends the proof body.",
+    "tiers": {
+      "T0": "Elementary — decide/ring/omega/simp-class. Pulled from the organic3_memory.db run ledger (modular-arithmetic conjecture mix).",
+      "T1": "AMC/AIME-flavored — number theory, divisibility, inequalities; need several tactic steps but a single focused argument.",
+      "T2": "Olympiad/Putnam-flavored — genuine multi-step reasoning, classical theorems; expect large prover models to outpace small ones here."
+    },
+    "verification": "All T1/T2 entries verified 2026-06-24 against leibniz-lean:v4.31.0 via LeanCliBackend.compile_statement (elaborates with 'by sorry'). Dropped: t2_fermat_little (p | n^p - n over Z had type mismatch; replaced with t2_zmod_fermat using ZMod)."
+  },
+  "T0": [
+    {
+      "theorem_src": "theorem t0_mod_six_zero (n : ℕ) : (n * (n + 1) * (2 * n + 1)) % 6 = 0",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_mod12_eq_one (n : ℕ) : (n * (n + 1) * (n + 2) * (n + 3) + 1) % 12 = 1",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_prod_four_consecutive_div_eight (n : ℕ) : (n * (n + 1) * (n + 2) * (n + 3)) % 8 = 0",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_n_mul_succ_mul_add_three_mod_six (n : ℕ) : (n * (n + 1) * (n + 3)) % 6 = 0 ∨ (n * (n + 1) * (n + 3)) % 6 = 2 ∨ (n * (n + 1) * (n + 3)) % 6 = 4",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_residue_mod_four_never_odd (n : ℕ) : (n*(n+1)*(n+2) + 2*n) % 4 = 0 ∨ (n*(n+1)*(n+2) + 2*n) % 4 = 2",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_mod12_in_zero_six (n : ℕ) : (n*(n+1)*(2*n+1) + 6*n*(n+1)) % 12 = 0 ∨ (n*(n+1)*(2*n+1) + 6*n*(n+1)) % 12 = 6",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_mod9_in_zero_three (n : ℕ) : (n*(n+1)*(n+3)*(n+4)) % 9 = 0 ∨ (n*(n+1)*(n+3)*(n+4)) % 9 = 3",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t0_residue_mod6_even_not_four (n : ℕ) : (((n^2 + n)^2 + n^2 + n) % 6) % 2 = 0 ∧ ((n^2 + n)^2 + n^2 + n) % 6 ≠ 4",
+      "imports": ["Mathlib.Tactic"]
+    }
+  ],
+  "T1": [
+    {
+      "theorem_src": "theorem t1_consec3_div6 (n : ℕ) : 6 ∣ n * (n + 1) * (n + 2)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_sum_odd_sq_mod4 (a b : ℤ) (ha : Odd a) (hb : Odd b) : (a^2 + b^2) % 4 = 2",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_diff_sq_div8 (n : ℕ) (h : Odd n) : 8 ∣ n^2 - 1",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_n_choose_2_even (n : ℕ) (h : 2 ≤ n) : Even (n.choose 2)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_gcd_consec (n : ℕ) : Nat.gcd n (n + 1) = 1",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_sum_formula (n : ℕ) : 2 * (Finset.range (n + 1)).sum id = n * (n + 1)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_consec_even_div8 (k : ℕ) : 8 ∣ (2 * k) * (2 * k + 2)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t1_sq_mod4 (n : ℕ) : n^2 % 4 = 0 ∨ n^2 % 4 = 1",
+      "imports": ["Mathlib.Tactic"]
+    }
+  ],
+  "T2": [
+    {
+      "theorem_src": "theorem t2_inf_primes : ∀ n : ℕ, ∃ p : ℕ, n < p ∧ p.Prime",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_cauchy_schwarz_nat (n : ℕ) (a b : Fin n → ℝ) : (∑ i, a i * b i)^2 ≤ (∑ i, a i ^ 2) * (∑ i, b i ^ 2)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_no_sq_3mod4 (n : ℤ) : n^2 % 4 ≠ 3",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_bernoulli_ineq (x : ℝ) (hx : -1 ≤ x) (n : ℕ) : 1 + n * x ≤ (1 + x)^n",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_coprime_prod (a b c : ℕ) (h1 : Nat.Coprime a b) (h2 : Nat.Coprime a c) : Nat.Coprime a (b * c)",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_zmod_fermat (p : ℕ) [Fact (Nat.Prime p)] (x : ZMod p) : x^p = x",
+      "imports": ["Mathlib.Tactic"]
+    },
+    {
+      "theorem_src": "theorem t2_pigeonhole_mod (n : ℕ) (hn : 0 < n) (f : Fin (n + 1) → ZMod n) : ∃ i j : Fin (n + 1), i ≠ j ∧ f i = f j",
+      "imports": ["Mathlib.Tactic"]
+    }
+  ]
+}
