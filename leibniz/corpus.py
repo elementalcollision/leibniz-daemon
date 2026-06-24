@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from leibniz.structural import congruence_signature
 from leibniz.types import ClaimSignature
 
 _DEFAULT_PATH = Path(__file__).resolve().parent.parent / "corpus" / "known_results.json"
@@ -44,9 +45,17 @@ class CorpusEntry:
 class CorpusBackend:
     entries: list[CorpusEntry]
     _by_hash: dict[str, CorpusEntry] = field(default_factory=dict, repr=False)
+    _by_sig: dict[tuple, str] = field(default_factory=dict, repr=False)  # ADR 0032
 
     def __post_init__(self) -> None:
         self._by_hash = {e.formal_hash: e for e in self.entries if e.formal_hash}
+        # ADR 0032: precompute structural congruence signatures for entries with a DSL predicate
+        self._by_sig = {}
+        for e in self.entries:
+            if e.claim_property:
+                s = congruence_signature(e.claim_property)
+                if s is not None:
+                    self._by_sig.setdefault(s, e.name)
 
     @classmethod
     def from_json(cls, path: Optional[Path] = None) -> "CorpusBackend":
@@ -63,12 +72,14 @@ class CorpusBackend:
         # we couldn't normalize is treated as novel, not silently KNOWN).
         return bool(sig.formal_hash) and sig.formal_hash in self._by_hash
 
-    # ADR 0031 Layer 2 (equivalent_known: decision-procedure equivalence) was RETRACTED — it
-    # was unsound for novelty. Every theorem's claim_property is a tautology over its domain, so
-    # box-equivalence matched ANY true claim to a tautological known (e.g. Fermat n^2%2==n%2),
-    # which would demote all genuine novelty to KNOWN. The claim_domain/claim_property fields
-    # remain as data (unused) for a future STRUCTURAL matcher. Novelty stays on the exact
-    # elaborator-hash (sound) + non-triviality.
+    def structural_known(self, claim_property: Optional[str]) -> Optional[str]:
+        """ADR 0032: the name of a curated known whose polynomial congruence is structurally
+        IDENTICAL to `claim_property`'s (same signature), or None. Catches RESTATEMENTS the
+        exact elaborator-hash misses (e.g. `(n^5+4n)%5==0` vs Fermat `n^5%5==n%5`) by FORM, not
+        truth — so it cannot false-KNOWN (a different congruence has a different signature), the
+        unsoundness that retracted ADR 0031 L2. Unrecognized shapes -> None -> stays NOVEL."""
+        s = congruence_signature(claim_property)
+        return self._by_sig.get(s) if s is not None else None
 
     def nearest(self, sig: ClaimSignature, k: int = 5) -> list[tuple[str, float]]:
         scored: list[tuple[str, float]] = []
