@@ -64,6 +64,28 @@ def test_summary_attribution_and_decisiveness():
     assert s["closes_per_prover_A"]["anthropic/claude-opus-4-8"] == 3
 
 
+def test_preflight_passes_when_all_reachable():
+    avail_a = {"deepseek/deepseek-prover-v2", "anthropic/claude-opus-4-8"}
+    avail_b = {"deepseek/deepseek-prover-v2", "Goedel-LM/Goedel-Prover-V2-32B", "anthropic/claude-opus-4-8"}
+    assert ab.preflight(avail_a, avail_b, CAND, required=2) == []
+
+
+def test_preflight_aborts_when_candidate_unreachable():
+    # Goedel's key/URL is wrong -> it isn't in arm B's available set -> the A/B is meaningless.
+    avail_a = {"deepseek/deepseek-prover-v2", "anthropic/claude-opus-4-8"}
+    avail_b = {"deepseek/deepseek-prover-v2", "anthropic/claude-opus-4-8"}  # no goedel
+    probs = ab.preflight(avail_a, avail_b, CAND, required=2)
+    assert any("Goedel-LM/Goedel-Prover-V2-32B" in p and "reachable in arm B" in p for p in probs)
+
+
+def test_preflight_aborts_when_an_arm_cannot_reach_consensus():
+    # Only one voter available in an arm -> can never hit N+1=2.
+    one = {"deepseek/deepseek-prover-v2"}
+    full = {"deepseek/deepseek-prover-v2", "Goedel-LM/Goedel-Prover-V2-32B", "anthropic/claude-opus-4-8"}
+    probs = ab.preflight(one, full, CAND, required=2)
+    assert any("arm A has only 1 available distinct voter" in p for p in probs)
+
+
 def test_useless_candidate_shows_zero_unlocks():
     # If the candidate never closes anything A didn't already, the A/B says so plainly.
     rows = [

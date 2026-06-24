@@ -106,16 +106,60 @@ def _goals_from_db(db_path: str, n: int) -> list[str]:
     return out
 
 
-def _run_arm(models: str, goals: list[str], meter, lean, min_consensus: int) -> list[dict]:
-    """Build the arm's ensemble and run every goal through N+1 consensus; return per-goal rows."""
+def _build_ensemble(models: str, meter):
+    """Build one arm's prover ensemble (no I/O; may raise ProviderUnavailable if a referenced
+    `@gateway` has no URL set — a fail-closed pre-flight signal, before any billable call)."""
     from leibniz.assembly import prover_ensemble
+    os.environ["LEIBNIZ_PROVER_MODELS"] = models
+    os.environ.pop("LEIBNIZ_HF_PROVER_MODELS", None)  # force the OpenRouter/generic path
+    return prover_ensemble(meter=meter)
+
+
+def _available_models(ensemble) -> set[str]:
+    """Model names in the ensemble whose provider is actually reachable (key present, etc.),
+    unwrapping strategy wrappers — the set of distinct voters that CAN participate."""
+    from leibniz.consensus import _prover_identity
+    out: set[str] = set()
+    for p in ensemble:
+        avail = getattr(p, "available", None)
+        ok = True
+        if callable(avail):
+            try:
+                ok = bool(avail())
+            except Exception:
+                ok = False
+        ident = _prover_identity(p)
+        if ok and ident.startswith("model:"):
+            out.add(ident.split("model:", 1)[1])
+    return out
+
+
+def preflight(avail_a: set[str], avail_b: set[str], candidates: set[str], required: int) -> list[str]:
+    """Pure pre-flight checks (CI-tested) — abort BEFORE any billable call if the A/B can't be
+    valid: the candidate prover must be reachable in arm B, and each arm must have at least N+1
+    available distinct voters (else it can never reach consensus and the comparison is moot)."""
+    problems: list[str] = []
+    missing = candidates - avail_b
+    if missing:
+        problems.append(
+            f"candidate prover(s) {sorted(missing)} are NOT reachable in arm B — check the "
+            f"gateway URL + API key; the A/B would be meaningless without them"
+        )
+    for name, avail in (("A", avail_a), ("B", avail_b)):
+        if len(avail) < required:
+            problems.append(
+                f"arm {name} has only {len(avail)} available distinct voter(s) (< N+1={required}): "
+                f"{sorted(avail)} — it can never reach consensus"
+            )
+    return problems
+
+
+def _run_arm(ensemble, goals: list[str], lean, min_consensus: int) -> list[dict]:
+    """Run every goal through N+1 consensus on a prebuilt ensemble; return per-goal rows."""
     from leibniz.consensus import ProofConsensus
     from leibniz.propositio import Expressio
 
-    os.environ["LEIBNIZ_PROVER_MODELS"] = models
-    os.environ.pop("LEIBNIZ_HF_PROVER_MODELS", None)  # force the OpenRouter/generic path
-    consensus = ProofConsensus(provers=prover_ensemble(meter=meter), lean=lean,
-                               min_consensus=min_consensus)
+    consensus = ProofConsensus(provers=ensemble, lean=lean, min_consensus=min_consensus)
     out = []
     for g in goals:
         try:
@@ -151,9 +195,29 @@ def main() -> int:
     from leibniz.backends import lean_repl
     from leibniz.backends.lean_cli import LeanCliBackend
     from leibniz.cost import CostBudget
+    from leibniz.providers import ProviderUnavailable
     from leibniz.verifiers import LeanVerifier
 
     meter = CostBudget.from_env()
+
+    # PRE-FLIGHT (no billable calls, no Lean touched): build both ensembles and confirm every
+    # arm is reachable BEFORE spending. A missing `@gateway` URL fails the build; a missing API
+    # key shows as an unavailable voter. Either way, abort with a clear message instead of
+    # burning a run that yields an ambiguous "candidate closed nothing" result.
+    try:
+        a_ens = _build_ensemble(arm_a, meter)
+        b_ens = _build_ensemble(arm_b, meter)
+    except ProviderUnavailable as e:
+        print(f"[ab_prover] PRE-FLIGHT FAILED (no billable calls made):\n  - {e}")
+        return 2
+    problems = preflight(_available_models(a_ens), _available_models(b_ens),
+                         candidates, min_consensus)
+    if problems:
+        print("[ab_prover] PRE-FLIGHT FAILED (no billable calls made):")
+        for p in problems:
+            print(f"  - {p}")
+        return 2
+
     backend = lean_repl.LeanReplBackend() if lean_repl.available() else LeanCliBackend()
     lean = LeanVerifier(backend)
 
@@ -164,8 +228,8 @@ def main() -> int:
     print(f"  candidate(s) under test: {sorted(candidates) or '(none — B ⊆ A)'}")
 
     t0 = time.time()
-    res_a = _run_arm(arm_a, goals, meter, lean, min_consensus)
-    res_b = _run_arm(arm_b, goals, meter, lean, min_consensus)
+    res_a = _run_arm(a_ens, goals, lean, min_consensus)
+    res_b = _run_arm(b_ens, goals, lean, min_consensus)
     rows = [{"goal": g, "a": a, "b": b} for g, a, b in zip(goals, res_a, res_b)]
     summary = summarize_ab(rows, candidates)
     elapsed = time.time() - t0
