@@ -80,6 +80,13 @@ def main() -> int:
     from leibniz.assembly import build_daemon  # noqa: E402
     from leibniz.calculemus import Calculemus, render_propositio  # noqa: E402
     from leibniz.daemon import CycleReport  # noqa: E402
+    from leibniz.instance_config import resolve_instance_config, write_provenance  # noqa: E402
+
+    # ADR 0033 Slice 3: resolve the per-instance kernel/corpus pin ONCE, record provenance
+    # (durable, auditable), and pass it to build_daemon so the run is traceable to its artifacts.
+    _cfg = resolve_instance_config()
+    _prov = write_provenance(_cfg)
+    print(f"[calibrate] {_cfg.summary()} (provenance -> {_prov})")
 
     feed = json.loads(_FEED.read_text())
     records = feed.get("records", [])
@@ -90,7 +97,7 @@ def main() -> int:
           f"{' + Aristotle' if os.environ.get('LEIBNIZ_ARISTOTLE', '') not in ('', '0') else ''}"
           f"{' + repair(0029)' if _repair_on else ''}")
 
-    daemon = build_daemon(frontier_limit=seeds_per_cycle, analogy_limit=0)
+    daemon = build_daemon(frontier_limit=seeds_per_cycle, analogy_limit=0, config=_cfg)
     daemon.survey = FeedSurvey(records, seeds_per_cycle)  # seed from the feed
     daemon.domains = ()  # single domain; the feed drives the seeds
 
