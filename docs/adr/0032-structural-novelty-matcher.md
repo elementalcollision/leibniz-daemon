@@ -156,3 +156,94 @@ anticipated, done SOUNDLY and conservatively:
   measure how many composite-`m` restatements are missed before adding more.
 - Whether to also structurally canonicalize the corpus's `theorem_src` (Lean) rather than the DSL
   `claim_property`, to cover knowns lacking a DSL contract — deferred; the DSL path covers the band.
+
+## Follow-up — loose-phrasing canonicalization (2026-06-24, additive, ACTIVE)
+
+The organic3 audit showed the matcher was **phrasing-brittle**: it canonicalized only the tight
+`P % m == r` (and `P1 % m == P2 % m`) shapes, so loosely-phrased RESTATEMENTS of *known* modular
+facts dodged the gate and came back **false-NOVEL**:
+
+- set-membership / disjunction: `P % m ∈ {0,4}`, `P%m==0 or P%m==4` → `None`;
+- vacuous offsets (`+ 6·n(n+1)` mod 6 ≡ 0) when written in a loose shape;
+- `!=` framings of a single-residue fact.
+
+Concrete miss: organic3 **#12** `n*(n+1)*(n+5) % 6 ∈ {0,4}` is logically the corpus's
+`cube_residue_mod_six` (`n^3 % 6 == n % 6`) — `n(n+1)(n+5) ≡ n^3+5n ≡ n^3−n (mod 6)`, actual
+residue set `{0}` — but the loose `∈{0,4}` phrasing returned `None`.
+
+**The fix (in `leibniz/structural.py`, byte-identical for inputs already handled):** widen the set
+of recognized predicate SHAPES, all canonicalizing onto a key that is COMPUTED behaviour, not
+phrasing. For the new shapes the signature keys on:
+
+> `(modulus m, reduced polynomial of P mod m, frozenset R)` where
+> `R = { P(n) % m : n ∈ [0, m−1] }` is the **actual** residue set computed by bounded enumeration.
+
+Recognized additions (single-variable `P` only):
+- `P % m in {…}` / `not in {…}` (also `(…)` / `[…]`);
+- `(P % m == c1) or (P % m == c2) or …` over one common `P` and `m`.
+
+The residues the author *asserted* are **discarded**; `R` is recomputed. When `R` is a **singleton**
+`{r}` the claim is exactly the congruence `P ≡ r (mod m)`, so it folds onto the EXISTING
+`(== / !=, m, normalize(P − r))` signature — that is how loose `P % m ∈ {0,4}` (actual `{0}`)
+matches a corpus `P % m == 0`. When `|R| > 1` the claim is a genuine multi-residue statement and
+gets a DISTINCT, relop-tagged signature `('in' / 'not in', m, reduced-coeffs-of-P, frozenset(R))`.
+
+### Soundness argument (why this is NOT L2, and cannot false-KNOWN)
+
+1. **Keys on FORM + COMPUTED residues, never on TRUTH.** L2 was retracted because it matched by
+   Z3 *truth*-equivalence, and every true ∀-claim is a tautology over its domain → all truths were
+   mutually equivalent → everything collapsed to KNOWN. This matcher never evaluates whether a
+   claim is *true*. It evaluates the polynomial `P`'s **value-map mod m** (a property of the
+   syntactic polynomial) and its **reduced coefficients mod m** (an exact algebraic normalization
+   in `(ℤ/mℤ)[n]`). Two claims match only when these structural objects coincide.
+
+2. **`R` is EXACT, not bounded-approximate.** An integer polynomial is periodic mod `m` with period
+   `m` (`P(n+m) ≡ P(n) (mod m)`, since `(n+m)^k ≡ n^k (mod m)`). So one full period `[0, m−1]`
+   yields the **complete** residue set; this is a closed computation, not a bounded search that can
+   miss a witness. We only enumerate when `m ≤ RESIDUE_BOUND + 1` (the ADR 0021 box, default 64);
+   for a larger modulus the box would not cover a period, so we **return `None` → NOVEL**, never a
+   canonicalization on an incomplete set.
+
+3. **Adding `R` can only SPLIT classes finer — it can never MERGE two distinct polynomials.** The
+   reduced polynomial (exponents + coeffs mod m) already *determines* the residue function
+   `n ↦ P(n) mod m`, hence determines `R`. So `R` is a **coarser, derived coordinate** of
+   `(m, reduced-poly)`. The base key `(m, reduced-poly)` is the already-accepted, sound ADR 0032
+   key (distinct polynomials ⇒ distinct signatures, proven by exact mod-`m` coefficient
+   normalization). Appending `R` to a sound key cannot introduce a collision the base key did not
+   already permit — and the base key permits none. **Therefore no false-KNOWN is introduced.**
+
+4. **Distinct polynomials provably never collapse.** Different reduced polynomial mod `m`, different
+   modulus, or (for the multi-residue branch) different residue set ⇒ different signature, by
+   construction. The `'in' / 'not in'` relop tag also makes the multi-residue family structurally
+   disjoint from the `'==' / '!='` singleton family.
+
+5. **The multi-residue branch DELIBERATELY skips the prime-`m` monic unit step.** The design
+   self-critique caught a would-be false-KNOWN: `2·n^2 % 7 ∈ {…}` and `n^2 % 7 ∈ {…}` have the
+   same residue *set* but different value-maps — for a *membership* claim they are different facts.
+   Monic-normalizing (multiply by a unit inverse) would collapse them. So the multi-residue key
+   reduces coefficients mod `m` **only** (exact, keeps `2P` ≠ `P`). The monic step is kept ONLY in
+   the singleton-fold / equality path, where it is a *true* algebraic equivalence (`c·P ≡ 0 ⟺
+   P ≡ 0` for a unit `c`) — exactly the tested `==`-shape behavior (`(2*n^5−2*n)%5==0` ↔ Fermat-5).
+
+6. **All error is one-directional and benign.** Anything unrecognized — multivariate membership,
+   non-constant set element, RHS not a literal set/tuple/list, heterogeneous/`and`/nested
+   disjunction, modulus too large, an inequality — returns `None` → stays NOVEL. The matcher fails
+   toward NOVEL, never toward KNOWN; and novelty only DEMOTES (KNOWN quarantines, reversible;
+   ADR 0031), so it can never cause a false promulgation.
+
+### Test coverage (`tests/test_novelty_canon_loose.py`)
+
+- **SHOULD-MATCH:** `P%m∈{0,4}` (actual `{0}`) ↔ `P%m==0`; #12 ↔ `cube_residue_mod_six`;
+  disjunction ↔ membership ↔ `==0`; vacuous-offset ↔ base; `not in {1}` singleton ↔ `!= 0`.
+- **MUST-NOT-MATCH (load-bearing):** different polynomials (`n^2%5` vs `n^3%5`, both tight and
+  membership), unit multiples in the multi-residue branch (`2*n^2%7` vs `n^2%7` — the self-critique
+  finding), different moduli, different residue sets, membership-vs-equality family disjointness,
+  and asserted-set-irrelevance. Plus a cross-product property test asserting equal multi-residue
+  signatures ⟺ equal `(m, reduced-poly, R)` against an **independent** canonical form (never truth).
+- **Boundary:** all unrecognized/unsafe shapes (incl. `m > RESIDUE_BOUND+1`) → `None` (NOVEL).
+
+Wiring: none beyond `congruence_signature` — `CorpusBackend.structural_known` and `NoveltyGate`
+already route candidate `claim_property` through it, so loose phrasings now resolve to the matching
+corpus entry automatically. `corpus/known_results.json`, `corpus.py`, `gates/novelty.py`, and
+`tests/test_invariants.py` are **unchanged**; the existing `tests/test_structural_r0032.py` and all
+12 corpus signatures are byte-identical.
