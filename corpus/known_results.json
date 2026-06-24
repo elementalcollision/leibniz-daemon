@@ -543,6 +543,45 @@
     "claim_property": "n * (n + 1) * (n + 2) * (n + 3) % 24 == 0"
   },
   {
+    "name": "four_consec_div_eight",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "consecutive_product",
+    "theorem_src": "theorem four_consec_div_eight : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 8 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "b63043f12a7cbe3c",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) * (n + 2) * (n + 3) % 8 == 0"
+  },
+  {
+    "name": "four_consec_div_four",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "consecutive_product",
+    "theorem_src": "theorem four_consec_div_four : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 4 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "5ef389c1f6fb1c7e",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) * (n + 2) * (n + 3) % 4 == 0"
+  },
+  {
+    "name": "sumsq_numerator_div_six",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "sum_of_squares",
+    "theorem_src": "theorem sumsq_numerator_div_six : forall n : Nat, n * (n + 1) * (2 * n + 1) % 6 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "17831ade9362dcb0",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) * (2 * n + 1) % 6 == 0"
+  },
+  {
     "name": "even_pair_div_eight",
     "claim_type": "invariant",
     "subject": "number_theory",
