@@ -1,8 +1,9 @@
 # ADR 0033 — UAT / Production instance isolation (the trust-safe fork)
 
-- Status: **Accepted** (2026-06-24) — design decided; implementation **staged**. Slices 1–3
-  landed (instance-tag + write-barrier; publish guard; per-instance kernel/corpus pinning).
-  Slice 4 (the separate checkout + deploy profiles) follows.
+- Status: **Accepted & implemented** (2026-06-24) — all four slices landed: instance-tag +
+  write-barrier; publish guard; per-instance kernel/corpus pinning; deploy profiles + launcher
+  + `UAT_PLAN.md` runbook. Standing up the `leibniz-uat/` worktree + filling scoped credentials
+  is the remaining operator action (documented in `UAT_PLAN.md`).
 - Date: 2026-06-24
 - Related: ADR 0001 (charter & trust hierarchy), ADR 0008 (promotion ≠ publication), ADR 0013
   (edge provenance), ADR 0016 (persistent runtime), ADR 0025 (proof persistence / DB
@@ -88,8 +89,13 @@ which is frozen anyway (5).
   while UAT/dev honour them. The resolved images + a corpus content hash are recorded per instance
   (`write_provenance` → `.leibniz/provenance-<instance>.jsonl`, append-only), called from the run
   entrypoint (build_daemon stays construct-only). `test_invariants.py` untouched.
-- **Slice 4: the fork itself** — `leibniz-uat/` checkout, deploy profiles, a `UAT_PLAN.md`-style
-  runbook, scoped credentials.
+- **Slice 4 (done): the fork itself** — `deploy/profiles/{prod,uat,dev}.env.example` templates;
+  `scripts/run_instance.sh` launcher that sources a profile, runs the `leibniz.deploy` isolation
+  guard (refuses a non-prod profile pointed at prod state, or a prod profile pointed at UAT
+  state — the launch-time complement to the write-barrier), then execs; and `UAT_PLAN.md` (the
+  fork topology via `git worktree`, the trust crux, the promotion gate, the operator runbook).
+  Standing up the `leibniz-uat/` worktree + scoped credentials is the operator action it
+  documents. `test_invariants.py` untouched.
 
 ## Validation
 
