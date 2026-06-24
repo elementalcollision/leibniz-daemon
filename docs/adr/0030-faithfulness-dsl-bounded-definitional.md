@@ -1,7 +1,8 @@
 # ADR 0030 — Faithfulness DSL increment: bounded definitional encodings (Proposed)
 
-- Status: **Tier A implemented** (2026-06-23); Tiers B/C **Proposed** — approve before
-  implementing each.
+- Status: **Tier A implemented** (2026-06-23). **Tier B implemented on branch
+  `adr0030-tierb-symbolic-exp` (2026-06-24) and HELD — not merged** (sound but inert at the
+  gate's bound; see *Outcome* below). Tier C **Proposed** — approve before implementing.
 - Date: 2026-06-23
 - Related: ADR 0002 (faithfulness gate), ADR 0004 (structured contract), ADR 0020 (refuse
   vacuous passes), ADR 0021 (widen the DSL — multi-var, constant powers, constant mod/div),
@@ -72,6 +73,38 @@ missed. Guardrails:
 - Magnitude: `base^B` is exact in Z3's unbounded integers (no overflow), just costly; the cap
   keeps it tractable and the per-search timeout (ADR 0021) still turns an undecided search into
   a DEFER, never an UNSAT.
+
+#### Tier B outcome (2026-06-24) — implemented, verified sound, HELD as inert
+
+Built on branch `adr0030-tierb-symbolic-exp` exactly as specified (the `B+1`-arm `If`-chain,
+`MAX_SYM_EXP_BOUND=16`, whole-predicate DEFER, compound/over-cap → DEFER). Empirical review on
+that branch:
+
+- **Sound** (no wrong-UNSAT). A symbolic-exponent claim that is false somewhere yields a real
+  witness (`find_counterexample("2^n % 2 != 0", 16)` → `{n:0}`); a tautology → UNSAT; an
+  over-cap or compound exponent → `encodable` False → DEFER, never a vacuous PASS.
+- **But inert at the production bound.** The faithfulness gate searches at `gaming_bound = 64`
+  (`gates/faithfulness.py`), and `MAX_SYM_EXP_BOUND = 16 < 64`, so *every* symbolic-exponent
+  predicate is over-cap → DEFER. `encodable("2^n % 3 == 1")` is False at the default bound —
+  identical behaviour to pre-Tier-B. The machinery only activates when a caller passes
+  `bound ≤ 16`, which the gate never does.
+- **The prompt change is therefore a net regression.** Tier B moved `2^n, k^n` into the
+  *allowed* DSL in the conjecturer prompt; at the gate's bound those claims DEFER, so it merely
+  invites conjecture cycles that cannot pass faithfulness, with zero upside.
+
+This **resolves the open question below**: neither clamp option works at `bound = 64`.
+*Per-variable clamping* (exponent → 16, other vars → 64) is **unsound** — a multivariate claim
+false only at some other variable in `[17, 64]` would be missed → wrong-UNSAT. *Whole-predicate
+DEFER* (the implemented choice) is sound but inert as shown. The only sound *and* active option
+is a chain reaching the full `B = 64`, i.e. `MAX_SYM_EXP_BOUND = 64` — but that is a degree-64
+nonlinear term over the box, which Z3 times out on → DEFER anyway, just slower. So symbolic
+exponents do not fit the bounded-Z3 model at the production bound.
+
+**Decision: shelve Tier B.** The branch is preserved for the record but not merged; the prompt
+stays as-is (symbolic exponents forbidden) on `main`. This vindicates the ADR's own framing that
+the DSL increment is band-widening, not critical-path — and shows the symbolic-exponent band in
+particular cannot be widened soundly *and* usefully here. Revisit only if the gate's bound model
+changes (e.g. a periodicity-aware reduction for modular claims).
 
 ### Tier C — `gcd` / `factorial` / `Nat.log` (bounded tables, behind tight caps)
 
