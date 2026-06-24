@@ -2,7 +2,9 @@
 
 - Status: **Tier A implemented** (2026-06-23). **Tier B implemented on branch
   `adr0030-tierb-symbolic-exp` (2026-06-24) and HELD — not merged** (sound but inert at the
-  gate's bound; see *Outcome* below). Tier C **Proposed** — approve before implementing.
+  gate's bound; see *Tier B outcome* below). **Tier C revisited (2026-06-24) and SHELVED** —
+  the conjecture mix produces zero such claims and `factorial` is inert at the production bound
+  (see *Tier C outcome* below).
 - Date: 2026-06-23
 - Related: ADR 0002 (faithfulness gate), ADR 0004 (structured contract), ADR 0020 (refuse
   vacuous passes), ADR 0021 (widen the DSL — multi-var, constant powers, constant mod/div),
@@ -123,6 +125,28 @@ Each is total and pure but only *cheaply* sound over a small range:
 Tier C is the riskiest (a subtly wrong table = a wrong UNSAT = a vacuous PASS), so each
 function lands with its own adversarial soundness review (per the ADR 0021 precedent) and a
 property test that the Z3 encoding agrees with Python's `math.gcd`/`factorial` on the whole box.
+
+#### Tier C outcome (2026-06-24) — revisited, SHELVED (does not earn its keep)
+
+Revisited per the open question below ("only do Tier C if the conjecture mix actually needs
+it"). The evidence says it does not:
+
+- **Zero demand.** The conjecturer DSL *explicitly forbids* `gcd`/`factorial`/`Nat.log`
+  (`anthropic_provider.py`: "FORBIDDEN … named functions (log, sqrt, gcd, factorial, Nat.log,
+  floor, sums/products)"). The organic runs' ledger contains no such claims — every candidate is
+  a polynomial/modular congruence (min/max + the Tier A band). So nothing would ever exercise
+  Tier C unless the prompt were *also* changed to invite these functions.
+- **Inviting them repeats the Tier B trap.** `factorial` caps at `MAX_FACT = 12`, far below the
+  gate's `gaming_bound = 64`; a factorial claim over the box would be over-cap → DEFER at the
+  production bound — inert, exactly like Tier B. (`gcd`'s logarithmic Euclid unroll *could* be
+  active and sound over [0,64], but there is no demand for it.)
+- **Wrong lever.** Like Tier B, this is band-widening; the binding constraint is prover reach
+  (ADR 0028/0029), not the faithfulness band.
+
+**Decision: shelve Tier C.** Do not implement; keep the functions forbidden in the conjecturer
+DSL. Revisit only if a future conjecture mix genuinely produces `gcd`/`factorial` claims that
+DEFER for lack of an encoding — and even then, only `gcd` looks both sound and active at the
+production bound.
 
 ## Soundness argument
 
