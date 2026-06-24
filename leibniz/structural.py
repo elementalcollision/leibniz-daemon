@@ -21,6 +21,26 @@ permutation-canonical-form problem; getting it wrong would collapse two genuinel
 congruences to one signature — a false-KNOWN that wrongly suppresses a real discovery. We
 therefore do NOT rename. The cost is a missed match (false-NOVEL), which is safe.
 
+LOOSE PHRASINGS (ADR 0032 follow-up — phrasing-independent by COMPUTED residues): a restatement
+that dodges the tight `P % m == r` shape used to slip through (false-NOVEL). Three additional
+predicate SHAPES now canonicalize onto the SAME signature space, keyed on the polynomial's FORM
+plus its ACTUAL residue set — never on the asserted set, never on truth:
+  • set-membership `P % m in {r1, r2, …}` / `not in {…}` (also `(…)`, `[…]`);
+  • `or`-disjunctions of `P % m == c` over one common `P` and `m`;
+and the already-recognized `!=` form. For these, the residues the author *asserted* are
+DISCARDED; we recompute `R = { P(n) % m : n in [0, m-1] }`. That set is EXACT, not bounded-
+approximate: an integer polynomial is periodic mod m with period m (`P(n+m) ≡ P(n)`), so one
+period yields the complete residue set. (If `m` exceeds the enumeration bound `RESIDUE_BOUND`,
+R could be incomplete → we return None → NOVEL, never a wrong canonicalization.) When R is a
+SINGLETON `{r}` the claim *is* the congruence `P ≡ r (mod m)`, so it folds onto the existing
+`== r` / `!= r` signature — that is why loose `P % m ∈ {0,4}` with actual residues `{0}` matches
+a corpus `P % m == 0`. When R has >1 residue the claim is a genuine multi-residue statement and
+gets a DISTINCT, relop-tagged signature `('in'/'not in', m, normalize(P), frozenset(R))` that can
+never collide with a singleton `==` form. This is purely structural: R is a *coarser* coordinate
+than the reduced polynomial (which already determines the residue function), so adding it can only
+SPLIT signature classes finer — it can NEVER merge two distinct polynomials. (See ADR 0032's
+soundness argument and the L2-retraction note in ADR 0031.)
+
 SOUNDNESS: two claims share a signature IFF they assert the same polynomial congruence in
 ℤ/mℤ over the SAME literally-named variables (up to a unit multiple when m is prime AND the
 claim is single-variable). Coefficient reduction mod m is an exact algebraic normalization in
@@ -39,6 +59,10 @@ from typing import Optional
 MAX_NODES = 200    # bound the AST against adversarial input (matches smt_z3)
 MAX_DEGREE = 64    # cap expanded-polynomial total degree (bounds dict size; over-degree -> NotPoly)
 MAX_EXP = 8        # constant-power cap (matches the DSL's ^ cap, ADR 0021)
+RESIDUE_BOUND = 64  # box [0, RESIDUE_BOUND] for residue enumeration (ADR 0021's default bound).
+#   A polynomial is periodic mod m with period m, so [0, m-1] already gives the COMPLETE residue
+#   set; with m <= RESIDUE_BOUND+1 the computed R is EXACT. For m > RESIDUE_BOUND+1 we cannot be
+#   sure R is complete -> return None (fail toward NOVEL) rather than risk a wrong canonicalization.
 
 
 class _NotPoly(Exception):
@@ -173,19 +197,148 @@ def _normalize(poly: dict, m: int, single_var: bool) -> tuple:
     return tuple(sorted(poly.items()))
 
 
+def _residue_set(poly: dict, m: int) -> Optional[frozenset]:
+    """The EXACT set of residues `{ P(n) % m : n ∈ ℤ }` for the integer polynomial `poly`.
+
+    An integer polynomial is periodic mod m with period m (`P(n+m) ≡ P(n) (mod m)`, since
+    `(n+m)^k ≡ n^k (mod m)`), so enumerating one full period `[0, m-1]` yields the COMPLETE
+    residue set — this is exact, not bounded-approximate. We only enumerate when `m <=
+    RESIDUE_BOUND + 1`; for a larger modulus the box would not cover a full period, so we
+    return None and let the caller fail toward NOVEL rather than canonicalize on an incomplete
+    set. Multivariate polynomials (several variables) are also returned as None here: the
+    residue *set* of a multivariate polynomial would need a product enumeration we do not do;
+    the loose-shape canonicalization is single-variable only (a conservative miss, never wrong).
+
+    Truth is never consulted — this enumerates the polynomial's FORM (its values mod m), the
+    same posture as ADR 0021's bounded box, but here the box is a full period so the set is
+    complete."""
+    if m > RESIDUE_BOUND + 1:
+        return None
+    # require a single variable name so n ranges over one axis; the constant poly has no vars.
+    names = {name for mono in poly for name, _ in mono}
+    if len(names) > 1:
+        return None
+    var = next(iter(names)) if names else None
+
+    def _eval(n: int) -> int:
+        total = 0
+        for mono, c in poly.items():
+            term = c
+            for _, e in mono:  # single var (or none): exponent on `var`
+                term *= n ** e
+            total += term
+        return total % m
+
+    if var is None:                       # constant polynomial -> single residue
+        return frozenset({_eval(0)})
+    return frozenset(_eval(n) for n in range(m))   # one full period = exact residue set
+
+
+def _residues_from_node(elts, m: int) -> Optional[frozenset]:
+    """Collect the constant integer residues asserted by a set/tuple/list literal, each reduced
+    into `[0, m)`. Any non-constant or non-int element -> None (unrecognized -> NOVEL). NOTE: the
+    asserted residues are used ONLY to recognize the shape; the SIGNATURE keys on the COMPUTED
+    residue set, never on this asserted set (so phrasing is irrelevant)."""
+    out = set()
+    for e in elts:
+        c = _const_int(e)
+        if c is None:
+            return None
+        out.add(c % m)
+    return frozenset(out)
+
+
+def _membership_signature(pnode: ast.AST, m: int, negate: bool) -> Optional[tuple]:
+    """Canonicalize a set-membership / disjunction claim `P % m ∈ R` (or its negation) to a
+    signature keyed on the polynomial FORM and the COMPUTED residue set R. Single-variable only.
+
+    • If the COMPUTED R is a singleton `{r}` the claim is exactly `P ≡ r (mod m)` (or `!≡` when
+      negated), so we fold onto the EXISTING `== r` / `!= r` signature `(relop, m, normalize(P-r))`
+      — making a loose `∈{…}` restatement match a tight `== r` corpus entry. The fold reuses the
+      full `_normalize` (incl. prime-m monic step): `c·P ≡ 0` ⟺ `P ≡ 0` for a unit `c`, so
+      unit-multiples of the SAME congruence collapse — exactly the tested `==`-shape behavior.
+    • Otherwise the claim is a genuine multi-residue statement; we emit a DISTINCT, relop-tagged
+      signature `('in'/'not in', m, coeffs-mod-m of P, frozenset(R))`. Here we DELIBERATELY do NOT
+      apply the monic unit step: for a membership claim the residue at each point matters, so `2·P`
+      and `P` are NOT interchangeable (they have different value-maps, even though their zero sets
+      agree). Monic-normalizing here would collapse `2*n^2 % 7 ∈ {…}` onto `n^2 % 7 ∈ {…}` — two
+      polynomials whose residue SETS coincide but whose facts differ — a false-KNOWN. So the
+      multi-residue key reduces coefficients mod m ONLY (exact in ℤ/mℤ), keeping distinct
+      polynomials distinct. The `'in'/'not in'` tag also never collides with the `'=='/'!='`
+      singleton form."""
+    state = {"vars": set()}
+    try:
+        poly = _expand(pnode, state)
+    except _NotPoly:
+        return None
+    if len(state["vars"]) > 1:            # multivariate residue set not enumerated -> NOVEL
+        return None
+    R = _residue_set(poly, m)
+    if R is None:                         # modulus too large for an exact period -> NOVEL
+        return None
+    if len(R) == 1:
+        r = next(iter(R))
+        relop = "!=" if negate else "=="
+        diff = _add(poly, {(): -r})
+        return (relop, m, _normalize(diff, m, single_var=True))
+    relop = "not in" if negate else "in"
+    # coefficient reduction mod m ONLY (NO monic unit step — see docstring): exact in ℤ/mℤ, and
+    # keeps 2*P distinct from P, so distinct polynomials never collide in the multi-residue key.
+    reduced = tuple(sorted((_mono_degree(mono), c % m) for mono, c in poly.items() if c % m != 0))
+    return (relop, m, reduced, R)
+
+
+def _disjunction_residues(node: ast.BoolOp):
+    """If `node` is `(P % m == c1) or (P % m == c2) or …` over ONE common polynomial `P` and
+    modulus `m` (each disjunct a `P % m == const`, same `P` source text, same `m`), return
+    `(P_ast, m, negate=False)` for membership canonicalization; else None. A heterogeneous or
+    non-`==` disjunct -> None (unrecognized -> NOVEL)."""
+    if not isinstance(node.op, ast.Or):
+        return None
+    p_src = None
+    mod = None
+    pnode = None
+    for v in node.values:
+        if not (isinstance(v, ast.Compare) and len(v.ops) == 1 and isinstance(v.ops[0], ast.Eq)):
+            return None
+        lm = _mod(v.left)
+        if lm is None:
+            return None
+        c = _const_int(v.comparators[0])
+        if c is None:
+            return None
+        src = ast.dump(lm[0])             # structural identity of the polynomial term across disjuncts
+        if p_src is None:
+            p_src, mod, pnode = src, lm[1], lm[0]
+        elif src != p_src or lm[1] != mod:
+            return None                   # different P or different m across disjuncts -> reject
+    if pnode is None or mod is None:
+        return None
+    return (pnode, mod)
+
+
 def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
     """Canonical signature of a polynomial congruence DSL predicate, or None.
 
-    Recognized SOUND shapes only (relop ∈ {==, !=}):
-      • `P % m <relop> c`        with c an integer constant residue 0 ≤ c < m
+    Recognized SOUND shapes only:
+      • `P % m <relop> c`        (relop ∈ {==, !=}) with c an integer residue 0 ≤ c < m
       • `P % m <relop> Q % m`    (both sides reduced by the SAME modulus)
+      • `P % m in {r1, …}` / `not in {…}`   (also `(…)` / `[…]`) — single-variable P
+      • `(P % m == c1) or (P % m == c2) or …` over ONE common P and m — single-variable P
     where P, P1, P2 are integer polynomials in the DSL's `+ - *` / constant `^` over one or
     more LITERAL variable names. Everything else — a raw (non-reduced) RHS, two different moduli,
-    a non-polynomial term, an inequality, a non-congruence — returns None (→ stays NOVEL).
+    a non-polynomial term, an inequality `<`/`>`, a non-congruence — returns None (→ stays NOVEL).
+
+    The set-membership and disjunction shapes are PHRASING-INDEPENDENT: they key on the
+    polynomial's reduced FORM plus its COMPUTED residue set (`{P(n) % m}`, exact over one period),
+    NOT on the residues the author asserted. A singleton computed residue folds onto the existing
+    `== r` / `!= r` signature (so `P % m ∈ {0,4}` with actual residues `{0}` matches a corpus
+    `P % m == 0`); a multi-residue set yields a distinct `'in'/'not in'`-tagged signature. See the
+    module docstring and ADR 0032 for the soundness argument (no false-KNOWN).
 
     Single-variable claims produce the legacy univariate signature (with prime-m unit
-    normalization); multivariate claims produce a monomial-keyed signature with NO renaming and
-    NO unit normalization (conservative: never a false-KNOWN, only missed matches)."""
+    normalization); multivariate `==`/`!=` claims produce a monomial-keyed signature with NO
+    renaming and NO unit normalization (conservative: never a false-KNOWN, only missed matches)."""
     if not predicate:
         return None
     try:
@@ -194,8 +347,33 @@ def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
         return None
     if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
         return None
+    # `or`-disjunction of `P % m == c` clauses -> membership canonicalization (computed residues).
+    if isinstance(tree, ast.BoolOp):
+        dj = _disjunction_residues(tree)
+        if dj is None:
+            return None
+        pnode, m = dj
+        if m < 2:
+            return None
+        return _membership_signature(pnode, m, negate=False)
     if not (isinstance(tree, ast.Compare) and len(tree.ops) == 1):
         return None
+    # set-membership `P % m in {…}` / `not in {…}` -> membership canonicalization.
+    memop = {ast.In: False, ast.NotIn: True}.get(type(tree.ops[0]))
+    if memop is not None:
+        lm = _mod(tree.left)
+        if lm is None:
+            return None
+        pnode, m = lm
+        if m < 2:
+            return None
+        comp = tree.comparators[0]
+        if not isinstance(comp, (ast.Set, ast.Tuple, ast.List)):
+            return None
+        asserted = _residues_from_node(comp.elts, m)
+        if asserted is None or not asserted:   # non-constant element or empty literal -> NOVEL
+            return None
+        return _membership_signature(pnode, m, negate=memop)
     relop = {ast.Eq: "==", ast.NotEq: "!="}.get(type(tree.ops[0]))
     if relop is None:
         return None
