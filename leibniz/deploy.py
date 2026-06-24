@@ -69,13 +69,54 @@ def validate_profile(env: Mapping[str, str]) -> list[str]:
     return problems
 
 
+def _positive_float(raw: str) -> bool:
+    try:
+        return float(raw) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def profile_warnings(env: Mapping[str, str]) -> list[str]:
+    """Soft advisories — surfaced at launch but NON-blocking. These are cost/operational
+    hygiene, not contamination: the hard contamination guarantees are `validate_profile` + the
+    runtime write-barrier (ADR 0033 Slice 1) + the publish guard (Slice 2). They exist because
+    the most damaging *operational* mistakes a profile can make are not isolation breaches:
+
+    - an UNBOUNDED spend ceiling (`LEIBNIZ_DAILY_USD_CAP` 0/unset = unlimited in CostBudget) — a
+      runaway soak burns budget with no programmatic stop; and
+    - the guard CANNOT verify credential distinctness — it sees state paths, not whether the
+      instance's API keys actually differ from PROD's. A UAT run on PROD's keys passes every
+      hard check yet defeats the blast-radius boundary, so we at least remind the operator.
+    """
+    warnings: list[str] = []
+    inst = (env.get("LEIBNIZ_INSTANCE") or "").strip().lower()
+    cap = (env.get("LEIBNIZ_DAILY_USD_CAP") or "").strip()
+    if not _positive_float(cap):
+        warnings.append(
+            f"LEIBNIZ_DAILY_USD_CAP is {cap or 'unset'} → UNLIMITED spend (CostBudget treats "
+            f"0/unset as no cap). Set a positive USD ceiling so a soak is bounded — the "
+            f"blast-radius boundary is spend, not just state isolation."
+        )
+    if inst != "prod":
+        warnings.append(
+            "this guard checks STATE isolation, not credential distinctness — confirm this "
+            "instance's .env holds SEPARATELY-SCOPED API keys (independent budget), NOT PROD's "
+            "(UAT_PLAN.md §3). Nothing in code can verify this for you."
+        )
+    return warnings
+
+
 def check_env(env: Optional[Mapping[str, str]] = None) -> int:
     """Print a verdict for the active (or given) environment; return a shell exit code.
 
-    Used by `scripts/run_instance.sh` as the early launch guard."""
+    Used by `scripts/run_instance.sh` as the early launch guard. Hard problems
+    (`validate_profile`) block (exit 1); soft advisories (`profile_warnings`) are printed but
+    never block."""
     env = os.environ if env is None else env
     inst = (env.get("LEIBNIZ_INSTANCE") or "dev").strip().lower()
     problems = validate_profile(env)
+    for w in profile_warnings(env):
+        print(f"[deploy] ⚠ {inst}: {w}")
     if problems:
         print(f"[deploy] ✗ {inst}: profile has {len(problems)} problem(s):")
         for p in problems:
