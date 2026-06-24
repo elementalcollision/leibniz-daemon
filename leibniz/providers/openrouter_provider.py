@@ -13,7 +13,17 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-from leibniz.providers import USER_AGENT, ProviderUnavailable, repair_proof_prompt, ssl_context
+from leibniz.providers import (
+    AUTOFORMALIZE_PROMPTS,
+    AUTOFORMALIZE_SYSTEM,
+    USER_AGENT,
+    ProviderUnavailable,
+    decompose_prompt,
+    repair_contract_prompt,
+    repair_formalization_prompt,
+    repair_proof_prompt,
+    ssl_context,
+)
 from leibniz.types import Role
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -42,8 +52,15 @@ class OpenRouterProvider:
         return bool(os.environ.get(self.api_key_env))
 
     def propose(self, role: Role, context: str) -> str:
-        system = _PROOF_SYSTEM if role is Role.PROOF_DRAFT else _GENERIC_SYSTEM
-        return self._complete(system, context)
+        # PROOF_DRAFT: the caller passes the full proof prompt as `context` -> bare-script system.
+        # CONJECTURE/FORMALIZE: apply the SHARED autoformalize template (ADR 0029 failover) so a
+        # backup builds byte-identical prompts to the Anthropic primary; the gates still decide.
+        if role is Role.PROOF_DRAFT:
+            return self._complete(_PROOF_SYSTEM, context)
+        template = AUTOFORMALIZE_PROMPTS.get(role)
+        if template is not None:
+            return self._complete(AUTOFORMALIZE_SYSTEM, template.format(context=context))
+        return self._complete(_GENERIC_SYSTEM, context)
 
     def repair_proof(self, theorem_src: str, failed_proof: str, error: str) -> str:
         """ADR 0029: repair a kernel-rejected proof given the error — same contract (and the
@@ -51,6 +68,22 @@ class OpenRouterProvider:
         failover/panel frontier reasoner in the repair loop. Returns ONLY a corrected `by ...`
         script; the kernel re-checks it (this only proposes), and the statement must not change."""
         return self._complete(_PROOF_SYSTEM, repair_proof_prompt(theorem_src, failed_proof, error))
+
+    # --- Autoformalize-stage repairs (ADR 0029 failover for CONJECTURE/FORMALIZE) -----------
+    # Shared prompts with AnthropicProvider; let this class fully back the autoformalizer when
+    # Anthropic is overloaded. Each only PROPOSES; the gates + kernel still decide.
+    def repair_formalization(self, statement: str, prior_src: str, error: str) -> str:
+        return self._complete(AUTOFORMALIZE_SYSTEM, repair_formalization_prompt(statement, prior_src, error))
+
+    def repair_contract(
+        self, statement: str, claim_domain: str, claim_property: str,
+        established_domain: str, problems: list,
+    ) -> str:
+        return self._complete(AUTOFORMALIZE_SYSTEM, repair_contract_prompt(
+            statement, claim_domain, claim_property, established_domain, problems))
+
+    def decompose(self, theorem_src: str) -> str:
+        return self._complete(AUTOFORMALIZE_SYSTEM, decompose_prompt(theorem_src))
 
     def _complete(self, system: str, content: str) -> str:
         key = os.environ.get(self.api_key_env)

@@ -137,20 +137,38 @@ def prover_ensemble(meter: object | None = None) -> list:
 _DEFAULT_REASONER_FALLBACKS = "z-ai/glm-5.2,moonshotai/kimi-k2.6,openai/gpt-5.5"
 
 
-def frontier_reasoner(primary: object, meter: object | None = None) -> object:
-    """A frontier reasoner with failover for the proof roles (PROOF_DRAFT/repair_proof),
-    ADR 0029. The Anthropic `primary` drafts/repairs; if a call errors (outage/overload) it
-    fails over to OpenRouter-hosted backups in order (default GLM/Kimi/GPT). Backups are
-    added only when OPENROUTER_API_KEY is set and the list is non-empty; otherwise the
-    primary is returned unchanged (behaviour identical to before). All PROPOSE only — the
-    Lean kernel still decides every candidate, so failover only changes which model drafts."""
+def _reasoner_backups(meter: object | None = None) -> list:
+    """OpenRouter-hosted frontier backups (default GLM/Kimi/GPT) for failover, ADR 0029.
+    Empty unless OPENROUTER_API_KEY is set and LEIBNIZ_REASONER_FALLBACKS is non-empty — so
+    failover is off by default and behaviour is identical to a single primary."""
     raw = os.environ.get("LEIBNIZ_REASONER_FALLBACKS", _DEFAULT_REASONER_FALLBACKS)
     models = [m.strip() for m in raw.split(",") if m.strip()]
     if not models or not os.environ.get("OPENROUTER_API_KEY"):
-        return primary
+        return []
     max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)
-    backups = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
-    return FailoverProvider([primary, *backups])
+    return [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok) for m in models]
+
+
+def frontier_reasoner(primary: object, meter: object | None = None) -> object:
+    """A frontier reasoner with failover for the proof roles (PROOF_DRAFT/repair_proof),
+    ADR 0029. The Anthropic `primary` drafts/repairs; if a call errors (outage/overload) it
+    fails over to OpenRouter-hosted backups in order. Returns the primary unchanged when no
+    backups are configured. All PROPOSE only — the Lean kernel still decides every candidate."""
+    backups = _reasoner_backups(meter)
+    return FailoverProvider([primary, *backups]) if backups else primary
+
+
+def autoformalizer_with_failover(primary: object, meter: object | None = None) -> object:
+    """The CONJECTURE/FORMALIZE autoformalizer with failover to OpenRouter backups (ADR 0029).
+
+    A *sustained* Anthropic overload crashed an organic run mid-cycle in the CONJECTURE role —
+    the proof role already failed over, but the proposal side did not. This extends the same
+    protection: the backups apply the SHARED autoformalize prompts (so they conjecture,
+    formalize, repair contracts/imports, and decompose identically), and every call still only
+    PROPOSES — the faithfulness/novelty gates and the Lean kernel decide. No backups configured
+    -> the primary is returned unchanged."""
+    backups = _reasoner_backups(meter)
+    return FailoverProvider([primary, *backups]) if backups else primary
 
 
 def _proof_verifier(cli_lean: LeanVerifier, repl_image: str | None = None) -> LeanVerifier:
@@ -190,10 +208,14 @@ def build_daemon(
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
     cost_budget = CostBudget.from_env()
-    autoformalizer = AnthropicProvider(
+    autoformalizer_primary = AnthropicProvider(
         model=os.environ.get("LEIBNIZ_CONJECTURE_MODEL", "claude-opus-4-8"),
         meter=cost_budget,
     )
+    # ADR 0029: the proposal-side autoformalizer fails over to OpenRouter backups on a sustained
+    # Anthropic overload (which previously crashed a run mid-cycle in CONJECTURE). The proof-role
+    # repairer below wraps the BARE primary in its own frontier_reasoner, so failover never nests.
+    autoformalizer = autoformalizer_with_failover(autoformalizer_primary, meter=cost_budget)
     consensus = ProofConsensus(
         provers=prover_ensemble(meter=cost_budget),
         lean=_proof_verifier(lean, repl_image=cfg.lean_repl_image),  # ADR 0011 REPL; ADR 0033 pinned
@@ -213,8 +235,9 @@ def build_daemon(
         rounds = _env_int("LEIBNIZ_REPAIR_ROUNDS", 2)
         repairer = ProofRepairer(
             # frontier reasoner with failover to OpenRouter backups on an Anthropic outage
-            # (ADR 0029); PROPOSES only — the kernel still decides every candidate.
-            provider=frontier_reasoner(autoformalizer, meter=cost_budget),
+            # (ADR 0029); PROPOSES only — the kernel still decides every candidate. Wraps the
+            # BARE primary (not the already-failover autoformalizer) so failover never nests.
+            provider=frontier_reasoner(autoformalizer_primary, meter=cost_budget),
             lean=consensus.lean,            # discharge + check_proof_with_error via the ensemble's verifier
             obligation=consensus.obligation,
             max_rounds=rounds,
