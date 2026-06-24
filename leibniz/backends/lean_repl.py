@@ -67,22 +67,44 @@ class LeanReplBackend:
         proc = self._start()
         if proc is None or proc.stdin is None or proc.stdout is None:
             return None
-        try:
-            proc.stdin.write(json.dumps(payload) + "\n\n")
-            proc.stdin.flush()
-            buf = ""
-            while True:
-                line = proc.stdout.readline()
-                if line == "":  # process died
-                    return None
-                buf += line
-                if buf.strip():
-                    try:
-                        return json.loads(buf.strip())
-                    except json.JSONDecodeError:
-                        continue
-        except (BrokenPipeError, OSError):
+        # Bound the exchange by `timeout_s`. A blocking `readline()` on a wedged REPL would
+        # otherwise hold `self._lock` forever and stall the WHOLE ensemble/run (no per-check
+        # timeout existed before). We run the write+read in a worker so the caller can give up:
+        # SIGALRM is unusable here (checks run in ThreadPoolExecutor worker threads, not main).
+        holder: dict = {}
+
+        def _exchange() -> None:
+            try:
+                proc.stdin.write(json.dumps(payload) + "\n\n")
+                proc.stdin.flush()
+                buf = ""
+                while True:
+                    line = proc.stdout.readline()
+                    if line == "":  # process died
+                        holder["resp"] = None
+                        return
+                    buf += line
+                    if buf.strip():
+                        try:
+                            holder["resp"] = json.loads(buf.strip())
+                            return
+                        except json.JSONDecodeError:
+                            continue
+            except (BrokenPipeError, OSError):
+                holder["resp"] = None
+
+        worker = threading.Thread(target=_exchange, daemon=True)
+        worker.start()
+        worker.join(self.timeout_s)
+        if worker.is_alive():
+            # The REPL did not answer within timeout_s. Tear it down so the blocked read
+            # unblocks (and the wedge cannot persist), then report None. This is conservative:
+            # a timed-out check is NEVER kernel_verified (discharge re-checks; it can only
+            # false-REJECT a pathological hang, never false-ACCEPT). close() drops the env
+            # cache so the next call rebuilds it against a fresh process.
+            self.close()
             return None
+        return holder.get("resp")
 
     def _env_for(self, key: tuple) -> Optional[int]:
         """REPL env id with `key` imports preloaded (cached). None if they error."""
@@ -155,6 +177,9 @@ class LeanReplBackend:
             except Exception:
                 pass
             self._proc = None
+        # Cached REPL env ids belong to the (now dead) process; a restarted REPL has fresh
+        # ids, so a stale cache would make every import-keyed check target a non-existent env.
+        self._envs.clear()
 
     def __enter__(self) -> "LeanReplBackend":
         return self
