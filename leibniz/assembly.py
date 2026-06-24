@@ -40,6 +40,7 @@ from leibniz.leonardo import LeonardoForgeAdapter
 from leibniz.pipeline import Conjecture, Formalize, Promulgate, Survey
 from leibniz.probes import default_probes
 from leibniz.proof_repair import ProofRepairer, RepairingDemonstrate
+from leibniz.providers import ProviderUnavailable
 from leibniz.providers.anthropic_provider import AnthropicProvider
 from leibniz.providers.aristotle_provider import AristotleProver
 from leibniz.providers.decomposition_prover import DecompositionProver
@@ -95,6 +96,35 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _resolve_prover(spec: str, default_url: str, default_key_env: str,
+                    meter: object | None, max_tok: int) -> OpenRouterProvider:
+    """Resolve one `LEIBNIZ_PROVER_MODELS` entry into an OpenAI-compatible prover (ADR 0028).
+
+    A bare `model` uses the default gateway (`LEIBNIZ_PROVER_BASE_URL` or OpenRouter). A
+    `model@gateway` entry routes that ONE model through a named gateway profile:
+    `LEIBNIZ_GATEWAY_<GATEWAY>_URL` (REQUIRED — fail closed if unset, so a typo never silently
+    routes to the wrong endpoint) and `LEIBNIZ_GATEWAY_<GATEWAY>_KEY_ENV` (default
+    `<GATEWAY>_API_KEY`). The LAST `@` is the gateway delimiter, so `@` is reserved in a prover
+    spec (real OpenRouter/HF prover ids do not use it). The model NAME (sans `@gateway`) is what
+    N+1 keys identity on, so a
+    model reached via two gateways is still ONE voter — routing is a transport detail, never a
+    trust-bar change; the Lean kernel still re-verifies every draft."""
+    if "@" in spec:
+        model, gateway = (s.strip() for s in spec.rsplit("@", 1))
+        gw = gateway.upper()
+        url = os.environ.get(f"LEIBNIZ_GATEWAY_{gw}_URL")
+        if not url:
+            raise ProviderUnavailable(
+                f"prover {spec!r} routes to gateway {gateway!r}, but LEIBNIZ_GATEWAY_{gw}_URL "
+                f"is not set (ADR 0028 per-model routing) — set it or drop the '@{gateway}'."
+            )
+        key_env = os.environ.get(f"LEIBNIZ_GATEWAY_{gw}_KEY_ENV") or f"{gw}_API_KEY"
+    else:
+        model, url, key_env = spec, default_url, default_key_env
+    return OpenRouterProvider(model=model, meter=meter, max_tokens=max_tok,
+                              url=url, api_key_env=key_env)
+
+
 def prover_ensemble(meter: object | None = None) -> list:
     """The prover cascade + witnesses for N+1 consensus. HuggingFace
     (`LEIBNIZ_HF_PROVER_MODELS`) is preferred — the specialized prover models
@@ -110,7 +140,14 @@ def prover_ensemble(meter: object | None = None) -> list:
     `LEIBNIZ_PROVER_KEY_ENV` so a STRONGER open model (e.g. Goedel-Prover-V2 via
     Featherless or a self-hosted vLLM endpoint, harness A) drops in by config; and
     `LEIBNIZ_ARISTOTLE` appends the Harmonic Aristotle agent prover (ADR 0028). Both still
-    only PROPOSE — our kernel re-verifies every draft under N+1 consensus."""
+    only PROPOSE — our kernel re-verifies every draft under N+1 consensus.
+
+    Per-model gateway routing (ADR 0028): a `LEIBNIZ_PROVER_MODELS` entry may be
+    `model@gateway` to route THAT model through a named gateway, so the ensemble can SPAN
+    gateways — e.g. `Goedel-LM/Goedel-Prover-V2-32B@featherless` on a flat-rate Featherless
+    plan alongside DeepSeek + opus on OpenRouter. N+1 keys identity on the model NAME (sans
+    `@gateway`), so the same model via two gateways is still ONE voter — routing never touches
+    the trust bar."""
     max_tok = int(os.environ.get("LEIBNIZ_PROVER_MAX_TOKENS", "2048") or 2048)  # proof-draft budget
     hf = [m.strip() for m in os.environ.get("LEIBNIZ_HF_PROVER_MODELS", "").split(",") if m.strip()]
     if hf:
@@ -118,12 +155,10 @@ def prover_ensemble(meter: object | None = None) -> list:
     else:
         models = [m.strip() for m in os.environ.get("LEIBNIZ_PROVER_MODELS", "").split(",") if m.strip()]
         # Lever 3 / harness A: point the OpenAI-compatible client at any gateway (default
-        # OpenRouter) so a stronger model is reachable without code — Featherless, a
-        # self-hosted vLLM, etc. The model id(s) come from LEIBNIZ_PROVER_MODELS.
+        # OpenRouter); per-model `model@gateway` entries override it for one model.
         base_url = os.environ.get("LEIBNIZ_PROVER_BASE_URL") or OpenRouterProvider.url
         key_env = os.environ.get("LEIBNIZ_PROVER_KEY_ENV") or "OPENROUTER_API_KEY"
-        base = [OpenRouterProvider(model=m, meter=meter, max_tokens=max_tok,
-                                   url=base_url, api_key_env=key_env) for m in models]
+        base = [_resolve_prover(m, base_url, key_env, meter, max_tok) for m in models]
     n_decomp = _env_int("LEIBNIZ_DECOMPOSE", 1)  # how many base provers to also run decomposed
     if n_decomp > 0 and base:
         base = base + [DecompositionProver(p) for p in base[:n_decomp]]
