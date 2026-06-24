@@ -50,16 +50,16 @@ CREATE TABLE IF NOT EXISTS memory (
     statement TEXT, claim_type TEXT, falsifiable_claim TEXT, domain TEXT,
     theorem_src TEXT, normalized_hash TEXT,
     kernel_verified INTEGER, qed TEXT, proof_src TEXT,
-    finish_reason TEXT, parents TEXT
+    finish_reason TEXT, parents TEXT, instance TEXT
 )
 """
 
 # Columns the runtime reads/writes by NAME (so the INSERT is robust to a migrated
-# DB where ALTER TABLE appended `proof_src` at the end, ADR 0025).
+# DB where ALTER TABLE appended columns at the end, ADR 0025 / ADR 0033).
 _COLUMNS = (
     "pid", "born", "ts", "statement", "claim_type", "falsifiable_claim", "domain",
     "theorem_src", "normalized_hash", "kernel_verified", "qed", "proof_src",
-    "finish_reason", "parents",
+    "finish_reason", "parents", "instance",
 )
 
 
@@ -81,6 +81,9 @@ class PersistentRuntime:
         clock: Callable[[], float] = time.time,
     ) -> None:
         self.db_path = str(db_path or os.environ.get("LEIBNIZ_RUNTIME_DB") or _DEFAULT_DB)
+        # ADR 0033: the instance this runtime belongs to (prod | uat | dev). Stamped on every
+        # row and enforced by the write-barrier so a UAT run can never write the PROD ledger.
+        self.instance = (os.environ.get("LEIBNIZ_INSTANCE") or "dev").strip().lower()
         self._clock = clock
         self._lock = threading.Lock()
         self._conn: Optional[sqlite3.Connection] = None
@@ -97,7 +100,27 @@ class PersistentRuntime:
             have = {row[1] for row in self._conn.execute("PRAGMA table_info(memory)")}
             if "proof_src" not in have:
                 self._conn.execute("ALTER TABLE memory ADD COLUMN proof_src TEXT")
+            if "instance" not in have:  # ADR 0033: per-instance provenance on a pre-existing DB
+                self._conn.execute("ALTER TABLE memory ADD COLUMN instance TEXT")
             self._conn.commit()
+            # ADR 0033 write-barrier: refuse a ledger already claimed by a DIFFERENT instance, so
+            # a misconfigured UAT pointed at the PROD DB FAILS CLOSED instead of interleaving.
+            # Legacy untagged (NULL) rows predate tagging and are exempt; the first tagged write
+            # claims the DB for that instance.
+            others = sorted(
+                r[0] for r in self._conn.execute(
+                    "SELECT DISTINCT instance FROM memory "
+                    "WHERE instance IS NOT NULL AND instance != ?", (self.instance,)
+                )
+            )
+            if others:
+                self._conn.close()
+                self._conn = None
+                raise RuntimeError(
+                    f"runtime DB {self.db_path!r} is owned by instance(s) {others}, not "
+                    f"{self.instance!r} (ADR 0033 write-barrier). Point LEIBNIZ_RUNTIME_DB at a "
+                    f"separate ledger for this instance."
+                )
         return self._conn
 
     # --- RuntimeAdapter Protocol ----------------------------------------------
@@ -114,6 +137,7 @@ class PersistentRuntime:
             de.proof_src if de else None,  # ADR 0025: persist the kernel-checked proof
             prop.finish_reason.value if prop.finish_reason else None,
             json.dumps(list(prop.parents)),
+            self.instance,  # ADR 0033: stamp the writing instance (provenance)
         )
         cols = ", ".join(_COLUMNS)
         marks = ", ".join("?" for _ in _COLUMNS)
