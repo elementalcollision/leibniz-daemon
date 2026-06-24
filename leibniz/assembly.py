@@ -170,7 +170,7 @@ def build_daemon(*, frontier_limit: int = 2, analogy_limit: int = 1) -> Leibniz:
     (load_env() first). frontier/analogy limits bound how many seeds a cycle runs."""
     lean = LeanVerifier(LeanCliBackend())
     smt = SMTVerifier(Z3Backend())
-    novelty = NoveltyGate(CorpusBackend.from_json(), lean, smt=smt)  # ADR 0031 L2: equivalence pass
+    novelty = NoveltyGate(CorpusBackend.from_json(), lean)  # ADR 0031 L2 retracted; exact-hash novelty
     faithfulness = FaithfulnessGate(smt=smt, probes=default_probes(smt), judge=ConservativeJudge())
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is

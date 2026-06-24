@@ -1,7 +1,9 @@
 # ADR 0031 — Novelty: catch known results by equivalence, not just exact hash (Proposed)
 
-- Status: **Layers 1 + 2 + 3 implemented** (2026-06-23). Layer 2 ships as a bounded, reversible
-  heuristic (see its section); a period-aware rigorous bound is a follow-up.
+- Status: **Layers 1 + 3 implemented; Layer 2 RETRACTED** (2026-06-23). The L2
+  decision-procedure-equivalence approach is *unsound for novelty* and was removed before it
+  could suppress discoveries (see its section). Novelty stays on the sound exact elaborator-hash
+  (L1) + non-triviality; the conjecturer is steered off the classic families (L3).
 - Date: 2026-06-23
 - Related: ADR 0001 (novelty = retrieval + decision procedure, NEVER a judge), ADR 0004
   (structured contract), ADR 0021/0030 (the Z3 DSL the equivalence check reuses), ADR 0026
@@ -66,19 +68,23 @@ for small primes), the power-residue divisibilities (`n^k − n ≡ 0 mod m` for
 (`k! ∣ product of k consecutive`). Extend `scripts/build_corpus.py` to emit them. This is the
 stopgap — it makes exact-hash catch the *canonical* forms immediately.
 
-### Layer 2 — Equivalence by decision procedure (the principled fix) — **IMPLEMENTED**
+### Layer 2 — Equivalence by decision procedure — **RETRACTED (unsound for novelty)**
 
-> **Shipped** in `Z3Backend.equivalent`, `CorpusBackend.equivalent_known`, and the
-> `NoveltyGate` pass (wired with the existing `SMTVerifier`). An adversarial review confirmed
-> the trust posture (no eval surface; only *demotes*, never a false promulgation; inconclusive
-> → NOVEL) and found the expected residual: box-equivalence is exact for the natural modular
-> class (periodicity) but a contrived predicate diverging only *beyond* the box could
-> false-KNOWN. Mitigated by raising the default bound to **1024** (far past any constant the
-> conjecturer emits; the in-box divergence is then found and rejected) — verified by a
-> regression test. The residual error is one-directional (false-KNOWN only) and REVERSIBLE
-> (quarantine, not delete), which is why a heuristic is acceptable here. A rigorous period-aware
-> bound (lcm of the moduli) is the follow-up. Inert until the corpus JSON is rebuilt with the
-> Layer-1 predicates.
+> Implemented, then **retracted the same day** when validation against the organic run's
+> promulgations exposed a fatal flaw. The check matched a candidate's `claim_property` to a
+> known's by box-equivalence — but **every theorem's property is a tautology over its domain**
+> (a true ∀-claim holds everywhere). A corpus predicate like Fermat's `n^2 % 2 == n % 2` is
+> itself always-true, so box-equivalence matched *any* always-true candidate to it. Concretely,
+> the genuinely-novel-but-true `(n^2+n) % 2 == 0` matched `fermat_little_2`, and even `n+0==n`
+> matched. In production this would have demoted **essentially every true conjecture to KNOWN**,
+> suppressing all novelty — the exact opposite of the mission. (The adversarial review's
+> Finding 1 gestured at this with an `(Fermat) or …` example; it was wrongly dismissed as
+> "genuinely equivalent" — missing that *all* truths are mutually box-equivalent. The bound was
+> never the issue.) `NoveltyGate` no longer runs the equivalence pass and
+> `CorpusBackend.equivalent_known` was removed; the `claim_domain`/`claim_property` corpus
+> fields remain as data for a possible future **structural** matcher (canonicalize the claim's
+> form — NOT truth-equivalence). `Z3Backend.equivalent` remains as a general primitive (it is
+> correct; the error was applying truth-equivalence to novelty).
 
 
 Give each corpus entry a DSL predicate (`claim_domain`, `claim_property`) and add to
