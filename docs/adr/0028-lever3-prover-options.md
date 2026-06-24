@@ -39,6 +39,16 @@ Sources: arXiv 2606.12594 (Pythagoras), blog.goedel-prover.com, arXiv 2504.11354
    points at any gateway (Featherless / self-hosted vLLM) serving e.g. Goedel-Prover-V2.
    `scripts/measure_goedel.py` runs a calibration with it. Zero new model code.
 
+   **Per-model gateway routing (2026-06-24).** `LEIBNIZ_PROVER_BASE_URL` repoints the *whole*
+   ensemble; to SPAN gateways, a `LEIBNIZ_PROVER_MODELS` entry may be `model@gateway`, routing
+   that one model through `LEIBNIZ_GATEWAY_<GATEWAY>_URL` + `LEIBNIZ_GATEWAY_<GATEWAY>_KEY_ENV`
+   (default `<GATEWAY>_API_KEY`; unset URL fails closed). Example — Goedel-Prover-V2 on a
+   flat-rate Featherless plan alongside DeepSeek + opus on OpenRouter:
+   `LEIBNIZ_PROVER_MODELS="deepseek/deepseek-prover-v2,Goedel-LM/Goedel-Prover-V2-32B@featherless,anthropic/claude-opus-4-8"`
+   with `LEIBNIZ_GATEWAY_FEATHERLESS_URL` set + `FEATHERLESS_API_KEY` in env. N+1 keys identity
+   on the model NAME, so a model reached via two gateways is still ONE voter — routing is pure
+   transport and never touches the trust bar (`_resolve_prover`, adversarially reviewed).
+
 2. **Integrate option B (Aristotle) as a provider.** `AristotleProver`
    (`leibniz/providers/aristotle_provider.py`, `propose` extra `aristotlelib`) submits the
    goal as a one-file Lean project, polls the async `AgentTask`, and returns the filled
