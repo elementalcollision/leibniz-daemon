@@ -1,7 +1,7 @@
 # ADR 0031 — Novelty: catch known results by equivalence, not just exact hash (Proposed)
 
-- Status: **Layers 1 + 2 implemented** (2026-06-23); Layer 3 **Proposed**. Layer 2 ships as a
-  bounded, reversible heuristic (see its section); a period-aware rigorous bound is a follow-up.
+- Status: **Layers 1 + 2 + 3 implemented** (2026-06-23). Layer 2 ships as a bounded, reversible
+  heuristic (see its section); a period-aware rigorous bound is a follow-up.
 - Date: 2026-06-23
 - Related: ADR 0001 (novelty = retrieval + decision procedure, NEVER a judge), ADR 0004
   (structured contract), ADR 0021/0030 (the Z3 DSL the equivalence check reuses), ADR 0026
@@ -99,13 +99,15 @@ Guardrails against a false KNOWN:
   timed-out / un-encodable search — i.e. only demote to KNOWN on a *conclusive* box-equivalence.
   (If unsure, treat as novel: protect the mission, since the verdict is reversible anyway.)
 
-### Layer 3 — Conjecturer steering away from classic territory (complementary)
+### Layer 3 — Conjecturer steering away from classic territory (complementary) — **IMPLEMENTED**
 
-ADR 0026-style: name Fermat's little theorem, power-residue facts (`n^k ≡ n mod m`), and
-consecutive-product divisibilities as KNOWN territory the CONJECTURE prompt must avoid, steering
-toward genuinely novel bands. Proposal-side; reduces the inflow so the gate has less to catch.
-Does not replace Layers 1–2 (a determined or unforeseen classic still slips), but cuts the
-common case cheaply.
+ADR 0026-style: the CONJECTURE prompt now names the three known families (Fermat's little
+theorem, power-residue `n^k ≡ n mod m`, consecutive-product divisibilities) as quarantined-KNOWN
+territory to avoid, and — critically — its positive EXAMPLE was itself a consecutive-product
+classic (`6 | n(n+1)(n+2)`), so it was actively steering INTO the textbook; that is replaced
+with an off-corpus format example (`(n^2 + 3) % 4 != 2`). Proposal-side; reduces the inflow so
+the gate has less to catch. Does not replace Layers 1–2 (a determined or unforeseen classic
+still slips), but cuts the common case cheaply.
 
 ## Why this stays trust-safe
 
