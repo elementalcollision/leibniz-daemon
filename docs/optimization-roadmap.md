@@ -243,10 +243,16 @@ discovery-frontier push.
       (conjecturer steered off the classic families) shipped and are **sound**. **L2
       (decision-procedure equivalence) was implemented then RETRACTED same-day as unsound** —
       every theorem's property is a tautology over its domain, so box-equivalence matched *any*
-      true claim to a tautological known (would suppress all novelty). Net: exact re-conjectures
-      of seeded knowns + the common families are now caught/steered; catching arbitrary
-      *restatements* needs a future **structural** canonicalizer (not truth-equivalence) — the
-      open novelty work.
+      true claim to a tautological known (would suppress all novelty).
+    - ✅ **Restatement matching — STRUCTURAL, sound (ADR 0032).** Replaces the retracted L2 with
+      a *form*-based matcher: canonicalize a univariate polynomial congruence to a signature
+      `(relop, m, coeffs mod m)` and match signature-to-signature. Two claims match IFF they
+      assert the *same* congruence — by form, never truth — so it **cannot false-KNOWN**, the
+      flaw that killed L2. The organic run's restatements (`(n^5+4n)%5==0` → Fermat-5, etc.) now
+      classify KNOWN, while genuinely-novel congruences (Euler's `n^2+n+41`), identities
+      (`n+0==n`), and multivariate claims stay NOVEL. Pure stdlib (no Z3/Lean/rebuild).
+      Process this time matched the stakes: design → adversarial design review → implement →
+      adversarial impl review, all three SOUND. **Novelty restatement gap: closed.**
 - **First promulgations + the trivia correction (ADR 0025)** — the lever-1 weaken-heavy
   run (8 cycles, 64 conjectured, $6.06) **promulgated 32 laws** — the first end-to-end
   kernel-verified promulgations. An audit confirmed the verification is **sound** (true
@@ -309,10 +315,14 @@ discovery-frontier push.
   The binding constraint *was* **lever 3 (a stronger prover)** — now **resolved**: the ADR 0029
   repair panel closes ~50% of missed goals and, in the organic funnel run, produced **12 sound
   N+1 promulgations with no human on the path** (decomposition still contributes ~0; the panel
-  is the engine). **The binding constraint has moved to NOVELTY:** the daemon now proves things
-  but rediscovers textbooks (all 12 were Fermat-family / elementary divisibility). ADR 0031
-  hardened the cheap cases (corpus broadening + steering) but the open work is a sound
-  **structural** novelty matcher to catch *restatements* of known results — the next lever.
+  is the engine). The binding constraint then **moved to NOVELTY** (the daemon proved things but
+  rediscovered textbooks — all 12 were Fermat-family / elementary divisibility). That is now
+  **addressed**: ADR 0031 (corpus broadening + steering; the L2 equivalence heuristic was
+  retracted as unsound) + **ADR 0032's sound STRUCTURAL matcher** catch the canonical knowns and
+  their restatements by form. Remaining open work is **breadth, not soundness**: grow the known
+  corpus, and extend the structural matcher beyond univariate polynomial congruences as the
+  conjecture mix demands. A fresh organic run is the next measurement (does the KNOWN fraction
+  rise and do genuinely novel survivors appear).
 
 ## Sequencing (as built)
 

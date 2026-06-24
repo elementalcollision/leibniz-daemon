@@ -72,11 +72,25 @@ class NoveltyGate:
                 producer="CorpusBackend",  # ADR 0013 §2
             )
 
-        # ADR 0031 Layer 2 (decision-procedure equivalence) was RETRACTED: comparing a
-        # candidate's claim_property to a known's by box-equivalence is unsound for novelty —
-        # both are theorems (always-true predicates over their domain), so EVERY true claim is
-        # box-equivalent to any tautological known, which would demote all genuine novelty to
-        # KNOWN. Novelty stays on the sound exact-hash match (Layer 1) + non-triviality.
+        # ADR 0032: a RESTATEMENT the exact hash missed — STRUCTURAL congruence match. Two
+        # claims share a signature IFF they assert the same polynomial congruence (by FORM, not
+        # truth), so this cannot false-KNOWN — the unsoundness that retracted ADR 0031 L2.
+        # Unrecognized shapes -> no signature -> stays NOVEL. No backend needed.
+        structural_known = getattr(self.corpus, "structural_known", None)
+        en = prop.enuntiatio
+        if callable(structural_known) and en is not None:
+            match = structural_known(en.claim_property)
+            if match:
+                prop.quarantine(FinishReason.KNOWN)
+                return EdgeEvidence(
+                    edge=NOVELTY_EDGE,
+                    tier=TrustTier.MECHANICAL,
+                    verdict=Verdict.FAIL,
+                    detail={"reason": "structural congruence match", "match": match},
+                    cost_units=1.0,
+                    producer="CorpusBackend.structural_known",  # ADR 0013 §2
+                )
+
         return EdgeEvidence(
             edge=NOVELTY_EDGE,
             tier=TrustTier.MECHANICAL,
