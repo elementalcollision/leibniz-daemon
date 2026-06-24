@@ -62,5 +62,10 @@ tests/test_invariants.py · demo.py · HANDOFF.md
   tier honestly; the policy and tests read it.
 - New design decisions get an ADR (next number after 0002). Don't bake a
   reversible architectural choice into code without one.
-- The current rung is **R0 (scaffold, green)**. Next is **R1 (real Lean kernel)**.
-  See `HANDOFF.md` for the rung tickets and exit tests — not this file.
+- The rung climb **R1 → R6 is substantially complete** (real Lean 4.31 kernel via Docker;
+  faithfulness + Z3; novelty retrieval; proposal models + the ADR 0029 repair panel; KFM /
+  MAP-Elites archive; the *Calculemus* reading-room + operator publish gate), all behind the
+  unchanged trust boundary. The project is now in the **post-R6 optimization phase** (discovery
+  yield), where the binding constraint is **novelty**, not prover reach or the trust boundary.
+  The live work plan is **`docs/optimization-roadmap.md`**; `HANDOFF.md` holds the rung tickets
+  and exit tests (kept as regressions). Do not trust this bullet for fine status — read those.

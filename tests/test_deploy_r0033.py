@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from leibniz.deploy import check_env, validate_profile
+from leibniz.deploy import check_env, profile_warnings, validate_profile
 
 _PROFILES = Path(__file__).resolve().parent.parent / "deploy" / "profiles"
 
@@ -114,3 +114,40 @@ def test_shipped_example_profiles_validate(name):
     env = _parse_env_example(_PROFILES / f"{name}.env.example")
     assert env.get("LEIBNIZ_INSTANCE") == name
     assert validate_profile(env) == []
+
+
+# --- soft advisories: cost ceiling + credential-distinctness reminder (non-blocking) -------
+
+def test_unset_cap_warns_but_does_not_block():
+    # An unbounded spend ceiling is a real risk but NOT a contamination breach -> warn, don't block.
+    env = _ok_uat()  # no LEIBNIZ_DAILY_USD_CAP
+    warns = profile_warnings(env)
+    assert any("LEIBNIZ_DAILY_USD_CAP" in w and "UNLIMITED" in w for w in warns)
+    assert validate_profile(env) == []      # still no HARD problem
+    assert check_env(env) == 0               # warnings never change the exit code
+
+
+def test_zero_cap_warns():
+    env = {**_ok_uat(), "LEIBNIZ_DAILY_USD_CAP": "0"}
+    assert any("LEIBNIZ_DAILY_USD_CAP" in w for w in profile_warnings(env))
+
+
+def test_positive_cap_silences_the_cap_warning():
+    env = {**_ok_uat(), "LEIBNIZ_DAILY_USD_CAP": "40"}
+    assert not any("LEIBNIZ_DAILY_USD_CAP" in w for w in profile_warnings(env))
+
+
+def test_non_prod_gets_credential_distinctness_reminder():
+    assert any("SEPARATELY-SCOPED" in w for w in profile_warnings(_ok_uat()))
+
+
+def test_prod_has_no_credential_reminder():
+    env = {
+        "LEIBNIZ_INSTANCE": "prod",
+        "LEIBNIZ_RUNTIME_DB": ".leibniz/memory.db",
+        "LEIBNIZ_FRONTIER_PATH": ".leibniz/frontier.json",
+        "LEIBNIZ_NOTEBOOK_PATH": ".leibniz/notebook.json",
+        "LEIBNIZ_DAILY_USD_CAP": "20",
+    }
+    assert not any("SEPARATELY-SCOPED" in w for w in profile_warnings(env))
+    assert profile_warnings(env) == []       # a fully-specified prod profile is advisory-clean
