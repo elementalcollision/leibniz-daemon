@@ -127,6 +127,43 @@ CURATED = [
     # Existence / construction
     ("exists_succ", "existence", "nat_succ", "construction",
      "theorem exists_succ : forall n : Nat, exists m : Nat, m = n + 1", ("Mathlib.Tactic",)),
+    # --- ADR 0031 Layer 1: elementary number theory the conjecturer rediscovers ------
+    # The first organic panel run promulgated Fermat's little theorem (p=3,5,7) and classic
+    # divisibilities as "novel" because the corpus had none of these. Seed them in the SAME
+    # ℕ-mod forms the conjecturer emits, so their structural hashes match a re-conjecture and
+    # the novelty gate says KNOWN. (Restatements like `(n^5+4n)%5==0` need ADR 0031 Layer 2's
+    # decision-procedure equivalence — out of scope here.) All are true.
+    # Fermat's little theorem: n^p ≡ n (mod p) for prime p.
+    ("fermat_little_2", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_2 : forall n : Nat, n ^ 2 % 2 = n % 2", ("Mathlib.Tactic",)),
+    ("fermat_little_3", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_3 : forall n : Nat, n ^ 3 % 3 = n % 3", ("Mathlib.Tactic",)),
+    ("fermat_little_5", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_5 : forall n : Nat, n ^ 5 % 5 = n % 5", ("Mathlib.Tactic",)),
+    ("fermat_little_7", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_7 : forall n : Nat, n ^ 7 % 7 = n % 7", ("Mathlib.Tactic",)),
+    ("fermat_little_11", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_11 : forall n : Nat, n ^ 11 % 11 = n % 11", ("Mathlib.Tactic",)),
+    ("fermat_little_13", "invariant", "number_theory", "fermat_little",
+     "theorem fermat_little_13 : forall n : Nat, n ^ 13 % 13 = n % 13", ("Mathlib.Tactic",)),
+    # Power-residue n^k ≡ n divisibilities (Fermat-derived; both mod- and minus-forms).
+    ("cube_residue_mod_six", "invariant", "number_theory", "power_residue",
+     "theorem cube_residue_mod_six : forall n : Nat, n ^ 3 % 6 = n % 6", ("Mathlib.Tactic",)),
+    ("cube_minus_self_div_six", "invariant", "number_theory", "power_residue",
+     "theorem cube_minus_self_div_six : forall n : Nat, (n ^ 3 - n) % 6 = 0", ("Mathlib.Tactic",)),
+    ("pow5_minus_self_div_thirty", "invariant", "number_theory", "power_residue",
+     "theorem pow5_minus_self_div_thirty : forall n : Nat, (n ^ 5 - n) % 30 = 0", ("Mathlib.Tactic",)),
+    ("pow7_minus_self_div_42", "invariant", "number_theory", "power_residue",
+     "theorem pow7_minus_self_div_42 : forall n : Nat, (n ^ 7 - n) % 42 = 0", ("Mathlib.Tactic",)),
+    # Consecutive-product divisibilities: k! divides any k consecutive integers.
+    ("two_consec_div_two", "invariant", "number_theory", "consecutive_product",
+     "theorem two_consec_div_two : forall n : Nat, n * (n + 1) % 2 = 0", ("Mathlib.Tactic",)),
+    ("three_consec_div_six", "invariant", "number_theory", "consecutive_product",
+     "theorem three_consec_div_six : forall n : Nat, n * (n + 1) * (n + 2) % 6 = 0", ("Mathlib.Tactic",)),
+    ("four_consec_div_24", "invariant", "number_theory", "consecutive_product",
+     "theorem four_consec_div_24 : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 24 = 0", ("Mathlib.Tactic",)),
+    ("even_pair_div_eight", "invariant", "number_theory", "divisibility",
+     "theorem even_pair_div_eight : forall n : Nat, 8 ∣ (2 * n) * (2 * n + 2)", ("Mathlib.Tactic",)),
 ]
 
 
