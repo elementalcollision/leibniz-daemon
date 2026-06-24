@@ -372,5 +372,187 @@
       "Mathlib.Tactic"
     ],
     "formal_hash": "a6d5cb187b86ada9"
+  },
+  {
+    "name": "fermat_little_2",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_2 : forall n : Nat, n ^ 2 % 2 = n % 2",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "d297427c5e4b4eed",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^2 % 2 == n % 2"
+  },
+  {
+    "name": "fermat_little_3",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_3 : forall n : Nat, n ^ 3 % 3 = n % 3",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "2fc93a519c558e6c",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^3 % 3 == n % 3"
+  },
+  {
+    "name": "fermat_little_5",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_5 : forall n : Nat, n ^ 5 % 5 = n % 5",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "481f97bc10ad5ee7",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^5 % 5 == n % 5"
+  },
+  {
+    "name": "fermat_little_7",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_7 : forall n : Nat, n ^ 7 % 7 = n % 7",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "a559a9d18c401b89",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^7 % 7 == n % 7"
+  },
+  {
+    "name": "fermat_little_11",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_11 : forall n : Nat, n ^ 11 % 11 = n % 11",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "876fc5c91c9481b2",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^11 % 11 == n % 11"
+  },
+  {
+    "name": "fermat_little_13",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "fermat_little",
+    "theorem_src": "theorem fermat_little_13 : forall n : Nat, n ^ 13 % 13 = n % 13",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "7fe9f624cd12e3b7",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^13 % 13 == n % 13"
+  },
+  {
+    "name": "cube_residue_mod_six",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "power_residue",
+    "theorem_src": "theorem cube_residue_mod_six : forall n : Nat, n ^ 3 % 6 = n % 6",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "e1d9d53277a3378c",
+    "claim_domain": "n >= 0",
+    "claim_property": "n^3 % 6 == n % 6"
+  },
+  {
+    "name": "cube_minus_self_div_six",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "power_residue",
+    "theorem_src": "theorem cube_minus_self_div_six : forall n : Nat, (n ^ 3 - n) % 6 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "00ccdea6d7e6aa80",
+    "claim_domain": "n >= 0",
+    "claim_property": "(n^3 - n) % 6 == 0"
+  },
+  {
+    "name": "pow5_minus_self_div_thirty",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "power_residue",
+    "theorem_src": "theorem pow5_minus_self_div_thirty : forall n : Nat, (n ^ 5 - n) % 30 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "4649467dc3bec5c8",
+    "claim_domain": "n >= 0",
+    "claim_property": "(n^5 - n) % 30 == 0"
+  },
+  {
+    "name": "pow7_minus_self_div_42",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "power_residue",
+    "theorem_src": "theorem pow7_minus_self_div_42 : forall n : Nat, (n ^ 7 - n) % 42 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "2a967c843d2dad10",
+    "claim_domain": "n >= 0",
+    "claim_property": "(n^7 - n) % 42 == 0"
+  },
+  {
+    "name": "two_consec_div_two",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "consecutive_product",
+    "theorem_src": "theorem two_consec_div_two : forall n : Nat, n * (n + 1) % 2 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "0b79e7f6cad1981f",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) % 2 == 0"
+  },
+  {
+    "name": "three_consec_div_six",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "consecutive_product",
+    "theorem_src": "theorem three_consec_div_six : forall n : Nat, n * (n + 1) * (n + 2) % 6 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "6296dd57fa4325bd",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) * (n + 2) % 6 == 0"
+  },
+  {
+    "name": "four_consec_div_24",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "consecutive_product",
+    "theorem_src": "theorem four_consec_div_24 : forall n : Nat, n * (n + 1) * (n + 2) * (n + 3) % 24 = 0",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "e956406a2451b651",
+    "claim_domain": "n >= 0",
+    "claim_property": "n * (n + 1) * (n + 2) * (n + 3) % 24 == 0"
+  },
+  {
+    "name": "even_pair_div_eight",
+    "claim_type": "invariant",
+    "subject": "number_theory",
+    "relation": "divisibility",
+    "theorem_src": "theorem even_pair_div_eight : forall n : Nat, 8 \u2223 (2 * n) * (2 * n + 2)",
+    "imports": [
+      "Mathlib.Tactic"
+    ],
+    "formal_hash": "c2cd1e581409521e",
+    "claim_domain": "n >= 0",
+    "claim_property": "(2 * n) * (2 * n + 2) % 8 == 0"
   }
 ]
