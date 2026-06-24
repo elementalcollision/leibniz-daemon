@@ -11,9 +11,16 @@ it reads `Demonstratio.qed`/`kernel_verified` set by `discharge`/`seal`.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from leibniz.propositio import Propositio
+
+
+def running_instance() -> str:
+    """The instance this process runs as (prod | uat | dev). Read at call time from
+    the environment — same convention as `PersistentRuntime` (default 'dev', lower)."""
+    return (os.environ.get("LEIBNIZ_INSTANCE") or "dev").strip().lower()
 
 
 def render_propositio(prop: Propositio) -> str:
@@ -56,28 +63,65 @@ class Calculemus:
         self.codex[prop.pid] = prop
         return True
 
-    def publish(self, pid: str, *, operator_approved: bool = False) -> bool:
-        """Promote a Codex law to the public ledger. Promotion != publication: a
-        human operator must explicitly approve (the daemon never calls this with
-        approval). Returns False unless approved and the law is in the Codex."""
+    def publish(
+        self,
+        pid: str,
+        *,
+        operator_approved: bool = False,
+        confirm_instance: str | None = None,
+    ) -> bool:
+        """Promote a Codex law to the public ledger.
+
+        Promotion != publication: a human operator must explicitly approve — the
+        daemon never calls this with approval (ADR 0008). Returns False unless
+        approved and the law is in the Codex.
+
+        ADR 0033 publish guard (invariant #3) — ADDITIVE, never weaker: the public
+        Codex is a PROD artefact, so publishing is refused unless this process runs
+        as PROD *and* the caller confirms the running instance explicitly (so a
+        publish can never happen by default / from a UAT or dev process). The
+        instance is read at call time from `LEIBNIZ_INSTANCE` (default 'dev'), the
+        same convention as `PersistentRuntime`.
+        """
+        instance = running_instance()
+        if instance != "prod":
+            raise RuntimeError(
+                f"publish refused: instance is {instance!r}, not 'prod' (ADR 0033 "
+                f"publish guard). Only the PROD instance may publish to the Codex."
+            )
+        if confirm_instance is None or confirm_instance.strip().lower() != instance:
+            raise RuntimeError(
+                f"publish refused: confirm_instance={confirm_instance!r} must match the "
+                f"running instance {instance!r} (ADR 0033 publish guard). Pass "
+                f"confirm_instance='prod' to publish."
+            )
         if not operator_approved or pid not in self.codex:
             return False
         self.published.add(pid)
         return True
 
     def render_public(self) -> str:
-        """The public Calculemus — only operator-published laws, proofs open."""
-        header = "# Calculemus\n\n*The ledger of theorems settled by calculation.*\n"
+        """The public Calculemus — only operator-published laws, proofs open. The
+        instance is rendered so each published law's provenance is visible (ADR 0033)."""
+        instance = running_instance()
+        header = (
+            "# Calculemus\n\n*The ledger of theorems settled by calculation.*\n"
+            f"\n*instance: {instance}*\n"
+        )
         entries = [render_propositio(self.codex[pid]) for pid in self.codex if pid in self.published]
         if not entries:
             return header + "\n*(nothing published yet)*\n"
         return header + "\n" + "\n\n---\n\n".join(entries) + "\n"
 
     def colophon(self) -> str:
-        """What is held back and why: promulgated laws awaiting operator publication."""
+        """What is held back and why: promulgated laws awaiting operator publication.
+        The running instance is shown so provenance is visible (ADR 0033 invariant #3)."""
+        instance = running_instance()
         held = [self.codex[pid] for pid in self.codex if pid not in self.published]
         lines = [
             "# Colophon — held back",
+            "",
+            f"*instance: {instance}*",
             "",
             f"{len(held)} promulgated law(s) await operator publication "
             "(promotion is not publication):",

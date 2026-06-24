@@ -50,18 +50,22 @@ def test_promotion_is_not_publication():
     assert law.enuntiatio.statement in cx.colophon()  # held back, with reason
 
 
-def test_publish_requires_explicit_operator_approval():
+def test_publish_requires_explicit_operator_approval(monkeypatch):
+    # ADR 0033 makes publish PROD-only + instance-confirmed; this R6 contract (the
+    # operator-approval gate) is exercised under that now-required context.
+    monkeypatch.setenv("LEIBNIZ_INSTANCE", "prod")
     cx = Calculemus()
     law = _law()
     cx.promulgate(law)
-    assert cx.publish(law.pid, operator_approved=False) is False  # daemon can't publish
+    assert cx.publish(law.pid, operator_approved=False, confirm_instance="prod") is False  # daemon can't publish
     assert law.pid not in cx.published
-    assert cx.publish(law.pid, operator_approved=True) is True    # human does
+    assert cx.publish(law.pid, operator_approved=True, confirm_instance="prod") is True    # human does
     assert law.pid in cx.published
     public = cx.render_public()
     assert law.enuntiatio.statement in public
     assert "by induction_hammer" in public  # proof open to inspection
 
 
-def test_publish_unknown_pid_is_refused():
-    assert Calculemus().publish("no-such-pid", operator_approved=True) is False
+def test_publish_unknown_pid_is_refused(monkeypatch):
+    monkeypatch.setenv("LEIBNIZ_INSTANCE", "prod")  # ADR 0033: publish is PROD-only
+    assert Calculemus().publish("no-such-pid", operator_approved=True, confirm_instance="prod") is False
