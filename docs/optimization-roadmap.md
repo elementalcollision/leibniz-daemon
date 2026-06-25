@@ -7,6 +7,31 @@ engine** without ever weakening the boundary. Each optimization is captured as a
 project's discipline: decisions get an ADR, and trust-guarded changes get operator
 sign-off via the PreToolUse hook).
 
+## Novelty frontier — measured conclusion (2026-06-25)
+
+The post-R6 binding constraint was **novelty** (the daemon soundly *re-proves* textbook math but
+does not *discover*). Two independent levers were then **built and measured** against a blind
+4-rater human novelty panel, not argued:
+
+- **Proposal source** (ADR 0034): mining true computed patterns vs. steering. A clean A/B —
+  mining **doubled yield** (13→26 promulgations) and produced **0 genuinely-novel** laws.
+- **Contract grammar** (ADR 0035 Stage A): soundly taught the faithfulness gate a new genre,
+  `a^n mod m` (symbolic exponents, via multiplicative-order period reduction). The genre **moved**
+  (16/23 promulgations in the new genre; structural coverage 100%→30%) and produced **0
+  genuinely-novel** laws (standard cyclic-group facts).
+
+**Conclusion (triangulated, re-checkable):** the bottleneck is **neither the proposer nor the
+grammar** — it is the **bounded-mechanical-faithfulness model itself**. Promulgating only what is
+mechanically faithfulness-checkable over a bounded box *and* auto-provable caps the daemon at
+elementary/textbook mathematics by construction. Genuine machine *discovery* under a hard trust
+boundary is now a **research question** (it would need a different trust-checkable notion of
+"faithful"), left standing rather than papered over. Soundness held throughout every experiment.
+
+Disposition: the novelty quest is **paused with a measured finding** (ADR 0034 §12, ADR 0035 §7;
+public account in `docs/cycles-report-novelty-frontier.md`). Both levers remain **sound and
+opt-in/default-off** — useful as *yield* levers (proving large volumes of true elementary number
+theory, e.g. seeding a Lean library) if breadth, not novelty, becomes the goal.
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
