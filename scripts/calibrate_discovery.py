@@ -25,7 +25,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 _REPO = Path(__file__).resolve().parent.parent
-_FEED = Path("/Users/dave/Agent_Data/Agents (Chimera, Newton, Leibniz)/arxiv_feed/feeds/latest/leibniz.json")
+# The seed feed. Defaults to the live "latest" arxiv feed, but LEIBNIZ_FEED_PATH PINS it to a
+# snapshot — essential for a reproducible A/B (so two runs on different days see identical seeds
+# rather than a feed that regenerated overnight).
+_FEED = Path(os.environ.get("LEIBNIZ_FEED_PATH")
+             or "/Users/dave/Agent_Data/Agents (Chimera, Newton, Leibniz)/arxiv_feed/feeds/latest/leibniz.json")
 # Prover ensemble on HuggingFace (the specialized prover models live there).
 _HF_PROVERS = "deepseek-ai/DeepSeek-Prover-V2-671B,deepseek-ai/DeepSeek-V3.2,deepseek-ai/DeepSeek-R1"
 

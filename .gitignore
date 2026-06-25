@@ -26,6 +26,9 @@ lean-project/.lake/
 # Per-instance state dirs (ADR 0033): UAT/dev ledgers + provenance, never committed
 .leibniz-uat/
 .leibniz-dev/
+# ADR 0034 A/B run artifacts: per-arm ledgers, pinned feed, operator-filled config — never committed
+.leibniz-ab/*
+!.leibniz-ab/ab_config.env.example
 
 # Filled deploy profiles (ADR 0033) — operator-specific; only the *.env.example templates ship
 deploy/profiles/*.env
