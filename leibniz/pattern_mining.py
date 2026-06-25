@@ -176,6 +176,11 @@ def mine(corpus_signatures: Iterable[tuple] = (), *, limit: Optional[int] = None
             sig = congruence_signature(prop)
             if sig is None or sig in known:        # unrecognized shape, or already textbook -> skip
                 continue
+            if not sig[2]:                          # reduced polynomial identically zero mod m: the
+                continue                            # claim is syntactically constant ("c == c") -> a
+                #   decision procedure closes it -> quarantined TRIVIAL (§7). Drop it: it is a wasted
+                #   mined seed, not a non-trivial restriction. (NB |R|==1 alone is NOT trivial — e.g.
+                #   n^2+n ≡ 0 mod 2 has reduced poly n^2+n != 0 mod 2 and needs a parity argument.)
             score = _score(degree, m, R, monic=coeffs[-1] == 1)
             prev = best.get(sig)
             if prev is None or score > prev.score:  # dedup by signature, keep the best-scoring form
