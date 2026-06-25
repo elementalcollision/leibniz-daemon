@@ -36,6 +36,9 @@ mkdir -p "$RUNDIR"
 # Resolve the Python interpreter once (some systems have only python3, others only python).
 PY="$(command -v python3 || command -v python || true)"
 [[ -n "$PY" ]] || { echo "no python3/python on PATH" >&2; exit 3; }
+# Stream Python stdout live (unbuffered) so the tee'd run.log shows progress instead of flushing
+# in chunks — arm A's log only filled at the end because CPython block-buffers when piped.
+export PYTHONUNBUFFERED=1
 
 # --- shared, code-independent config (IDENTICAL for A and B) --------------------------------
 if [[ ! -f "$CONFIG" ]]; then
