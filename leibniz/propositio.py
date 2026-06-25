@@ -108,6 +108,11 @@ class Propositio:
     # Quality-diversity coordinates KFM uses to place this in the archive.
     behavior_descriptor: tuple[float, ...] = ()
 
+    # ADR 0034 Stage 2: which kind of seed produced this candidate (mined | weaken | kfm |
+    # survey). Recorded so the §5 kill condition can measure the genuine-novelty fraction of
+    # MINED-origin promulgations specifically. Proposal-side provenance; gates nothing.
+    seed_origin: Optional[str] = None
+
     def record(self, ev: EdgeEvidence) -> None:
         self.edges.append(ev)
 
