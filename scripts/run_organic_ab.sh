@@ -33,6 +33,10 @@ LIVE_FEED="/Users/dave/Agent_Data/Agents (Chimera, Newton, Leibniz)/arxiv_feed/f
 CONFIG="$ABDIR/ab_config.env"
 mkdir -p "$RUNDIR"
 
+# Resolve the Python interpreter once (some systems have only python3, others only python).
+PY="$(command -v python3 || command -v python || true)"
+[[ -n "$PY" ]] || { echo "no python3/python on PATH" >&2; exit 3; }
+
 # --- shared, code-independent config (IDENTICAL for A and B) --------------------------------
 if [[ ! -f "$CONFIG" ]]; then
   echo "missing $CONFIG — copy .leibniz-ab/ab_config.env.example to it and fill the panel/gateway." >&2
@@ -49,7 +53,7 @@ if [[ ! -f "$PINNED_FEED" ]]; then
   echo "[ab] pinned the live feed -> $PINNED_FEED"
 fi
 export LEIBNIZ_FEED_PATH="$PINNED_FEED"
-_FEED_DATE="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('run_date'))" "$PINNED_FEED")"
+_FEED_DATE="$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1])).get('run_date'))" "$PINNED_FEED")"
 
 # --- fresh, isolated ledger for this arm (clean slate) --------------------------------------
 export LEIBNIZ_INSTANCE="dev"
@@ -64,10 +68,10 @@ echo "[ab] repair=${LEIBNIZ_PROOF_REPAIR:-<off>}  panel=${LEIBNIZ_REPAIR_PANEL:-
 
 # --- run ------------------------------------------------------------------------------------
 cd "$REPO"
-python scripts/calibrate_discovery.py "$CYCLES" "$SEEDS" "$CAP" 2>&1 | tee "$RUNDIR/run.log"
+"$PY" scripts/calibrate_discovery.py "$CYCLES" "$SEEDS" "$CAP" 2>&1 | tee "$RUNDIR/run.log"
 
 # --- capture per-arm outputs (the global report is overwritten each run) --------------------
 cp -f "$REPO/calibration_report.json" "$RUNDIR/calibration_report.json"
 echo "[ab] === Stage-0 novelty metric for arm $ARM ==="
-python scripts/novelty_report.py --db "$LEIBNIZ_RUNTIME_DB" | tee "$RUNDIR/novelty_report.txt"
+"$PY" scripts/novelty_report.py --db "$LEIBNIZ_RUNTIME_DB" | tee "$RUNDIR/novelty_report.txt"
 echo "[ab] arm $ARM complete. Artifacts in $RUNDIR/"
