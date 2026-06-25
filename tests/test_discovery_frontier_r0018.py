@@ -352,3 +352,114 @@ def test_daemon_records_outcomes_and_steers_next_cycle():
     # ledger lessons + a weakening seed reached the conjecturer on the second cycle
     assert any("Lessons from the ledger" in s for s in conj.seen)
     assert any("STRICTLY WEAKER" in s for s in conj.seen)
+
+
+# === ADR 0034 Stage 1: steering graft (genre-kill + flavour exemplars) =======
+
+from leibniz.discovery import _family, load_novelty_exemplars  # noqa: E402
+
+
+def _proven(claim_property: str, stmt: str = "law") -> Propositio:
+    p = Propositio(enuntiatio=Enuntiatio(statement=stmt, claim_type=ClaimType.INVARIANT,
+                                         falsifiable_claim="x", claim_property=claim_property))
+    p.finish_reason = FinishReason.PROMULGATED
+    return p
+
+
+def test_family_key_is_coarse_relop_and_modulus():
+    # different polynomials, same relop+modulus -> ONE family (the genre-hop unit)
+    a, b = _family("(n^2) % 2 == 0"), _family("(n^4 + n^2) % 2 == 0")
+    assert a is not None and a[0] == b[0]
+    # a residue-SET characterization is a DISTINCT family (relop differs), so it survives a == kill
+    assert _family("(n^2) % 2 in {0}")[0] != a[0]
+    # different modulus -> different family
+    assert _family("(n^2) % 3 == 0")[0] != a[0]
+    # outside the DSL -> no family (no kill)
+    assert _family("gcd(n, n+1) == 1") is None
+    assert _family(None) is None
+
+
+def test_genre_kill_fires_after_threshold_proven_only():
+    nb = DiscoveryNotebook(capacity=12, genre_threshold=3)
+    # two proven in the family -> not yet killed
+    nb.record(_proven("(n^2) % 2 == 0"))
+    nb.record(_proven("(n^4) % 2 == 0"))
+    assert nb.genre_kill == []
+    # a NON-proven candidate in the family must NOT count toward exhaustion
+    miss = Propositio(enuntiatio=Enuntiatio(statement="m", claim_type=ClaimType.INVARIANT,
+                                            falsifiable_claim="x", claim_property="(n^6) % 2 == 0"))
+    miss.finish_reason = FinishReason.UNPROVEN
+    nb.record(miss)
+    assert nb.genre_kill == []
+    # the third PROVEN one trips the kill
+    nb.record(_proven("(n^4 + n^2) % 2 == 0"))
+    assert nb.genre_kill == ["== modular claims modulo 2"]
+
+
+def test_genre_kill_is_bounded():
+    nb = DiscoveryNotebook(capacity=50, genre_threshold=1, genre_capacity=2)
+    for m in (2, 3, 5, 7):                       # four distinct families, cap is 2
+        nb.record(_proven(f"(n^2) % {m} == 0"))
+    assert len(nb.genre_kill) == 2
+
+
+def test_steering_surfaces_exemplars_and_genre_kill():
+    nb = DiscoveryNotebook(capacity=12, genre_threshold=1)
+    nb.exemplars = ["squares are 0 or 1 mod 4 [(n^2) % 4 in {0, 1}]"]
+    nb.record(_proven("(n^2) % 2 == 0"))        # trips a kill at threshold 1
+    s = nb.steering()
+    assert "FLAVOUR" in s and "squares are 0 or 1 mod 4" in s
+    assert "EXHAUSTED FAMILIES" in s and "modulo 2" in s
+
+
+def test_exemplars_are_not_persisted_but_genre_state_is():
+    nb = DiscoveryNotebook(capacity=12, genre_threshold=1)
+    nb.exemplars = ["flavour anchor"]
+    nb.record(_proven("(n^3 + 5*n) % 3 == 0"))
+    back = DiscoveryNotebook.from_dict(nb.to_dict(), capacity=12)
+    assert back.genre_kill == nb.genre_kill                 # ledger state carries across runs
+    assert back._family_counts == nb._family_counts
+    assert back.exemplars == []                             # flavour anchors reload from corpus
+
+
+def test_from_dict_is_defensive_against_forged_genre_payload():
+    nb = DiscoveryNotebook.from_dict(
+        {"genre_kill": "not-a-list", "family_counts": {"k": "not-an-int"}}, capacity=6)
+    assert nb.genre_kill == [] and nb._family_counts == {}
+
+
+def test_cold_start_steering_unchanged_without_exemplars_or_outcomes():
+    nb = DiscoveryNotebook()                                # no exemplars, no outcomes
+    assert nb.steering() == ""
+    assert steer("SEED", nb, None) == "SEED"
+
+
+# --- the curated corpus file itself stays sound ------------------------------
+
+def test_novelty_exemplars_file_loads_and_is_valid_dsl():
+    from leibniz.structural import congruence_signature
+    import json as _json
+    from pathlib import Path as _Path
+    raw = _json.loads((_Path(__file__).resolve().parent.parent
+                       / "corpus" / "novelty_exemplars.json").read_text())
+    exemplars = raw["exemplars"]
+    assert 1 <= len(exemplars) <= 8                         # "a handful" (ADR 0034 §9)
+    for e in exemplars:
+        # every curated anchor must be expressible in the recognized DSL (a real flavour anchor)
+        assert congruence_signature(e["claim_property"]) is not None, e["claim_property"]
+    # and the loader renders them as non-empty steering lines
+    lines = load_novelty_exemplars()
+    assert lines and all(isinstance(x, str) and x for x in lines)
+
+
+def test_load_novelty_exemplars_missing_file_is_empty():
+    assert load_novelty_exemplars("/nonexistent/path/exemplars.json") == []
+
+
+def test_load_novelty_exemplars_is_defensive_against_malformed_payloads(tmp_path):
+    # An explicit null or a non-list payload must yield [] — never a crash, never char-iteration
+    # of a string (regression: data.get('exemplars', []) returns None for an explicit null).
+    for payload in ('{"exemplars": null}', '{"exemplars": "foo"}', '[]', 'null', '"x"'):
+        f = tmp_path / "ex.json"
+        f.write_text(payload)
+        assert load_novelty_exemplars(f) == [], payload
