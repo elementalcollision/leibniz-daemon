@@ -186,3 +186,14 @@ def test_real_miner_exhausts_cleanly():
             break
     assert drawn == len(miner)                    # dispensed exactly the pool, no more
     assert miner.seeds(8) == []                    # stays empty after exhaustion (no stale re-dispense)
+
+
+def test_constant_mod_m_patterns_are_dropped_as_trivial():
+    # A polynomial that reduces to a CONSTANT mod m ("c == c") is decide-closable -> TRIVIAL (§7);
+    # the miner must not emit it (it would be a wasted mined seed). signature[2]==() marks it.
+    pool = pm.mine(limit=3000)
+    assert all(p.signature[2] != () for p in pool), "trivial-constant pattern leaked into the pool"
+    # but a genuine singleton restriction (reduced poly != 0 mod m) is KEPT — it needs a real
+    # argument (e.g. n^2+n ≡ 0 mod 2 is a parity fact, not 'c == c').
+    keep = sig("(n^2 + n) % 2 == 0")
+    assert keep is not None and keep[2] != ()
