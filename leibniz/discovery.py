@@ -90,6 +90,20 @@ def load_novelty_exemplars(path: Union[str, Path, None] = None) -> list[str]:
             out.append(e.strip())
     return out
 
+
+def novelty_exemplar_properties(path: Union[str, Path, None] = None) -> list[str]:
+    """The curated exemplars' canonical `claim_property` predicates (ADR 0034 Stage 2). Used to
+    EXCLUDE exemplars from the pattern-miner's pool so a fact already injected as steering context
+    is not also mined (double-injection inflates apparent diversity). Missing/corrupt -> []."""
+    try:
+        data = json.loads(Path(path or _DEFAULT_EXEMPLARS).read_text())
+    except (OSError, ValueError, TypeError):
+        return []
+    raw = data.get("exemplars") if isinstance(data, dict) else None
+    return [str(e["claim_property"]) for e in (raw if isinstance(raw, list) else [])
+            if isinstance(e, dict) and e.get("claim_property")]
+
+
 # Outcomes that mean "do not propose shapes like this again" (dead ends).
 _AVOID = frozenset({
     FinishReason.KNOWN, FinishReason.TRIVIAL, FinishReason.REFUTED,

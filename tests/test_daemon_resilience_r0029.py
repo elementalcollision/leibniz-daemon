@@ -9,6 +9,8 @@ These exercise the resilience boundary directly with stub stages; no network, no
 """
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from leibniz.daemon import CycleReport, Leibniz
 
 
@@ -55,7 +57,8 @@ def test_loop_continues_past_an_errored_seed():
             self.n += 1
             if self.n == 1:
                 raise RuntimeError("transient 529")
-            return object()                              # a 'prop' for seed 2
+            return SimpleNamespace()                     # an attribute-settable 'prop' for seed 2
+            # (a real conjecture returns a Propositio; _run_seeds tags .seed_origin on it, ADR 0034)
 
     d = _bare_daemon()
     d.conjecture = _ConjectureOnceBoom()

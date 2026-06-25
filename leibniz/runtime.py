@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS memory (
     statement TEXT, claim_type TEXT, falsifiable_claim TEXT, domain TEXT,
     theorem_src TEXT, normalized_hash TEXT,
     kernel_verified INTEGER, qed TEXT, proof_src TEXT,
-    finish_reason TEXT, parents TEXT, instance TEXT, claim_property TEXT
+    finish_reason TEXT, parents TEXT, instance TEXT, claim_property TEXT, seed_origin TEXT
 )
 """
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS memory (
 _COLUMNS = (
     "pid", "born", "ts", "statement", "claim_type", "falsifiable_claim", "domain",
     "theorem_src", "normalized_hash", "kernel_verified", "qed", "proof_src",
-    "finish_reason", "parents", "instance", "claim_property",
+    "finish_reason", "parents", "instance", "claim_property", "seed_origin",
 )
 
 
@@ -106,6 +106,9 @@ class PersistentRuntime:
                 # predicate so promulgations are natively measurable by novelty_metrics
                 # (pre-Stage-0 rows stay NULL — reported honestly as no-property-stored).
                 self._conn.execute("ALTER TABLE memory ADD COLUMN claim_property TEXT")
+            if "seed_origin" not in have:  # ADR 0034 Stage 2: seed provenance (mined|weaken|kfm|
+                # survey) so the §5 kill condition can isolate MINED-origin promulgations.
+                self._conn.execute("ALTER TABLE memory ADD COLUMN seed_origin TEXT")
             self._conn.commit()
             # ADR 0033 write-barrier: refuse a ledger already claimed by a DIFFERENT instance, so
             # a misconfigured UAT pointed at the PROD DB FAILS CLOSED instead of interleaving.
@@ -143,6 +146,7 @@ class PersistentRuntime:
             json.dumps(list(prop.parents)),
             self.instance,  # ADR 0033: stamp the writing instance (provenance)
             en.claim_property,  # ADR 0034 Stage 0: the canonical DSL predicate (or None)
+            prop.seed_origin,  # ADR 0034 Stage 2: seed provenance (mined|weaken|kfm|survey|None)
         )
         cols = ", ".join(_COLUMNS)
         marks = ", ".join("?" for _ in _COLUMNS)
@@ -157,7 +161,7 @@ class PersistentRuntime:
             rows = self._db().execute(
                 "SELECT pid, born, statement, claim_type, falsifiable_claim, domain, "
                 "theorem_src, normalized_hash, kernel_verified, qed, proof_src, "
-                "finish_reason, parents, claim_property "
+                "finish_reason, parents, claim_property, seed_origin "
                 "FROM memory ORDER BY ts DESC, rowid DESC LIMIT ?",
                 (n,),
             ).fetchall()
@@ -185,7 +189,7 @@ class PersistentRuntime:
 def _row_to_prop(r: tuple) -> Propositio:
     (pid, born, statement, claim_type, falsifiable_claim, domain, theorem_src,
      normalized_hash, kernel_verified, qed, proof_src, finish_reason, parents,
-     claim_property) = r
+     claim_property, seed_origin) = r
     en = Enuntiatio(
         statement=statement, claim_type=ClaimType(claim_type),
         falsifiable_claim=falsifiable_claim or "",
@@ -208,4 +212,5 @@ def _row_to_prop(r: tuple) -> Propositio:
     )
     # Disposition only — never the policy-gated `promulgated` flag (trust note above).
     prop.finish_reason = FinishReason(finish_reason) if finish_reason else None
+    prop.seed_origin = seed_origin  # ADR 0034 Stage 2: round-trip seed provenance
     return prop
