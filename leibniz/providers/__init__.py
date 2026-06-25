@@ -41,6 +41,8 @@ def repair_proof_prompt(theorem_src: str, failed_proof: str, error: str) -> str:
 # repair_proof_prompt is shared for the proof role. Routing conjecture/formalize through a
 # backup model during an Anthropic outage stays proposal-only (ADR 0001): the faithfulness /
 # novelty gates and the Lean kernel still decide every candidate.
+import os  # noqa: E402  (env-gated DSL increment, ADR 0035 Stage A)
+
 from leibniz.types import Role  # noqa: E402  (kept next to the prompts that use it)
 
 AUTOFORMALIZE_SYSTEM = (
@@ -48,6 +50,22 @@ AUTOFORMALIZE_SYSTEM = (
     "of algorithms. You PROPOSE; a Lean kernel and mechanical gates DECIDE. Never "
     "claim something is proven. Respond with ONLY the requested JSON, no prose."
 )
+
+# ADR 0035 Stage A: the gate now soundly checks `base^n % m` (constant base, constant modulus,
+# VARIABLE exponent) over the multiplicative-order period. Inviting that genre into the prompt is
+# env-gated (default OFF) so main's conjecturer is unchanged until the live calibration proves it
+# out — set LEIBNIZ_DSL_SYMBOLIC_EXP=1 for the Stage A experiment arm.
+_SYMBOLIC_EXP = os.environ.get("LEIBNIZ_DSL_SYMBOLIC_EXP", "") not in ("", "0")
+_POW_RULE = (
+    "  • ^ with a CONSTANT exponent 0..8 (n^2, (a+b)^3); ALSO base^n % m with a CONSTANT base and "
+    "CONSTANT modulus but a VARIABLE exponent n is allowed (ADR 0035: e.g. 2^n % 7 — checked over "
+    "the multiplicative-order period). A variable exponent OUTSIDE a mod, a compound exponent "
+    "(2^(n+1)), or a non-constant base is still forbidden.\n"
+    if _SYMBOLIC_EXP else
+    "  • ^ with a CONSTANT exponent 0..8 (n^2, (a+b)^3) — NOT a variable exponent\n"
+)
+_FORBIDDEN_EXP = ("VARIABLE exponents outside a mod (2^n alone, k^n, 2^(n+1))"
+                  if _SYMBOLIC_EXP else "VARIABLE exponents (2^n, k^n)")
 
 # ADR 0022: the faithfulness checker can only certify a contract whose predicates
 # live in this sound, Z3-decidable arithmetic DSL (ADR 0021). A contract outside it
@@ -59,13 +77,13 @@ AUTOFORMALIZE_DSL = (
     "  • non-negative integer variables — name them freely (n, a, b, k, ...)\n"
     "  • non-negative integer literals\n"
     "  • + - *  (add, subtract, multiply)\n"
-    "  • ^ with a CONSTANT exponent 0..8 (n^2, (a+b)^3) — NOT a variable exponent\n"
+    f"{_POW_RULE}"
     "  • / and % by a CONSTANT positive divisor (n/2, n%3)\n"
     "  • min(a, b) and max(a, b) — two or more integer arguments (ADR 0030)\n"
     "  • comparisons < <= > >= == != ; and / or / not ; parentheses\n"
     "FORBIDDEN (these make the claim un-checkable): named functions (log, sqrt, gcd, "
-    "factorial, Nat.log, floor, sums/products), VARIABLE exponents (2^n, "
-    "k^n), division/modulo by a variable, real/rational numbers, quantifiers inside "
+    f"factorial, Nat.log, floor, sums/products), {_FORBIDDEN_EXP}, "
+    "division/modulo by a variable, real/rational numbers, quantifiers inside "
     "a predicate. If the natural claim needs any of these, RESTATE it as an "
     "elementary-arithmetic statement that does fit (e.g. a concrete polynomial bound, "
     "a divisibility/mod identity) — that is the novel-yet-tractable band."

@@ -21,9 +21,9 @@
 # Usage: run_organic_ab.sh <A|B> [cycles] [seeds_per_cycle] [cap_usd]   (defaults 8 3 40, = organic5)
 set -euo pipefail
 
-ARM="${1:?usage: run_organic_ab.sh <A|B> [cycles seeds cap]}"
+ARM="${1:?usage: run_organic_ab.sh <A|B|SA> [cycles seeds cap]}"
 CYCLES="${2:-8}"; SEEDS="${3:-3}"; CAP="${4:-40}"
-case "$ARM" in A|B) ;; *) echo "arm must be A or B, got '$ARM'" >&2; exit 2 ;; esac
+case "$ARM" in A|B|SA) ;; *) echo "arm must be A, B, or SA, got '$ARM'" >&2; exit 2 ;; esac
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ABDIR="$REPO/.leibniz-ab"
@@ -58,14 +58,17 @@ fi
 export LEIBNIZ_FEED_PATH="$PINNED_FEED"
 _FEED_DATE="$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1])).get('run_date'))" "$PINNED_FEED")"
 
-# --- the experimental variable: Stage-2 pattern mining (ADR 0034) ----------------------------
-# Set EXPLICITLY per arm so arm A can never be confounded by a stray LEIBNIZ_PATTERN_MINE left in
-# the shell: A = OFF (Stage 0+1 only), B = ON (Stage 0+1+2). This is the ONLY intended difference
-# between the arms. AB_MINE_K overrides B's seeds-per-cycle (default 2).
-if [[ "$ARM" == "A" ]]; then
-  export LEIBNIZ_PATTERN_MINE=0
-else
+# --- the experimental variable, set EXPLICITLY per arm (no stray-env confound) ----------------
+#   A  = Stage 0+1 baseline           (mining off, symbolic-exp off)
+#   B  = Stage 0+1+2                   (mining on,  symbolic-exp off)  — ADR 0034 A/B
+#   SA = ADR 0035 Stage A experiment  (mining off, symbolic-exp ON)   — base^n % m invited
+# AB_MINE_K overrides B's mined seeds-per-cycle (default 2).
+export LEIBNIZ_PATTERN_MINE=0
+export LEIBNIZ_DSL_SYMBOLIC_EXP=0
+if [[ "$ARM" == "B" ]]; then
   export LEIBNIZ_PATTERN_MINE="${AB_MINE_K:-2}"
+elif [[ "$ARM" == "SA" ]]; then
+  export LEIBNIZ_DSL_SYMBOLIC_EXP=1
 fi
 
 # --- fresh, isolated ledger for this arm (clean slate) --------------------------------------
@@ -77,7 +80,7 @@ rm -f "$LEIBNIZ_RUNTIME_DB" "$LEIBNIZ_NOTEBOOK_PATH" "$LEIBNIZ_FRONTIER_PATH"
 
 echo "[ab] arm=$ARM  commit=$(git -C "$REPO" rev-parse --short HEAD)  feed run_date=$_FEED_DATE"
 echo "[ab] ledger=$RUNDIR  prover=${LEIBNIZ_PROVER_MODELS:-<unset>}  consensus=${LEIBNIZ_PROOF_CONSENSUS:-2}"
-echo "[ab] repair=${LEIBNIZ_PROOF_REPAIR:-<off>}  panel=${LEIBNIZ_REPAIR_PANEL:-<none>}  pattern_mine=$LEIBNIZ_PATTERN_MINE"
+echo "[ab] repair=${LEIBNIZ_PROOF_REPAIR:-<off>}  panel=${LEIBNIZ_REPAIR_PANEL:-<none>}  pattern_mine=$LEIBNIZ_PATTERN_MINE  symbolic_exp=$LEIBNIZ_DSL_SYMBOLIC_EXP"
 
 # --- run ------------------------------------------------------------------------------------
 cd "$REPO"
