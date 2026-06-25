@@ -1,0 +1,20 @@
+{
+  "_note": "ADR 0034 Stage 1 — curated novel-yet-elementary FLAVOUR anchors shown to the conjecturer as proposal-side context. These are NOT a gate and are NEVER proposed verbatim; they model a DIFFERENT structure from the textbook 'P(n) divisible by k' genre (e.g. characterizing a residue SET). Operator-editable: each entry must be TRUE, formalizable in the faithfulness DSL, and non-trivial. Keep the list short (a handful). ADR 0034 §9 / §1 (the human-curated nature is an acknowledged limit: this does not scale past the operator's imagination).",
+  "exemplars": [
+    {
+      "statement": "A perfect square leaves remainder 0 or 1 modulo 4 (never 2 or 3)",
+      "claim_property": "(n^2) % 4 in {0, 1}",
+      "flavor": "residue-SET characterization, not a single divisibility"
+    },
+    {
+      "statement": "A perfect square is congruent to 0 or 1 modulo 3",
+      "claim_property": "(n^2) % 3 in {0, 1}",
+      "flavor": "residue-SET characterization at a different modulus"
+    },
+    {
+      "statement": "A perfect cube is congruent to 0, 1, or 8 modulo 9",
+      "claim_property": "(n^3) % 9 in {0, 1, 8}",
+      "flavor": "residue-SET characterization, a less obvious modulus"
+    }
+  ]
+}

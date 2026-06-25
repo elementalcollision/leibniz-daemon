@@ -30,6 +30,7 @@ from leibniz.discovery import (
     _DEFAULT_NOTEBOOK,
     DiscoveryNotebook,
     FrontierController,
+    load_novelty_exemplars,
 )
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
@@ -307,6 +308,10 @@ def build_daemon(
     # so the weaken-and-retry loop keeps grinding the UNPROVEN frontier toward a proof.
     _notebook_path = os.environ.get("LEIBNIZ_NOTEBOOK_PATH") or str(_DEFAULT_NOTEBOOK)
     _nb_cap = _env_int("LEIBNIZ_NOTEBOOK_CAP", 12)
+    # ADR 0034 Stage 1: resume the outcome notebook, then load the curated novel-yet-elementary
+    # FLAVOUR anchors into it (proposal-side context only; not persisted to the ledger).
+    _notebook = DiscoveryNotebook.load(_notebook_path, capacity=_nb_cap)
+    _notebook.exemplars = load_novelty_exemplars()
     return Leibniz(
         runtime=PersistentRuntime(),  # ADR 0016: SQLite memory + circadian phase
         survey=Survey(forge),
@@ -327,7 +332,7 @@ def build_daemon(
         cost_budget=cost_budget,  # ADR 0011 cap, ADR 0014 metered by real usage
         # ADR 0018: outcome-conditioned conjecture; ADR 0023: resumed from + persisted
         # to disk so near-misses accumulate across runs for weaken-and-retry.
-        notebook=DiscoveryNotebook.load(_notebook_path, capacity=_nb_cap),
+        notebook=_notebook,
         notebook_path=_notebook_path,
         weaken_k=_env_int("LEIBNIZ_WEAKEN_K", 3),
         # ADR 0018/0019: adaptive difficulty band, resumed from + persisted to disk.

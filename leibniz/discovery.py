@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Union
 
 from leibniz.propositio import Propositio
+from leibniz.structural import congruence_signature
 from leibniz.types import FinishReason
 
 # Where the learned difficulty band + outcome notebook persist across runs (gitignored,
@@ -41,6 +42,53 @@ from leibniz.types import FinishReason
 # runs, so weaken-and-retry keeps grinding the same UNPROVEN frontier toward a proof.
 _DEFAULT_FRONTIER = Path(__file__).resolve().parent.parent / ".leibniz" / "frontier.json"
 _DEFAULT_NOTEBOOK = Path(__file__).resolve().parent.parent / ".leibniz" / "notebook.json"
+# ADR 0034 Stage 1: curated novel-yet-elementary FLAVOUR anchors (checked in, operator-editable).
+_DEFAULT_EXEMPLARS = Path(__file__).resolve().parent.parent / "corpus" / "novelty_exemplars.json"
+_FAMILY_CAP = 64  # bound the persisted family histogram so it can't grow without limit
+
+
+def _family(claim_property: str | None) -> tuple[str, str] | None:
+    """A COARSE family key + human descriptor for a claim, from its congruence signature: the
+    relop KIND and the modulus, with the polynomial DROPPED. This is the genre-hop unit — e.g.
+    "== modular claims modulo 2" groups every divisibility-by-2 fact regardless of which
+    polynomial, which is exactly the clustering measured in organic5 (10 promulgations spread
+    across shapes but concentrated on `== mod 2`). A genuinely different KIND of mod-2 claim — a
+    residue-SET characterization `n^2 % 2 in {…}` — has relop `in`, so it is a DISTINCT family and
+    survives the nudge. None when the property is absent or outside the recognized DSL shapes (no
+    family -> no kill). Proposal-side steering only; gates nothing (ADR 0034 §6).
+
+    Deliberately coarse: the ADR records that a family-level kill only lengthens the genre-hop (it
+    is the delivery vehicle for Stage 2, not a cure). A too-fine key would never fire across
+    shapes; this one fires on the real cluster. It only ever STEERS — the conjecturer may still
+    propose a killed family, and the gates + kernel still decide."""
+    sig = congruence_signature(claim_property) if claim_property else None
+    if sig is None:
+        return None
+    relop, m = sig[0], sig[1]
+    return f"{relop}|{m}", f"{relop} modular claims modulo {m}"
+
+
+def load_novelty_exemplars(path: Union[str, Path, None] = None) -> list[str]:
+    """Load curated novel-yet-elementary FLAVOUR anchors (ADR 0034 Stage 1) as short steering
+    lines. These are operator-curated reference points modelling a DIFFERENT structure from the
+    textbook divisibility genre (e.g. characterizing a residue SET) — shown to the conjecturer
+    as context, never proposed verbatim, never a gate. A missing/corrupt file yields an empty
+    list (steering unchanged), so a fresh checkout / CI behaves exactly as before."""
+    try:
+        data = json.loads(Path(path or _DEFAULT_EXEMPLARS).read_text())
+    except (OSError, ValueError, TypeError):
+        return []
+    out: list[str] = []
+    # Defensive (matches from_dict): a missing key, explicit null, or a non-list payload (a
+    # forged/truncated file) all yield [] — never a crash, never iterating a string's chars.
+    raw = data.get("exemplars") if isinstance(data, dict) else None
+    for e in (raw if isinstance(raw, list) else []):
+        if isinstance(e, dict) and e.get("statement"):
+            cp = e.get("claim_property")
+            out.append(str(e["statement"]) + (f" [{cp}]" if cp else ""))
+        elif isinstance(e, str) and e.strip():
+            out.append(e.strip())
+    return out
 
 # Outcomes that mean "do not propose shapes like this again" (dead ends).
 _AVOID = frozenset({
@@ -113,6 +161,16 @@ class DiscoveryNotebook:
     proven: list[str] = field(default_factory=list)    # emulate these shapes
     too_hard: list[str] = field(default_factory=list)  # weaken these
     avoid: list[str] = field(default_factory=list)     # don't re-propose these
+    # ADR 0034 Stage 1: family-level genre steering (proposal-side context; gates nothing).
+    # `genre_kill` names whole FAMILIES the daemon has repeatedly PROVED (the genre-hop
+    # signature) so the conjecturer is nudged to a structurally different shape; `exemplars`
+    # are curated novel-yet-elementary FLAVOUR anchors (loaded from corpus/novelty_exemplars.json,
+    # NOT the ledger). `_family_counts` is the per-family proof histogram behind genre_kill.
+    genre_kill: list[str] = field(default_factory=list)
+    exemplars: list[str] = field(default_factory=list)
+    genre_capacity: int = 6      # bound the kill list (ADR 0034 §9: <=6)
+    genre_threshold: int = 3     # proven instances of a family before it is declared exhausted
+    _family_counts: dict = field(default_factory=dict)
 
     @staticmethod
     def _push(bucket: list[str], item: str, cap: int) -> None:
@@ -139,10 +197,28 @@ class DiscoveryNotebook:
         # faithfulness budget refused it (ADR 0018 review).
         if kernel_proved or prop.promulgated or r is FinishReason.PROMULGATED:
             self._push(self.proven, stmt, self.capacity)
+            self._note_family(prop)  # ADR 0034 Stage 1: track proven FAMILIES for genre-kill
         elif r is FinishReason.UNPROVEN:
             self._push(self.too_hard, stmt, self.capacity)
         elif r in _AVOID:
             self._push(self.avoid, stmt, self.capacity)
+
+    def _note_family(self, prop: Propositio) -> None:
+        """Count this PROVEN claim's coarse family; once a family is clearly exhausted
+        (>= genre_threshold proofs) promote it to the bounded genre_kill list. Proposal-side
+        steering only — it changes the prompt, never a verdict."""
+        cp = prop.enuntiatio.claim_property if prop.enuntiatio else None
+        fam = _family(cp)
+        if fam is None:
+            return
+        key, descriptor = fam
+        self._family_counts[key] = self._family_counts.get(key, 0) + 1
+        if len(self._family_counts) > _FAMILY_CAP:  # evict the lowest-count family
+            self._family_counts.pop(min(self._family_counts, key=self._family_counts.get), None)
+        if (self._family_counts[key] >= self.genre_threshold
+                and descriptor not in self.genre_kill
+                and len(self.genre_kill) < self.genre_capacity):
+            self.genre_kill.append(descriptor)
 
     def steering(self) -> str:
         """A compact instruction block for the CONJECTURE prompt. Empty until there
@@ -151,9 +227,17 @@ class DiscoveryNotebook:
         if self.proven:
             lines.append("Recently PROVEN here (emulate this shape/difficulty): "
                          + "; ".join(self.proven[-3:]))
+        if self.exemplars:  # ADR 0034 Stage 1: positive flavour anchors (a DIFFERENT structure)
+            lines.append("For a sense of NOVEL-yet-elementary FLAVOUR — reach for this KIND of "
+                         "claim (a different STRUCTURE), do NOT submit these verbatim: "
+                         + "; ".join(self.exemplars))
         if self.avoid:
             lines.append("Recently TRIVIAL or already KNOWN (do NOT re-propose these "
                          "or close variants): " + "; ".join(self.avoid[-3:]))
+        if self.genre_kill:  # ADR 0034 Stage 1: family-level exhaustion (coarser than `avoid`)
+            lines.append("EXHAUSTED FAMILIES — you have already proved many of these; STOP "
+                         "proposing this KIND and switch to a structurally different claim: "
+                         + "; ".join(self.genre_kill))
         if self.too_hard:
             lines.append("Recently TOO HARD to prove (propose something in reach, or a "
                          "weaker cousin): " + "; ".join(self.too_hard[-3:]))
@@ -162,8 +246,10 @@ class DiscoveryNotebook:
     # --- persistence (ADR 0023): carry accumulated near-misses across runs so the
     # weaken-and-retry loop keeps working the same frontier instead of forgetting it.
     def to_dict(self) -> dict:
+        # exemplars are NOT persisted — they are reloaded from the curated corpus file each run.
         return {"proven": list(self.proven), "too_hard": list(self.too_hard),
-                "avoid": list(self.avoid)}
+                "avoid": list(self.avoid), "genre_kill": list(self.genre_kill),
+                "family_counts": dict(self._family_counts)}
 
     @classmethod
     def from_dict(cls, d: dict, capacity: int = 6) -> "DiscoveryNotebook":
@@ -174,6 +260,18 @@ class DiscoveryNotebook:
             vals = d.get(key)
             for stmt in (vals if isinstance(vals, list) else []):  # a str bucket would iterate chars
                 cls._push(bucket, str(stmt), capacity)
+        # ADR 0034 Stage 1: restore genre steering (defensive against a forged/truncated payload).
+        gk = d.get("genre_kill")
+        for desc in (gk if isinstance(gk, list) else [])[:nb.genre_capacity]:
+            if str(desc) not in nb.genre_kill:
+                nb.genre_kill.append(str(desc))
+        fc = d.get("family_counts")
+        if isinstance(fc, dict):
+            for k, v in list(fc.items())[:_FAMILY_CAP]:
+                try:
+                    nb._family_counts[str(k)] = int(v)
+                except (TypeError, ValueError):
+                    continue
         return nb
 
     def save(self, path: Union[str, Path]) -> None:
