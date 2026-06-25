@@ -125,3 +125,16 @@ def test_construction_is_side_effect_free(tmp_path):
     db = tmp_path / "lazy.db"
     PersistentRuntime(db_path=db)  # construct only
     assert not db.exists()
+
+
+def test_seed_origin_round_trips(tmp_path):
+    """ADR 0034 Stage 2: seed provenance (mined|weaken|kfm|survey) is persisted and restored so
+    the §5 kill condition can isolate MINED-origin promulgations."""
+    with PersistentRuntime(db_path=tmp_path / "m.db") as rt:
+        p = _prop("mined law", proven=True)
+        p.seed_origin = "mined"
+        rt.remember(p)
+        rt.remember(_prop("untagged law"))        # seed_origin None
+        by = {x.enuntiatio.statement: x for x in rt.recall_recent(10)}
+    assert by["mined law"].seed_origin == "mined"
+    assert by["untagged law"].seed_origin is None

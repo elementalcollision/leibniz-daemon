@@ -81,6 +81,12 @@ class Leibniz:
     frontier: Optional[FrontierController] = None       # adaptive difficulty band
     frontier_path: Optional[str] = None                # persist the band across runs
     weaken_k: int = 2                                   # UNPROVEN -> weaker re-conjectures
+    # ADR 0034 Stage 2: empirical pattern miner (proposal-side seeds from computed residue facts).
+    # Optional — absent -> no mining, loop unchanged. When present, `mine_k` of each cycle's seeds
+    # are mined patterns that REPLACE (not add to) survey seeds, so the conjecture budget is
+    # unchanged vs a no-mining run (a clean A/B on volume). It seeds; the gates + kernel decide.
+    pattern_miner: Optional[object] = None
+    mine_k: int = 0
 
     def circadian_cycle(self) -> CycleReport:
         report = CycleReport()
@@ -139,20 +145,47 @@ class Leibniz:
     ) -> list[str]:
         domain = domain or self.domain
         if fresh_only:
-            return self.survey.run(domain)
+            return self._blend_mined(self.survey.run(domain))
         # ADR 0018 M3: mine UNPROVEN near-misses into strictly-weaker re-conjectures,
         # alongside the KFM recombinations and a few fresh survey seeds.
         weaken = weakening_seeds(self.notebook.too_hard, self.weaken_k) if self.notebook else []
         seeds = (self.kfm.recombination_seeds(recombine_k) + weaken
                  + self.survey.run(domain)[:fresh_per_cycle])
-        return seeds or self.survey.run(domain)  # cold archive -> fresh survey
+        return self._blend_mined(seeds or self.survey.run(domain))  # cold archive -> fresh survey
+
+    def _blend_mined(self, base: list[str]) -> list[str]:
+        """ADR 0034 Stage 2: REPLACE up to `mine_k` of this cycle's seeds with computed-pattern
+        seeds, preserving the seed COUNT (so a mining run's conjecture budget matches a no-mining
+        run — a clean A/B on volume). No miner / mine_k<=0 -> `base` unchanged."""
+        if self.pattern_miner is None or self.mine_k <= 0 or not base:
+            return base
+        mined = self.pattern_miner.seeds(self.mine_k)
+        if not mined:
+            return base
+        mined = mined[:len(base)]                 # never grow the seed list
+        return mined + base[len(mined):]
+
+    @staticmethod
+    def _seed_origin(seed: str) -> str:
+        """Classify a seed by its producer (ADR 0034 §5 provenance), by the markers each producer
+        stamps: mined patterns, KFM recombinations, weakened near-misses, else the survey feed."""
+        from leibniz.pattern_mining import MINED_SEED_PREFIX
+        if seed.startswith(MINED_SEED_PREFIX):
+            return "mined"
+        if "STRICTLY WEAKER" in seed:
+            return "weaken"
+        if "combining features" in seed:
+            return "kfm"
+        return "survey"
 
     def _run_seeds(self, seeds: list[str], report: CycleReport) -> None:
         for seed in seeds:
             try:
                 # ADR 0018 M1/M2: condition the conjecture on ledger lessons + the target
                 # difficulty band (a no-op until the notebook/frontier have learned).
+                origin = self._seed_origin(seed)  # ADR 0034 §5: provenance for the kill condition
                 prop = self.conjecture.run(steer(seed, self.notebook, self.frontier))
+                prop.seed_origin = origin
                 report.conjectured += 1
 
                 survivor = self.formalize.run(prop)  # cheap gates run inside

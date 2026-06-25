@@ -58,6 +58,16 @@ fi
 export LEIBNIZ_FEED_PATH="$PINNED_FEED"
 _FEED_DATE="$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1])).get('run_date'))" "$PINNED_FEED")"
 
+# --- the experimental variable: Stage-2 pattern mining (ADR 0034) ----------------------------
+# Set EXPLICITLY per arm so arm A can never be confounded by a stray LEIBNIZ_PATTERN_MINE left in
+# the shell: A = OFF (Stage 0+1 only), B = ON (Stage 0+1+2). This is the ONLY intended difference
+# between the arms. AB_MINE_K overrides B's seeds-per-cycle (default 2).
+if [[ "$ARM" == "A" ]]; then
+  export LEIBNIZ_PATTERN_MINE=0
+else
+  export LEIBNIZ_PATTERN_MINE="${AB_MINE_K:-2}"
+fi
+
 # --- fresh, isolated ledger for this arm (clean slate) --------------------------------------
 export LEIBNIZ_INSTANCE="dev"
 export LEIBNIZ_RUNTIME_DB="$RUNDIR/memory.db"
@@ -67,7 +77,7 @@ rm -f "$LEIBNIZ_RUNTIME_DB" "$LEIBNIZ_NOTEBOOK_PATH" "$LEIBNIZ_FRONTIER_PATH"
 
 echo "[ab] arm=$ARM  commit=$(git -C "$REPO" rev-parse --short HEAD)  feed run_date=$_FEED_DATE"
 echo "[ab] ledger=$RUNDIR  prover=${LEIBNIZ_PROVER_MODELS:-<unset>}  consensus=${LEIBNIZ_PROOF_CONSENSUS:-2}"
-echo "[ab] repair=${LEIBNIZ_PROOF_REPAIR:-<off>}  panel=${LEIBNIZ_REPAIR_PANEL:-<none>}"
+echo "[ab] repair=${LEIBNIZ_PROOF_REPAIR:-<off>}  panel=${LEIBNIZ_REPAIR_PANEL:-<none>}  pattern_mine=$LEIBNIZ_PATTERN_MINE"
 
 # --- run ------------------------------------------------------------------------------------
 cd "$REPO"

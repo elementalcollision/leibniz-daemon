@@ -31,6 +31,7 @@ from leibniz.discovery import (
     DiscoveryNotebook,
     FrontierController,
     load_novelty_exemplars,
+    novelty_exemplar_properties,
 )
 from leibniz.gates.faithfulness import FaithfulnessGate
 from leibniz.gates.novelty import NoveltyGate
@@ -312,6 +313,22 @@ def build_daemon(
     # FLAVOUR anchors into it (proposal-side context only; not persisted to the ledger).
     _notebook = DiscoveryNotebook.load(_notebook_path, capacity=_nb_cap)
     _notebook.exemplars = load_novelty_exemplars()
+    # ADR 0034 Stage 2: opt-in empirical pattern miner (LEIBNIZ_PATTERN_MINE = seeds/cycle, 0=off).
+    # Seeded with the corpus signatures so it never re-mines a textbook fact the gate would
+    # quarantine. Proposal-side; the gates + kernel still decide every mined candidate.
+    _mine_k = _env_int("LEIBNIZ_PATTERN_MINE", 0)
+    _miner = None
+    if _mine_k > 0:
+        from leibniz.pattern_mining import PatternMiner  # local import: stdlib-only, no extra deps
+        from leibniz.structural import congruence_signature as _sig
+        # Drop both corpus AND exemplar signatures from the minable pool: an exemplar is already
+        # injected as steering context, so re-mining it would double-inject the same fact and
+        # inflate apparent diversity without adding novelty (ADR 0034 Stage-2 review). Mining must
+        # contribute NET-NEW patterns beyond what Stage 1 already shows.
+        _exclude = {s for e in CorpusBackend.from_json(cfg.corpus_path).entries
+                    if e.claim_property and (s := _sig(e.claim_property))}
+        _exclude |= {s for cp in novelty_exemplar_properties() if (s := _sig(cp)) is not None}
+        _miner = PatternMiner(_exclude)
     return Leibniz(
         runtime=PersistentRuntime(),  # ADR 0016: SQLite memory + circadian phase
         survey=Survey(forge),
@@ -334,6 +351,8 @@ def build_daemon(
         # to disk so near-misses accumulate across runs for weaken-and-retry.
         notebook=_notebook,
         notebook_path=_notebook_path,
+        pattern_miner=_miner,           # ADR 0034 Stage 2 (None unless LEIBNIZ_PATTERN_MINE>0)
+        mine_k=_mine_k,
         weaken_k=_env_int("LEIBNIZ_WEAKEN_K", 3),
         # ADR 0018/0019: adaptive difficulty band, resumed from + persisted to disk.
         frontier=FrontierController.load(_frontier_path),
