@@ -1,0 +1,18 @@
+{
+  "cycle": 3,
+  "roman": "III",
+  "created_at": "2026-06-25T00:00:00Z",
+  "domain": "arithmetic_and_number_theory",
+  "seeds": 59,
+  "conjectured": 59,
+  "reached_proof": 35,
+  "promulgated": 23,
+  "by_reason": {
+    "promulgated": 23,
+    "unproven": 18,
+    "gamed": 15,
+    "known": 3
+  },
+  "summary": "The faithfulness checker learned a genuinely new shape this cycle — a^n mod m, a fixed base raised to the variable exponent — decided soundly over the multiplicative-order period (the sound, active repair of an extension that had been inert at the production bound). It is a genre the engine literally could not state before, and it used it: 16 of the 23 kernel-verified laws are a^n mod m facts (2^n mod 7 in {1,2,4}; 7^n mod 16 in {1,7,9,15}; ...), none gamed, the trust boundary intact. The structural metric — which only understands polynomials — went blind to 70% of the output (it had understood 100% the cycle before), the signature of a genre that genuinely left the old language. Yet a blind panel of four independent graders rated every one of them textbook or a restatement: zero genuinely novel. These are the standard cyclic behaviour of powers modulo a number. Read against the prior cycle (which moved the proposer's source to no novelty effect), this locates the wall precisely: neither the proposer nor the contract language is the bottleneck — the bounded, mechanically-checkable trust model itself caps the daemon at elementary mathematics. A measured, re-checkable result, not a lament.",
+  "illustrative": false
+}

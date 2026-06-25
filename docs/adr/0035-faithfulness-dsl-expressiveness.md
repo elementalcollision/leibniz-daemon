@@ -1,7 +1,10 @@
 # ADR 0035 — Faithfulness-DSL expressiveness: widening what the gate can soundly state and decide
 
-**Status:** Proposed (design only — no code, awaiting operator approval). Successor to ADR 0030
-(bounded definitional encodings) and ADR 0034 (conjecturer-side novelty, §12 finding).
+**Status:** Accepted & measured — Stage A built, A/B-measured, then KILLED as a novelty lever
+(kept opt-in/default-off as a sound yield-of-order-facts lever). See §7 for the measured outcome.
+The decisive finding: the novelty ceiling is the **bounded-mechanical-faithfulness model**, not the
+DSL grammar and not the proposer. Successor to ADR 0030 (bounded definitional encodings) and
+ADR 0034 (conjecturer-side novelty, §12 finding).
 **Date:** 2026-06-25
 **Trust boundary:** untouched, and that is the design's central constraint. `kernel_verified` is
 set only in `LeanVerifier.discharge`; `Q.E.D.` iff `kernel_verified`; `gates/` and
@@ -213,3 +216,45 @@ sufficient. Persisted `claim_property` + `seed_origin` (already landed) make thi
 
 This ADR, like 0034, ships its own strongest objections (§2 Stage B unsoundness, §3 TCB growth, §4
 the downgrade). We do not oversell what we can measure.
+
+## 7. Measured outcome (2026-06-25) — Stage A killed as a novelty lever; the ceiling is the model
+
+Stage A was built (PRs #114 encoding, #115 env-gated prompt + the `SA` run arm) and the calibration
+arm ran on the same pinned config as the 0034 A/B (feed `run_date 2026-06-23`, opus + the 3-model
+repair panel; `LEIBNIZ_DSL_SYMBOLIC_EXP=1`, mining off).
+
+**Mechanically, Stage A is a clear, sound success — the genre moved:**
+- 59 conjectured → 23 promulgated, of which **16 are `base^n % m` symbolic-exponent laws** — a genre
+  that DEFERred *entirely* before Stage A (e.g. `2^n % 7 ∈ {1,2,4}`, `7^n % 16 ∈ {1,7,9,15}`,
+  `2^n % 15 ∈ {1,2,4,8}`). **0 gamed** among them — the order-reduction encoding let nothing through
+  unsoundly, as the §3 review + tests required.
+- The Stage-0 signature-coverage tripwire dropped from **100% (arm A) → 30% (SA)**: 16/23
+  promulgations are invisible to the polynomial metric because they genuinely **left** that DSL.
+  This is the exact leading indicator §5 named.
+
+**On novelty (the actual target) — the kill condition is NOT met.** A blind 4-rater panel
+(calibrated so quadratic-residue / divisibility / parity **and multiplicative-order / Fermat /
+Mersenne** all count as textbook; blind to arm/origin) scored the 19 distinct SA promulgations
+**15 textbook / 4 variant / 0 novel — zero novel votes, every law, every rater** (the 4 "variant"
+are whitespace duplicates of textbook entries). The 16 symbolic-exponent laws are standard cyclic
+behaviour of `a^n mod m` — provable by a first-year student from the multiplicative order of `a`.
+
+**Verdict & disposition.** Per §5 this is the pre-registered *failure-with-a-finding*: the
+`None`-signature fraction rose (genre changed) while blind-novel stayed **0**. **Stage A is killed
+as a NOVELTY lever.** It is *already* default-off (the encoding is inert unless
+`LEIBNIZ_DSL_SYMBOLIC_EXP` invites the genre, which `main` does not), so no revert is needed; it
+stays as a sound, opt-in widening (a yield lever for order-facts) and the record that this genre is
+textbook.
+
+**The decisive, triangulated finding.** Two independent levers have now been *measured*, not argued:
+ADR 0034 changed the proposal **source** (recall→compute mining) — 2× yield, **0 novel**; ADR 0035
+changed the DSL **grammar** (added a whole new sound genre) — coverage 100%→30%, **0 novel**. The
+bottleneck is therefore neither the proposer nor the grammar: it is the **bounded-mechanical-
+faithfulness model itself**. The trust boundary — promulgate only what is mechanically
+faithfulness-checkable over a bounded box *and* auto-provable — caps the daemon at elementary,
+textbook mathematics *by construction*. Genuine novelty is in fundamental tension with that boundary;
+reaching it would require a faithfulness model that admits claims not bounded-decidable (which
+weakens the very guarantee the project exists for), or a different notion of "discovery" than
+"a kernel-checked promulgated law." That is the honest frontier, and it is a research question, not
+an engineering ticket. Stage B (recurrence/Pisano) is **not built** — it would only re-confirm the
+same ceiling in a third genre.
