@@ -1,6 +1,8 @@
 # ADR 0034 — Conjecturer-side novelty: making Leibniz reach beyond the textbook
 
-**Status:** Proposed (awaiting operator approval — no code yet)
+**Status:** Accepted & measured — Stage 0/1 landed; Stage 2 built + A/B-measured then KILLED as a
+novelty lever (kept opt-in as a yield lever). See §12 for the measured outcome. The binding
+constraint on novelty is now identified as the faithfulness DSL's expressiveness, not the proposer.
 **Date:** 2026-06-24
 **Extends:** 0009 (open-ended loop), 0018 (discovery frontier), 0026 (non-trivial
 steering), 0031/0032 (novelty: corpus + structural matcher).
@@ -257,3 +259,38 @@ Stage 2 ~600–800 LOC.
   statement of where genuine mathematical novelty actually requires leaving the bounded DSL.
 - This ADR deliberately ships its own strongest objection (§4). The point of a *Calculemus* is
   that we do not oversell what we can measure.
+
+## 12. Measured outcome (2026-06-25) — Stage 2 killed as a novelty lever
+
+Stages 0, 1, 2 were built (PRs #103, #104, #110, #111) and a clean A/B was run on identical
+config (pinned feed, isolated ledgers, shared prover panel; the only difference is the code /
+the `LEIBNIZ_PATTERN_MINE` toggle):
+
+- **Arm A** = Stage 0+1 (steering): 59 conjectured → 13 promulgated.
+- **Arm B** = Stage 0+1+2 (+ mining): 62 conjectured → 26 promulgated (of which **mined-origin 10**,
+  weaken 7, survey 8, kfm 1), via the persisted `seed_origin` tag.
+
+**Yield:** mining *doubled* promulgation at the same conjecture budget (reached-proof 26→48) —
+because mined patterns are verified-true by enumeration, so they prove readily. A real **yield**
+lever.
+
+**Novelty (the actual target):** a blind 4-rater panel scored all 39 promulgations (A+B,
+shuffled, blind to arm/origin), calibrated so quadratic residues / divisibility / parity count as
+*textbook*. Result: **0 genuinely-novel, every arm, every rater** (A: 10 textbook / 3 variant / 0
+novel; B-mined: 9 / 1 / 0; raw votes 113 textbook, 41 variant, **0 novel**). The 10 mined-origin
+laws were *quadratic-residue sets* (`n² mod 5/7/8/11/13/16 ∈ {QRs}`) — found autonomously across
+moduli (a step up from arm A imitating hand-fed exemplars), but textbook.
+
+**Verdict — the §5 kill condition is NOT met:** mined-origin promulgations did not beat arm A on
+the blind genuine-novelty read (both 0). Triviality half passed. **Stage 2 is therefore killed as
+a NOVELTY lever** and stays opt-in / default-off (`LEIBNIZ_PATTERN_MINE=0`); it remains available
+as a *yield* lever for proving large volumes of true elementary arithmetic (e.g. seeding a Lean
+library), which is a different goal.
+
+**The deeper finding (§4, confirmed end-to-end):** the bottleneck is NOT the proposal *source*
+(recall vs compute) — changing it doubled yield but moved genuine novelty not at all. It is the
+**expressiveness of the bounded faithfulness DSL**: a polynomial-congruence grammar can only *state*
+textbook-genre arithmetic, so everything provable inside it is, by construction, textbook. Genuine
+novelty requires enlarging what the system can faithfully *formalize* (new objects/operators) —
+which touches the faithfulness gate and must be done soundly. That, not the conjecturer's
+imagination, is the next frontier. Stage 0's instrumentation (kept) is what made this measurable.
