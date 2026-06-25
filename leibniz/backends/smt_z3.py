@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
+from math import gcd
 from typing import Optional
 
 try:  # z3 ships in the `verify` extra; the module stays importable without it
@@ -42,10 +43,82 @@ except ImportError:  # pragma: no cover
 VAR = "n"
 MAX_POW = 8       # cap constant exponents (sound expansion to repeated multiplication)
 MAX_NODES = 200   # cap predicate AST size (bounds recursion on untrusted input)
+MAX_ORDER = 64    # ADR 0035 Stage A: cap the multiplicative-order If-chain length (and the box
+#   must cover a full period, so the order must also be <= the search bound — enforced per-call)
+
+_ORDER_CACHE: dict[tuple[int, int], Optional[int]] = {}
 
 
 class PredicateError(ValueError):
     """The predicate string is outside the safe, soundly-decidable DSL."""
+
+
+def _multiplicative_order(base: int, m: int) -> Optional[int]:
+    """The multiplicative order ord_m(base) = smallest k>0 with base^k ≡ 1 (mod m), or None when
+    it does not exist (gcd(base, m) != 1, so base^n mod m is NOT purely periodic from n=0 — it has
+    a transient, e.g. 2^n mod 4 = 1,2,0,0,…). Pure trial over k in [1, m-1] (ord | φ(m) ≤ m-1);
+    cached. ADR 0035 Stage A — used only to drive an exact finite encoding; never a verdict."""
+    key = (base % m, m) if m else (base, m)
+    if key in _ORDER_CACHE:
+        return _ORDER_CACHE[key]
+    out: Optional[int] = None
+    if m >= 2 and gcd(base, m) == 1:
+        x = 1 % m
+        for k in range(1, m):
+            x = (x * base) % m
+            if x == 1:
+                out = k
+                break
+    _ORDER_CACHE[key] = out
+    return out
+
+
+def _order_reduction(mod_node: ast.AST, env: dict, bound: Optional[int]):
+    """ADR 0035 Stage A: if `mod_node` is `base^n % m` (CONSTANT base, BARE-VARIABLE exponent,
+    CONSTANT modulus), encode it EXACTLY over the multiplicative-order period as an `ord`-arm
+    `If`-chain indexed by `n mod ord` — `ord` arms (typically 3–20), not the 64-arm chain that
+    made ADR 0030 Tier B inert. Returns the Z3 residue expression, or None when the node is NOT
+    that shape (the normal mod path then applies and DEFERs on the variable exponent).
+
+    Exact-or-DEFER. When it IS the shape but cannot be soundly encoded, raise PredicateError
+    (-> DEFER), never a wrong encoding:
+      • gcd(base, m) != 1 -> not purely periodic (pre-period) -> DEFER;
+      • the search box must cover a FULL PERIOD for 'UNSAT over the box' to be genuine, so
+        ord must be <= the search `bound` (and <= MAX_ORDER) -> else DEFER. (A bare variable n
+        ranges [0, bound]; with ord <= bound, n=0..ord-1 all lie in the box, so every residue in
+        the cycle is reachable and an UNSAT is a real 'no witness anywhere'.)
+    The base^k mod m sequence is purely periodic from k=0 with period ord when gcd(base,m)=1 (it
+    lives in the unit group (ℤ/mℤ)*), so residues[k mod ord] == base^k mod m for ALL k>=0 —
+    including the n=0 arm (residues[0] = base^0 mod m = 1)."""
+    # Self-contained guard (defense-in-depth): only ever act on a real `_ % _` node. Today the
+    # sole caller is the ast.Mod branch of _conv, so this is belt-and-suspenders — but a function
+    # in the faithfulness encoding path must not depend on its caller for soundness.
+    if not (isinstance(mod_node, ast.BinOp) and isinstance(mod_node.op, ast.Mod)):
+        return None
+    left = mod_node.left
+    if not (isinstance(left, ast.BinOp) and isinstance(left.op, ast.Pow)):
+        return None  # `ast.Pow` is the operator; the power node is a BinOp whose .op is ast.Pow
+    base = _const_int(left.left)
+    exp = left.right
+    # Our shape iff CONSTANT base + BARE-variable exponent + CONSTANT modulus >= 2. A constant
+    # exponent uses the normal Pow path; a compound exponent (2^(n+1)) or non-constant base/modulus
+    # is NOT our shape -> return None -> normal mod path -> recurses into Pow -> DEFER.
+    m = _const_int(mod_node.right)  # type: ignore[arg-type]
+    if base is None or not isinstance(exp, ast.Name) or m is None or m < 2:
+        return None
+    # It IS base^n % m. From here every failure is a DEFER (raise), never a wrong encoding.
+    ordv = _multiplicative_order(base, m)
+    if ordv is None:
+        raise PredicateError("base^n % m: needs gcd(base, m) == 1 (else a pre-period, not periodic)")
+    if bound is None or ordv > bound or ordv > MAX_ORDER:
+        raise PredicateError("base^n % m: order exceeds the search bound/cap (box must cover a period)")
+    var = env.setdefault(exp.id, z3.Int(exp.id))
+    residues = [pow(base, i, m) for i in range(ordv)]   # residues[0] = 1 (the n=0 arm), pinned
+    idx = var % ordv
+    out = z3.IntVal(residues[-1])
+    for i in range(ordv - 2, -1, -1):
+        out = z3.If(idx == i, z3.IntVal(residues[i]), out)
+    return out
 
 
 _CMP = {
@@ -65,34 +138,37 @@ def _const_int(node: ast.AST) -> Optional[int]:
     return None
 
 
-def _conv(node: ast.AST, env: dict):
+def _conv(node: ast.AST, env: dict, bound: Optional[int] = None):
     """Compile an AST node to a Z3 expression over the integer variables in `env`
     (created on demand — multi-variable). Only soundly-encodable constructs are
-    accepted; anything else raises PredicateError."""
+    accepted; anything else raises PredicateError. `bound` is the search box bound, threaded
+    through so the ADR 0035 order-reduction can require the box to cover a full period."""
     if isinstance(node, ast.BoolOp):
-        vals = [_conv(v, env) for v in node.values]
+        vals = [_conv(v, env, bound) for v in node.values]
         return z3.And(*vals) if isinstance(node.op, ast.And) else z3.Or(*vals)
     if isinstance(node, ast.UnaryOp):
         if isinstance(node.op, ast.Not):
-            return z3.Not(_conv(node.operand, env))
+            return z3.Not(_conv(node.operand, env, bound))
         if isinstance(node.op, ast.USub):
-            return -_conv(node.operand, env)
+            return -_conv(node.operand, env, bound)
         raise PredicateError(f"unary op {type(node.op).__name__}")
     if isinstance(node, ast.BinOp):
         op = node.op
         if isinstance(op, ast.Add):
-            return _conv(node.left, env) + _conv(node.right, env)
+            return _conv(node.left, env, bound) + _conv(node.right, env, bound)
         if isinstance(op, ast.Sub):
-            return _conv(node.left, env) - _conv(node.right, env)
+            return _conv(node.left, env, bound) - _conv(node.right, env, bound)
         if isinstance(op, ast.Mult):
-            return _conv(node.left, env) * _conv(node.right, env)
+            return _conv(node.left, env, bound) * _conv(node.right, env, bound)
         # `^` is rewritten to `**` before parsing, so only ast.Pow reaches here. Sound
         # only for a constant, small, non-negative exponent -> repeated multiplication.
+        # (A VARIABLE exponent reaches here only OUTSIDE a `% m` context — unbounded, so DEFER;
+        # the periodic `base^n % m` case is intercepted at the Mod node below, never here.)
         if isinstance(op, ast.Pow):
             k = _const_int(node.right)
             if k is None or k > MAX_POW:
                 raise PredicateError("power needs a constant exponent in [0, MAX_POW]")
-            base = _conv(node.left, env)
+            base = _conv(node.left, env, bound)
             out = z3.IntVal(1)
             for _ in range(k):
                 out = out * base
@@ -102,15 +178,20 @@ def _conv(node: ast.AST, env: dict):
             d = _const_int(node.right)
             if not d or d <= 0:
                 raise PredicateError("division needs a constant positive divisor")
-            return _conv(node.left, env) / d
+            return _conv(node.left, env, bound) / d
         if isinstance(op, ast.Mod):
+            # ADR 0035 Stage A: `base^n % m` is encoded over its multiplicative-order period
+            # (exact-or-DEFER); any other shape falls through to the normal constant-divisor mod.
+            reduced = _order_reduction(node, env, bound)
+            if reduced is not None:
+                return reduced
             d = _const_int(node.right)
             if not d or d <= 0:
                 raise PredicateError("modulo needs a constant positive divisor")
-            return _conv(node.left, env) % d
+            return _conv(node.left, env, bound) % d
         raise PredicateError(f"bin op {type(op).__name__}")
     if isinstance(node, ast.Compare):
-        terms = [_conv(node.left, env), *[_conv(c, env) for c in node.comparators]]
+        terms = [_conv(node.left, env, bound), *[_conv(c, env, bound) for c in node.comparators]]
         clauses = []
         for i, op in enumerate(node.ops):
             fn = _CMP.get(type(op))
@@ -128,7 +209,7 @@ def _conv(node: ast.AST, env: dict):
             raise PredicateError("only bare min()/max() calls are allowed")
         name = node.func.id
         if name in ("min", "max") and len(node.args) >= 2:
-            args = [_conv(a, env) for a in node.args]
+            args = [_conv(a, env, bound) for a in node.args]
             pick = ((lambda x, y: z3.If(x < y, x, y)) if name == "min"
                     else (lambda x, y: z3.If(x > y, x, y)))
             out = args[0]
@@ -144,10 +225,12 @@ def _conv(node: ast.AST, env: dict):
     raise PredicateError(f"unsupported syntax: {type(node).__name__}")
 
 
-def compile_pred(src: str, env=None):
+def compile_pred(src: str, env=None, bound: Optional[int] = None):
     """Compile a DSL predicate into a Z3 BOOLEAN over the integer vars in `env`. The
     result must be boolean (a bare term like ``n + 1`` is rejected). `env=None` starts
-    fresh; a bare Z3 var is accepted for the legacy single-`n` call shape."""
+    fresh; a bare Z3 var is accepted for the legacy single-`n` call shape. `bound` is the
+    search box bound (threaded to the ADR 0035 order-reduction, which needs the box to cover a
+    full period; when None, that reduction DEFERs, so behaviour is unchanged for bound-less callers)."""
     if env is None:
         env = {}
     elif not isinstance(env, dict):
@@ -159,7 +242,7 @@ def compile_pred(src: str, env=None):
         raise PredicateError(str(e)) from e
     if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
         raise PredicateError("predicate too large")
-    result = _conv(tree.body, env)
+    result = _conv(tree.body, env, bound)
     if not isinstance(result, z3.BoolRef):
         raise PredicateError("predicate is not a boolean expression")
     return result
@@ -182,7 +265,9 @@ class Z3Backend:
             return ("error", None)
         env: dict = {}
         try:
-            exprs = [compile_pred(p, env) for p in preds]
+            # thread the search bound so the ADR 0035 order-reduction only fires when the box
+            # covers a full period (ord <= bound) — else it DEFERs (exact-or-DEFER).
+            exprs = [compile_pred(p, env, bound) for p in preds]
         except (PredicateError, RecursionError, z3.Z3Exception):
             # z3 raises a Z3Exception at CONSTRUCTION time for a non-boolean term fed to
             # And/Or/Not (e.g. "not n", "n and n>0"); treat it as un-encodable, never a
@@ -211,7 +296,7 @@ class Z3Backend:
         if z3 is None:
             return False
         try:
-            compile_pred(pred)
+            compile_pred(pred, bound=self.default_bound)  # match what _decide will search
             return True
         except (PredicateError, RecursionError, z3.Z3Exception):
             return False  # incl. a non-boolean term z3 rejects at construction time
