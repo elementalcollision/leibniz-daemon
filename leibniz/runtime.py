@@ -50,16 +50,16 @@ CREATE TABLE IF NOT EXISTS memory (
     statement TEXT, claim_type TEXT, falsifiable_claim TEXT, domain TEXT,
     theorem_src TEXT, normalized_hash TEXT,
     kernel_verified INTEGER, qed TEXT, proof_src TEXT,
-    finish_reason TEXT, parents TEXT, instance TEXT
+    finish_reason TEXT, parents TEXT, instance TEXT, claim_property TEXT
 )
 """
 
 # Columns the runtime reads/writes by NAME (so the INSERT is robust to a migrated
-# DB where ALTER TABLE appended columns at the end, ADR 0025 / ADR 0033).
+# DB where ALTER TABLE appended columns at the end, ADR 0025 / ADR 0033 / ADR 0034).
 _COLUMNS = (
     "pid", "born", "ts", "statement", "claim_type", "falsifiable_claim", "domain",
     "theorem_src", "normalized_hash", "kernel_verified", "qed", "proof_src",
-    "finish_reason", "parents", "instance",
+    "finish_reason", "parents", "instance", "claim_property",
 )
 
 
@@ -102,6 +102,10 @@ class PersistentRuntime:
                 self._conn.execute("ALTER TABLE memory ADD COLUMN proof_src TEXT")
             if "instance" not in have:  # ADR 0033: per-instance provenance on a pre-existing DB
                 self._conn.execute("ALTER TABLE memory ADD COLUMN instance TEXT")
+            if "claim_property" not in have:  # ADR 0034 Stage 0: persist the canonical DSL
+                # predicate so promulgations are natively measurable by novelty_metrics
+                # (pre-Stage-0 rows stay NULL — reported honestly as no-property-stored).
+                self._conn.execute("ALTER TABLE memory ADD COLUMN claim_property TEXT")
             self._conn.commit()
             # ADR 0033 write-barrier: refuse a ledger already claimed by a DIFFERENT instance, so
             # a misconfigured UAT pointed at the PROD DB FAILS CLOSED instead of interleaving.
@@ -138,6 +142,7 @@ class PersistentRuntime:
             prop.finish_reason.value if prop.finish_reason else None,
             json.dumps(list(prop.parents)),
             self.instance,  # ADR 0033: stamp the writing instance (provenance)
+            en.claim_property,  # ADR 0034 Stage 0: the canonical DSL predicate (or None)
         )
         cols = ", ".join(_COLUMNS)
         marks = ", ".join("?" for _ in _COLUMNS)
@@ -152,7 +157,8 @@ class PersistentRuntime:
             rows = self._db().execute(
                 "SELECT pid, born, statement, claim_type, falsifiable_claim, domain, "
                 "theorem_src, normalized_hash, kernel_verified, qed, proof_src, "
-                "finish_reason, parents FROM memory ORDER BY ts DESC, rowid DESC LIMIT ?",
+                "finish_reason, parents, claim_property "
+                "FROM memory ORDER BY ts DESC, rowid DESC LIMIT ?",
                 (n,),
             ).fetchall()
         return [_row_to_prop(r) for r in rows]
@@ -178,11 +184,13 @@ class PersistentRuntime:
 
 def _row_to_prop(r: tuple) -> Propositio:
     (pid, born, statement, claim_type, falsifiable_claim, domain, theorem_src,
-     normalized_hash, kernel_verified, qed, proof_src, finish_reason, parents) = r
+     normalized_hash, kernel_verified, qed, proof_src, finish_reason, parents,
+     claim_property) = r
     en = Enuntiatio(
         statement=statement, claim_type=ClaimType(claim_type),
         falsifiable_claim=falsifiable_claim or "",
         domain=domain or "analysis_of_algorithms",
+        claim_property=claim_property,  # ADR 0034 Stage 0: round-trip the canonical predicate
     )
     ex = Expressio(theorem_src=theorem_src, normalized_hash=normalized_hash or "") if theorem_src else None
     # Reconstruct the certificate only for proven candidates (qed == Q.E.D. iff

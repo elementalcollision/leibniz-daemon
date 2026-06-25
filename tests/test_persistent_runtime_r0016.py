@@ -72,6 +72,48 @@ def test_proven_candidate_round_trips_certificate(tmp_path):
         assert by_stmt["unproven"].finish_reason is FinishReason.UNPROVEN
 
 
+def test_claim_property_round_trips(tmp_path):
+    """ADR 0034 Stage 0: the canonical DSL predicate is persisted and restored, so
+    promulgations are natively measurable by novelty_metrics. A claim with no property
+    (prose-only) round-trips as None."""
+    with PersistentRuntime(db_path=tmp_path / "m.db") as rt:
+        with_prop = _prop("n^3 + 5*n divisible by 3", proven=True)
+        with_prop.enuntiatio.claim_property = "(n^3 + 5*n) % 3 == 0"
+        rt.remember(with_prop)
+        rt.remember(_prop("prose only", reason=FinishReason.UNPROVEN))  # claim_property None
+        by_stmt = {p.enuntiatio.statement: p for p in rt.recall_recent(10)}
+    assert by_stmt["n^3 + 5*n divisible by 3"].enuntiatio.claim_property == "(n^3 + 5*n) % 3 == 0"
+    assert by_stmt["prose only"].enuntiatio.claim_property is None
+
+
+def test_claim_property_migrates_on_preexisting_db(tmp_path):
+    """A DB created before ADR 0034 (no claim_property column) gains it idempotently, and a
+    later write/read carries the predicate — no data loss for pre-existing rows."""
+    import sqlite3
+    db = tmp_path / "legacy.db"
+    # Simulate a pre-0034 schema: the 0033-era columns, without claim_property.
+    con = sqlite3.connect(db)
+    con.execute(
+        "CREATE TABLE memory (pid TEXT PRIMARY KEY, born REAL, ts REAL, statement TEXT, "
+        "claim_type TEXT, falsifiable_claim TEXT, domain TEXT, theorem_src TEXT, "
+        "normalized_hash TEXT, kernel_verified INTEGER, qed TEXT, proof_src TEXT, "
+        "finish_reason TEXT, parents TEXT, instance TEXT)"
+    )
+    con.execute(
+        "INSERT INTO memory (pid, statement, claim_type, falsifiable_claim, kernel_verified, qed) "
+        "VALUES ('old1', 'legacy law', 'structural', 'x', 0, 'Q.E.I.')"
+    )
+    con.commit()
+    con.close()
+    with PersistentRuntime(db_path=db) as rt:        # migration runs on connect
+        p = _prop("new law")
+        p.enuntiatio.claim_property = "(n^2) % 2 == 0"
+        rt.remember(p)
+        by_stmt = {x.enuntiatio.statement: x for x in rt.recall_recent(10)}
+    assert by_stmt["legacy law"].enuntiatio.claim_property is None      # pre-existing row: NULL
+    assert by_stmt["new law"].enuntiatio.claim_property == "(n^2) % 2 == 0"
+
+
 def test_witness_is_a_documented_seam(tmp_path):
     with PersistentRuntime(db_path=tmp_path / "m.db") as rt:
         assert rt.witness("anything", 3) == []
