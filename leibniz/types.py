@@ -77,6 +77,10 @@ class FinishReason(Enum):
     MALFORMED = "malformed"                   # did not compile
     GAMED = "gamed"                           # statement satisfiable while claim false
     OVER_BUDGET = "over_budget"               # judged-faithfulness residual would exceed budget
+    WALNUT_DECIDED = "walnut_decided"         # ADR 0038: mechanically decided TRUE by Walnut over
+    #                                           unbounded n (a sound DECISION procedure, re-checked) —
+    #                                           a SEPARATE non-Q.E.D. tier; NEVER kernel_verified/qed/
+    #                                           promulgated (those stay kernel-only, invariants 1 & 7).
 
 
 @dataclass(frozen=True)
