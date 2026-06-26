@@ -304,11 +304,25 @@ def _default_runner(predicate: str, numeration: str, *, timeout: float = 120.0) 
         )
         # Trust the result ONLY on a clean exit. A nonzero return code (parse error, crash)
         # => DEFER, never a stale or partial read.
-        if proc.returncode != 0:
+        if proc.returncode != 0 or not result.exists():
+            _walnut_debug(predicate, numeration, proc.returncode, proc.stdout, proc.stderr)
             return None
-        return result.read_text() if result.exists() else None
+        return result.read_text()
     except (subprocess.SubprocessError, OSError):
         return None
+
+
+def _walnut_debug(predicate: str, numeration: str, rc: int, out: str, err: str) -> None:
+    """When LEIBNIZ_WALNUT_DEBUG is set, print why a run produced no usable result (Walnut's
+    own stderr/stdout — e.g. a predicate syntax error) so the prompt/syntax can be tuned.
+    Diagnostics only; never affects the verdict (a failed run is always a sound DEFER)."""
+    if not os.environ.get("LEIBNIZ_WALNUT_DEBUG"):
+        return
+    import sys
+    tail = (err or out or "").strip().splitlines()[-8:]
+    print(f"[walnut-debug] rc={rc} ?{numeration} {predicate}", file=sys.stderr)
+    for ln in tail:
+        print(f"[walnut-debug]   {ln}", file=sys.stderr)
 
 
 @dataclass

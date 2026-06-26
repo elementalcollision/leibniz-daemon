@@ -34,19 +34,20 @@ from leibniz.walnut_conjecture import WalnutConjecturer  # noqa: E402
 
 
 def _record(prop) -> dict:
-    """The ledger row for one decided/quarantined claim. For a DECIDED record it includes the
-    re-checked automaton certificate (the provenance edge) so the blind panel sees the
-    formal-first statement of record."""
+    """The ledger row for one decided/quarantined claim. Includes the decision-path `reason`
+    (diagnostics) and, for a DECIDED record, the certificate (the provenance edge) so the
+    blind panel sees the formal-first statement of record."""
     ex = prop.expressio
-    cert = next((e for e in prop.edges if e.edge == WALNUT_DECISION_EDGE), None)
+    edge = next((e for e in prop.edges if e.edge == WALNUT_DECISION_EDGE), None)
     return {
         "pid": prop.pid,
         "finish_reason": prop.finish_reason.value if prop.finish_reason else None,
+        "reason": (edge.detail.get("reason") if edge else None),  # decided_sentence / no_result / ...
         "statement": prop.enuntiatio.statement,
         "walnut_predicate": ex.walnut_predicate if ex else None,
         "walnut_numeration": ex.walnut_numeration if ex else None,
         "promulgated": prop.promulgated,           # MUST be False — tier is non-Q.E.D.
-        "automaton_certificate": (cert.detail.get("automaton") if cert else None),
+        "automaton_certificate": (edge.detail.get("automaton") if edge else None),
     }
 
 
@@ -67,9 +68,11 @@ def run_observatory(conjecturer: WalnutConjecturer, count: int, out_path: Path) 
         records.append(_record(prop))
     # SAFETY: a Walnut-tier ledger must never contain a promulgated/Q.E.D. record.
     assert all(not r["promulgated"] for r in records), "tier leak: a record is promulgated"
+    reason_hist = Counter(r["reason"] for r in records if r["reason"])  # WHY each was decided/quarantined
     out_path.write_text(json.dumps({"count": count, "by_reason": dict(counts),
+                                    "reason_histogram": dict(reason_hist),
                                     "records": records}, indent=2))
-    return {"count": count, "by_reason": dict(counts),
+    return {"count": count, "by_reason": dict(counts), "reason_histogram": dict(reason_hist),
             "decided": counts.get(FinishReason.WALNUT_DECIDED.value, 0),
             "sample_failure": sample_failure, "ledger": str(out_path)}
 
@@ -95,6 +98,12 @@ def main() -> int:
     print(f"  decided (WALNUT_DECIDED): {summary['decided']}")
     for reason, n in sorted(summary["by_reason"].items()):
         print(f"    {reason:<16} {n}")
+    if summary.get("reason_histogram"):
+        print("  why (decision-path reason):")
+        for why, n in sorted(summary["reason_histogram"].items()):
+            print(f"    {why:<22} {n}")
+        if not summary["decided"]:
+            print("  (re-run with LEIBNIZ_WALNUT_DEBUG=1 to see Walnut's stderr on 'no_result')")
     print(f"  ledger -> {summary['ledger']}")
     if summary.get("by_reason", {}).get("no_proposal") and summary.get("sample_failure"):
         # diagnostics: show WHY proposals were unusable (provider error or a raw-draft sample)
