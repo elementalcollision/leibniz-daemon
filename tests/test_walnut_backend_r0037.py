@@ -352,6 +352,31 @@ def test_default_runner_deletes_stale_result_before_run(tmp_path, monkeypatch):
     assert not result.exists()     # the stale file was deleted, never left to be re-read
 
 
+def test_default_runner_defers_when_jar_not_in_build_libs(tmp_path, monkeypatch):
+    # ADR 0037 §7 hardening: a jar NOT in <home>/build/libs/ has no reliable home -> DEFER,
+    # never a wrong cwd / stale read.
+    jar = tmp_path / "Walnut-all.jar"      # directly in tmp, not build/libs/
+    jar.write_text("")
+    java = tmp_path / "fakejava"
+    java.write_text("#!/bin/sh\necho true > Result/leibniz_faith.txt\nexit 0\n")
+    java.chmod(java.stat().st_mode | stat.S_IXUSR)
+    monkeypatch.setenv("LEIBNIZ_WALNUT_JAR", str(jar))
+    monkeypatch.delenv("LEIBNIZ_WALNUT_HOME", raising=False)
+    monkeypatch.setattr(walnut.shutil, "which", lambda _name: str(java))
+    assert walnut._default_runner("Ai i=i", "msd_2", timeout=30.0) is None
+
+
+def test_walnut_home_override(tmp_path, monkeypatch):
+    # $LEIBNIZ_WALNUT_HOME explicitly locates the home regardless of jar layout.
+    jar = tmp_path / "anywhere" / "Walnut-all.jar"
+    jar.parent.mkdir(parents=True)
+    jar.write_text("")
+    monkeypatch.setenv("LEIBNIZ_WALNUT_HOME", str(tmp_path))
+    assert walnut._walnut_home(jar) == tmp_path
+    monkeypatch.delenv("LEIBNIZ_WALNUT_HOME", raising=False)
+    assert walnut._walnut_home(jar) is None  # not in build/libs, no override -> None
+
+
 def test_default_runner_returns_fresh_result_on_clean_exit(tmp_path, monkeypatch):
     # Sanity floor: a clean exit that DOES write the result returns that fresh text — the
     # guard rejects stale/failed runs without blocking legitimate ones.
