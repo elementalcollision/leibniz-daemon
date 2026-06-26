@@ -3,6 +3,9 @@
 **Status:** Proposed (design only — no code, awaiting operator approval). Synthesis of an in-harness
 5-design panel + adversarial pass + an **independent 5-model external review** (Fugu, DeepSeek V4 Pro,
 Kimi, GLM 5.2, Gemini 3.5 Thinking — `docs/external-review-novelty-frontier.md`).
+**A round-2 external review of *this synthesis* (6 models incl. Fugu Ultra —
+`docs/external-review-2-genuine-discovery.md`) substantially revises the recommendation. §10 records
+that reconciliation and SUPERSEDES §3, §6, and §8 where they conflict. Read §10 first.**
 **Date:** 2026-06-25
 **Predecessors:** ADR 0034 (conjecturer-side novelty — §12 kill), ADR 0035 (faithfulness-DSL
 expressiveness — Stage A killed as a novelty lever; **§7.1 correction**).
@@ -198,3 +201,153 @@ coverage metric is a **tripwire only, never a gate**.
   the proof-carrying TCB growth + undecidability (§3b), and the honest "novelty unmeasured" caveat
   (§5). The 5-model external review corrected the premise; this records the correction rather than
   defending the original over-claim. *Calculemus.*
+
+---
+
+## 10. Round-2 external review — revised recommendation (supersedes §3, §6, §8)
+
+The round-1 synthesis above was itself sent back to the panel (now **6 models**, +Fugu Ultra —
+`docs/external-review-2-genuine-discovery.md`) with one instruction: *attack the synthesis.* They did,
+and the result changes the plan more than round 1 changed the premise. The net is not a new build
+order — it is **measure before you build any of this**, plus a re-ranking of the levers. The four
+substantive corrections, then the disposition.
+
+### 10.0 Retraction first — discount the convergence
+
+§2 weighted as "high confidence" the points where the external models *independently converged*,
+arguing different model families ⇒ real signal. **Round 2 retracts this, and the panel retracts it on
+itself:** the reviewers note (unanimously) that they share a training distribution and the
+formal-methods Zeitgeist, so their agreement on "3-body → validation / proof-carrying is the escape"
+is a **shared inductive prior, not independent expert confirmation**. Consequence: weight the
+*falsifiable, cheap experiments* they propose over the *conceptual consensus* they reached. Everything
+below is organized around experiments, not opinions.
+
+### 10.1 Stage A is inert — confirmed 6/6; killed as a novelty rung (supersedes §3b Stage A, §8.2)
+
+The triviality-trap worry is correct and unanimous: pure polynomial-identity / Gröbner certificates
+prove exactly what `ring` already closes, so the **non-triviality gate quarantines them before
+faithfulness ever runs** — "a bridge to a town already razed" (GLM). DeepSeek is sharpest: anything
+*exact-certificate-checkable* is, by that token, *decidable*, hence trivial-gated — so there is **no
+class that is simultaneously (a) exact-cert-checkable, (b) non-trivial, and (c) expressible without
+enriching the DSL.** Stage A as specified (§3b) is therefore **dead.** It is *salvageable only* by
+enriching the claim language into specific **certifying fragments**, each a real DSL extension and (GLM)
+"a specialized scalpel, not a general escape":
+
+- **SOS / Positivstellensatz** — semialgebraic inequalities `P ≥ 0` (external SDP finds a rational
+  SOS cert; the *kernel check* is `ring` on the decomposition; `nlinarith` fails on e.g. Motzkin).
+- **Wilf–Zeilberger / creative telescoping** — hypergeometric sums `Σₖ F(n,k) = S(n)` (rational
+  certificate `R(n,k)`; the check reduces to a rational-function identity = `ring`; needs sums /
+  binomials / factorials in the DSL).
+- **Ideal-membership / Nullstellensatz** — algebraic entailment `⋀ hᵢ = 0 ⟹ f = 0` via `f = Σ qᵢ hᵢ`.
+- **Recurrence / automata / C-finite (Walnut-style)** — modular periodicity, linear recurrences,
+  automatic sequences (needs recurrence primitives).
+
+These are genuine — but each is a build of its own, and GLM/DeepSeek are right that the *general*
+escape is Stage B + a richer language. So Stage A is **reclassified**: not "the safe first rung," but
+"a menu of certifying-fragment experiments," each gated behind the measurements in §10.4 and below the
+cheaper bets. The honest one-liner the round-2 brief asked for: **Stage A is inert; the real escape is
+inseparable from Stage B + a richer claim language.**
+
+### 10.2 Proof-carrying / Stage B is a *soundness* escape, not a *discovery* escape (refines §3b, §5)
+
+Reaffirmed 6/6, sharpened: Stage B converts the *epistemic* wall (`[0,64]` categorically forbids
+trusting beyond the box) into a *computational* wall (the bridge proof may DEFER). Fugu Ultra & GLM
+call this a **productive, honest relocation** — a computational wall yields to compute / heuristics /
+RL, an epistemic one cannot, and it is the *intrinsic* Gödel–Turing wall, so you "stop lying to
+yourself." Kimi & DeepSeek warn it can be **equally fatal in practice** ("a cleanroom inside a sewer";
+"a smaller, stricter Flyspeck, not a truth-oracle"): synthesis is AI-complete, so the bridge will
+DEFER on ~all interesting claims, and the **renderer becomes the new load-bearing TCB**. Two firm
+consequences:
+
+1. **The renderer must be UNTRUSTED.** The kernel-checked **formal object is normative**; the English
+   prose is *non-authoritative commentary* generated from it (formal-first publication, already in §4
+   — now mandatory, not a mitigation). A renderer bug otherwise yields a kernel-checked proof of a
+   *mis-statement* (the documented `Δ∀` / `ΔH` / vacuous-antecedent gaming modes).
+2. **Do not build the renderer first.** Gate Stage B behind the §10.4 oracle-reachability benchmark.
+   Stage B is a **high-assurance platform for (largely human-driven) formal mathematics** — a real
+   contribution — but **not** an autonomous-novelty engine, and must not be sold as one.
+
+### 10.3 The conjecture tier is numerology unless it leaves the box — → "Observatory" (supersedes §3a "ship now", §8.1)
+
+The round-2 catch that lands on *my hardened* Track 1: §3a made the evidence stamp **sound**, but
+**sound ≠ out-of-sample.** An in-sample "encodable + conclusive `decide_unsat` over `[0,64]`, none
+found" stamp is *still numerology* — it is the strong-law-of-small-numbers (Pólya, Mertens, Skewes),
+and multiple-testing over many generated predicates destroys its significance. To be a contribution
+rather than "epistemic spam diluting a Codex," the tier must raise its evidence standard to **one of**:
+
+- **Out-of-sample / MDL (Fugu, Fugu Ultra):** generate the predicate on a *restricted* domain (e.g.
+  `[0,32]`); require it to **compress** (predicate far shorter than the data it summarizes) **and**
+  to predict a *disjoint, harder* holdout (`[33,256]`) **unmodified**. Pre-registered, frozen.
+- **Structural impedance (GLM):** don't stamp "no counterexample"; stamp **where the proof engine
+  structurally failed** — "goal reduces to G′; tactics T₁,T₂,T₃ fail at sub-goal G″ requiring
+  induction on decreasing metric M; witness W." This converts the tier from numerological exhaust
+  into a **high-value todo-list for human mathematicians.**
+- **Structural-invariant certificate (Gemini):** a coboundary / commutator / symmetry identity
+  checkable over the polynomial ring (Ramanujan-Machine "conservative matrix field" precedent) —
+  "proven algebraic structure awaiting analytic identification," not a numerical coincidence.
+- **Linkage to a recognized open problem (Kimi).**
+
+And the **success metric is conversion-rate-to-proofs vs a baseline**, not raw conjecture count.
+Rebranded the **Observatory** (Fugu), explicitly *not* Codex-stamped. The §3a soundness fixes all
+still apply; they are necessary, not sufficient. "Ship now" (§8.1) is **withdrawn** pending an
+out-of-sample standard.
+
+### 10.4 Abstraction mining is promoted from alternative (§6) to the *leading* candidate
+
+6/6 emphatic, and the strongest *divergent-from-round-1* signal: the panel over-weighted the
+**acceptance** boundary (how to *trust* a theorem) and under-weighted the **proposal** boundary (how
+to *invent* the mathematics). The two prior experiments moved the proposal **source** and the contract
+**grammar** — but never the **ontology**. Math does not scale by longer proofs of flat statements; it
+scales by **definitions / lemma-schemas that compress** the reasoning space (Lenat's AM/Eurisko,
+Colton's HR, modern concept-formation). "Your vocabulary is too small to think thoughts not already in
+textbooks." This is the one lever that changes the **type** of output and attacks the real bottleneck:
+**representation, not inference or faithfulness.**
+
+Decisively, it comes with the **cheapest falsifiable pre-test in the whole program**, run on *existing
+data, no trust-boundary touch* (GLM's "build a compressor first"):
+
+> Run anti-unification / macro-extraction over the **existing promulgated proof corpus** and measure a
+> **Proof-Compression Δ** (Kolmogorov / DAG-size). **If 0 macros compress the trivial corpus, those
+> theorems are structurally disjoint noise and the whole abstraction-mining thesis is dead** — a cheap
+> kill. **If one macro compresses many, *that macro is the real candidate*** — promote it to a
+> first-class definition (no richer claim language needed). Anti-gerrymandering gates (Fugu): short
+> description length, proof-compression, held-out transfer, *reuse* (downstream concept productivity),
+> stability, legibility.
+
+§6 is hereby promoted: abstraction mining is the **primary research bet**, gated on this pre-test.
+
+### 10.5 Measure before build — the governing principle and the new disposition (supersedes §8)
+
+The meta-finding, unanimous: "sound escape, novelty unmeasured" is **self-deception** if we build
+first — the two prior failures *and* this would-be-third all share the structure "widen X, hope
+novelty follows." So the disposition is **no builds yet** (which also honors the operator's "before we
+take any further steps"); instead, pre-register and run cheap, decisive measurements, cheapest first:
+
+1. **M1 — Proof-Compression Δ (abstraction-mining viability).** §10.4. Cheapest; existing data; no
+   trust touch. Decides whether the leading candidate is even alive. **Run this first.**
+2. **M2 — Oracle-formalization reachability replay (Stage B viability).** Hand-compile ~20 genuinely
+   *novel, non-textbook* target theorems into the formal language and test three gates: **(i)
+   expressibility** (can the DSL even state them? if not, *language* is the bottleneck, not
+   faithfulness), **(ii) generator reach** (can the proposer realistically emit them?), **(iii) bridge
+   synthesis** (given the exact statement, can the solvers close the Stage-B proof?). If the system
+   cannot recover known-novel "gold" when *spoon-fed* the target, escaping the box yields novelty ≈ 0
+   → don't build the renderer.
+3. **M3 — Faithfulness mutation-detection ≥ 80%** for any faithfulness change: inject subtle semantic
+   faults (quantifier inversion `Δ∀`, dropped hypothesis `ΔH`, vacuous antecedent, `=` vs `≡`); a
+   gate that misses them is spec-gaming, not faithfulness.
+4. **M4 — Novelty-precision@K + conversion-rate vs baselines** for the Observatory tier; the blind
+   human read (ADR 0034 §5) remains the sole novelty referee (an LLM judge violates invariant #4).
+
+**Pre-registered kill (Kimi), adopted:** if, after M1/M2 green, a bounded Stage-B-plus-extended-grammar
+run (target ~1000 CPU-hr) yields **< 1 blind-novel theorem**, scrap the proof-carrying-for-novelty
+thesis and pivot to abstraction mining and/or an explicit human-in-the-loop formal-sketch tool.
+
+**Revised build order (supersedes §8's):** M1 → M2 → (only the lever that survives) → M3-guarded build
+→ blind read / M4 → Kimi kill-gate. Stage A (poly-identity) is **not** built; certifying fragments
+(§10.1) only if M1/M2 point at them. The Observatory ships only with an out-of-sample standard (§10.3).
+Nothing in §10 touches the proved path or `tests/test_invariants.py`; M1 and M2 are pure measurement.
+
+*The round-2 verdict in one line: the synthesis was cleaner than the premise but still conservative —
+"polishing the bars of the cage." The honest response is not to build the cleaner cage faster, but to
+measure, cheapest-first, whether any of these levers reaches novelty at all — and to take seriously
+that the untouched lever is representation, not trust. Calculemus — and this time, measure first.*
