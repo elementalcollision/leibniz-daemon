@@ -23,19 +23,10 @@ from leibniz.pipeline import _maybe_json
 from leibniz.propositio import Enuntiatio, Expressio, Propositio
 from leibniz.types import ClaimType, Role
 
-# The proposal prompt. Pushes toward NON-textbook automatic-sequence conjectures expressed
-# as a single-free-variable FO predicate (what the Walnut tier can decide); forbids the
-# command-language metacharacters the runner would reject anyway (so malformed proposals fail
-# early rather than DEFERring in the runner).
-WALNUT_SEED = (
-    "Propose a genuinely NON-textbook conjecture about a k-automatic sequence (Thue-Morse, "
-    "Rudin-Shapiro, paperfolding, Tribonacci/Fibonacci word, Stern, or a base-b/Pisot sequence) "
-    "that is expressible as a FIRST-ORDER formula with exactly ONE free variable n over a "
-    "numeration (msd_2, msd_fib, msd_trib, ...). Return JSON with keys: statement (plain English), "
-    "walnut_predicate (a Walnut FO formula in n using E/A quantifiers, &, |, ~, =>, SEQ[i], +, <, "
-    "with n the only free variable; NO quotes, semicolons, or newlines), walnut_numeration, and "
-    "falsifiable_claim. The conjecture must be true for all n (the tier decides universality)."
-)
+# A LIGHT steering context. The full schema + Walnut syntax live in the shared
+# Role.WALNUT_CONJECTURE prompt template (leibniz/providers/__init__.py), so they cannot drift
+# across providers (the ADR 0013 shared-prompt discipline). This is just per-call variation.
+WALNUT_SEED = "Vary the sequence and the property from any you have proposed before."
 
 
 def parse_walnut_claim(draft: str) -> Optional[Propositio]:
@@ -67,20 +58,28 @@ class WalnutConjecturer:
 
     provider: ProviderAdapter
     observatory: WalnutObservatory = field(default_factory=WalnutObservatory)
+    # Diagnostics for the most recent generate() (so a silent all-fail run is debuggable):
+    last_draft: Optional[str] = None     # the raw provider draft (None if the provider errored)
+    last_error: Optional[str] = None     # the provider exception text, if any
 
-    def generate(self, seed: str = WALNUT_SEED) -> Optional[Propositio]:
-        """Propose ONE automatic-sequence claim (proposal only; nothing decided yet)."""
+    def generate(self, context: str = WALNUT_SEED) -> Optional[Propositio]:
+        """Propose ONE automatic-sequence claim via Role.WALNUT_CONJECTURE (proposal only;
+        nothing decided yet). Records last_draft/last_error so a parse/provider failure is
+        visible rather than a silent None."""
+        self.last_draft = self.last_error = None
         try:
-            draft = self.provider.propose(Role.CONJECTURE, seed)
-        except Exception:
-            return None  # a proposal failure must never break the caller
+            draft = self.provider.propose(Role.WALNUT_CONJECTURE, context)
+        except Exception as e:  # a proposal failure must never break the caller
+            self.last_error = f"{type(e).__name__}: {e}"
+            return None
+        self.last_draft = draft
         return parse_walnut_claim(draft)
 
-    def generate_and_decide(self, seed: str = WALNUT_SEED) -> Optional[Propositio]:
+    def generate_and_decide(self, context: str = WALNUT_SEED) -> Optional[Propositio]:
         """Propose, then DECIDE via Walnut (the non-Q.E.D. tier). Returns the filed Propositio,
         or ``None`` if the proposal was unusable. The decision/soundness is the Observatory's
         job (reviewed); this only routes a proposed claim to it."""
-        prop = self.generate(seed)
+        prop = self.generate(context)
         if prop is None:
             return None
         return self.observatory.decide(prop)
