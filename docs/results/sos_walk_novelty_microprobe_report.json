@@ -1,0 +1,17 @@
+{
+  "what": "SOS WALK-rung NOVELTY micro-probe (the build go/no-go; ADR 0037 \u00a74/\u00a710.5)",
+  "verdict": "RED \u2014 defer the SOS rung build; the binding constraint is the PRODUCER's frontier-encoding gap, not soundness/reach",
+  "green_intersection_in_reach_AND_box_out_AND_plausibly_novel": {
+    "default": "0/12",
+    "frontier": "0/12"
+  },
+  "frontier_steering_moved_needle": false,
+  "frontier_steering_side_effect": "DEGRADED quality \u2014 frontier vocabulary but more false/sign-inverted artifacts (~2 default -> ~5 frontier)",
+  "decisive_structural_finding": "perfect anti-correlation: every plausibly_novel claim is in_sos_reach=NO; every in_sos_reach=YES claim is textbook_competition. The two desirable properties NEVER co-occur. The only backend-consumable claims are catalogued PSD-not-SOS landmarks (Motzkin/Choi-Lam/Robinson/Horn \u2014 appearing IDENTICALLY in both arms) + trivial Lyapunov forms; every genuine frontier target (Sidorenko C4, hypergraph Turan, clique density, copositivity, SOS-Lyapunov, proof-complexity lower bounds) is NOT a finite real-vector semialgebraic inequality (lives over graphon/flag moment bodies) OR a non-existence meta-statement OR false.",
+  "cross_backend_conclusion": "confirmed across TWO independent sound backends (Walnut automatic-sequences run-3, SOS polynomial inequalities): the soundly-checkable AND finitely-encodable region IS the textbook region. The binding constraint is NOVELTY at the producer, manifesting as a structural ENCODING gap, not soundness, reach, or prover power.",
+  "recommended_fixes_before_reprobe": [
+    "flag-algebra/graphon-moment encoder: conjecturer emits the finite flag-basis SDP variable space (Razborov reformulation) for density inequalities, not the scalar shadow with realizability stranded in prose",
+    "in-loop symbolic self-check inside the conjecturer (the sympy verification the assessors used) to kill the false/misformalized class pre-submission"
+  ],
+  "reprobe_gate": "build goes GREEN when the GREEN intersection is non-empty in even the default arm"
+}
