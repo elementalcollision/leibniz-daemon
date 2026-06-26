@@ -20,12 +20,16 @@ does not *discover*). Two independent levers were then **built and measured** ag
   (16/23 promulgations in the new genre; structural coverage 100%→30%) and produced **0
   genuinely-novel** laws (standard cyclic-group facts).
 
-**Conclusion (triangulated, re-checkable):** the bottleneck is **neither the proposer nor the
-grammar** — it is the **bounded-mechanical-faithfulness model itself**. Promulgating only what is
-mechanically faithfulness-checkable over a bounded box *and* auto-provable caps the daemon at
-elementary/textbook mathematics by construction. Genuine machine *discovery* under a hard trust
-boundary is now a **research question** (it would need a different trust-checkable notion of
-"faithful"), left standing rather than papered over. Soundness held throughout every experiment.
+**Conclusion (triangulated, re-checkable; refined 2026-06-25 after a 5-model external review):** the
+bottleneck is **neither the proposer nor the grammar** — it is the faithfulness **test**: a
+*pointwise, bounded-box* `[0,64]` linter over a tiny arithmetic DSL, used as the sole faithfulness
+arbiter, can only certify elementary, locally-checkable facts. This is **not** a property of
+mechanical trust in general — a small kernel can check arbitrarily deep proofs (Flyspeck /
+Feit–Thompson / Robbins), so bounded *trust* ≠ bounded *domain*. The escape that preserves "nothing
+false gets `Q.E.D.`" is **proof-carrying faithfulness**: kernel/CAS-checked *certificates* of the
+statement↔claim link (including exact-**unbounded** algebraic-identity classes), with bounded Z3
+demoted to lint; the residual gap then relocates to *validation* (human-intent → formalized-claim),
+the right and auditable place. Scoped in **ADR 0036**. Soundness held throughout every experiment.
 
 Disposition: the novelty quest is **paused with a measured finding** (ADR 0034 §12, ADR 0035 §7;
 public account in `docs/cycles-report-novelty-frontier.md`). Both levers remain **sound and
