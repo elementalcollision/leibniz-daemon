@@ -44,10 +44,15 @@ def parse_walnut_claim(draft: str) -> Optional[Propositio]:
         claim_type=ClaimType.INVARIANT,
         falsifiable_claim=str(data.get("falsifiable_claim") or f"exists n violating: {stmt}"),
     )
+    # ADR 0039: carry the machine-checkable property descriptor (if any) so the Observatory's
+    # faithfulness lint can cross-check the predicate's INTENT before filing DECIDED. Only a dict
+    # is kept; anything else is dropped to None (the lint then DEFERs under require_descriptor).
+    descriptor = data.get("property_descriptor")
     ex = Expressio(
         theorem_src=f"-- walnut-decided claim (non-Q.E.D.): {stmt}",
         walnut_predicate=str(pred),
         walnut_numeration=str(num),
+        property_descriptor=descriptor if isinstance(descriptor, dict) else None,
     )
     return Propositio(enuntiatio=en, expressio=ex, seed_origin="walnut")
 
@@ -57,7 +62,11 @@ class WalnutConjecturer:
     """Generate automatic-sequence claims and file them in the non-Q.E.D. Walnut tier."""
 
     provider: ProviderAdapter
-    observatory: WalnutObservatory = field(default_factory=WalnutObservatory)
+    # ADR 0039: the live tier REQUIRES a usable property_descriptor before filing a DECIDED-true
+    # (the formal-first record needs a machine-checkable faithfulness anchor). A descriptor-less
+    # or undescribable decision is quarantined, not filed.
+    observatory: WalnutObservatory = field(
+        default_factory=lambda: WalnutObservatory(require_descriptor=True))
     # Diagnostics for the most recent generate() (so a silent all-fail run is debuggable):
     last_draft: Optional[str] = None     # the raw provider draft (None if the provider errored)
     last_error: Optional[str] = None     # the provider exception text, if any

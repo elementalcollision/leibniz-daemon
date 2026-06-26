@@ -169,10 +169,29 @@ AUTOFORMALIZE_PROMPTS = {
         "Example (FORMAT only — Thue-Morse is overlap-free): walnut_numeration = \"msd_2\", "
         "walnut_predicate = \"A i,p (p>=1) => (E t (t<3*p) & T[i+t] != T[i+t+p])\". "
         "Treat this as the SHAPE, not a claim to resubmit; vary the sequence/property.\n"
+        "FAITHFULNESS (REQUIRED): also return a property_descriptor — a HIGH-LEVEL, "
+        "machine-checkable spec of EXACTLY the property your predicate is meant to encode. It "
+        "must NOT contain any bound arithmetic (that lives only in walnut_predicate); a separate "
+        "checker brute-forces it over a prefix and QUARANTINES your claim if the predicate "
+        "disagrees with it. Choose ONE family and fill its parameters; word is one of "
+        "T, RS, F, TR (paperfolding is not yet checkable):\n"
+        '  power_free:     {{"family":"power_free","word":"RS","exponent":<e>=2>}}  '
+        "(the word has NO e-th power; e.g. cube-free is exponent 3)\n"
+        '  avoids_factor:  {{"family":"avoids_factor","word":"T","block":"00"}}  '
+        "(the exact digit block never occurs)\n"
+        '  avoids_pattern: {{"family":"avoids_pattern","word":"RS","pattern":"alternating","length":<L>}}  '
+        "(no strictly alternating 0101…/1010… factor of length L)\n"
+        "Pick the family that matches your statement; if none fits, pick a DIFFERENT property "
+        "that does (do not invent a family — an unrecognised descriptor is quarantined). The "
+        "descriptor's \"word\" MUST be the SAME sequence your walnut_predicate indexes (a "
+        "mismatch is quarantined), and it must describe EXACTLY that property — not a different "
+        "true fact about the sequence.\n"
         "Context: {context}\n"
         'Return JSON: {{"statement": <plain-English claim>, '
         '"walnut_predicate": <FO formula in n, per the syntax above>, '
-        '"walnut_numeration": <e.g. msd_2>, "falsifiable_claim": <what would refute it>}}'
+        '"walnut_numeration": <e.g. msd_2>, '
+        '"property_descriptor": <one family object from above>, '
+        '"falsifiable_claim": <what would refute it>}}'
     ),
 }
 
