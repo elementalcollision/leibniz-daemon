@@ -275,3 +275,23 @@ polynomial-nonnegativity claims that are IN-SOS-reach **and** box-OUT **and** pl
 they are all RED competition inequalities, defer the build until the proposal side can route to the GREEN
 frontier. Recommended re-checker if built: **Option A** (stdlib `Fraction` identity + exact rational LDLᵀ,
 zero float tolerance), cross-checked by Lean `ring`+`positivity` in the adversarial soundness review.
+
+### 8.1 WALK-rung NOVELTY micro-probe — RED (build deferred)
+
+The §8 go/no-go (the measurement the soundness-GREEN did *not* clear) is run: `docs/results/
+sos_walk_novelty_microprobe_report.json` (run `wokre7kl4`), synthesized in
+`docs/discovery-ceiling-cross-backend-finding.md`.
+
+**RED — defer the SOS rung build.** Two conjecturer arms (default vs explicit frontier-steering), 24
+polynomial-inequality conjectures scored on in-SOS-reach × box-OUT × plausibly-non-textbook. The GREEN
+intersection was **0/12 in both arms**; frontier-steering did not move the needle and *degraded* quality
+(more false/sign-inverted artifacts). Decisive structural finding: a **perfect anti-correlation** —
+every `plausibly_novel` claim was `in_sos_reach = no`; every `in_sos_reach = yes` claim was
+`textbook_competition`. The only backend-consumable claims are catalogued PSD-not-SOS landmarks
+(Motzkin/Choi-Lam/Robinson/Horn, identical across arms); every genuine frontier target leaves the finite
+real-vector semialgebraic class (graphon/flag moment bodies, non-existence meta-statements) or arrives
+false. This reproduces, in a second domain, the Walnut run-3 textbook ceiling: **soundly-checkable +
+finitely-encodable = textbook.** The binding constraint is novelty at the *producer* (a structural
+encoding gap), not soundness, reach, or prover power. Re-probe gate: build goes GREEN when the GREEN
+intersection is non-empty in even the default arm — which needs producer-side fixes (a flag-algebra/
+graphon-moment encoder; an in-loop symbolic self-check), not another backend.
