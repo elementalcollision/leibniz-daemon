@@ -1,0 +1,130 @@
+{
+  "packet": "blind-novelty-panel-packet",
+  "run": "Observatory run-3 (lint-on, anti-collapse conjecturer), 20 claims -> 11 decided",
+  "screen": "soundness (predicate decodes TRUE on prefix + non-vacuous); novelty is the HUMAN panel's call (invariant 4)",
+  "n_sound_admissible": 11,
+  "candidates": [
+    {
+      "blind_id": "6bee4c3d",
+      "formal_statement_of_record": "For all positions i and all periods p>=1, there exists an offset t with 3t < 7p (i.e. t < 7p/3) such that T[i+t] != T[i+t+p]. Under the file's own Walnut convention (the sibling 4th-power records use t < 3p = (4-1)p as the overlap window), this overlap bound (e-1)*p = (7/3)*p decodes to e = 10/3. So the predicate decides: the Thue-Morse sequence contains no factor of exponent >= 10/3 (it is (10/3)-power-free / avoids fractional powers of exponent 10/3 and above). NOTE: 7p/3 is the OVERLAP-region bound (e-1)p, not the exponent itself; the exponent is 10/3 ~ 3.333, not 7/3.",
+      "walnut_predicate": "A i,p (p>=1) => (E t (t+t+t < p+p+p+p+p+p+p) & T[i+t] != T[i+t+p])",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "no",
+      "descriptor_matches_predicate": "no",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "4a52fbe9",
+      "formal_statement_of_record": "For every position i and every period p>=1 there exists an offset t with t<3p such that F[i+t] != F[i+t+p]. Equivalently: the Fibonacci word F (fixed point of 0->01, 1->0) contains no 4th power, i.e. no factor of the form wwww for nonempty w (a period-p match window of length (4-1)p = 3p never holds completely). The bound t<3p = (e-1)*p with e=4 is the standard e-th-power idiom.",
+      "walnut_predicate": "A i,p (p>=1) => (E t (t<3*p) & F[i+t] != F[i+t+p])",
+      "numeration": "msd_fib",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "7e012821",
+      "formal_statement_of_record": "For every position i in the Thue-Morse sequence T, the length-5 factor T[i],T[i+1],T[i+2],T[i+3],T[i+4] is not equal to (1,1,0,1,1); i.e., the block \"11011\" never occurs as a factor of T.",
+      "walnut_predicate": "A i ~(T[i]=@1 & T[i+1]=@1 & T[i+2]=@0 & T[i+3]=@1 & T[i+4]=@1)",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "7244bb95",
+      "formal_statement_of_record": "For every position i in the Tribonacci word TR, it is not the case that TR[i]=2 and TR[i+1]=2 and TR[i+2]=2; i.e. the factor \"222\" (three consecutive 2's) never occurs in TR.",
+      "walnut_predicate": "A i ~(TR[i]=@2 & TR[i+1]=@2 & TR[i+2]=@2)",
+      "numeration": "msd_trib",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "b34f1cb1",
+      "formal_statement_of_record": "For every position n, the length-5 window T[n..n+4] of the Thue-Morse sequence is NOT strictly alternating; i.e. it is never the case that T[n]!=T[n+1] AND T[n+1]!=T[n+2] AND T[n+2]!=T[n+3] AND T[n+3]!=T[n+4]. Over the binary alphabet this means neither '01010' nor '10101' occurs as a factor of T. (n is universally quantified; exactly 4 inequality clauses over indices n..n+4; no spurious padding clauses; no off-by-one.)",
+      "walnut_predicate": "A n ~(T[n]!=T[n+1] & T[n+1]!=T[n+2] & T[n+2]!=T[n+3] & T[n+3]!=T[n+4])",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "78864be4",
+      "formal_statement_of_record": "For all positions i, the length-6 factor RS[i..i+5] is NOT strictly alternating; equivalently, the Rudin-Shapiro sequence contains no strictly-alternating factor of length 6 (no block of the form ababab with a != b). The trailing disjunct (n=n & i!=i) is always-false padding (i!=i is never satisfiable; the free var n is harmless because it is conjoined with the false i!=i), so it does not affect the decided statement.",
+      "walnut_predicate": "A i (~(RS[i]!=RS[i+1] & RS[i+1]!=RS[i+2] & RS[i+2]!=RS[i+3] & RS[i+3]!=RS[i+4] & RS[i+4]!=RS[i+5])) | (n=n & i!=i)",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "7fde1160",
+      "formal_statement_of_record": "For every position i and every period p>=1, there exists an offset t with 0<=t<3p such that T[i+t] != T[i+t+p]. Equivalently: the Thue-Morse sequence contains no 4th power (no factor of the form wwww, i.e. no length-4p factor with period p), since a 4th power would require T[i+t]==T[i+t+p] for all t in 0..3p-1. So: Thue-Morse is 4th-power-free.",
+      "walnut_predicate": "A i,p (p>=1) => (E t (t<3*p) & T[i+t] != T[i+t+p])",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "7de50ecc",
+      "formal_statement_of_record": "For all positions i and all periods p>=1, there exists an offset t with 0<=t<4p such that RS[i+t] != RS[i+t+p]. Equivalently: the Rudin-Shapiro sequence contains no 5th power w^5 (a block of length p repeated 5 times, total length 5p), i.e. RS is 5th-power-free. (A 5th power at (i,p) would require RS[i+t]==RS[i+t+p] for all t in [0,4p); the predicate forbids exactly that, with the correct 4p = (5-1)*p matching window \u2014 no off-by-p artifact.)",
+      "walnut_predicate": "A i,p (p>=1) => (E t (t<4*p) & RS[i+t] != RS[i+t+p])",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "e6340469",
+      "formal_statement_of_record": "For every position i, the Rudin-Shapiro sequence (0/1 encoding: parity of the number of possibly-overlapping '11' factors in the binary expansion of the index) does NOT satisfy RS[i]=RS[i+1]=RS[i+2]=RS[i+3]=RS[i+4]=1. Equivalently, over all n, the length-5 block 11111 never occurs as a factor of RS; the symbol 1 never appears five times consecutively.",
+      "walnut_predicate": "A i ~(RS[i]=@1 & RS[i+1]=@1 & RS[i+2]=@1 & RS[i+3]=@1 & RS[i+4]=@1)",
+      "numeration": "msd_2",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "ff277dbe",
+      "formal_statement_of_record": "For every position i in the Fibonacci word F, it is not the case that F[i]=0 and F[i+1]=0 and F[i+2]=0. Equivalently: F contains no occurrence of the factor \"000\" (the symbol 0 never appears three times consecutively).",
+      "walnut_predicate": "A i ~(F[i]=@0 & F[i+1]=@0 & F[i+2]=@0)",
+      "numeration": "msd_fib",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    },
+    {
+      "blind_id": "d9379e22",
+      "formal_statement_of_record": "For every position i, the length-4 factor \"2020\" does not occur in the Tribonacci word starting at i; i.e. there is no i with TR[i]=2, TR[i+1]=0, TR[i+2]=2, TR[i+3]=0. Equivalently, the Tribonacci word avoids the factor \"2020\".",
+      "walnut_predicate": "A i ~(TR[i]=@2 & TR[i+1]=@0 & TR[i+2]=@2 & TR[i+3]=@0)",
+      "numeration": "msd_trib",
+      "sound": true,
+      "prose_faithful": "yes",
+      "descriptor_matches_predicate": "yes",
+      "novelty_advisory": "textbook"
+    }
+  ],
+  "novelty_triage": {
+    "textbook": 11,
+    "plausibly_novel": 0
+  },
+  "forwarded_to_human_panel": [],
+  "forward_decision": "0 forwarded. All 11 are SOUND but novelty-advisory=textbook (classical: Thue 1912 overlap-freeness corollaries, Fibonacci/Tribonacci critical exponents, elementary forbidden-factor/run-length facts). Forwarding textbook items would waste the scarce human-panel budget (the binding constraint) and pollute invariant-4 calibration. Novelty remains the human panel's call; the advisory is triage. Operator may override and forward.",
+  "kernel_bridge_trigger_1": "UNMET (requires >=1 blind-panel-CONFIRMED novel decision; 0 plausibly-novel).",
+  "faithfulness_residual": {
+    "pid": "6bee4c3d",
+    "issue": "prose says exponent 7/3, descriptor says 3, predicate decodes to 10/3 \u2014 three different numbers; SOUND (10/3-power-free is true for TM) but human-facing text inconsistent; the lint validated the wrong (descriptor) exponent",
+    "fix": "derive the power_free exponent from the predicate's matching-window bound (t<K*p => e=K+1) and require descriptor.exponent==that; rejects fractional/non-matching predicates"
+  }
+}
