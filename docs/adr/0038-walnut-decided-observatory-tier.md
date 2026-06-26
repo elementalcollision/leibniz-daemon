@@ -40,10 +40,17 @@ from both the kernel Q.E.D. Codex and the ADR 0036 §10.3 unproved-conjecture Ob
 *stronger* than the latter — a sound decision, not a numerical-evidence conjecture). Design:
 
 - **Decider, not faithfulness.** Here the claim's `walnut_predicate` IS the theorem (e.g. Thue-Morse
-  overlap-freeness), and Walnut *decides* it: reuse `classify_agreement` — `universal` → **DECIDED**
-  (`FinishReason.WALNUT_DECIDED`), `refuted` → **REFUTED** (with the disagreeing structure), `indeterminate`
-  → **DEFER** (quarantined; never guessed). The decision carries the **re-checked automaton certificate**
-  (the gate's `automaton_is_universal`, ADR 0037 §7) — MECHANICAL, not a judge.
+  overlap-freeness), and Walnut *decides* it. Two cases, with **different** trust strengths (both
+  MECHANICAL, never a judge; both non-Q.E.D.):
+  - **Closed sentence** (all variables bound — the common form, e.g. `A i,p …`): Walnut returns the
+    bare token `true`/`false`. `true` → **DECIDED**, `false` → **REFUTED**. A 0-track token has no
+    structure to re-derive, so this is *trusted as Walnut's decision* — sound only because the
+    production runner is the real Walnut (`_default_runner`: input sanitization + stale-file deletion
+    + clean-exit + fresh read), i.e. **Walnut joins the TCB** for this non-Q.E.D. tier (like Z3).
+  - **Free-variable predicate** → a structured agreement automaton: `classify_agreement` → `universal`
+    → **DECIDED** with an **independent re-check** (`recheck_walnut_certificate` /
+    `automaton_is_universal`, ADR 0037 §7), `refuted` → **REFUTED**, `indeterminate` → **DEFER**
+    (quarantined; never guessed).
 - **Never Q.E.D., never promulgated.** A `WALNUT_DECIDED` record sets **no** `kernel_verified`, `qed`, or
   `promulgated`; it does **not** pass through `Promulgate`/`validate_path`. It is a distinct outcome in a
   distinct store. The Q.E.D. Codex remains kernel-only.
@@ -63,7 +70,7 @@ from both the kernel Q.E.D. Codex and the ADR 0036 §10.3 unproved-conjecture Ob
 |---|---|
 | 1 — `kernel_verified` only in `LeanVerifier.discharge` | the tier never sets it; Walnut decisions are a separate `FinishReason`, not a proof edge |
 | 7 — Q.E.D. iff `kernel_verified` | `WALNUT_DECIDED` ≠ Q.E.D.; the tier never stamps Q.E.D. |
-| an LLM never decides | the LLM *proposes* the conjecture; **Walnut** (a sound decision procedure) decides; the decision is re-checked (automaton universality) |
+| an LLM never decides | the LLM *proposes* the conjecture; **Walnut** (a sound decision procedure) decides — independently re-checked for a free-variable agreement automaton, or trusted as Walnut's decision for a closed-sentence `true`/`false` (Walnut in the TCB, non-Q.E.D.) |
 | promotion requires PROOF+FAITHFULNESS via `validate_path` | the tier does **not** promulgate — it is a parallel, non-Codex output; `validate_path`/`test_invariants` untouched, byte-identical |
 | novelty never by an LLM judge | novelty is read by the unchanged **blind human panel** (ADR 0034 §5) |
 
