@@ -1,0 +1,27 @@
+{
+  "what": "SOS/Positivstellensatz WALK-rung measure-before-build reachability probe (ADR 0037 \u00a74 gate)",
+  "composite_verdict": "AMBER \u2014 build as low-regret infra, NOT for proven discovery yield; novelty is the binding constraint",
+  "dimension_verdicts": {
+    "Tooling + EXACT soundness of an SOS/Positivstellensatz certi": "green",
+    "reachability": "amber",
+    "box-OUT vs Z3 + Q.E.D.-eligibility for the WALK rung (SOS / ": "green",
+    "Novelty potential + faithfulness for the SOS/Positivstellens": "amber"
+  },
+  "greens": [
+    "Tooling + EXACT soundness of an SOS/Positivstellensatz certificate (ADR 0037 WALK rung)",
+    "box-OUT vs Z3 + Q.E.D.-eligibility for the WALK rung (SOS / Positivstellensatz)"
+  ],
+  "reds": [],
+  "key_findings": {
+    "soundness": "GREEN \u2014 exact rational SOS re-check feasible STDLIB-ONLY (identity dict-eq over Q + exact rational LDL^T PSD); float SDP stays off-TCB; proven with code (6/6 cases incl. correct rejections); sostactic precedent ships the ADR 0037 \u00a72 contract in Lean",
+    "box_out": "GREEN \u2014 reaches forall x in R^n polynomial nonnegativity (over R, unbounded, forall-proof) \u2014 3 axes of escape from the bounded-integer [0,64] box; orthogonal to Walnut",
+    "two_seams_QED": {
+      "faithfulness_backend_ADR0037_placement": "NON-Q.E.D. (faithfulness edge) \u2014 but re-check is KERNEL-GRADE (ring re-derives the identity), the first faithfulness backend stronger than Walnut's structural check",
+      "prover_seam_higher_value": "GENUINELY Q.E.D. \u2014 if the conjecture IS a polynomial inequality, the SOS cert re-checked by ring+positivity IS a kernel proof (proof edge, like nlinarith/polyrith). A sound path to kernel-verified discovery WITHOUT the run-rung renderer. Different seam (prover_ensemble), must stay uncrossed from LeanVerifier.discharge"
+    },
+    "novelty": "AMBER/bimodal \u2014 RED competition/olympiad genre (now auto-solved by AIPS/LIPS = textbook ceiling recurrence, the SOS analogue of run-3); GREEN research frontier (flag-algebra extremal combinatorics resolved OPEN conjectures, copositivity/SOS-Lyapunov, SOS lower bounds) but the current conjecturer/DSL cannot render the GREEN class",
+    "faithfulness_strength": "the rung's strongest dimension \u2014 the polynomial inequality often IS its own formal statement (3-body gap much smaller than Walnut prose); residual slack (constraint set, strict-vs-non-strict) is lint-able at routing"
+  },
+  "the_true_go_nogo": "a WALK-rung NOVELTY micro-probe: does the conjecturer produce polynomial-nonnegativity claims that are IN-SOS-reach AND box-OUT AND plausibly-non-textbook? soundness-GREEN does NOT clear the build (ADR 0037 \u00a74/\u00a710.5).",
+  "recommended_recheck": "Option A (stdlib Fraction identity + exact rational LDL^T PSD, ~40 lines, zero float tolerance); cross-check with Lean ring+positivity (Option B) in the soundness review"
+}
