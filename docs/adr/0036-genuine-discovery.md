@@ -6,6 +6,7 @@ Kimi, GLM 5.2, Gemini 3.5 Thinking — `docs/external-review-novelty-frontier.md
 **A round-2 external review of *this synthesis* (6 models incl. Fugu Ultra —
 `docs/external-review-2-genuine-discovery.md`) substantially revises the recommendation. §10 records
 that reconciliation and SUPERSEDES §3, §6, and §8 where they conflict. Read §10 first.**
+**§11 records the first measurement result, M1 (proof-compression), and its adversarial audit.**
 **Date:** 2026-06-25
 **Predecessors:** ADR 0034 (conjecturer-side novelty — §12 kill), ADR 0035 (faithfulness-DSL
 expressiveness — Stage A killed as a novelty lever; **§7.1 correction**).
@@ -351,3 +352,43 @@ Nothing in §10 touches the proved path or `tests/test_invariants.py`; M1 and M2
 "polishing the bars of the cage." The honest response is not to build the cleaner cage faster, but to
 measure, cheapest-first, whether any of these levers reaches novelty at all — and to take seriously
 that the untouched lever is representation, not trust. Calculemus — and this time, measure first.*
+
+---
+
+## 11. M1 measured — proof-compression (abstraction-mining viability)
+
+The first §10.5 pre-test is run. Full record: `docs/m1-proof-compression-finding.md`; harness
+`scripts/measure_compression.py` (stdlib, read-only over the A/B/SA ledgers, trust boundary
+untouched). It was itself adversarially audited (6-agent `m1-verify` workflow) — which caught and
+forced the retraction of a defective null (details below), the discipline this ADR demands.
+
+- **Result: ALIVE-but-floor.** The GLM **kill does not fire**: the 47 distinct promulgated proofs
+  share real, large cross-proof structure — **+2.23 cross-proof gain** (the joined corpus is 69%
+  smaller than compressing each proof alone), holding on raw un-abstracted text (+1.58), after
+  boilerplate-strip (+1.82), and leave-dominant-cluster-out (+1.59); **+0.44** above the order-0
+  entropy floor (genuine substring matching, not frequency skew). Abstraction mining is a
+  *mechanically viable* lever on this corpus.
+- **But the mined macro is the textbook genre** (both independent math readers, unanimous): the
+  finite-ring closure in ℤ/mℤ (case-split `n mod m`, reduce the polynomial, finite-`decide`).
+  Confirms §10.4's GIGO concern: mining a 0-novel corpus recovers 0-novel concepts. Abstraction
+  mining is **not an independent escape** — its novelty is gated by **input-corpus diversity**, not
+  the compressor.
+- **M1 is a FLOOR, not a ceiling.** A syntactic compressor is *structurally blind* to
+  cross-genre/semantic abstraction: it reports **no** POLY↔POW bridge (cross-genre help ≈ 0.07),
+  yet both readers independently identify a real one — both genres are *eventual-periodicity of a
+  residue sequence in the finite monoid ℤ/mℤ*, unified by `residue-membership ⟺ divisibility ⟺
+  periodicity` and the reduction lemma `(P n) % m = (P (n%m)) % m`. So the GLM pre-test confirms
+  viability but **cannot upper-bound mining headroom.**
+- **Retraction on the record:** the first cut reported a **+1.51 "order-sensitive Kolmogorov-Δ"**
+  headline; the audit proved the metric is order-*in*sensitive (the DEFLATE window spans the corpus;
+  whole-proof reorder moves it +0.016) and the within-shuffle null conflated cross-proof sharing
+  with DEFLATE anti-locality (~3–5× inflation). Corrected to sum-independent-vs-joined (+2.23) and
+  the order-0 floor (+0.44); the corrected harness reproduces every adversarial re-run exactly.
+
+**Consequence for the plan:** the decisive question is no longer "does a macro compress?" (yes) but
+"can a mined abstraction reach a concept the generator did not name, across a genre boundary the
+compressor calls bridgeless?" — which a compressor cannot answer. So the next step is **M2
+(oracle-reachability)**, not another compression probe. A concrete, cheap M2 seed falls out of M1:
+promote the latent abstraction the readers found — the reduction lemma `(P n) % m = (P (n%m)) % m`
+plus the residue ⟺ divisibility reframing — to a real Lean lemma-schema and measure whether it lets
+the daemon reach proofs/novelty **not** in the corpus, especially across the POLY/POW boundary.
