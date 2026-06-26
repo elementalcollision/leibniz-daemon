@@ -38,6 +38,9 @@ class Role(Enum):
     FORMALIZE = "formalize"       # draft a Lean statement from an Enuntiatio
     PROOF_DRAFT = "proof_draft"   # draft a tactic script for the kernel to check
     ANALOGY = "analogy"           # cross-domain stepping stones (Leonardo seam)
+    WALNUT_CONJECTURE = "walnut_conjecture"  # ADR 0038: an automatic-sequence FO claim for the
+    #                                          Walnut-decided tier (predicate + numeration, NOT a
+    #                                          Lean contract) — proposal only; Walnut decides.
 
 
 class ClaimType(Enum):

@@ -56,19 +56,24 @@ def test_parse_missing_fields_returns_none():
 
 # --- generation -------------------------------------------------------------
 
-def test_generate_uses_conjecture_role():
+def test_generate_uses_walnut_conjecture_role():
     prov = _FakeProvider(_GOOD_DRAFT)
     prop = WalnutConjecturer(provider=prov).generate()
-    assert prov.role_seen is Role.CONJECTURE
+    assert prov.role_seen is Role.WALNUT_CONJECTURE  # NOT the daemon's standard CONJECTURE role
     assert prop is not None and prop.expressio.walnut_numeration == "msd_2"
 
 
-def test_generate_robust_to_provider_failure():
-    assert WalnutConjecturer(provider=_RaisingProvider()).generate() is None
+def test_generate_robust_to_provider_failure_records_error():
+    conj = WalnutConjecturer(provider=_RaisingProvider())
+    assert conj.generate() is None
+    assert conj.last_error is not None and "provider down" in conj.last_error  # diagnostics
 
 
-def test_generate_robust_to_garbage_draft():
-    assert WalnutConjecturer(provider=_FakeProvider("```garbage```")).generate() is None
+def test_generate_robust_to_garbage_draft_records_raw():
+    conj = WalnutConjecturer(provider=_FakeProvider("```garbage```"))
+    assert conj.generate() is None
+    assert conj.last_draft == "```garbage```"  # raw draft retained for diagnosis
+    assert conj.last_error is None             # not a provider error — a parse failure
 
 
 # --- end-to-end: generate -> decide -> non-Q.E.D. tier ----------------------
