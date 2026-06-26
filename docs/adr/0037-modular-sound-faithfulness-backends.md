@@ -140,3 +140,31 @@ registration, not a rewrite.
   is green.
 
 *Calculemus — and build the seam before the engine.*
+
+---
+
+## 6. Backend #1 (Walnut) reachability gate — GREEN
+
+The §4 measure-before-build gate for the crawl rung is run. Full record:
+`docs/walnut-reachability-probe-finding.md`; provenance
+`docs/results/walnut_reachability_probe_report.json`.
+
+- **GREEN: 12/12** target theorems are IN-Walnut **and** box-OUT — soundly decidable over
+  **unbounded n** (FO + addition over k-automatic sequences, Büchi–Bruyère), the exact unbounded-∀
+  class M2 found the bounded box cannot reach (M2: 0/24 expressible; Walnut: 12/12). 6 are plausibly
+  non-textbook; the adversarial automaticity check found **0** dangerous over-claims. Each decision
+  emits a re-checkable **automaton certificate** (TRUE ⟺ synthesized automaton universal /
+  complement empty) → exact-or-DEFER, fits the §2 protocol exactly.
+- **Honest bound:** the probe establishes *reachability + soundness*, **not novelty** — the
+  structured novelty field has 0 literal "research" tags, and true novelty needs the blind human
+  panel (ADR 0034 §5). GREEN means "the paradigm is worth building," not "Walnut discovers."
+- **Caveats carried forward:** the genuinely-novel headlines (Motzkin mod 8 never divisible by 8 — a
+  named former conjecture; Gessel/Apéry mod 8; odd-Catalan residue count) need custom DFAOs
+  (Rowland–Yassawi) and can DEFER on engineering; a first smoke-test (Tribonacci 4th-power-free,
+  built-ins only) is queued; the actual run is sandbox-blocked (untrusted external Java) and awaits
+  operator authorization.
+
+**Decision:** the crawl rung is cleared to build — the Walnut backend (protocol + lint-demotion
+dispatch + Walnut integration with the automaton-emptiness re-checker behind an adversarial soundness
+review), then a blind-panel novelty read on its output. The walk rung (SOS) and run rung (kernel
+bridge) remain gated on their own probes.
