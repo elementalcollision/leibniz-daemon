@@ -1,0 +1,42 @@
+{
+  "what": "ADR 0039 lint independent verification: generators recomputed from scratch + known facts",
+  "generators_match_independent_recomputation": {
+    "T": true,
+    "RS": true,
+    "F": true,
+    "TR": true
+  },
+  "known_facts": {
+    "RS_has_4th_power_0000": true,
+    "RS_4th_power_site": [
+      7,
+      1
+    ],
+    "RS_5th_power_free_in_prefix": true,
+    "TM_cube_free": true,
+    "TM_not_square_free": true,
+    "RS_contains_1010": true
+  },
+  "verdict": "all generators reproduce; RS not 4th-power-free (0000@7); TM cube-free not square-free",
+  "adversarial_review_wpptdvqhs": {
+    "verdict": "FIX-FIRST; generators clean; trust claim upheld (downgrade-only, no kernel state, total)",
+    "fixes_applied": [
+      "descriptor<->predicate word binding",
+      "block alphabet guard",
+      "exponent/length degeneracy guards",
+      "bool params rejected"
+    ],
+    "witnesses_now_blocked": {
+      "word_substitution_T_for_RS": "undescribable",
+      "out_of_alphabet_block_9999": "undescribable",
+      "huge_exponent_100": "undescribable",
+      "huge_exponent_4096": "undescribable",
+      "honest_descriptor_still_caught": "counterexample"
+    },
+    "documented_residual_not_closed": {
+      "family_shop_avoids_00000": "pass",
+      "param_shop_alt_len50": "pass",
+      "note": "right word + unrelated-but-true property; irreducible in lint+formal-first; only templated predicates close; human blind-panel backstop"
+    }
+  }
+}

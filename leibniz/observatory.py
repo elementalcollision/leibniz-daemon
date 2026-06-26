@@ -33,6 +33,7 @@ from leibniz.backends.walnut import (
     recheck_walnut_certificate,
 )
 from leibniz.gates.sound_backends import Certificate
+from leibniz.observatory_lint import LintResult, lint_descriptor
 from leibniz.propositio import Propositio
 from leibniz.types import EdgeEvidence, FinishReason, TrustTier, Verdict
 
@@ -52,20 +53,61 @@ class WalnutObservatory:
     """
 
     runner: Callable[..., Optional[str]] = field(default=_default_runner)
+    # ADR 0039: when True, a DECIDED-true with NO usable property_descriptor is REFUSED
+    # (quarantined) rather than filed — the formal-first record then has no machine-checkable
+    # anchor for its faithfulness. The production conjecturer / live entrypoint set this True;
+    # the default is False so the pure decision-semantics tests (no descriptor) still exercise
+    # the Walnut path. The lint's *counterexample* catch is ALWAYS on, regardless of this flag.
+    require_descriptor: bool = False
 
     def _file(self, prop: Propositio, reason: FinishReason, verdict: Verdict, why: str,
-              cert_data: str | None = None, numeration: str | None = None) -> Propositio:
+              cert_data: str | None = None, numeration: str | None = None,
+              extra_detail: dict | None = None) -> Propositio:
         """Record a provenance edge (NEVER a promotion edge) with a diagnostic ``why`` and set
         the finish reason. Sets no ``promulgated``/``Demonstratio``/Q.E.D. (kernel-only)."""
         detail: dict = {"reason": why}
         if cert_data is not None:
             detail.update(automaton=cert_data, numeration=numeration)
+        if extra_detail:
+            detail.update(extra_detail)
         prop.record(EdgeEvidence(
             edge=WALNUT_DECISION_EDGE, tier=TrustTier.MECHANICAL, verdict=verdict,
             detail=detail, producer="walnut/decide",
         ))
         prop.finish_reason = reason
         return prop
+
+    def _decide_true(self, prop: Propositio, why: str, cert_data: str,
+                     numeration: str) -> Propositio:
+        """ADR 0039 faithfulness lint, applied to EVERY Walnut DECIDED-true before it is filed.
+
+        Walnut soundly decided the *predicate* true; this is the formal-statement ↔ INTENT
+        cross-check the kernel/Walnut cannot do. Brute-force the conjecturer's
+        ``property_descriptor`` over a finite prefix:
+          * a prefix COUNTEREXAMPLE ⇒ the predicate is not faithful to the stated property ⇒
+            quarantine (``lint_counterexample``), never DECIDED. This is the artifact catch.
+          * UNDESCRIBABLE (no/unknown descriptor) ⇒ quarantine only when ``require_descriptor``
+            (production): a formal-first record needs a machine-checkable anchor. Otherwise file
+            DECIDED, recording the lint status (advisory) for honesty.
+        The lint can only DOWNGRADE — it never certifies and never touches kernel state. The
+        record is FORMAL-FIRST: the predicate + descriptor are the statement of record; the
+        Enuntiatio prose is advisory commentary.
+        """
+        ex = prop.expressio
+        # The descriptor is bound to the predicate Walnut decided (its word must be the word the
+        # predicate indexes); an unbound descriptor cannot anchor faithfulness (review fix).
+        lint: LintResult = lint_descriptor(ex.property_descriptor, decided_true=True,
+                                           predicate=ex.walnut_predicate)
+        faith = {"faithfulness": {"mode": "formal_first", "lint": lint.status,
+                                  "prefix_checked": lint.prefix_checked, **lint.detail}}
+        if lint.is_counterexample:
+            return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "lint_counterexample",
+                              extra_detail=faith)
+        if lint.status == "undescribable" and self.require_descriptor:
+            return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "lint_no_descriptor",
+                              extra_detail=faith)
+        return self._file(prop, FinishReason.WALNUT_DECIDED, Verdict.PASS, why,
+                          cert_data=cert_data, numeration=numeration, extra_detail=faith)
 
     def decide(self, prop: Propositio) -> Propositio:
         """Run Walnut on the claim's predicate and file the outcome (with a diagnostic reason
@@ -107,9 +149,8 @@ class WalnutObservatory:
         # theorems ("RS is overlap-free").
         if aut.is_sentence:
             if aut.is_true:
-                return self._file(prop, FinishReason.WALNUT_DECIDED, Verdict.PASS,
-                                  "decided_sentence", cert_data=result_text,
-                                  numeration=ex.walnut_numeration)
+                return self._decide_true(prop, "decided_sentence", result_text,
+                                         ex.walnut_numeration)
             return self._file(prop, FinishReason.REFUTED, Verdict.FAIL, "refuted_sentence")
 
         # Free-variable predicate -> a structured agreement automaton. Require the numeration we
@@ -121,9 +162,8 @@ class WalnutObservatory:
             cert = Certificate(kind=WALNUT_CERT_KIND, rechecked=False, data=result_text,
                                detail={"numeration": ex.walnut_numeration})
             if recheck_walnut_certificate(cert):
-                return self._file(prop, FinishReason.WALNUT_DECIDED, Verdict.PASS,
-                                  "decided_universal", cert_data=result_text,
-                                  numeration=ex.walnut_numeration)
+                return self._decide_true(prop, "decided_universal", result_text,
+                                         ex.walnut_numeration)
             return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "recheck_failed")
         if verdict == "refuted":
             return self._file(prop, FinishReason.REFUTED, Verdict.FAIL, "refuted_automaton")

@@ -1,7 +1,8 @@
 """Opt-in LIVE Walnut-decided Observatory run (ADR 0038). BILLABLE LLM + real Walnut.
 
-Generates N automatic-sequence conjectures (Role.CONJECTURE), DECIDES each with Walnut over
-unbounded n (the non-Q.E.D. tier — never kernel-Q.E.D.), and writes the
+Generates N automatic-sequence conjectures (Role.WALNUT_CONJECTURE), DECIDES each with Walnut
+over unbounded n (the non-Q.E.D. tier — never kernel-Q.E.D.), cross-checks each DECIDED-true
+against its property_descriptor (ADR 0039 faithfulness lint), and writes the
 DECIDED/REFUTED/UNPROVEN records to a JSON ledger for the blind-novelty panel.
 
 Needs creds in .env (the CONJECTURE model) AND a built Walnut, located via env:
@@ -42,10 +43,12 @@ def _record(prop) -> dict:
     return {
         "pid": prop.pid,
         "finish_reason": prop.finish_reason.value if prop.finish_reason else None,
-        "reason": (edge.detail.get("reason") if edge else None),  # decided_sentence / no_result / ...
-        "statement": prop.enuntiatio.statement,
-        "walnut_predicate": ex.walnut_predicate if ex else None,
+        "reason": (edge.detail.get("reason") if edge else None),  # decided_sentence / lint_counterexample / ...
+        "statement": prop.enuntiatio.statement,    # ADR 0039: ADVISORY prose, NOT the record
+        "walnut_predicate": ex.walnut_predicate if ex else None,        # formal-first: the record
         "walnut_numeration": ex.walnut_numeration if ex else None,
+        "property_descriptor": ex.property_descriptor if ex else None,  # the lint's checkable anchor
+        "faithfulness": (edge.detail.get("faithfulness") if edge else None),  # lint status + counterexample
         "promulgated": prop.promulgated,           # MUST be False — tier is non-Q.E.D.
         "automaton_certificate": (edge.detail.get("automaton") if edge else None),
     }
@@ -89,7 +92,9 @@ def main() -> int:
 
     conjecturer = WalnutConjecturer(
         provider=build_conjecturer(meter=CostBudget.from_env()),
-        observatory=WalnutObservatory(),
+        # ADR 0039: live tier requires a usable property_descriptor before filing DECIDED-true
+        # (the faithfulness lint's machine-checkable anchor; descriptor-less => quarantine).
+        observatory=WalnutObservatory(require_descriptor=True),
     )
     print(f"[observatory] generating + deciding {count} automatic-sequence claims (LIVE)...")
     summary = run_observatory(conjecturer, count, out)

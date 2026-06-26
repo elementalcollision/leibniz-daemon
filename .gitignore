@@ -42,3 +42,7 @@ ab_prover_tiers_report.json
 # OS
 .DS_Store
 Walnut/
+
+# Observatory live-run artifacts (ADR 0038/0039) — operator-local, never committed
+observatory_ledger*.json
+observatory_run*.log

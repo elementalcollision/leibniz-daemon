@@ -74,6 +74,14 @@ class Expressio:
     # *decides* the sentence, it does not certify the rendering.
     walnut_predicate: Optional[str] = None
     walnut_numeration: Optional[str] = None
+    # ADR 0039 (Observatory faithfulness lint): a machine-checkable spec of the property the
+    # predicate is MEANT to encode, from a closed whitelist of families (power_free,
+    # avoids_factor, avoids_pattern). High-level parameters only (e.g. exponent=4) — the
+    # error-prone bound arithmetic lives solely in walnut_predicate, so this independently pins
+    # the predicate's INTENT. Brute-forced over a finite prefix before a DECIDED-true is filed;
+    # a prefix counterexample => the predicate is unfaithful => quarantine. None unless the claim
+    # is an automatic-sequence claim the conjecturer described.
+    property_descriptor: Optional[dict] = None
 
 
 @dataclass

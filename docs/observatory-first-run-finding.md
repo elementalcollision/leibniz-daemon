@@ -24,7 +24,7 @@ the *predicate*, but the predicate ≠ the prose, and the prose is **false for R
 
 | pid | bug | predicate actually decides | prose claims | prose true? |
 |---|---|---|---|---|
-| d4a4d22b | `t<4p` not `t<3p` | RS is **5th-power-free** (true) | RS is **4th-power-free** | **FALSE** (crit. exp. = 4; `1111` at 7–10) |
+| d4a4d22b | `t<4p` not `t<3p` | RS is **5th-power-free** (true) | RS is **4th-power-free** | **FALSE** (`0000` — a 4th power of `0` — at positions 7–10) |
 | d37eb690 | `i<n+4` not `i<n+3` | no alternating length-**5** window (true) | no alternating length-**4** factor | **FALSE** (`RS[13..16]=1010`) |
 | baff1218 | window `i≤n+1` not `i≤n` | (reads one symbol past the factor) | length-(n+1) factor non-constant | **FALSE at n=1** (`RS[1..2]=00`) |
 
