@@ -249,14 +249,31 @@ def _safe_walnut_inputs(predicate: str, numeration: str) -> bool:
     return bool(_SAFE_NUMERATION.fullmatch(numeration))
 
 
+def _walnut_home(jar_path: Path) -> Optional[Path]:
+    """Resolve Walnut's home dir (where ``Result/`` lives): ``$LEIBNIZ_WALNUT_HOME`` if set and
+    a directory, else the jar's grandparent IFF the jar sits in ``build/libs/`` (the standard
+    fat-jar layout). Otherwise None => DEFER, rather than guessing a wrong cwd."""
+    env = os.environ.get("LEIBNIZ_WALNUT_HOME")
+    if env:
+        p = Path(env)
+        return p if p.is_dir() else None
+    jp = jar_path.resolve()
+    if jp.parent.name == "libs" and jp.parent.parent.name == "build":
+        return jp.parent.parent.parent
+    return None
+
+
 def _default_runner(predicate: str, numeration: str, *, timeout: float = 120.0) -> Optional[str]:
     """Run Walnut on ``eval <name> "?<numeration> <predicate>";`` and return the result
     automaton text, or None (=> DEFER) if Walnut is unavailable, the inputs are unsafe, or
     it errors.
 
     Walnut location is taken from ``$LEIBNIZ_WALNUT_JAR`` (the path to ``Walnut-all.jar``);
-    Walnut reads/writes relative to its home (the jar's ``build/libs/`` => repo root), so
-    the result lands in ``<home>/Result/<name>.txt``.
+    Walnut reads/writes relative to its home (where ``Result/`` lives). The home is
+    ``$LEIBNIZ_WALNUT_HOME`` if set, else derived from the jar assuming the standard
+    ``<home>/build/libs/Walnut-all.jar`` layout — and if the jar is NOT in that layout we
+    DEFER (return None) rather than guess a wrong cwd (ADR 0037 §7 hardening; sound — a
+    misconfigured path becomes an explicit DEFER, never a wrong/stale read).
     """
     if not _safe_walnut_inputs(predicate, numeration):
         return None  # untrusted input could inject a Walnut command -> DEFER
@@ -267,7 +284,9 @@ def _default_runner(predicate: str, numeration: str, *, timeout: float = 120.0) 
     jar_path = Path(jar)
     if not jar_path.exists():
         return None
-    home = jar_path.resolve().parent.parent.parent  # build/libs/Walnut-all.jar -> repo root
+    home = _walnut_home(jar_path)
+    if home is None:
+        return None  # cannot locate Walnut's home / Result dir reliably -> DEFER
     name = "leibniz_faith"
     program = f'eval {name} "?{numeration} {predicate}";\nexit;\n'
     result = home / "Result" / f"{name}.txt"
