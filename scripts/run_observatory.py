@@ -54,10 +54,14 @@ def run_observatory(conjecturer: WalnutConjecturer, count: int, out_path: Path) 
     """Generate + decide `count` claims; persist the ledger; return a summary. Pure given the
     injected conjecturer (so it is unit-testable without live LLM/Walnut)."""
     records, counts = [], Counter()
+    sample_failure = None  # diagnostics: first unusable-proposal reason (provider error or raw draft)
     for _ in range(count):
         prop = conjecturer.generate_and_decide()
         if prop is None:
             counts["no_proposal"] += 1
+            if sample_failure is None:
+                sample_failure = conjecturer.last_error or ((conjecturer.last_draft or "")[:400]
+                                                            or "(empty draft)")
             continue
         counts[prop.finish_reason.value if prop.finish_reason else "none"] += 1
         records.append(_record(prop))
@@ -66,7 +70,8 @@ def run_observatory(conjecturer: WalnutConjecturer, count: int, out_path: Path) 
     out_path.write_text(json.dumps({"count": count, "by_reason": dict(counts),
                                     "records": records}, indent=2))
     return {"count": count, "by_reason": dict(counts),
-            "decided": counts.get(FinishReason.WALNUT_DECIDED.value, 0), "ledger": str(out_path)}
+            "decided": counts.get(FinishReason.WALNUT_DECIDED.value, 0),
+            "sample_failure": sample_failure, "ledger": str(out_path)}
 
 
 def main() -> int:
@@ -91,6 +96,10 @@ def main() -> int:
     for reason, n in sorted(summary["by_reason"].items()):
         print(f"    {reason:<16} {n}")
     print(f"  ledger -> {summary['ledger']}")
+    if summary.get("by_reason", {}).get("no_proposal") and summary.get("sample_failure"):
+        # diagnostics: show WHY proposals were unusable (provider error or a raw-draft sample)
+        print("\n  [diag] a sample unusable proposal (provider error or raw draft):")
+        print("  " + str(summary["sample_failure"]).replace("\n", "\n  "))
     if summary["decided"]:
         print("  NEXT: blind-novelty panel (ADR 0034 §5) on the DECIDED records — trigger 1/2 "
               "for the kernel bridge (task #54). These are NOT Q.E.D. (decided by Walnut, "

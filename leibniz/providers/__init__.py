@@ -150,6 +150,30 @@ AUTOFORMALIZE_PROMPTS = {
         "Draft a Lean 4 tactic script proving this statement. Return ONLY the script "
         "starting with `by`:\n{context}"
     ),
+    # ADR 0038: a claim for the Walnut-decided tier. This is NOT a Lean contract — it is a
+    # first-order formula over a k-automatic sequence that Walnut decides over UNBOUNDED n.
+    Role.WALNUT_CONJECTURE: (
+        "Propose ONE genuinely NON-textbook conjecture about a k-AUTOMATIC SEQUENCE, "
+        "expressible as a first-order formula with EXACTLY ONE free variable n over a "
+        "numeration Walnut decides (msd_2, msd_fib, msd_trib). Good built-in sequences: "
+        "Thue-Morse T, Rudin-Shapiro RS, paperfolding P, Fibonacci word F, Tribonacci TR. "
+        "AVOID first-year facts; aim for properties proved with Walnut in the Shallit-group "
+        "literature: power-/overlap-freeness, factor/subword structure, appearance, or "
+        "additive properties. The formula must be TRUE for ALL n (the tier decides "
+        "universality over unbounded n; a false one is REFUTED).\n"
+        "WALNUT SYNTAX for walnut_predicate (n is the ONLY free variable): quantifiers "
+        "`E i` / `A i` (and `E i,p` / `A i,p` to bind several); boolean `&` `|` `~` `=>`; "
+        "comparisons `< <= = != >= >`; ADDITION ONLY between variables (NO `i*p`; write 3*p "
+        "as p+p+p); index a sequence as `T[i+p]`; test a value as `T[i]=@0`. Do NOT put "
+        "double-quotes, semicolons, or newlines inside walnut_predicate.\n"
+        "Example (FORMAT only — Thue-Morse is overlap-free): walnut_numeration = \"msd_2\", "
+        "walnut_predicate = \"A i,p (p>=1) => (E t (t<3*p) & T[i+t] != T[i+t+p])\". "
+        "Treat this as the SHAPE, not a claim to resubmit; vary the sequence/property.\n"
+        "Context: {context}\n"
+        'Return JSON: {{"statement": <plain-English claim>, '
+        '"walnut_predicate": <FO formula in n, per the syntax above>, '
+        '"walnut_numeration": <e.g. msd_2>, "falsifiable_claim": <what would refute it>}}'
+    ),
 }
 
 
