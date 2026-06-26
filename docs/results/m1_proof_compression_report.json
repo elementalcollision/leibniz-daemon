@@ -1,0 +1,227 @@
+{
+  "corpus_size_distinct": 47,
+  "arms": [
+    [
+      [
+        "B"
+      ],
+      21
+    ],
+    [
+      [
+        "A"
+      ],
+      9
+    ],
+    [
+      [
+        "SA"
+      ],
+      9
+    ],
+    [
+      [
+        "SA",
+        "SA"
+      ],
+      2
+    ],
+    [
+      [
+        "A",
+        "SA"
+      ],
+      1
+    ],
+    [
+      [
+        "A",
+        "B",
+        "B",
+        "SA"
+      ],
+      1
+    ],
+    [
+      [
+        "A",
+        "B",
+        "B"
+      ],
+      1
+    ],
+    [
+      [
+        "A",
+        "B"
+      ],
+      1
+    ],
+    [
+      [
+        "SA",
+        "SA",
+        "SA"
+      ],
+      1
+    ],
+    [
+      [
+        "SA",
+        "SA",
+        "SA",
+        "SA",
+        "SA"
+      ],
+      1
+    ]
+  ],
+  "statement_level": {
+    "n_laws": 47,
+    "schema_histogram": {
+      "POW_MOD::a^n % m \u2208 S": 8,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [2, 1]]": 7,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [2]]": 6,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4, 2]]": 4,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [3, 1]]": 4,
+      "OTHER": 4,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [2, 0]]": 3,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4, 3, 2]]": 2,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4, 2, 0]]": 2,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4, 0]]": 2,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [2, 1, 0]]": 2,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4]]": 1,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [4, 3, 2, 1]]": 1,
+      "POLY_MOD::P(n) % m \u2208 S [degree-set [3, 1, 0]]": 1
+    },
+    "family_histogram": {
+      "POLY_MOD": 35,
+      "POW_MOD": 8,
+      "OTHER": 4
+    },
+    "dominant_family": [
+      "POLY_MOD",
+      35
+    ],
+    "dl_raw_tokens": 1580,
+    "dl_compressed_tokens": 768,
+    "compression_ratio": 0.4861,
+    "n_unparsed_OTHER": 4
+  },
+  "proof_compression_full": {
+    "dl_joined_bytes": 2258,
+    "dl_sum_independent_bytes": 7292,
+    "order0_entropy_floor_bytes": 3242.3,
+    "cross_proof_gain": 2.2294,
+    "joined_vs_sum_ratio": 0.3097,
+    "structure_vs_floor_gain": 0.4359
+  },
+  "proof_compression_stripped": {
+    "dl_joined_bytes": 1790,
+    "dl_sum_independent_bytes": 5041,
+    "order0_entropy_floor_bytes": 2469.1,
+    "cross_proof_gain": 1.8162,
+    "joined_vs_sum_ratio": 0.3551,
+    "structure_vs_floor_gain": 0.3794
+  },
+  "proof_compression_raw": {
+    "dl_joined_bytes": 2915,
+    "dl_sum_independent_bytes": 7513,
+    "order0_entropy_floor_bytes": 3698.6,
+    "cross_proof_gain": 1.5774,
+    "joined_vs_sum_ratio": 0.388,
+    "structure_vs_floor_gain": 0.2688
+  },
+  "leave_dominant_cluster_out": {
+    "n_remaining": 25,
+    "cross_proof_gain": 1.5857,
+    "joined_vs_sum_ratio": 0.3867
+  },
+  "cross_genre_help": {
+    "n_poly": 35,
+    "n_pow": 8,
+    "cross_genre_help_fraction": 0.0697
+  },
+  "descriptive_clusters_full": {
+    "n_proofs": 47,
+    "n_clusters": 11,
+    "cluster_sizes": [
+      22,
+      6,
+      5,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1
+    ],
+    "largest_cluster": 22,
+    "top3_coverage": 0.7021
+  },
+  "cluster_threshold_curve": {
+    "0.70": 38,
+    "0.85": 22,
+    "0.90": 10,
+    "0.95": 6
+  },
+  "top_proof_macros": [
+    {
+      "size": 22,
+      "member_hashes": [
+        "29de6e63f6",
+        "651ad1f5a2",
+        "57ea965a80",
+        "33130c7d28",
+        "d3a12e8acc",
+        "c14804b182"
+      ],
+      "shared_core_preview": "by have <H> : n % <N> = <N> n % <N> = <N> n % <N> = <N> n % <N> = <N> : = by have <H> : n % <N> = <N> n % <N> = <N>",
+      "example_proof": "by\n  have h : n % 4 = 0 \u2228 n % 4 = 1 \u2228 n % 4 = 2 \u2228 n % 4 = 3 := by omega\n  have hn : n % 8 = 0 \u2228 n % 8 = 1 \u2228 n % 8 = 2 \u2228 n % 8 = 3 \u2228 n % 8 = 4 \u2228 n % 8 = 5 \u2228 n % 8 = 6 \u2228 n % 8 = 7 := by omega\n  have : (n^2 * (n+1)^2) % 8 = ((n % 8)^2 * ((n % 8 + 1)^2)) % 8 := by\n    conv_lhs => rw [\u2190 Nat.mod_add_div n",
+      "example_statement": "(n^2 * (n+1)^2) % 8 == 0 or (n^2 * (n+1)^2) % 8 == 4"
+    },
+    {
+      "size": 6,
+      "member_hashes": [
+        "fb54c30e92",
+        "8f088c7d4b",
+        "f004c1749c",
+        "f5ea8874ea",
+        "69c9ecb71e",
+        "41e73ed1ba"
+      ],
+      "shared_core_preview": "by <V> : = n % <N> <V> : = n <N> have <H> : n = <V> <N> <V> : = by [ <V> <V> ] ( n <N> ) have <H> : <V> < <N> : = by",
+      "example_proof": "by\n  let r := n % 8\n  let k := n / 8\n  have hn : n = r + 8 * k := by\n    dsimp [r, k]\n    exact (Nat.mod_add_div n 8).symm\n  have hr : r < 8 := by\n    dsimp [r]\n    exact Nat.mod_lt n (by norm_num)\n  interval_cases r <;> rw [hn] <;> ring_nf <;> omega",
+      "example_statement": "(n^4 + 2*n^2 + 1) % 8 == 0 or (n^4 + 2*n^2 + 1) % 8 == 1 or (n^4 + 2*n^2 + 1) % 8 == 4"
+    },
+    {
+      "size": 5,
+      "member_hashes": [
+        "1f538dd3c5",
+        "525b140609",
+        "bd757909a5",
+        "6cd9076a5c",
+        "c4fa1e904b"
+      ],
+      "shared_core_preview": "by have <H> : n % <N> = <N> n % <N> = <N> : = by <H> <H> <H> <V> : <V> n = <N> * <V> : = n <N> by <V> : <V> n = <N> *",
+      "example_proof": "by\n  have h : n % 2 = 0 \u2228 n % 2 = 1 := by omega\n  rcases h with h | h\n  \u00b7 left\n    obtain \u27e8k, rfl\u27e9 : \u2203 k, n = 2 * k := \u27e8n / 2, by omega\u27e9\n    ring_nf\n    omega\n  \u00b7 right\n    obtain \u27e8k, rfl\u27e9 : \u2203 k, n = 2 * k + 1 := \u27e8n / 2, by omega\u27e9\n    have key : (2 * k + 1)^4 = 16 * (k^4 + 2*k^3 + k^2) + 8*k^2 + 8*k",
+      "example_statement": "(n^4) % 16 == 0 or (n^4) % 16 == 1"
+    }
+  ],
+  "verdict": {
+    "statement_compression_ratio": 0.4861,
+    "cross_proof_gain_full": 2.2294,
+    "cross_proof_gain_raw_unabstracted": 1.5774,
+    "cross_proof_gain_stripped": 1.8162,
+    "structure_vs_order0_floor_gain": 0.4359,
+    "leave_dominant_cluster_out_gain": 1.5857,
+    "cross_genre_help_fraction": 0.0697,
+    "kill_fires": false,
+    "mechanism_viable": true,
+    "robust_to_leave_one_cluster_out": true,
+    "is_floor_not_ceiling": true,
+    "summary": "ALIVE (mechanism viable; KILL does not fire): genuine cross-proof dictionary sharing, survives boilerplate-strip and leave-dominant-cluster-out, beats the order-0 entropy floor. A real reusable macro exists. NOTE: this is a FLOOR on mining viability, not a ceiling \u2014 a syntactic compressor is blind to cross-genre/semantic abstraction (see cross_genre_help \u2248 0). Whether the macro is NOVEL or the textbook genre is the \u00a710.4 question the compressor cannot answer; read top_proof_macros (here: textbook)."
+  }
+}
