@@ -203,11 +203,19 @@ round 3 returned **safe_to_merge, 0 blocking, no laundering paths**. Both reprod
 the renderer are honestly placed in the **faithfulness** TCB (like Z3); the proof-edge TCB (Lean kernel)
 is untouched; `tests/test_invariants.py` byte-identical.
 
-**MUST-DO BEFORE THE OPERATOR ENABLES IT** (each errs to DEFER today — sound, but the PASS path is
-validated only on synthetic fixtures): (1) **validate the PASS path against a real Walnut predicate-
-automaton `Result/*.txt`** and extend the parser/alphabet to the live label format (it may use bracketed
-labels `[0],[1]` + a `{…}` header my parser does not yet model → currently DEFERs); (2) **prop-binding**
-— a partial numeration-match seam is in; tighten the deeper automaton↔claim binding or accept it as the
-documented Walnut+renderer TCB; (3) **runner home derivation** hardening (`$LEIBNIZ_WALNUT_HOME`). Until
-(1) is done, the live backend is sound but non-functional (DEFERs real output), so enabling it changes
-nothing until validated — which is the safe order.
+**Output-format validation — DONE.** The parser was validated against the Walnut serializer *source*
+(`Automata/Automaton.java::write`/`writeAlphabet`/`writeState`): a TRUE/FALSE result is the literal
+token; otherwise the header is the numeration name (`msd_2`), each state is `<q> <output>`, and each
+transition is `<digit> -> <dest>` with **bare** space-separated digits (the reviewers' "bracketed
+`[0],[1]`" concern was a misread — brackets are a separate display path, not the `.txt` writer). Our
+parser matches this for the single-track numeration agreement automaton (confirmed also by the real
+`Word Automata Library/T.txt`); multi-track/set-alphabet/NFA cases DEFER (sound). A regression test
+(`test_parses_real_walnut_serializer_format`) pins the exact byte-format. Reading the serializer covers
+every case, so it is a stronger check than a single live sample.
+
+**STILL MUST-DO BEFORE THE OPERATOR ENABLES IT** (each errs to DEFER — sound): (1) **prop-binding** — a
+partial numeration-match seam is in (`check` DEFERs on a numeration mismatch); the deeper automaton↔claim
+binding remains the documented Walnut+renderer TCB; (2) **runner home derivation** hardening
+(`$LEIBNIZ_WALNUT_HOME`). With the format validated, the live backend now classifies real single-track
+output correctly — so once the operator registers it + the re-checker, a genuine universal agreement
+automaton will PASS (and a non-universal one FAIL), rather than DEFERring everything.
