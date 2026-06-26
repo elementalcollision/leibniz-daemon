@@ -276,16 +276,26 @@ def _default_runner(predicate: str, numeration: str, *, timeout: float = 120.0) 
     misconfigured path becomes an explicit DEFER, never a wrong/stale read).
     """
     if not _safe_walnut_inputs(predicate, numeration):
+        _walnut_dbg(f"input rejected by sanitizer (injection chars / bad numeration): "
+                    f"?{numeration} {predicate[:80]}")
         return None  # untrusted input could inject a Walnut command -> DEFER
     jar = os.environ.get("LEIBNIZ_WALNUT_JAR")
     java = shutil.which("java")
-    if not jar or java is None:
+    if not jar:
+        _walnut_dbg("LEIBNIZ_WALNUT_JAR is unset")
+        return None
+    if java is None:
+        _walnut_dbg("`java` not found on PATH")
         return None
     jar_path = Path(jar)
     if not jar_path.exists():
+        _walnut_dbg(f"jar not found at {jar_path} (is this the right path? e.g. "
+                    f"<walnut>/build/libs/Walnut-all.jar)")
         return None
     home = _walnut_home(jar_path)
     if home is None:
+        _walnut_dbg(f"could not resolve Walnut home from {jar_path} — set $LEIBNIZ_WALNUT_HOME "
+                    f"or place the jar in <home>/build/libs/")
         return None  # cannot locate Walnut's home / Result dir reliably -> DEFER
     name = "leibniz_faith"
     program = f'eval {name} "?{numeration} {predicate}";\nexit;\n'
@@ -312,17 +322,24 @@ def _default_runner(predicate: str, numeration: str, *, timeout: float = 120.0) 
         return None
 
 
+def _walnut_dbg(msg: str) -> None:
+    """Print one diagnostic line under LEIBNIZ_WALNUT_DEBUG (stderr). Diagnostics only — every
+    call site still returns a sound DEFER; this never affects a verdict."""
+    if os.environ.get("LEIBNIZ_WALNUT_DEBUG"):
+        import sys
+        print(f"[walnut-debug] {msg}", file=sys.stderr)
+
+
 def _walnut_debug(predicate: str, numeration: str, rc: int, out: str, err: str) -> None:
     """When LEIBNIZ_WALNUT_DEBUG is set, print why a run produced no usable result (Walnut's
     own stderr/stdout — e.g. a predicate syntax error) so the prompt/syntax can be tuned.
     Diagnostics only; never affects the verdict (a failed run is always a sound DEFER)."""
     if not os.environ.get("LEIBNIZ_WALNUT_DEBUG"):
         return
-    import sys
     tail = (err or out or "").strip().splitlines()[-8:]
-    print(f"[walnut-debug] rc={rc} ?{numeration} {predicate}", file=sys.stderr)
+    _walnut_dbg(f"rc={rc} ?{numeration} {predicate}")
     for ln in tail:
-        print(f"[walnut-debug]   {ln}", file=sys.stderr)
+        _walnut_dbg(f"  {ln}")
 
 
 @dataclass
