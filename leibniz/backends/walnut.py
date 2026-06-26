@@ -29,21 +29,25 @@ operator opts in by constructing the gate with this backend AND registering
 cannot accept a PASS of this kind — the dormant default is safe). The real subprocess
 runner DEFERs whenever Walnut is absent or errors, so an unconfigured environment is sound.
 
-MUST-DO BEFORE ENABLING (the slice is SOUND off-by-default — these are
-correctness/utility gaps that keep the PASS path from firing, or harden it, when wired on;
-each errs toward DEFER today, never a false PASS):
-  1. **Validate the PASS path against a REAL Walnut predicate-automaton `Result/*.txt`.**
-     The universal/PASS path is exercised only by synthetic fixtures here; the live
-     eval-result label format is unconfirmed (it may use bracketed labels `[0],[1]` and a
-     `{...}` alphabet header that `_alphabet`/`parse_walnut_automaton` do not yet model, in
-     which case genuine output classifies as `indeterminate` => DEFER). Run a free-variable
-     agreement eval, capture the Result file, and extend the parser/alphabet to match it.
-  2. **Prop-binding:** the gate's re-checker verifies the certificate automaton is
-     *universal* but not that it is the agreement automaton for THIS claim. Add a seam so a
-     universal automaton whose numeration disagrees with `prop.expressio.walnut_numeration`
-     DEFERs (closes the "universal automaton for the wrong claim" sub-case; the deeper
-     automaton<->claim binding remains the documented Walnut+renderer TCB).
-  3. **Runner home derivation:** `$LEIBNIZ_WALNUT_JAR` is assumed to live in `build/libs/`;
+FORMAT VALIDATED against the Walnut serializer source (`Automata/Automaton.java::write` /
+`writeAlphabet` / `writeState`, Walnut commit pinned in the probe): a TRUE/FALSE result is
+the literal token; otherwise the header is the numeration name (``msd_2``) for a numeration
+track (or ``{0, 1}`` for a set alphabet), each state is ``<q> <output>``, and each
+transition is ``<digit(s)> -> <dest>`` with **bare space-separated digits** — NOT bracketed
+``[0]`` labels (the brackets in Walnut are a separate display path, not the `.txt` writer).
+`parse_walnut_automaton` matches this for the single-track numeration case (our agreement
+automaton over one free variable n under ``?msd_k``); multi-track headers, set-alphabet
+headers, and NFA multi-dest lines fall to the malformed/unknown-alphabet path => DEFER
+(sound). `test_walnut_backend_r0037.py::test_parses_real_walnut_serializer_format` pins the
+exact byte-format. (Reading the serializer covers every case, so it is a stronger check than
+one live sample; a live eval can still triple-confirm but is not required.)
+
+STILL MUST-DO BEFORE ENABLING (sound off-by-default; each errs toward DEFER, never a false
+PASS):
+  1. **Prop-binding (partial seam present):** the gate's re-checker verifies the certificate
+     automaton is *universal* and `check` already DEFERs on a numeration mismatch, but the
+     deeper automaton<->claim binding remains the documented Walnut+renderer TCB.
+  2. **Runner home derivation:** `$LEIBNIZ_WALNUT_JAR` is assumed to live in `build/libs/`;
      accept `$LEIBNIZ_WALNUT_HOME` or assert the ancestry and DEFER otherwise.
 """
 from __future__ import annotations
