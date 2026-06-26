@@ -10,7 +10,7 @@ Needs creds in .env (the CONJECTURE model) AND a built Walnut, located via env:
     export LEIBNIZ_WALNUT_HOME=/abs/path/to/Walnut
 
 Run:
-    python scripts/run_observatory.py [count] [out.json]
+    python3 scripts/run_observatory.py [count] [out.json]
 
 Without LEIBNIZ_WALNUT_JAR the runner DEFERs every claim (=> all UNPROVEN) — sound, but
 nothing is decided; the script warns up front.
