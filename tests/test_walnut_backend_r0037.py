@@ -16,6 +16,7 @@ from leibniz.backends.walnut import (
     WALNUT_CERT_KIND,
     WalnutBackend,
     automaton_is_universal,
+    classify_agreement,
     parse_walnut_automaton,
     recheck_walnut_certificate,
 )
@@ -54,6 +55,24 @@ def test_parse_structured_automaton():
 def test_parse_garbage_is_not_parsed_ok():
     assert parse_walnut_automaton("not an automaton").parsed_ok is False
     assert parse_walnut_automaton("").parsed_ok is False
+
+
+# Exact byte-format Walnut's Automaton.write()/writeAlphabet/writeState emit: numeration
+# header, then per state a leading blank line, "<q> <output>", and "<digit> -> <dest>" lines
+# with BARE digits (not bracketed). This pins our parser to the real serializer.
+_REAL_UNIVERSAL = "msd_2\n\n0 1\n0 -> 0\n1 -> 1\n\n1 1\n0 -> 0\n1 -> 1\n"
+_REAL_REFUTED = "msd_2\n\n0 1\n0 -> 0\n1 -> 1\n\n1 0\n0 -> 0\n1 -> 1\n"
+
+
+def test_parses_real_walnut_serializer_format():
+    a = parse_walnut_automaton(_REAL_UNIVERSAL)
+    assert a.numeration == "msd_2"
+    assert a.states == {0: 1, 1: 1}
+    assert a.trans == {0: {"0": 0, "1": 1}, 1: {"0": 0, "1": 1}}
+    assert a.parsed_ok and a.deterministic
+    # multi-state universal / refuted both classify correctly in the real format
+    assert classify_agreement(parse_walnut_automaton(_REAL_UNIVERSAL)) == "universal"
+    assert classify_agreement(parse_walnut_automaton(_REAL_REFUTED)) == "refuted"
 
 
 # --- universality (the real structural check) -------------------------------
