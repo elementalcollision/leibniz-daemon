@@ -26,7 +26,30 @@ from leibniz.types import ClaimType, Role
 # A LIGHT steering context. The full schema + Walnut syntax live in the shared
 # Role.WALNUT_CONJECTURE prompt template (leibniz/providers/__init__.py), so they cannot drift
 # across providers (the ADR 0013 shared-prompt discipline). This is just per-call variation.
-WALNUT_SEED = "Vary the sequence and the property from any you have proposed before."
+WALNUT_SEED = (
+    "Propose a NON-textbook, plausibly-TRUE automatic-sequence conjecture. A FALSE claim is "
+    "mechanically refuted and wastes the run, and a claim duplicating an earlier one is wasted "
+    "too — aim for a property you believe holds for ALL n yet is not a first-year fact."
+)
+
+# Anti-collapse ROTATION (run-2 finding: 20/20 calls produced the *same* RS-4th-power-free claim
+# because each call saw only a static seed with no memory). We steer breadth across the
+# lint-checkable words × families so successive proposals cannot all collapse onto one idea.
+# Paperfolding is omitted (the lint cannot anchor it yet ⇒ it would only quarantine).
+WALNUT_WORDS = ("Thue-Morse T", "Rudin-Shapiro RS", "Fibonacci word F", "Tribonacci TR")
+WALNUT_FAMILIES = (
+    "power-freeness — choose an exponent e in 2..6 you believe HOLDS (e.g. cube-free, 5th-power-free)",
+    "avoiding a specific short block — choose a concrete block over the sequence's own alphabet",
+    "no strictly-alternating factor of a chosen length L",
+)
+
+
+def _rotation_target(i: int) -> str:
+    """A breadth steer for call ``i``: word cycles fastest, family every len(WALNUT_WORDS)."""
+    w = WALNUT_WORDS[i % len(WALNUT_WORDS)]
+    f = WALNUT_FAMILIES[(i // len(WALNUT_WORDS)) % len(WALNUT_FAMILIES)]
+    return (f"For THIS proposal, target sequence: {w}; property family: {f}. "
+            "This is a breadth STEER, not a hard constraint — but do vary genuinely.")
 
 
 def parse_walnut_claim(draft: str) -> Optional[Propositio]:
@@ -70,25 +93,57 @@ class WalnutConjecturer:
     # Diagnostics for the most recent generate() (so a silent all-fail run is debuggable):
     last_draft: Optional[str] = None     # the raw provider draft (None if the provider errored)
     last_error: Optional[str] = None     # the provider exception text, if any
+    # Anti-collapse SESSION MEMORY: each proposal's (statement, outcome) so the next call's
+    # context can say "do not repeat these" and "this one was refuted". `call_index` drives the
+    # breadth rotation. Proposal-side only — no trust state lives here.
+    history: list[dict] = field(default_factory=list)
+    call_index: int = 0
 
-    def generate(self, context: str = WALNUT_SEED) -> Optional[Propositio]:
+    def _build_context(self) -> str:
+        """The dynamic per-call steer: base seed + a rotating (word, family) target + the
+        session avoid-list (prior statements and how they were decided)."""
+        parts = [WALNUT_SEED, _rotation_target(self.call_index)]
+        if self.history:
+            avoid = "\n".join(f"  - {h['statement']} -> {h['outcome']}" for h in self.history[-12:])
+            parts.append(
+                "You have ALREADY proposed these THIS SESSION — do NOT repeat or trivially reword "
+                "any (especially the ones marked refuted/unproven); choose a genuinely different "
+                "sequence and/or property:\n" + avoid)
+        return "\n".join(parts)
+
+    def _remember(self, statement: Optional[str], outcome: str) -> None:
+        self.history.append({"statement": (statement or "(unparseable draft)")[:100],
+                             "outcome": outcome})
+
+    def generate(self, context: Optional[str] = None) -> Optional[Propositio]:
         """Propose ONE automatic-sequence claim via Role.WALNUT_CONJECTURE (proposal only;
-        nothing decided yet). Records last_draft/last_error so a parse/provider failure is
-        visible rather than a silent None."""
+        nothing decided yet). Builds an anti-collapse context (rotation + session avoid-list)
+        unless an explicit ``context`` is supplied. Records last_draft/last_error so a
+        parse/provider failure is visible rather than a silent None, and appends to ``history``."""
         self.last_draft = self.last_error = None
+        ctx = context if context is not None else self._build_context()
+        self.call_index += 1
         try:
-            draft = self.provider.propose(Role.WALNUT_CONJECTURE, context)
+            draft = self.provider.propose(Role.WALNUT_CONJECTURE, ctx)
         except Exception as e:  # a proposal failure must never break the caller
             self.last_error = f"{type(e).__name__}: {e}"
+            self._remember(None, "no_proposal")
             return None
         self.last_draft = draft
-        return parse_walnut_claim(draft)
+        prop = parse_walnut_claim(draft)
+        self._remember(prop.enuntiatio.statement if prop else None,
+                       "proposed" if prop else "no_proposal")
+        return prop
 
-    def generate_and_decide(self, context: str = WALNUT_SEED) -> Optional[Propositio]:
+    def generate_and_decide(self, context: Optional[str] = None) -> Optional[Propositio]:
         """Propose, then DECIDE via Walnut (the non-Q.E.D. tier). Returns the filed Propositio,
-        or ``None`` if the proposal was unusable. The decision/soundness is the Observatory's
-        job (reviewed); this only routes a proposed claim to it."""
+        or ``None`` if the proposal was unusable. Records the decision outcome back into
+        ``history`` so the next proposal's avoid-list shows what was refuted/decided. The
+        decision/soundness is the Observatory's job (reviewed); this only routes to it."""
         prop = self.generate(context)
         if prop is None:
             return None
-        return self.observatory.decide(prop)
+        out = self.observatory.decide(prop)
+        if self.history:  # thread the outcome back so future calls avoid refuted ideas
+            self.history[-1]["outcome"] = out.finish_reason.value if out.finish_reason else "unknown"
+        return out
