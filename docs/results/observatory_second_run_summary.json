@@ -1,0 +1,75 @@
+{
+  "what": "Observatory run-2 (lint-on) summary \u2014 the lint's first live validation + conjecturer mode-collapse diagnosis",
+  "run": {
+    "count": 20,
+    "by_reason": {
+      "refuted": 18,
+      "unproven": 2
+    },
+    "reason_histogram": {
+      "refuted_sentence": 18,
+      "lint_counterexample": 2
+    }
+  },
+  "lint_validation": {
+    "decided_true_caught_by_lint": 2,
+    "false_decided_records_filed": 0,
+    "catches": [
+      {
+        "pid": "b51f947b",
+        "predicate": "A i,p (p>=1) => (E t (t<3*p+1) & RS[i+t] != RS[i+t+p])",
+        "descriptor": {
+          "family": "power_free",
+          "word": "RS",
+          "exponent": 4
+        },
+        "counterexample": {
+          "kind": "power",
+          "exponent": 4,
+          "start": 7,
+          "period": 1,
+          "factor": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "pid": "36d5c951",
+        "predicate": "A i,p (p>=1) => (E t (t<3*p+p) & RS[i+t] != RS[i+t+p])",
+        "descriptor": {
+          "family": "power_free",
+          "word": "RS",
+          "exponent": 4
+        },
+        "counterexample": {
+          "kind": "power",
+          "exponent": 4,
+          "start": 7,
+          "period": 1,
+          "factor": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "verdict": "lint caught 2/2 live faithfulness artifacts (the run-1 d4a4d22b class); 0 false DECIDED filed"
+  },
+  "walnut_refutations": {
+    "refuted_sentence": 18,
+    "note": "conjecturer proposed the false 'RS 4th-power-free' as closed sentences; Walnut soundly refuted"
+  },
+  "conjecturer_diagnosis": {
+    "distinct_descriptors_across_run": 1,
+    "mode_collapse": "20/20 claims identical (RS power_free exponent 4) \u2014 a single FALSE textbook-misconception",
+    "root_cause": "generate() used a static seed with no cross-call memory; WALNUT_SEED 'vary from before' could not bite",
+    "binding_constraint": "conjecturer diversity + correctness (NOT the trust machinery, NOT prover reach)"
+  },
+  "fix_applied": "anti-collapse steering: session avoid-list (statement+outcome) + (word x family) rotation + true-not-false steer (proposal-side; no trust impact)",
+  "packet": "EMPTY (0 decided => nothing to screen); kernel-bridge trigger-1 UNMET"
+}
