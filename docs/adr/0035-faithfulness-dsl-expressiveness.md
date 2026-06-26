@@ -1,9 +1,10 @@
 # ADR 0035 — Faithfulness-DSL expressiveness: widening what the gate can soundly state and decide
 
 **Status:** Accepted & measured — Stage A built, A/B-measured, then KILLED as a novelty lever
-(kept opt-in/default-off as a sound yield-of-order-facts lever). See §7 for the measured outcome.
-The decisive finding: the novelty ceiling is the **bounded-mechanical-faithfulness model**, not the
-DSL grammar and not the proposer. Successor to ADR 0030 (bounded definitional encodings) and
+(kept opt-in/default-off as a sound yield-of-order-facts lever). See §7 for the measured outcome,
+and **§7.1 for a correction** (after a 5-model external review): the novelty ceiling is Leibniz's
+**pointwise bounded-box faithfulness *test*** (not the proposer, not the grammar) — but **not**
+mechanical trust in general; the sound escape is *proof-carrying faithfulness* (ADR 0036). Successor to ADR 0030 (bounded definitional encodings) and
 ADR 0034 (conjecturer-side novelty, §12 finding).
 **Date:** 2026-06-25
 **Trust boundary:** untouched, and that is the design's central constraint. `kernel_verified` is
@@ -258,3 +259,28 @@ weakens the very guarantee the project exists for), or a different notion of "di
 "a kernel-checked promulgated law." That is the honest frontier, and it is a research question, not
 an engineering ticket. Stage B (recurrence/Pisano) is **not built** — it would only re-confirm the
 same ceiling in a third genre.
+
+### 7.1 Correction (2026-06-25) — the §7 finding over-generalized; the wall is the *test*, not mechanical trust
+
+An independent five-model external review (Fugu, DeepSeek V4 Pro, Kimi, GLM 5.2, Gemini 3.5 Thinking;
+`docs/external-review-novelty-frontier.md`) **unanimously** flagged that §7's phrasing
+("the bounded-mechanical-faithfulness model itself … caps the daemon by construction") over-reaches.
+The precise, defensible claim — which **supersedes** the "bounded-mechanical faithfulness / the model
+itself caps novelty" framing wherever it appears above (§4, §6, §7):
+
+- **The measured result stands.** Leibniz *as built* — a *pointwise, bounded-box* `[0,64]`
+  faithfulness linter over a tiny arithmetic DSL, used as the *sole* faithfulness test — is capped at
+  elementary/local facts (proved twice, blind-measured).
+- **But "bounded-mechanical faithfulness caps novelty" is false as a general law.** Bounded *trust*
+  (a small checker) ≠ bounded *domain* (a small evaluation box). A small kernel can check arbitrarily
+  deep proofs — four-colour, Kepler/Flyspeck, Feit–Thompson, Robbins (auto-proved, not trivial),
+  Boolean-Pythagorean (a vast SAT certificate). The wall is the *pointwise bounded-box linter*, not
+  mechanical trust, and not the kernel.
+- **The sound escape (→ ADR 0036): proof-carrying faithfulness.** Keep `Q.E.D.` brutally formal, but
+  make the faithfulness *earner* a kernel/CAS-checked **certificate** of the statement↔claim
+  correspondence — including **exact, unbounded** classes (polynomial-identity / Gröbner). Bounded Z3
+  stays as cheap *lint*. The residual 3-body gap then relocates to **validation** (human-intent →
+  formalized-claim) — irreducible, but auditable, and the correct place for it. So genuine novelty
+  requires leaving the bounded-box *linter*, **not** the trust boundary. (Honest caveat: this removes
+  the *expressiveness* ceiling soundly; whether it yields *blind-novel* results is unmeasured and
+  must be tested, per ADR 0036's pre-registered kill.)

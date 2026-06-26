@@ -68,10 +68,20 @@ Two independent levers — the proposer's *source* and the contract *language* �
 it was built to do, and each produced **zero** genuine novelty. That triangulates the answer, and it
 is not the obvious one:
 
-> The bottleneck is neither the proposer nor the grammar. It is the **trust model itself.** A daemon
-> that promulgates only what it can mechanically check for faithfulness over a bounded box *and*
-> automatically prove is, by that very discipline, confined to elementary, textbook mathematics. The
-> honesty that makes the Codex trustworthy is the same constraint that caps what it can discover.
+> The bottleneck is neither the proposer nor the grammar. It is the faithfulness **test** —
+> specifically, a *pointwise, bounded-box* check (is there a counterexample in a small window?) used
+> as the sole arbiter of whether a formal statement means what was claimed. That kind of test can
+> only certify locally-checkable, elementary facts. It is **not** a limit of mechanical trust as
+> such: a small trusted kernel can check arbitrarily deep proofs — the four-colour theorem, Kepler's
+> conjecture, and Feit–Thompson were all machine-verified. **Bounded *trust* is not bounded *truth*.**
+> The honest escape keeps `Q.E.D.` brutally formal but lets the faithfulness evidence be a checkable
+> *certificate* — including exact, *unbounded* algebraic ones — instead of a bounded sample; the
+> genuine wall then moves to where it belongs: not "is it true?" (the kernel settles that) but "does
+> the formal statement match human intent?" — a *validation* question, audited, never hidden.
+
+*(Refined 2026-06-25 after an independent five-model external review — see the project's
+external-review reference. The first draft of this finding over-generalized "bounded-box check" to
+"mechanical trust"; the corrected claim is above.)*
 
 This is worth stating plainly because it is a *measured* result, not a hunch. We did not conclude
 "novelty is hard." We changed the two things most people would change, measured both against a blind
