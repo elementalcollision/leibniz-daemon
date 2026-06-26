@@ -219,3 +219,59 @@ binding remains the documented Walnut+renderer TCB; (2) **runner home derivation
 (`$LEIBNIZ_WALNUT_HOME`). With the format validated, the live backend now classifies real single-track
 output correctly — so once the operator registers it + the re-checker, a genuine universal agreement
 automaton will PASS (and a non-universal one FAIL), rather than DEFERring everything.
+
+---
+
+## 8. Backend #2 (SOS / Positivstellensatz) reachability gate — AMBER
+
+The §4 measure-before-build gate for the **walk** rung is run. Full record:
+`docs/results/sos_walk_rung_probe_report.json` (4-dimension probe + synthesis, run `whha16dx0`).
+
+**Composite verdict: AMBER — worth building as low-regret infrastructure, NOT on the strength of
+discovery yield.** Two dimensions GREEN (the questions they answer), two AMBER (the question that
+gates the build — novelty):
+
+- **Soundness + tooling — GREEN, de-risked.** The exact-recheck path is *proven, not asserted*: a
+  stdlib-only (`fractions.Fraction`) re-checker — polynomial-identity dict-equality over ℚ **+** exact
+  rational **LDLᵀ** PSD test (no sqrt; pivots carry the squares) — was implemented and passed 6/6 cases
+  including correct rejection of an indefinite Gram and a fabricated identity-failing cert. The float SDP
+  solver, the only unsound component, stays entirely **off-TCB** (an optional propose-side extra, like
+  Z3/Lean). Published precedent (`sostactic`) ships the literal §2 contract in Lean (`ring_nf` identity +
+  `positivity`). For non-SOS-but-nonneg targets (Motzkin; Blekherman: *almost all* nonneg polys aren't
+  SOS) the Positivstellensatz/denominator form `d·P = n` keeps the re-checker unchanged.
+- **Box-OUT reach — GREEN, genuine.** SOS reaches `∀x∈ℝⁿ` polynomial nonnegativity: over ℝ (not ℤ),
+  unbounded (not `[0,64]`), a universal-quantifier *proof* (not a finite enumeration) — three orthogonal
+  axes of escape from the bounded-integer box, orthogonal to Walnut. (Caveat: the genuinely-unbounded ℝⁿ
+  target is served by the *narrow* pure-SOS + Reznick-multiplier fragment; Putinar/Schmüdgen need
+  compactness, so the constrained successes overstate coverage of the headline class.)
+- **Novelty — AMBER, the binding constraint (same wall as Walnut).** The reachable class is **bimodal**:
+  a RED sub-class (competition/olympiad inequalities — AM-GM, Schur, symmetric 3-var — *now actively
+  automated* by AIPS/LIPS, the SOS analogue of run-3's textbook ceiling) and a GREEN sub-class
+  (research-frontier: flag-algebra extremal combinatorics where SOS+SDP has resolved *open* conjectures,
+  copositivity / SOS-Lyapunov, SOS proof-complexity lower bounds). **The current conjecturer/DSL emits
+  the RED class out of the box and cannot render the GREEN class** without substantial new proposal-side
+  machinery — "reachable in principle ≠ reachable by the current daemon," the same trap as Walnut's
+  custom-DFAO caveat. AMBER not RED because SOS has a genuine open frontier (a *strictly higher* novelty
+  ceiling than Walnut) *if routed there*.
+- **Faithfulness — the rung's strongest dimension.** A polynomial inequality often *is* its own formal
+  statement (`∀ x y z : ℝ, 0≤x → … → 0 ≤ P x y z`) — the 3-body gap is materially smaller than Walnut
+  prose. Residual slack lives in the *statement* (constraint set; strict `<` vs non-strict `≤`), which is
+  lint-able at routing, not in the trusted certificate path.
+
+**The pivotal strategic finding — two seams, and only one is Q.E.D.:**
+- **SOS as a faithfulness backend (this ADR's §2 placement) is NON-Q.E.D.** (faithfulness edge, not proof
+  edge; invariants #1/#7 keep `kernel_verified` to `LeanVerifier.discharge`). *But* its re-check is the
+  first **kernel-grade** faithfulness re-check — `ring` re-derives the SOS identity, strictly stronger
+  than Walnut's structural automaton-universality check.
+- **SOS as a *prover* (proof edge, alongside `nlinarith`/`polyrith`) is GENUINELY Q.E.D.** when the
+  conjecture *itself* is a polynomial inequality: the cert re-checked by `ring`+`positivity` *is* a kernel
+  proof. This is a sound path to **kernel-verified discovery without the run-rung renderer** — arguably
+  the higher-value use and the real strategic upgrade over Walnut. It is a *different seam* (`prover_
+  ensemble`), and must stay uncrossed from the faithfulness backend.
+
+**The true go/no-go (still pending):** per §4/§10.5, the soundness-GREEN does **not** clear the build. The
+gating measurement is a **WALK-rung novelty micro-probe** — does the conjecturer produce
+polynomial-nonnegativity claims that are IN-SOS-reach **and** box-OUT **and** plausibly-non-textbook? If
+they are all RED competition inequalities, defer the build until the proposal side can route to the GREEN
+frontier. Recommended re-checker if built: **Option A** (stdlib `Fraction` identity + exact rational LDLᵀ,
+zero float tolerance), cross-checked by Lean `ring`+`positivity` in the adversarial soundness review.
