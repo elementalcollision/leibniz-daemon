@@ -67,6 +67,13 @@ class Expressio:
     # would be a parse error inside the proof — there is no separate-declaration surface to
     # poison. Empty for ordinary proofs.
     proof_hints: str = ""
+    # ADR 0037 backend #1 (Walnut): the automatic-sequence FO rendering whose TRUTH (decided
+    # soundly over unbounded n) establishes faithfulness, plus its numeration (e.g. "msd_2",
+    # "msd_trib"). None unless the claim is an automatic-sequence claim. The rendering itself
+    # is a trusted artifact (the renderer-TCB point, ADR 0036 §10.2); the WalnutBackend only
+    # *decides* the sentence, it does not certify the rendering.
+    walnut_predicate: Optional[str] = None
+    walnut_numeration: Optional[str] = None
 
 
 @dataclass
