@@ -1,0 +1,447 @@
+{
+ "targets": [
+  {
+   "statement": "Wolstenholme's theorem: for every prime p ≥ 5, C(2p−1, p−1) ≡ 1 (mod p³); equivalently H_{p−1} = Σ_{k=1}^{p−1} 1/k ≡ 0 (mod p²) and Σ_{k=1}^{p−1} 1/k² ≡ 0 (mod p²) as congruences of rationals with denominators prime to p.",
+   "novelty_justification": "This is a genuinely deep congruence: the surprising part is the modulus is p³ (not p or p²), and it is the namesake of the open 'Wolstenholme prime' problem (primes for which the congruence lifts to p⁴ — only 16843 and 2124679 are known). A research mathematician treats it as a classical-but-nontrivial result, not a first-year exercise; the standard first-year fact is only the mod-p Fermat/Wilson level. It avoids the daemon's genres entirely: it is a binomial / harmonic-number congruence with the prime p as a VARIABLE modulus, not a fixed-modulus polynomial P(n) mod m nor an a^n mod m order law.",
+   "source": "J. Wolstenholme, 'On certain properties of prime numbers', Quarterly Journal of Pure and Applied Mathematics 5 (1862), 35–39. Modern treatment: Hardy & Wright, An Introduction to the Theory of Numbers, §7.8; R. Mestrovic, 'Wolstenholme's theorem: its generalizations and extensions in the last hundred and fifty years (1862–2012)', arXiv:1111.3057.",
+   "math_features": "Number domain: congruences of rationals ℚ (denominators prime to p) reduced to ℤ/p³. Quantifier structure: unbounded ∀ over primes p ≥ 5 (infinitude). Special functions/operators: binomial coefficient C(2p−1,p−1) (NT function), harmonic-type finite sums ∑ 1/k and ∑ 1/k² over a variable range, variable modulus p³. Missing-feature tags vs the DSL: #2 unbounded-∀, #4 summation, #6 variable-modulus, #7 binomial/NT-function.",
+   "area": "number-theory",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "2",
+    "4",
+    "6",
+    "7",
+    "1"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "OUT on four independent, mutually reinforcing axes. (#2 unbounded-∀/infinitude) \"for every prime p ≥ 5\" is a genuine universal over infinitely many primes; the [0,64] box can only sample finitely many, so it cannot soundly certify the universal — gaming-vulnerable. (#6 variable-modulus) the congruence is mod p³ (and mod p²) with p the quantified variable; the DSL allows x % d only for CONSTANT positive d, and the one ADR-0035 exception (base^n % m) still requires a CONSTANT modulus — p³ is disallowed. (#4 summation) H_{p−1} and Σ 1/k² are iterated operators over a VARIABLE range 1..p−1; the DSL has no Σ/Π at all. (#7 NT-function) C(2p−1,p−1) is explicitly excluded (\"no binomial\"); the coprime-to-p side condition also implicates primality of p, another excluded NT predicate. (#1 reals/rationals) the harmonic formulation is over rationals 1/k (denominators prime to p) while the DSL is z3.Int-only — secondary, since the binomial form C(2p−1,p−1) is integer-valued. A modest SOUND extension cannot help: even adding a bounded binomial lookup table (#7) and a bounded-Σ form (#4) would only express the predicate SHAPE for a FIXED p; it cannot soundly discharge an unbounded-∀-over-primes claim with a VARIABLE modulus p³ on a finite [0,64] box — the universal-with-variable-modulus core (#2 + #6) admits no sound bounded check. Lean-statable but only judge-checkable here, hence NOT expressible_in_dsl.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Zsygmondy's theorem (primitive prime divisors): for coprime a > b ≥ 1 and every n > 1, aⁿ − bⁿ has a prime divisor q dividing no a^k − b^k for 1 ≤ k < n, except n=1, n=2 with a+b a power of 2, and (a,b,n)=(2,1,6); in particular aⁿ−1 (a≥2) has a primitive prime divisor for all n≥7.",
+   "novelty_justification": "A working number theorist regards Zsygmondy as a substantive 19th–20th-century theorem with a delicate exceptional set, routinely invoked in finite group theory and Diophantine work (e.g. bounding orders of elements). It is nowhere in a first-year syllabus — it asserts EXISTENCE of a witness prime with a non-divisibility condition over an unbounded family, far beyond order-of-a-mod-m bookkeeping. It does not reduce to either daemon genre: the object is a primitive prime DIVISOR (an existential witness plus a quantified non-divisibility constraint across all smaller exponents), not a fixed polynomial residue nor a single a^n mod m congruence.",
+   "source": "K. Zsigmondy, 'Zur Theorie der Potenzreste', Monatshefte für Mathematik und Physik 3 (1892), 265–284. (Special case b=1 is Bang's theorem, 1886.) Modern reference: M. Roitman, 'On Zsigmondy primes', Proc. AMS 125 (1997), 1913–1919.",
+   "math_features": "Number domain: ℤ (coprime a,b) with statements about prime divisibility. Quantifier structure: ∀∃∀ alternation — for all admissible (a,b,n) THERE EXISTS a prime q SUCH THAT for all k<n, q ∤ a^k−b^k; plus unbounded ∀ over n with a finite exceptional set. Special functions/operators: prime-divisor predicate, multiplicative-order reasoning, the exponential difference aⁿ−bⁿ with VARIABLE exponent (general, not a single base^n mod m). Missing-feature tags vs the DSL: #2 unbounded-∀, #3 existential/∀∃, #5 variable-exponent, #7 primality/prime-divisor.",
+   "area": "number-theory",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "2",
+    "3",
+    "5",
+    "7"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Fundamentally outside the bounded-box fragment, and no modest SOUND extension recovers it. The statement is ∀(a,b,n) ∃q ∀k<n — genuine ∀∃ alternation (#3) over an UNBOUNDED exponent n with a finite exception set (#2 infinitude). The DSL contract is a single implicitly-∀ predicate gamed on [0,64] with no existential quantifier; there is no ∃-witness machinery and the box only checks a finite slice, so the universal claim cannot be soundly settled there. The witness prime q can be arbitrarily large (primitive primes are ≡1 mod n and grow without bound), so even an extended box cannot soundly contain the existential witness — a bounded check would be UNSOUND (could pass while the statement fails beyond the box). Two further whitelist violations compound this: the prime-divisor / primality / 'q ∤ a^k−b^k' predicate (#7; the spec explicitly bans primality, gcd, order-as-function), and aⁿ−bⁿ uses a VARIABLE base AND variable exponent with no fixed modulus (#5), which the lone ADR-0035 base^n % m special case (constant base, constant modulus, one period) does not cover. Adding a bounded primality/gcd lookup table — the kind of modest extension the spec contemplates — fixes only #7; the ∀∃-over-infinite-n core (#2,#3,#5) requires fundamentally unbounded/quantified machinery, so no sound bounded check exists. Statable in Lean, but only judge-checkable → not expressible_in_dsl.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Gauss's primitive-root sum congruence: for an odd prime p, if g_1,...,g_{φ(p−1)} are the distinct primitive roots mod p in {1,...,p−1}, then ∑ g_i ≡ μ(p−1) (mod p), where μ is the Möbius function (companion: ∏ g_i ≡ 1 (mod p) for p > 3).",
+   "novelty_justification": "This is a classic but decidedly non-elementary gem: it links a sum over the primitive roots of p to the Möbius value of p−1, and its proof uses cyclotomic polynomials / the structure of (ℤ/p)* together with Möbius inversion. A research mathematician would call it a pretty named consequence of primitive-root theory, not a first-year fact (first-year stops at 'a primitive root exists mod p'). It is outside both daemon genres: the modulus p is variable, the summation ranges over a set defined by an order condition (primitive roots), and the right-hand side is an arithmetic function μ — none of which is a fixed P(n) mod m or a single a^n mod m law.",
+   "source": "C. F. Gauss, Disquisitiones Arithmeticae (1801), arts. 80–81. Textbook statement: K. Ireland & M. Rosen, A Classical Introduction to Modern Number Theory, 2nd ed., Springer GTM 84, Ch. 4 exercises; G. H. Hardy & E. M. Wright, §7.5–7.6.",
+   "math_features": "Number domain: ℤ/p with a variable prime modulus p. Quantifier structure: unbounded ∀ over odd primes p. Special functions/operators: Möbius function μ, Euler totient φ (count of primitive roots), a SUMMATION ∑ (and ∏ for the companion) over the order-defined set of primitive roots, multiplicative order as a selection predicate. Missing-feature tags vs the DSL: #2 unbounded-∀, #4 summation/product, #6 variable-modulus, #7 Möbius/totient/order-as-function.",
+   "area": "number-theory",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "#2 unbounded-∀ / infinitude",
+    "#4 summation/product",
+    "#6 variable-modulus",
+    "#7 number-theoretic functions (Möbius μ, Euler φ, multiplicative order, primality)"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "OUT on every axis. (a) Variable modulus: the congruence is mod a VARIABLE prime p; the DSL allows x % d only with a constant positive divisor d, and even the ADR-0035 base^n % m special case requires a CONSTANT modulus m (spec lines 22-25). (b) Unbounded-∀: the claim quantifies over all odd primes with no finite box; the contract checks one integer var on [0,64], which covers only finitely many primes and would leave the ∀ undischarged — an unsound check of the universal statement. There is also no isPrime to select the primes. (c) Summation/product: the sum ranges over a variable-size set (φ(p−1) terms); the DSL has no iterated Σ/Π and restricts functions to min/max only (spec lines 26-27, 36). (d) Number-theoretic functions: μ (RHS), φ (count of summands), and multiplicative order (the 'primitive root' selection predicate) are all explicitly excluded (lines 26-27, 39). No modest SOUND bounded extension closes this: even adding a bounded μ/φ lookup table, variable modulus, and bounded Σ, the theorem still requires an UNBOUNDED family of primes each with its own modulus and its own order-defined, variable-cardinality summand set taken mod the variable p — fundamentally infinitary, no sound bounded check exists.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Lerch's Fermat-quotient congruence: for an odd prime p, with Fermat quotient q_p(a) = (a^{p−1}−1)/p (gcd(a,p)=1) and Wilson quotient W_p = ((p−1)!+1)/p, one has ∑_{a=1}^{p−1} q_p(a) ≡ −W_p (mod p); consequently p is a Wilson prime iff ∑_{a=1}^{p−1} q_p(a) ≡ 0 (mod p).",
+   "novelty_justification": "The Fermat quotient and Wilson quotient are objects no first-year course defines, and Lerch's identity tying the SUM of all Fermat quotients to the Wilson quotient mod p is a recognizably research-flavored congruence (it underlies modern searches for Wilson primes and Fermat-quotient vanishing, e.g. Wieferich-type questions). A research mathematician would cite Lerch (1905), not call it elementary. It avoids both daemon genres: it couples a factorial-based quotient (Wilson) to a sum of (p−1)-power quotients over a variable prime modulus — not a fixed polynomial residue and not a single a^n mod m order computation.",
+   "source": "M. Lerch, 'Zur Theorie des Fermatschen Quotienten (a^{p−1}−1)/p = q(a)', Mathematische Annalen 60 (1905), 471–490. Survey context: A. Granville, 'The square of the Fermat quotient', Integers 4 (2004); R. Crandall, K. Dilcher & C. Pomerance, 'A search for Wieferich and Wilson primes', Math. Comp. 66 (1997), 433–449.",
+   "math_features": "Number domain: ℤ/p arising from integer quotients (a^{p−1}−1)/p and ((p−1)!+1)/p, with p a VARIABLE prime modulus. Quantifier structure: unbounded ∀ over odd primes p. Special functions/operators: factorial (Wilson quotient), the (p−1)-th power with VARIABLE exponent tied to the modulus, and a SUMMATION ∑_{a=1}^{p−1} over a variable range. Missing-feature tags vs the DSL: #2 unbounded-∀, #4 summation, #5 variable-exponent, #6 variable-modulus, #7 factorial/Fermat-quotient as NT functions.",
+   "area": "number-theory",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "2",
+    "4",
+    "5",
+    "6",
+    "7"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Comprehensively outside the Z3 bounded-box fragment; it needs 5 of the 10 missing categories, several load-bearing. (#2) The claim is ∀ over all odd primes with no finite box — and a finite-box check is unsound for a universal over an infinite set; primality is itself a forbidden NT predicate. (#6) The modulus is `mod p` with p VARIABLE; the DSL allows only constant-modulus `% d`, and its sole variable-exponent escape hatch `base^n % m` fixes BOTH base and modulus to constants — useless here since modulus p is the variable. (#5) `a^{p−1}` is a power with variable exponent tied to the modulus; DSL powers require a constant exponent 0≤k≤8. (#7) The Fermat quotient (a^{p−1}−1)/p and Wilson quotient ((p−1)!+1)/p divide by the VARIABLE p (DSL division needs a constant divisor) and W_p uses factorial, an explicitly forbidden function. (#4) The statement sums ∑_{a=1}^{p−1} over a variable range; DSL has no Σ/Π and only min/max functions. No modest SOUND bounded extension helps: the modulus, exponent, and divisor are all the same unbounded variable p, and even a bounded-Σ or variable-modulus add-on cannot make the unbounded ∀-over-primes claim sound (no sound bounded check of a universal-over-infinite-primes exists). A Lean statement would be judge-only, not Z3-decidable.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "For every nonnegative integer n, the partition function p satisfies p(5n+4) ≡ 0 (mod 5) (Ramanujan's first congruence), where p(k) counts unordered partitions of k.",
+   "novelty_justification": "Superficially this reads like the daemon's known 'P(n) mod m' genre, but that is exactly the trap: p(n) is the integer-partition function, NOT a polynomial. It has no closed polynomial form and is defined via the generating function ∏ 1/(1-q^k) (equivalently a recurrence using pentagonal numbers). The residue-case-split-on-(n mod m) schema the daemon mined CANNOT touch it, because p(n) mod 5 is not periodic in any way a finite n-mod-m split detects — the real proof needs the q-series identity (1-q)(1-q^2)... ≡ structure mod 5 / modular forms. A research mathematician would call this a deep 1919 result (Hardy, Atkin, Ono), never first-year. Genuinely outside the known corpus genre.",
+   "source": "S. Ramanujan, 'Some properties of p(n), the number of partitions of n', Proc. Cambridge Philos. Soc. 19 (1919) 207–210. See also Ramanujan's congruences, Wikipedia; M. D. Hirschhorn, 'Simple proofs of Ramanujan's partition congruences', UNSW. https://en.wikipedia.org/wiki/Ramanujan%27s_congruences",
+   "math_features": "Domain ℤ≥0. Quantifier: unbounded ∀n. Needs the SEQUENCE/RECURRENCE feature (partition function p(n), feature 8) — NOT a polynomial, so the polynomial-mod-m machinery does not apply. Implicitly built on a generating-function PRODUCT/Π (feature 4) and a fixed modulus 5. Inexpressible in the DSL: no p(n) primitive, no recurrence, no infinite product; a sound bounded extension would need a verified p(n) table plus a proof its mod-5 pattern persists past the box — i.e. genuine unbounded-∀ machinery, no finite check suffices.",
+   "area": "additive-combinatorial",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SEQUENCES/RECURRENCES",
+    "SUMMATION/PRODUCT",
+    "UNBOUNDED-∀ / INFINITUDE"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "The wall is the partition function p(n) itself. The DSL's function set is exhaustive (only min/max; \"no user functions\"), and p(n) is explicitly named under missing-feature 8 (SEQUENCES/RECURRENCES — \"partition p(n)\"). Every standard definition of p routes through forbidden machinery: the generating function ∏ 1/(1−x^k) (feature 4, PRODUCT) or Euler's pentagonal-number recurrence (feature 4, a Σ over a variable range). The linear argument 5n+4 and the constant modulus % 5 are individually fine DSL constructs, but with no p(n) primitive the predicate cannot be built at all. A \"modest\" extension — adding a verified p(n) lookup table on the box [0,64] — would let Z3 CHECK the finitely many instances n=0..12 (arguments 4,9,…,64), but this is NOT a SOUND certificate for the universal ∀n claim: a finite table says nothing about persistence past the box. This is unlike the ADR-0035 base^n % m case, where multiplicative-order periodicity mathematically guarantees one period certifies all n. Here the mod-5 vanishing for all n IS the content of Ramanujan's theorem and requires genuine modular-form / generating-function identities (e.g. the ∏(1−x^n)^5/∏(1−x^{5n}) argument); no finite bounded check is sound. Hence OUT with no modest sound extension.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Erdős–Ginzburg–Ziv: for every n ≥ 1, any 2n−1 integers contain n of them (some n-subset) whose sum is divisible by n; the bound 2n−1 is sharp.",
+   "novelty_justification": "This is a cornerstone of zero-sum additive combinatorics (the Davenport-constant world), proved by reducing to prime n via Cauchy–Davenport and a pigeonhole/Chevalley–Warning argument — nothing a first-year course covers. It is squarely outside both daemon genres: there is no single polynomial P and no fixed-base power a^n; instead it is an existence-over-all-sequences statement with a chosen-subset sum, with the modulus n itself being the universally quantified variable. The sharpness clause adds a genuine extremal-construction half.",
+   "source": "P. Erdős, A. Ginzburg, A. Ziv, 'Theorem in the additive number theory', Bull. Res. Council Israel 10F (1961) 41–43. See Zero-sum problem, Wikipedia; Mathlib Combinatorics.Additive.ErdosGinzburgZiv. https://en.wikipedia.org/wiki/Zero-sum_problem",
+   "math_features": "Domain ℤ (residues mod n). Quantifier structure: ∀n ∀(sequence of length 2n−1) ∃(n-subset) — full ∀∃ alternation (feature 3). Needs VARIABLE-MODULUS (the divisor is the quantified n, feature 6), a SUMMATION over a chosen index set of variable size n (feature 4), and SETS/combinatorial subset selection (feature 9). Multiply inexpressible: the DSL's % requires a constant divisor and has no Σ, no subset quantifier; even bounding n leaves an unbounded existential over (2n−1 choose n) subsets — no constant-divisor finite-box check captures it.",
+   "area": "additive-combinatorial",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "EXISTENTIAL / ∃",
+    "SUMMATION/PRODUCT",
+    "VARIABLE-MODULUS",
+    "SETS/COMBINATORIAL STRUCTURES"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Multiply inexpressible, no modest sound bounded extension reaches it. (1) Quantifier alternation ∀∃ (feature 3): the statement is ∀n ∀(sequence of length 2n−1) ∃(n-subset); the DSL predicate is purely universal over a [0,64] box with no genuine existential witness and no alternation, and the ∃ ranges over (2n−1 choose n) subsets, unbounded in n. (2) VARIABLE-MODULUS (feature 6): divisibility is mod the quantified primary variable n, but the DSL's % requires a constant positive divisor; the sole ADR-0035 exception (base^n % m) needs constant base AND constant modulus and does not apply when the modulus itself is the variable. (3) SUMMATION (feature 4): a_{i_1}+…+a_{i_n} is a Σ over a chosen index set of variable size n, while DSL + is fixed-arity at compile time. (4) SETS/COMBINATORIAL (feature 9): the existential selects an n-element subset of a (2n−1)-element family, with no subset quantifier or cardinality; the sequence itself is a variable-length family of integers indexed by the quantified n, beyond the fixed on-demand z3.Int vars. A lookup-table-style extension (gcd/φ tables, fixed bounded Σ, a single variable modulus) cannot help: even fixing n to a small constant still leaves a genuine ∃-over-subsets with ∀∃ alternation, and the variable divisor n plus the sharpness clause (length 2n−2 admits a counterexample for all n) require fundamentally quantified/variable-modulus machinery. No constant-divisor finite-box check is faithful. Statable in Lean but only judge-checkable here — i.e. not in the sound envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Cauchy–Davenport: for every prime p and every pair of nonempty subsets A, B ⊆ ℤ/pℤ, the sumset A+B = {a+b : a∈A, b∈B} satisfies |A+B| ≥ min(p, |A|+|B|−1); equality holds for arithmetic progressions of common difference.",
+   "novelty_justification": "The foundational addition theorem of additive combinatorics (it powers EGZ, the Davenport constant, Freiman-type results). Its standard proofs use the polynomial method (Combinatorial Nullstellensatz) or e-transforms — graduate-level, not first-year. It shares no structure with the daemon's polynomial-residue or order-of-a-base genres: the object is the cardinality of a sumset over a finite field of varying prime order, a set-theoretic / cardinality inequality, not a divisibility fact about a single n.",
+   "source": "A.-L. Cauchy (1813); H. Davenport, 'On the addition of residue classes', J. London Math. Soc. 10 (1935) 30–32. Survey: 'Cauchy–Davenport theorem: various proofs and some early generalizations'. https://www.math.toronto.edu/swastik/gcd-arxiv-version.pdf",
+   "math_features": "Domain ℤ/pℤ with p a quantified prime. Quantifier: ∀p (prime) ∀A,B nonempty — and the assertion is about |A+B|, the CARDINALITY of a SUMSET (feature 9, sets/combinatorial cardinality). Also needs VARIABLE-MODULUS (the prime p ranges, feature 6), PRIMALITY (p prime, feature 7), and min(...) over the two regimes. The DSL has min/max but NO notion of a set, set cardinality, or sumset, and no primality predicate or variable modulus — fundamentally inexpressible; even a bounded version would have to quantify over all subset pairs of ℤ/pℤ, which is set machinery the box-check has no encoding for.",
+   "area": "additive-combinatorial",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SETS/COMBINATORIAL STRUCTURES",
+    "VARIABLE-MODULUS",
+    "NUMBER-THEORETIC FUNCTIONS",
+    "EXISTENTIAL / ∃"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Fundamentally inexpressible; no modest sound bounded extension reaches it. The DSL quantifies over integer variables (z3.Int) on the box [0,64] and offers only arithmetic, constant-exponent power, constant divisor/modulus, and min/max — it has NO notion of a set, a subset, set cardinality, or a sumset constructor (spec missing-feature 9 explicitly excludes cardinalities and set ops beyond a finite residue disjunction). The whole assertion is about |A+B|, the cardinality of a sumset of two subsets of ℤ/pℤ, with the outer quantifier ranging over subset PAIRS — a set-valued universe the box-check cannot encode. It additionally needs (6) variable modulus, since p is a quantified prime so the ring ℤ/pℤ varies (the DSL allows only constant positive divisors in % d, plus the single ADR-0035 base^n % m with constant m), and (7) a primality predicate for 'p prime' (isPrime is explicitly absent), and the equality clause is an existential over extremal configurations (4 / ∃). A bounded version would have to enumerate all 2^p × 2^p subset pairs and count distinct sumset residues — that is first-class set/cardinality machinery plus variable modulus plus primality, a redesign of the term universe (integers → sets-over-a-ring), not a modest lookup-table/bounded-Σ extension. Statable in Lean but only LLM-judge-checkable here, hence NOT in the sound envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Schur's theorem: for every number of colors r ≥ 1 there exists a least integer S(r) (the r-color Schur number) such that every r-coloring of {1,…,S(r)} contains a monochromatic solution of x + y = z (x, y not required distinct). Known values: S(1)=1, S(2)=5, S(3)=14, S(4)=45, S(5)=161. The existence of a finite S(r) for every r is the theorem; equivalently, x+y=z is partition-regular.",
+   "novelty_justification": "A pillar of Ramsey theory / partition regularity (Schur 1916, a precursor to Rado's theorem and to the finite-field proof attempts of Fermat's Last Theorem mod p). The existence proof goes through Ramsey's theorem; the exact values S(4) and S(5) are hard (S(5)=161 was settled only in 2017 by a massive SAT computation, Heule). No first-year course proves it, and it is entirely disjoint from the daemon's two genres: the object is a guaranteed monochromatic additive triple under an arbitrary r-coloring, a colouring/Ramsey statement, with no polynomial and no fixed-base power anywhere.",
+   "source": "I. Schur, 'Über die Kongruenz x^m + y^m ≡ z^m (mod p)', Jahresber. DMV 25 (1916) 114–117. Schur number S(5)=161: M. Heule, 'Schur Number Five', AAAI 2018. See 'Schur's Theorem and Related Topics in Ramsey Theory' (Kisner). https://en.wikipedia.org/wiki/Schur%27s_theorem",
+   "math_features": "Domain ℤ+ and colorings c:{1..N}→{1..r}. Quantifier: ∃S(r) ∀(r-coloring of [S(r)]) ∃ monochromatic (x,y,z) with x+y=z — nested ∀∃ over colorings (feature 3) plus genuine EXISTENTIAL/INFINITUDE for the 'S(r) exists for all r' form (feature 2). Needs SETS/COMBINATORIAL STRUCTURES — colourings/partitions of an interval (feature 9), with r a quantified parameter. The DSL has no colouring/function-as-object primitive, no quantifier over colorings, and no way to assert 'some finite N works' — inexpressible; a sound bounded check could verify a FIXED claim like 'every 2-coloring of {1..5} has a monochromatic Schur triple' (that single instance is a finite SAT-style box), but the theorem's ∀r / existence-of-S(r) content needs unbounded machinery.",
+   "area": "additive-combinatorial",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SETS/COMBINATORIAL STRUCTURES",
+    "EXISTENTIAL / ∃",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "The DSL's contract is a single implicitly-∀ integer claim \"for all n with claim_domain(n), claim_property(n)\" checked on the bounded box [0,64], with predicates over integer variables (and/or/not, comparisons, +−*, constant power/div/mod, min/max). Schur's theorem quantifies over r-COLORINGS of an interval — functions c:{1..N}→{1..r} (feature 9 SETS/COMBINATORIAL STRUCTURES, Ramsey-type) — which the DSL cannot represent: it has no colouring/partition/function-as-object primitive and no quantifier over such objects (feature 10). The logical form is nested ∀∃ alternation (∃S(r) ∀coloring ∃ monochromatic triple, feature 3 EXISTENTIAL/∃), and the actual theorem asserts existence of a finite S(r) FOR ALL r and partition-regularity of x+y=z, which is unbounded (feature 2 UNBOUNDED-∀/INFINITUDE). Even a single FIXED instance (\"every 2-coloring of {1..5} has a monochromatic Schur triple\") is outside the fragment: the universally-quantified object there is a coloring (a function), not an integer in [0,64], so the DSL's integer-box gaming search cannot enumerate it. That fixed instance is decidable by a SAT-style finite-coloring enumerator, but that is a separate verification engine, not a modest extension of this integer-variable-over-box DSL — and even adding it would NOT capture the theorem's ∀r / existence-of-S(r) / partition-regularity content, for which no sound bounded check exists. No modest sound extension (gcd/φ table, variable modulus, bounded Σ) is relevant here; the obstacle is the colouring-quantifier and unbounded existential, not a missing arithmetic primitive.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Motzkin numbers M(n) (M(0)=1, (n+2)M(n)=(2n+1)M(n-1)+3(n-1)M(n-2)) satisfy 8 ∤ M(n) for all n ≥ 0; more precisely (Eu–Liu–Yeh) M(n) mod 8 is determined by the binary digits of n+1 and never equals 0.",
+   "novelty_justification": "This is a forbidden-residue theorem for a non-polynomial, recursively defined sequence, conjectured by Deutsch and Sagan and only proved in 2008 via a delicate analysis of Motzkin numbers modulo powers of 2 (and the binary expansion of n). It is not the daemon's 'polynomial P(n) mod m is periodic, case-split on n mod m' genre: M(n) is not a polynomial in n, residues are governed by base-2 digit structure rather than a residue of n, and the result is an OEIS-grade nontrivial fact (a sequence that provably misses an entire residue class), not a first-year exercise.",
+   "source": "S.-P. Eu, S.-C. Liu, Y.-N. Yeh, 'Catalan and Motzkin numbers modulo 4 and 8', European J. Combin. 29 (2008) 1449–1466 (proving a conjecture of E. Deutsch and B. Sagan, 'Congruences for Catalan and Motzkin numbers and related sequences', J. Number Theory 117 (2006) 191–215). OEIS A001006.",
+   "math_features": "Domain ℤ≥0; unbounded ∀ n (INFINITUDE, feature 2); a non-polynomial holonomic/recursively-defined sequence M(n) (SEQUENCES/RECURRENCES, feature 8); fixed modulus 8 but the residue is governed by the base-2 digits of n+1 rather than n mod m (automatic-sequence / digit-function machinery, feature 10/7); statement is a negation '8 ∤ M(n)' i.e. M(n) % 8 ≠ 0.",
+   "area": "sequences-recurrences",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "UNBOUNDED-∀ / INFINITUDE",
+    "SUMMATION/PRODUCT",
+    "SEQUENCES/RECURRENCES",
+    "NUMBER-THEORETIC FUNCTIONS"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Multiple hard blockers, none fixable by a modest sound bounded extension. (1) The core object M(n) is a holonomic/recursively-defined sequence (feature 8) with a convolution definition M(n+1)=M(n)+Σ_k M(k)M(n-1-k) (feature 4); the DSL allows only min/max and constant-exponent powers — no user functions, no sequence definition, no variable-range Σ — so M(n) cannot even be named, let alone evaluated, in a predicate. (2) The claim is a genuine unbounded ∀ n over ℤ≥0 (feature 2), and the mod-8 value is NOT eventually periodic in n: it is an automatic sequence tracking the base-2 digits of n+1 (digit-function / number-theoretic machinery, feature 7). A bounded box [0,64] is therefore NOT a sound certificate — agreement on n ≤ 64 implies nothing for n > 64. The single ADR 0035 variable-exponent escape (base^n % m, requiring gcd=1 and order ≤ 64, encoded over one period) does not apply: there is no base^n here and no period exists. Adding a gcd/φ lookup table, variable modulus, or one bounded Σ would not help; a sound check would require recurrence-aware reasoning plus a base-2 digit / automatic-sequence decision procedure — fundamentally outside the bounded-box fragment. (Modulus is the constant 8, so VARIABLE-MODULUS is not the issue, and the '% 8 != 0' negation form itself is DSL-legal; the inexpressible part is the operand M(n).)",
+   "novelty_recheck": "nontextbook"
+  },
+  {
+   "statement": "Apéry-number supercongruence: with A(n) = Σ_{k=0}^{n} C(n,k)²·C(n+k,k)², for every prime p ≥ 5 and all integers m,r ≥ 1, A(p^r·m) ≡ A(p^{r-1}·m) (mod p^{3r}); in particular A(p·m) ≡ A(m) (mod p^3).",
+   "novelty_justification": "The exponent 3r is one power of p beyond what formal-group / Gauss-congruence theory forces, which is exactly what makes it a 'supercongruence' and a deep result rather than routine. The case r=1 was observed by Gessel and proved by Gessel–Mimura; the full statement is Coster's theorem, building on Beukers. The modulus is a varying prime power p^{3r} (not a fixed m), the sequence is a double-sum Apéry number (not a polynomial in n), and quantification is over all primes p ≥ 5 and all r — none of which is first-year material and none of which is the daemon's a^n mod m or P(n) mod m genre.",
+   "source": "M. Coster, doctoral thesis, Univ. Leiden (1988); F. Beukers, 'Some congruences for the Apéry numbers', J. Number Theory 21 (1985) 141–155; I. Gessel, 'Some congruences for Apéry numbers', J. Number Theory 14 (1982) 362–368. See also OEIS A005259.",
+   "math_features": "Domain primes p ≥ 5 and integers m,r ≥ 1; unbounded ∀ over p and r (INFINITUDE, feature 2); a binomial double-sum sequence A(n) with Σ and C(·,·) (SUMMATION feature 4, NUMBER-THEORETIC/binomial feature 7, SEQUENCES feature 8); congruence to a VARIABLE prime-power modulus p^{3r} (VARIABLE-MODULUS, feature 6); nested ∀ structure over (p,m,r).",
+   "area": "sequences-recurrences",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SUMMATION/PRODUCT",
+    "NUMBER-THEORETIC FUNCTIONS",
+    "SEQUENCES/RECURRENCES",
+    "VARIABLE-MODULUS",
+    "VARIABLE-EXPONENT",
+    "UNBOUNDED-∀ / INFINITUDE"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "No modest sound bounded extension captures this. The statement simultaneously needs: (a) a sequence A(n) defined by a variable-range sum Σ_{k=0}^{n} (no Σ/Π in DSL — line 35); (b) binomial coefficients C(n,k), C(n+k,k) (no binomial/factorial — lines 27,39); (c) A(n) as a user-defined integer sequence (no sequences/recurrences, no user functions — lines 26-27,40); (d) a primality side-condition \"p prime, p ≥ 5\" (no isPrime — line 39); (e) a VARIABLE prime-power modulus p^{3r} — DSL only permits `% d` with constant positive d; the lone ADR-0035 exception is base^n % m with BOTH base and modulus constant, which does not cover a variable prime modulus, let alone a variable exponent 3r; (f) variable exponents (p^r, p^{r-1}, p^{3r}) beyond the single periodic base^n % m form (line 36). Decisively, the theorem is an INFINITUDE statement: its whole content is a supercongruence mod p^{3r} for ALL primes p and ALL r ≥ 1, so no finite box [0,64] (or any finite B) soundly establishes it — checking small p,r,m can only refute, never prove the universal claim. Even a generous bundle of sound extensions (gcd/φ lookup table, variable modulus, bounded Σ, bounded binomial table) cannot produce a sound finite check, because soundness for \"for all r\" requires unbounded reasoning the bounded-box gamer does not have. This belongs to the JUDGED tier, not the sound Z3 envelope.",
+   "novelty_recheck": "nontextbook"
+  },
+  {
+   "statement": "Let C(n) = (1/(n+1))·C(2n,n) be the Catalan numbers, ν_2 the 2-adic valuation, and s_2(k) the binary digit-sum (number of 1s). Then ν_2(C(n)) = s_2(n+1) − 1 for all n ≥ 0; equivalently C(n) is odd iff n+1 is a power of 2 (n = 2^a − 1).",
+   "novelty_justification": "This converts a 2-adic valuation of a non-polynomial sequence into a base-2 digit-count of n+1 — an automatic-sequence / Kummer's-theorem phenomenon, not a residue-mod-m periodicity. The 'Catalan is odd iff n=2^a−1' corollary alone is a classic non-obvious fact, and the full valuation formula ν_2(C(n))=s_2(n+1)−1 is a genuine theorem (via Kummer/Legendre applied to the central binomial). It is categorically outside the daemon's 'polynomial mod m' and 'a^n mod m' genres: the answer is a digit-sum function of n+1, and the quantity computed is a p-adic valuation, not a residue.",
+   "source": "Classical, via Kummer's theorem (E. Kummer 1852) and Legendre's formula; standard reference R. Alter and K. K. Kubota, 'Prime and prime power divisibility of Catalan numbers', J. Combin. Theory Ser. A 15 (1973) 243–256; see also OEIS A000108 and A048881 (s_2(n+1)−1).",
+   "math_features": "Domain ℤ≥0; unbounded ∀ n (feature 2); Catalan sequence C(n)=C(2n,n)/(n+1) — non-polynomial, binomial/recursive (SEQUENCES feature 8, binomial feature 7); equality involves the 2-adic valuation ν_2 and the binary digit-sum function s_2 (NUMBER-THEORETIC FUNCTIONS, feature 7; automatic/digit machinery, feature 10); a function-valued identity, not a fixed-modulus residue.",
+   "area": "sequences-recurrences",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "NUMBER-THEORETIC FUNCTIONS",
+    "SEQUENCES/RECURRENCES",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "OUT. The statement composes THREE distinct non-DSL primitives, none of which is in the exhaustive predicate grammar (Variables / and-or-not / comparisons / + - * / constant-exponent ^k / constant-divisor /d and %d / min,max only): (a) the binomial coefficient C(2n,n) defining the Catalan sequence C(n) — explicitly excluded (\"no binomial\"), tagged NUMBER-THEORETIC FUNCTIONS (feature 7) and SEQUENCES/RECURRENCES (feature 8, a closed-form/recursive a(n)); (b) the 2-adic valuation ν_2(·) applied to that function-valued argument — not a primitive, no p-adic valuation, no abs/floor (feature 7); (c) the binary digit-sum s_2(n+1) — automatic/digit machinery with no expression over the allowed arithmetic (feature 7/10). It is also an unbounded ∀ n≥0 over a function-valued equality (feature 2). Statable in Lean but its statement↔claim faithfulness could only be settled by the LLM judge (JUDGED tier), not by the bounded-box Z3 decision procedure — so NOT expressible_in_dsl. A MODEST sound extension does not reach it: the lone existing variable-input extension (ADR 0035) is the periodic base^n % m. Capturing this would require adding, simultaneously, a binomial/Catalan-sequence primitive, a ν_2 primitive, AND an s_2 digit-sum primitive — three independent non-trivial additions, well past the \"add gcd/φ as one bounded lookup table\" tier. Even bounding n to [0,64] the equality still references all three missing functions, so no single modest lookup table or variable-modulus tweak suffices. (One could in principle hardcode a 65-entry truth table of the equality over the box, but that is precomputing the theorem, not a sound DSL extension, and it abandons the unbounded ∀ the claim actually asserts.)",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Stern's diatomic (fusc) sequence s(n): s(0)=0, s(1)=1, s(2n)=s(n), s(2n+1)=s(n)+s(n+1). For every n ≥ 0, gcd(s(n), s(n+1)) = 1 — consecutive Stern values are coprime (equivalently n ↦ s(n)/s(n+1) enumerates every positive rational exactly once in lowest terms).",
+   "novelty_justification": "Stern's diatomic sequence is the prototypical 2-regular (automatic-flavored) integer sequence defined by a base-2 'mediant' recurrence, not a polynomial in n; coprimality of consecutive terms is the arithmetic engine behind the Stern–Brocot enumeration of ℚ⁺ and is the kind of statement modern researchers verify with Walnut. It needs gcd of two recurrence-defined terms under an unbounded ∀ — squarely outside both the daemon's P(n) mod m and a^n mod m genres, and not a first-year identity.",
+   "source": "M. A. Stern (1858); see N. Calkin and H. Wilf, 'Recounting the rationals', Amer. Math. Monthly 107 (2000) 360–363; J. Shallit, 'The Walnut prover' and applications to 2-regular sequences (e.g. H. Mousavi, L. Schaeffer, J. Shallit work on automatic sequences). OEIS A002487.",
+   "math_features": "Domain ℤ≥0; unbounded ∀ n (INFINITUDE, feature 2); a non-polynomial 2-regular sequence s(n) given by the base-2 recurrence s(2n)=s(n), s(2n+1)=s(n)+s(n+1) (SEQUENCES/RECURRENCES, feature 8; automatic-sequence machinery, feature 10); the predicate is gcd(s(n),s(n+1))=1 (NUMBER-THEORETIC FUNCTION gcd, feature 7); references two adjacent sequence terms simultaneously.",
+   "area": "sequences-recurrences",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "2",
+    "7",
+    "8"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Three DSL violations stack. (a) s(n) is a recursively-defined, non-polynomial 2-regular sequence; the DSL's function set is exhaustively {min, max} with no user functions and no recurrences (feature 8). (b) gcd is on the explicit forbidden list (feature 7). (c) The claim is genuinely unbounded-∀ / infinitary (feature 2): coprimality for ALL n is what makes the Stern-Brocot map a bijection onto Q+. The decisive soundness obstruction is (c)+(a): the DSL only checks the box [0,64], so it could at most verify gcd(s(n),s(n+1))=1 for n in 0..64 — passing the box does NOT entail the universal statement, so the box check is UNSOUND for the actual theorem and the claim routes to the JUDGED tier, not the sound envelope. A modest extension could add a gcd lookup table and a Stern-value table over the box (gcd-as-table is itself one of the spec's example modest extensions), which would make the box predicate well-formed, but it would still only decide the finite instance, never the ∀n / 2-regularity content. No bounded check is sound for an INFINITUDE claim over a recurrence with no closed form, so it stays OUT. A fully sound treatment needs the automaton/2-regular structural argument (Walnut-style), which is outside any bounded-box fragment.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Apéry's theorem: ζ(3) = Σ_{n≥1} 1/n³ is irrational (ζ(3) ∉ ℚ), via the Apéry numbers a_n = Σ_{k=0}^n C(n,k)²C(n+k,k)² and companion b_n satisfying (n+1)³u_{n+1} = (34n³+51n²+27n+5)u_n − n³u_{n−1}, converging to ζ(3) fast enough to bound the irrationality measure (≤ 5.514, Rhin–Viola).",
+   "novelty_justification": "Open from Euler (1735) until Apéry's 1978 proof; it remains the only odd zeta value proven irrational with an elementary-looking but genuinely deep argument (Beukers' integral / Padé reformulation). No research mathematician would call a finite-irrationality-measure result for ζ(3), or the 34n³+51n²+27n+5 recurrence, first-year material — it is a celebrated 20th-century theorem and the irrationality of ζ(5) is still open.",
+   "source": "R. Apéry, 'Irrationalité de ζ(2) et ζ(3)', Astérisque 61 (1979) 11–13; F. Beukers, 'A note on the irrationality of ζ(2) and ζ(3)', Bull. LMS 11 (1979) 268–272; G. Rhin & C. Viola, 'The group structure for ζ(3)', Acta Arith. 97 (2001) 269–293.",
+   "math_features": "Number domain ℝ (irrationality of a real constant, ∉ ℚ). Quantifier structure: unbounded ∀ over summation index PLUS ∃-form negation of rationality (¬∃ p,q∈ℤ with ζ(3)=p/q). Special objects: infinite series Σ_{n≥1} 1/n³, a linear three-term recurrence with polynomial coefficients, binomial coefficients C(n,k). DSL-inexpressible features (per spec): REALS (1), UNBOUNDED-∀/INFINITUDE (2), SUMMATION/PRODUCT (4), NUMBER-THEORETIC FUNCTIONS — binomials (7), SEQUENCES/RECURRENCES (8).",
+   "area": "analysis-irrationality",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "UNBOUNDED-∀/INFINITUDE",
+    "SUMMATION/PRODUCT",
+    "NUMBER-THEORETIC FUNCTIONS",
+    "SEQUENCES/RECURRENCES"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "No sound bounded extension can capture this. The DSL asserts \"for all integer n on [0,64], claim_property(n)\" over integer variables with +,-,*, constant exponents/divisors/moduli, and only min/max. Apéry's conclusion is irrationality of a real constant — \"ζ(3) ∉ ℚ\" cannot even be stated: there is no real/rational type, no constant ζ(3), no ∉ℚ predicate (REALS, tag 1). It is intrinsically about an infinite series limit and asymptotic convergence rate (INFINITUDE, tag 2) — the bounded box [0,64] cannot witness a limit. The defining objects need Σ_{n≥1}, Σ_{k=0}^n (SUMMATION, tag 4), binomial coefficients C(n,k) (NT FUNCTIONS, tag 7 — \"binomial\" is explicitly forbidden; only min/max allowed), and the three-term polynomial recurrence a_n/b_n (RECURRENCES, tag 8 — \"any recursively-defined a(n)\" is explicitly inexpressible). The spec's sanctioned modest extensions (gcd/φ lookup table, variable modulus, bounded Σ) do not reach this: even a bounded Σ leaves the statement a claim about the true real limit's non-representability as p/q over the unbounded integers, which is necessarily a real/unbounded-quantified property a finite [0,64] integer check can neither encode nor soundly certify. Statable in Lean, but only LLM-judge-checkable — outside the sound envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Regular continued fraction of e: e = [2; 1,2,1, 1,4,1, 1,6,1, …], with a_0=2 and for k≥1 the period-3 block (a_{3k−1},a_{3k},a_{3k+1})=(1,2k,1); consequently the convergents p_n/q_n → e and e is irrational.",
+   "novelty_justification": "The explicit closed form of e's continued-fraction expansion (the 1,2k,1 pattern) is a theorem of Euler with a nontrivial modern proof via the Hermite–Padé approximations to the exponential — it is exactly the 'continued-fraction identity for e' genre the Ramanujan Machine targets, not a manipulation a first-year student would derive. Establishing the pattern for all k requires integral representations of the convergent errors, well beyond elementary algebra.",
+   "source": "L. Euler, 'De fractionibus continuis dissertatio' (1737); H. Cohn, 'A short proof of the simple continued fraction expansion of e', Amer. Math. Monthly 113 (2006) 57–62; C. D. Olds, 'The simple continued fraction expansion of e', Amer. Math. Monthly 77 (1970) 968–974.",
+   "math_features": "Number domain ℝ with the rationals ℚ as convergents. Quantifier structure: unbounded ∀k≥1 specifying the k-th block of partial quotients, with an implicit limit (convergents → e). Special objects: an infinite (non-terminating, eventually-patterned) continued fraction, the index-dependent term a_{3k}=2k (a VARIABLE term inside an iterated reciprocal operator). DSL-inexpressible features: REALS (1), UNBOUNDED-∀/INFINITUDE (2), SUMMATION/PRODUCT — continued fraction is an iterated operator over a variable range (4), SEQUENCES/RECURRENCES — the partial-quotient sequence a_n (8).",
+   "area": "analysis-irrationality",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "UNBOUNDED-∀/INFINITUDE",
+    "SUMMATION/PRODUCT",
+    "SEQUENCES/RECURRENCES"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "No sound bounded check can exist. The DSL is a single-/multi-integer-variable predicate checked on a finite box [0,64] (smt_z3._conv). This theorem lives in four directions the box cannot reach: (1) REALS — the object is the transcendental real e and its rational convergents p_n/q_n → e; irrationality is a non-membership claim e∉ℚ over the reals, plus the reciprocals 1/(…) need non-constant rational division which the DSL forbids (only constant divisors). (2) UNBOUNDED-∀/INFINITUDE — the period-3 pattern is asserted for all k≥1 over the infinite partial-quotient sequence, and the convergence p_n/q_n → e is a limit with no finite box. (4) SUMMATION/PRODUCT — a continued fraction is an iterated reciprocal operator over a variable range (the spec lists continued fractions explicitly under tag 4); the DSL has no iterated operator. (8) SEQUENCES/RECURRENCES — the partial-quotient sequence a_n (a_0=2, a_{3k}=2k, else 1) is an index-defined sequence with a variable term a_{3k}=2k inside the operator. Crucially, verifying any finite prefix of partial quotients on [0,64] does NOT entail the infinite expansion, the limit, or irrationality — a bounded check would be unsound, not merely incomplete. The modest sound extensions on offer (gcd/φ lookup table, variable modulus, bounded Σ) address none of this; the obstruction is the real domain + infinitude + the limit, which require fundamentally unbounded/real machinery. Statable in Lean but only judge-checkable, hence not in the sound DSL envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Gelfond–Schneider theorem (Hilbert's 7th problem): if α, β are algebraic numbers with α ∉ {0,1} and β irrational, then α^β is transcendental (concrete instances: 2^√2 and e^π are transcendental).",
+   "novelty_justification": "This resolved Hilbert's 7th problem and was open from 1900 until Gelfond and Schneider independently settled it in 1934; transcendence of 2^√2 and e^π is a flagship result of transcendental number theory, proved via an auxiliary function / Siegel's lemma argument that is graduate-level at minimum. No mathematician would mistake the transcendence of α^β for first-year content — even today transcendence of e+π is open.",
+   "source": "A. O. Gelfond, 'Sur le septième problème de Hilbert', Izv. Akad. Nauk SSSR 7 (1934) 623–634; Th. Schneider, 'Transzendenzuntersuchungen periodischer Funktionen', J. Reine Angew. Math. 172 (1934) 65–69; A. Baker, 'Transcendental Number Theory', Cambridge UP (1975), Ch. 2.",
+   "math_features": "Number domain: ℂ/ℝ, specifically the field of algebraic numbers vs. transcendentals (ℝ∖𝔸). Quantifier structure: bounded-hypothesis ∀ over a pair (α,β) of algebraic numbers (∀α,β ∈ 𝔸 with side conditions ⇒ α^β ∉ 𝔸), an unbounded universal over an infinite algebraic domain. Special objects: algebraicity/transcendence predicate, general real-exponent power α^β, minimal polynomials. DSL-inexpressible features: REALS/COMPLEX & algebraic-vs-transcendental (1), UNBOUNDED-∀ over an infinite field (2), VARIABLE-EXPONENT — genuine α^β with irrational exponent, far beyond the periodic base^n%m case (5), NUMBER-THEORETIC FUNCTIONS — 'is algebraic' as a predicate (7).",
+   "area": "analysis-irrationality",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "1",
+    "2",
+    "5",
+    "7"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "No sound bounded check can exist. The DSL is a Z3 fragment over integer variables on a finite box [0,64]; its only objects are integers, its only \"functions\" are min/max, and its power form is constant-exponent x^k (k≤8) plus the single periodic base^n % m case. Gelfond–Schneider is a transcendence statement: (a) its objects live in ℝ/ℂ and it asserts membership in ℝ∖𝔸 (REALS, tag 1); (b) it is an unbounded ∀ over the infinite field of algebraic numbers, with no finite box (UNBOUNDED-∀, tag 2); (c) α^β is a genuine power with an irrational/real exponent, far beyond constant-k or periodic base^n%m (VARIABLE-EXPONENT, tag 5); (d) \"is algebraic\"/\"is transcendental\" is a field-theoretic predicate the DSL cannot express (NUMBER-THEORETIC FUNCTIONS, tag 7). The modest sound extensions the spec contemplates — gcd/φ lookup tables, variable modulus, bounded Σ — are all still integer/finite-box machinery and do not approach transcendence, Diophantine approximation, or minimal polynomials over an infinite field. Faithfulness here is only judge-checkable, i.e. outside the sound envelope. The proposer's claimed tags (1,2,5,7) are correct.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Roth's theorem (sharp Diophantine approximation): for every algebraic irrational α and every ε > 0, there are only finitely many rationals p/q (q>0) with |α − p/q| < 1/q^{2+ε}; equivalently the irrationality measure of every algebraic irrational equals exactly 2 (μ(α)=2).",
+   "novelty_justification": "Roth won the Fields Medal (1958) for this; it is the optimal strengthening of the Thue–Siegel–Dyson line (exponents √(2d), 2√d, d/2+1), reducing the approximation exponent to the best-possible 2+ε. The proof builds a multivariate auxiliary polynomial and invokes Roth's lemma on its index — emphatically not first-year, and the effective (vs. ineffective) form remains a major open problem.",
+   "source": "K. F. Roth, 'Rational approximations to algebraic numbers', Mathematika 2 (1955) 1–20, corrigendum 168; W. M. Schmidt, 'Diophantine Approximation', LNM 785, Springer (1980); A. Baker, 'Transcendental Number Theory', Cambridge UP (1975), Ch. 7.",
+   "math_features": "Number domain ℝ with rational approximants p/q ∈ ℚ. Quantifier structure: full alternation — ∀ algebraic irrational α, ∀ε>0, the set {(p,q): |α−p/q|<q^{−2−ε}} is FINITE (a ∀∀ over an unbounded domain with a finiteness/∃-bound conclusion: ∃N ∀ q>N …). Special objects: real absolute value |·|, a variable-exponent rational bound q^{2+ε} with REAL exponent, the irrationality-measure functional μ(α)=2. DSL-inexpressible features: REALS & real inequalities (1), UNBOUNDED-∀ + finiteness/asymptotic claim (2), EXISTENTIAL/∀∃ alternation (3), VARIABLE-EXPONENT q^{2+ε} with real ε (5), NUMBER-THEORETIC FUNCTIONS — algebraicity predicate and irrationality measure (7).",
+   "area": "analysis-irrationality",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "EXISTENTIAL / ∃",
+    "VARIABLE-EXPONENT",
+    "NUMBER-THEORETIC FUNCTIONS"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "No sound bounded check can exist. The DSL is an integer-only ∀-over-[0,64] box with predicates built from +,-,*, constant-exponent powers, constant divisor/modulus, and min/max. Roth's theorem violates this on five independent axes simultaneously: (1) REALS — α is a real algebraic irrational and |α−p/q| < 1/q^{2+ε} is a real absolute-value inequality; the box is integer-only. (2) INFINITUDE — \"only finitely many rationals\" is a genuine finiteness assertion over an unbounded (p,q) domain, which a fixed [0,64] box cannot witness or refute soundly. (3) ∀∃ ALTERNATION — finiteness unfolds to ∃N ∀q>N …, alternating quantifiers the DSL's single implicit ∀-block cannot encode. (4) VARIABLE-EXPONENT — q^{2+ε} carries a REAL variable exponent; the DSL allows only constant integer exponent 0≤k≤8 plus the lone base^n % m periodic case (constant base/modulus — inapplicable). (5) NUMBER-THEORETIC FUNCTIONS — the algebraicity predicate \"α is algebraic\" and the irrationality-measure functional μ(α) are not in {min,max} and are not bounded-table-able (algebraicity ranges over arbitrary-degree minimal polynomials; μ is a real lim-sup). The proposed modest extensions (gcd/φ lookup table, variable modulus, bounded Σ) address none of reals, real exponents, finiteness, alternation, or the measure functional. This is fundamentally unbounded + real + alternating-quantifier machinery; it is at best Lean-statable and only judge-checkable, not in the sound Z3 envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Motzkin polynomial M(x,y)=x^4 y^2 + x^2 y^4 - 3 x^2 y^2 + 1 is nonnegative on ℝ² but is not a sum of squares in ℝ[x,y] (equivalently the Motzkin form is PSD on ℝ³ but not SOS).",
+   "novelty_justification": "This is the first historical counterexample (Motzkin, 1967) to the question 'is every nonnegative polynomial a sum of squares?' — i.e., a concrete witness that the PSD cone strictly contains the SOS cone for n≥2 variables, degree ≥6. The non-SOS direction is NOT a first-year fact: it requires either a dual-certificate / extremal-ray argument or the Gram-matrix / Newton-polytope analysis, and it is the canonical motivating example for the entire field of SOS/Positivstellensatz optimization (Lasserre/Parrilo hierarchies). No undergraduate algebra course derives the SOS impossibility.",
+   "source": "T. S. Motzkin, 'The arithmetic-geometric inequality,' in Inequalities (O. Shisha, ed.), Academic Press, 1967, pp. 205–224. Standard modern treatment: B. Reznick, 'Some concrete aspects of Hilbert's 17th problem,' Contemp. Math. 253 (2000), 251–272.",
+   "math_features": "Number domain: ℝ (reals; the statement is false-interesting only over ℝ, and the SOS clause quantifies over the polynomial RING ℝ[x,y]). Quantifier structure: bounded-degree ∀(x,y)∈ℝ² for nonnegativity, plus a ¬∃ over decompositions q_i ∈ ℝ[x,y] with M = Σ q_i² (existence of a polynomial-ring certificate). Operators: polynomial powers x^4, y^4, products; no transcendental functions. The non-SOS part needs an ideal/Gram-matrix (linear-algebra-over-a-cone) certificate, not pointwise evaluation.",
+   "area": "inequalities-algebra",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "EXISTENTIAL / ∃",
+    "SUMMATION/PRODUCT",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Two clauses, both OUT. (1) Nonnegativity is ∀(x,y)∈ℝ²: the DSL has only integer variables checked on the bounded integer box [0,64] (missing feature REALS), so it cannot even soundly state a ∀-over-the-real-plane inequality, let alone the near-equality real-algebra at x²=y²=1. (2) The load-bearing non-SOS clause is a ¬∃ over decompositions q_i ranging over the entire ring ℝ[x,y] (unboundedly many polynomials of unbounded degree) such that M = Σ q_i². This is a genuine ¬∃ with quantifier alternation (EXISTENTIAL/∃), a sum of a variable number of squared terms (SUMMATION/PRODUCT), polynomials quantified as objects in an infinite-dimensional cone (HIGHER-ORDER/FUNCTIONS-AS-OBJECTS), over ℝ (REALS). SOS-membership is a global cone-separation / Gram-matrix (semidefinite) property, not a pointwise predicate on integer tuples, so no bounded-box evaluation in this DSL can encode it. No modest SOUND extension (gcd/φ lookup table, variable modulus, bounded Σ) reaches it — certifying non-membership in the SOS cone requires real semidefinite / Positivstellensatz machinery (an SDP/SOS certificate checker), which is a fundamentally different decision procedure, not a small extension of a bounded-box integer pointwise checker.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Choi–Lam quaternary quartic Q(x,y,z,w)=x²y²+y²z²+z²x²+w⁴−4xyzw is nonnegative on ℝ⁴ but not a sum of squares of polynomials.",
+   "novelty_justification": "A second, structurally independent (degree-4, four-variable) PSD-but-not-SOS form due to Choi and Lam (1977), in the lowest possible degree (4) for a non-SOS nonnegative quaternary form — distinct from Motzkin both in degree (4 vs 6) and in variable count. It is a load-bearing example in Choi–Lam's theory of extremal positive semidefinite forms and in the proof that for n≥4 variables there are nonnegative quartics off the SOS cone. The SOS impossibility is decidedly research-level: it uses extremality of PSD forms, not anything taught in a first algebra course.",
+   "source": "M. D. Choi and T. Y. Lam, 'Extremal positive semidefinite forms,' Mathematische Annalen 231 (1977), 1–18; and M. D. Choi and T. Y. Lam, 'An old question of Hilbert,' Queen's Papers in Pure and Applied Math. 46 (1977), 385–405.",
+   "math_features": "Number domain: ℝ⁴. Quantifier structure: bounded-degree ∀(x,y,z,w)∈ℝ⁴ for the inequality, plus ¬∃ over SOS decompositions in ℝ[x,y,z,w] (a ring/ideal certificate). Operators: degree-4 monomials, a mixed quartic term -4xyzw (the AM–GM equality term); no special functions. Needs a positivity certificate / extremal-cone argument rather than residue or pointwise reasoning.",
+   "area": "inequalities-algebra",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "EXISTENTIAL / ∃",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Both halves fall outside the DSL's atom (one integer-ish variable, bounded box [0,64], single boolean predicate). Half 1 (Q≥0 on all of ℝ⁴) is a GLOBAL REAL inequality over reals, not integers in a finite box — the polynomial arithmetic (degree-4 monomials, the −4xyzw term) is within the operator set (*, ^ with constant exp ≤ 8), but the domain ℝ⁴ and the unbounded ∀ are not. Restricting to integers on [0,64] would NOT be faithful to the real statement (the AM–GM equality and the form's behavior genuinely need ℝ), so the integer-box Z3 check is unsound as a verdict — Lean-statable but only judge/heuristic-checkable, hence NOT expressible. Half 2 (¬∃ SOS decomposition) quantifies over the infinite-dimensional cone of SOS polynomials in ℝ[x,y,z,w] — a Gram-matrix / Positivstellensatz obstruction, treating polynomials/decompositions as objects (HIGHER-ORDER) with a genuine non-existence claim (EXISTENTIAL) over real coefficients (REALS). No bounded lookup-table-style extension (gcd/φ table, variable modulus, bounded Σ) recovers either half; the required machinery is real positivity certificates over an unbounded/infinite-dimensional space, for which no sound bounded box check exists.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Newton's inequalities: for real a_1,…,a_n with e_k the k-th elementary symmetric polynomial and p_k = e_k / C(n,k) the elementary symmetric mean, p_k² ≥ p_{k-1}·p_{k+1} for 1 ≤ k ≤ n-1 (all real a_i); Maclaurin corollary p_1 ≥ p_2^{1/2} ≥ … ≥ p_n^{1/n} for nonnegative a_i, strengthening AM–GM.",
+   "novelty_justification": "Newton's inequalities are the log-concavity of the elementary symmetric means and hold for ALL real a_i — the proof is non-trivial: it goes through the fact that a real-rooted polynomial's derivative is real-rooted (Rolle) plus an induction on differentiation/contraction, NOT a one-line convexity argument. The 'all real (possibly negative) a_i' clause is exactly what makes it stronger than, and not a corollary of, AM–GM. The connection to real-rootedness and ultra-log-concavity is active in combinatorics (e.g., Lorentzian polynomials). A research mathematician treats this as a structural real-rootedness theorem, not a first-year manipulation.",
+   "source": "I. Newton, Arithmetica Universalis (1707); modern proof in G. H. Hardy, J. E. Littlewood, G. Pólya, 'Inequalities,' Cambridge Univ. Press, 2nd ed. 1952, §2.22 (Theorem 51) and the surrounding discussion of Newton's and Maclaurin's inequalities.",
+   "math_features": "Number domain: ℝ (real a_i, including negative; the means p_k are rational functions of them). Quantifier structure: ∀(a_1,…,a_n)∈ℝⁿ, ∀k with 1≤k≤n-1 — a doubly-quantified family parameterized by the variable arity n (genuinely unbounded in n). Operators: elementary symmetric polynomials e_k = Σ over C(n,k)-element index sets (a SUMMATION/binomial-indexed operator), normalization by binomial coefficients C(n,k), and a quadratic log-concavity comparison. Proof machinery: real-rootedness / Rolle, not bounded evaluation.",
+   "area": "inequalities-algebra",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "SUMMATION/PRODUCT",
+    "NUMBER-THEORETIC FUNCTIONS",
+    "VARIABLE-EXPONENT"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "Decisively OUT, and no modest sound bounded extension reaches it. Multiple independent walls each fall outside the integer/bounded-box envelope: (1) REALS — the a_i are genuine reals including negatives, the means p_k are rational functions of them, and the Maclaurin corollary uses fractional/irrational powers p_k^{1/k}; the DSL admits only z3.Int over [0,64] with constant integer exponents 0..8. (2) UNBOUNDED-∀ — the statement is a family parameterized by the variable arity n (and index k), genuinely unbounded in n; the DSL fixes finitely many variables and tests only on a finite box, so no faithful check of the ∀n family exists. (3) SUMMATION/PRODUCT — e_k = Σ over C(n,k)-element index sets is an iterated operator over a variable-length range; the DSL has no Σ/Π. (4) NUMBER-THEORETIC — normalization by the binomial coefficient C(n,k) is explicitly forbidden, and division is permitted only by a CONSTANT positive divisor (C(n,k) varies with n,k). A bounded-Σ or gcd/φ-lookup extension cannot help: the summation range and arity both grow unboundedly with n, the variables are real, and the quantification is over ℝⁿ for unbounded n — there is no finite box on which a bounded check is faithful to the claim. The proof itself (real-rootedness / Rolle) is real-analytic, not bounded evaluation. Faithfulness here could only be assigned by an LLM judge (JUDGED tier), which is outside the sound envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Schur's inequality (case t=2): for all nonnegative reals x,y,z, x^2(x-y)(x-z) + y^2(y-x)(y-z) + z^2(z-x)(z-y) ≥ 0, with equality iff x=y=z or two are equal and the third is 0; equivalently, the constrained Positivstellensatz statement that the symmetric quartic S_2 lies in the cone generated by 1,x,y,z,xy,yz,zx (Σ σ_α·m_α with σ_α SOS, m_α products of constraint generators), certifying nonnegativity on the nonnegative orthant ℝ³_{≥0}.",
+   "novelty_justification": "Schur's inequality holds ONLY on the nonnegative orthant (it is false for general real x,y,z), so it is a constrained-positivity / Positivstellensatz instance, not an unconstrained SOS statement — the t=2 quartic is genuinely NOT a sum of squares over ℝ³, and certifying it requires multipliers from the orthant constraints (Putinar/Schmüdgen-type representation). This domain-restricted positivity, plus the precise equality-case classification, is well beyond first-year algebra; it is a staple of olympiad-to-research inequality theory and a clean small example of a Positivstellensatz certificate.",
+   "source": "I. Schur (the inequality bears his name); G. H. Hardy, J. E. Littlewood, G. Pólya, 'Inequalities' (1952), §2.22; and for the Positivstellensatz reading, M. Putinar, 'Positive polynomials on compact semi-algebraic sets,' Indiana Univ. Math. J. 42 (1993), 969–984.",
+   "math_features": "Number domain: ℝ restricted to the nonnegative orthant ℝ³_{≥0} (a semialgebraic domain, defined by x≥0,y≥0,z≥0). Quantifier structure: bounded-degree ∀(x,y,z) over a constrained real region, with an exact ∃-equality-locus characterization. Operators: a degree-4 symmetric polynomial with cross-difference products (x-y)(x-z), no special functions. The faithful certificate is a CONSTRAINED Positivstellensatz representation (SOS multipliers times constraint generators), strictly more than an unconstrained sum of squares.",
+   "area": "inequalities-algebra",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "REALS",
+    "EXISTENTIAL / ∃",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "OUT. The DSL is an INTEGER bounded-box fragment: variables are z3.Int implicitly ∀-quantified over [0,64]. The target's domain is the real nonnegative orthant ℝ³_{≥0} (missing-feature #1 REALS). The polynomial OPERATORS themselves (+, -, *, constant powers ≤ 8) are all in the DSL, so the raw expression would compile over integers — but that is precisely why a Z3 integer-box check would be UNSOUND here: a polynomial nonnegative on every integer (or rational) grid point in the box can be negative between points, so grid sampling does not decide \"≥0 on all reals ≥0\". The faithful object is a CONSTRAINED Positivstellensatz / SOS-over-a-cone certificate (SOS multipliers σ_α times constraint generators), which is a real-closed-field / SDP construct entirely outside the Z3 integer fragment (relates to #10, certificate-as-object). The exact equality-locus \"iff x=y=z or two equal and third 0\" adds an ∃-equality-locus characterization of the solution set (#3 EXISTENTIAL/∃), which the single boolean predicate over a box cannot capture. No modest sound extension (gcd/φ lookup table, variable modulus, bounded Σ) touches any of this — a sound check would require replacing the backend with real quantifier elimination or SOS/Positivstellensatz machinery over ℝ. Statable in Lean, but only judge-checkable within this DSL, hence NOT expressible_in_dsl.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "The Ramsey number R(4,4) = 18: every 2-colouring of the edges of K_18 contains a monochromatic K_4, and there is a 2-colouring of K_17 with no monochromatic K_4 (equivalently, 18 is the least N such that every red/blue edge-colouring of K_N has a red or blue K_4).",
+   "novelty_justification": "Ramsey numbers are not first-year material; R(4,4)=18 is a specific, hard-won extremal value (the K_17 lower-bound colouring is the Paley graph on 17 vertices, a quadratic-residue construction, and the upper bound needs the R(s,t) <= R(s-1,t)+R(s,t-1) recursion plus a parity refinement). A research mathematician treats small Ramsey numbers as genuine combinatorics; R(5,5) is still unknown (between 43 and 48), which underscores that even R(4,4) is non-trivial. This is squarely a finite-structure statement (a property of all 2-colourings of a fixed finite graph) yet decidedly not textbook arithmetic.",
+   "source": "Greenwood, R.E. and Gleason, A.M., 'Combinatorial relations and chromatic graphs', Canadian J. Math. 7 (1955), 1-7 (established R(4,4)=18). See also Radziszowski, 'Small Ramsey Numbers', Electronic J. Combinatorics, Dynamic Survey DS1.",
+   "math_features": "Domain: finite graphs / 2-edge-colourings of K_N (combinatorial structures, DSL feature 9). Quantifier structure: bounded ∀ over all colourings of a fixed finite K_18 for the upper bound, plus a single ∃ witness colouring of K_17 for the lower bound (a ∀ / ∃ pair over an astronomically large but finite search space). No arithmetic operators in the daemon's sense; the objects are subsets of edge sets, monochromatic-clique predicates, and cardinalities — not Σ/Π or modular arithmetic.",
+   "area": "discrete-extremal",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "9",
+    "3"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "OUT. The DSL admits only predicates over a few integer variables on the bounded box [0,64], built from arithmetic, comparisons, booleans, min/max, constant powers/divisors/moduli, and the one periodic base^n % m form (≤200 AST nodes). It has no construct for a graph, an edge set, a 2-colouring, a clique, or set cardinality — exactly the inexpressible class named verbatim by tag 9 (SETS/COMBINATORIAL STRUCTURES: graphs, colourings, cardinalities, Ramsey-type). The statement is also a genuine quantifier alternation: ∀ colourings of K_18 ∃ a monochromatic K_4 (upper bound), and ∃ a colouring of K_17 with ∀ 4-subsets non-monochromatic (lower bound) — well beyond the single implicit integer ∀, triggering tag 3 (EXISTENTIAL/∀∃). The witness colourings live in finite but astronomical spaces (2^136 for K_17, 2^153 for K_18) and cannot be encoded as integers in [0,64], so no re-expression fits the integer-box fragment. A modest SOUND extension (gcd/φ lookup table, variable modulus, bounded Σ) does NOT reach it: faithful checking would require a wholly different finite-model/SAT backend encoding edge booleans, all C(n,4) clique constraints, and ∀∃ alternation — a separate decision procedure, not a bounded tweak to this Z3 integer DSL. (R(4,4)=18 is itself a decidable finite computation, but only via that other machinery.)",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Turán's theorem (extremal case) / Mantel's theorem: for every n the maximum number of edges in an n-vertex triangle-free (K_3-free) graph is floor(n^2/4), uniquely achieved by the balanced complete bipartite graph K_{floor(n/2),ceil(n/2)}; hence any n-vertex graph with > floor(n^2/4) edges contains a triangle.",
+   "novelty_justification": "This is the foundational result of extremal graph theory, not first-year discrete math. The general Turán theorem (forbidding K_{r+1}, giving the Turán graph T(n,r) with (1 - 1/r)n^2/2 edges asymptotically) launched an entire field; the uniqueness of the extremal graph and the exact floor(n^2/4) bound require a genuine extremal argument (Zykov symmetrization or a Cauchy-Schwarz / weighting argument). A research mathematician regards Turán-type problems as a core research area (Erdos-Stone-Simonovits, hypergraph Turán problems remaining open). The statement is over finite graphs with an exact integer extremal count, completely outside polynomial-congruence territory.",
+   "source": "Turán, P., 'On an extremal problem in graph theory' (Hungarian), Mat. Fiz. Lapok 48 (1941), 436-452; special case due to Mantel, W., Wiskundige Opgaven 10 (1907), 60-61. Standard reference: Bollobás, 'Extremal Graph Theory'.",
+   "math_features": "Domain: finite simple graphs on n vertices (combinatorial structures, DSL feature 9), with the edge count an integer-valued extremal quantity. Quantifier structure: ∀ graphs G on n vertices (e(G) > floor(n^2/4) ⇒ G contains K_3), an unbounded family parameterized by n (DSL feature 2, unbounded-∀ over a structure family), plus an ∃ uniqueness claim on the extremizer. Uses floor (real/integer floor of n^2/4 — DSL feature 1/7), counting/cardinality of edge sets, and a subgraph-containment predicate — none expressible as modular arithmetic.",
+   "area": "discrete-extremal",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SETS/COMBINATORIAL STRUCTURES",
+    "EXISTENTIAL / ∃",
+    "UNBOUNDED-∀ / INFINITUDE"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "The DSL box quantifies a single integer variable n over [0,64] with predicates over {+ - * ^const /const %const min max} and comparisons. The theorem's primary objects are finite graphs G on n vertices: it requires (a) a graph as a first-class structure with an edge set, (b) the cardinality e(G), (c) the subgraph-containment predicate 'G ⊇ K_3', and (d) a ∃!-uniqueness claim about the extremizer K_{floor(n/2),ceil(n/2)}. None of these are encodable as integer predicates over the box; the outer ∀ is over graph space (≈2^(n choose 2) graphs per n), not over the integer box, so there is NO Z3 box decision procedure that can refute/witness it (feature 9 SETS/COMBINATORIAL STRUCTURES + feature 3 EXISTENTIAL uniqueness + feature 2 unbounded-∀ over n and over the structure family). Only the scalar bound floor(n^2/4) is in-DSL (n^2/4 is a legal const-divisor floor-div), but that is merely one operand of the RHS, not the quantified-over-graphs claim. A MODEST sound extension (gcd/φ lookup table, variable modulus, bounded Σ) does NOT reach it: faithfulness-checking would need finite-model enumeration over all graphs on n vertices plus ∃!-extremality, which is a different (exponential, structure-valued, n-unbounded) class than an arithmetic widening of the integer box. Statable in Lean but only judge-checkable here — NOT expressible_in_dsl.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Brooks' theorem: for a connected graph G with maximum degree Δ, χ(G) ≤ Δ unless G is a complete graph K_{Δ+1} or an odd cycle C_{2k+1}, in which case χ(G) = Δ+1; equivalently, the only connected graphs whose chromatic number meets the trivial upper bound Δ+1 are complete graphs and odd cycles.",
+   "novelty_justification": "Brooks' theorem is a genuine graph-colouring theorem with a non-trivial proof (Lovász's inductive/greedy-ordering argument, or Kempe-chain analysis), sharper than the elementary greedy bound χ ≤ Δ+1 that IS first-year. The characterization of exactly which connected graphs are the extremal exceptions (complete graphs and odd cycles, and no others) is the substantive, non-obvious content. Research mathematicians cite Brooks' theorem as a cornerstone of chromatic graph theory and a template for many later sharpenings (e.g., the Borodin-Kostochka conjecture remains open). It is a statement about finite graphs and their chromatic number, not arithmetic.",
+   "source": "Brooks, R.L., 'On colouring the nodes of a network', Proc. Cambridge Phil. Soc. 37 (1941), 194-197. Modern proof: Lovász, L., 'Three short proofs in graph theory', J. Combin. Theory Ser. B 19 (1975), 269-271.",
+   "math_features": "Domain: finite simple connected graphs (combinatorial structures, DSL feature 9), with chromatic number χ(G) a graph invariant (an existential-over-colourings minimum: the least k such that a proper k-colouring exists — quantifier alternation ∃colouring∀edge, DSL feature 3). Maximum degree Δ is a max over vertex degrees (a structural max, not the DSL's numeric min/max on integers). Exception set is a structural characterization (complete graphs, odd cycles) — pure combinatorial classification with no arithmetic operators, modulus, or polynomial expression.",
+   "area": "discrete-extremal",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SETS/COMBINATORIAL STRUCTURES",
+    "EXISTENTIAL / ∃",
+    "UNBOUNDED-∀ / INFINITUDE",
+    "HIGHER-ORDER / FUNCTIONS-AS-OBJECTS / COMPLEXITY"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "The DSL's universe is a single (or few) integer variable(s) implicitly ∀-quantified over the bounded box [0,64], with each of claim_domain/claim_property a boolean predicate built from +,-,*, constant-exponent powers, constant divisor/modulo (plus the lone base^n % m periodic case), and min/max on integer arguments. Brooks' theorem instead quantifies over all finite simple connected graphs — objects entirely outside the variable vocabulary (feature 9: graphs/colourings/edge sets). Its central object χ(G) is the least k admitting a proper k-colouring, i.e. ∃colouring ∀edge(endpoints differ) then minimized — genuine ∀∃ quantifier alternation (feature 3) over a function-valued witness (a colouring is a function over a structure, feature 10), and the ∀ over graphs is unbounded, not a [0,64] integer box (feature 2). The exception predicates ('connected', 'maximum degree Δ', 'is K_{Δ+1}', 'is odd cycle C_{2k+1}') are structural predicates over adjacency/edge sets, again feature 9; the DSL's max ranges only over given integer arguments, not vertex degrees of an unencoded graph. No modest sound bounded extension (gcd/φ lookup table, variable modulus, bounded Σ) touches any of this: a faithfulness check would require encoding graphs, connectivity, and an existential search over colourings — fundamentally different machinery, not a small numeric add-on. The statement is Lean-formalizable but only judge-checkable, so it is NOT in the sound DSL envelope.",
+   "novelty_recheck": "textbook"
+  },
+  {
+   "statement": "Erdős–Ko–Rado theorem: if F is an intersecting family of k-element subsets of an n-element set with n ≥ 2k, then |F| ≤ C(n-1, k-1); moreover for n > 2k equality holds only for a 'star' (all k-sets containing one fixed element).",
+   "novelty_justification": "EKR is a central theorem of extremal set theory, not first-year combinatorics. The tight bound C(n-1,k-1) and the uniqueness of the star extremal family require a real argument — Katona's cyclic-permutation proof or the original shifting/compression method. A research mathematician regards EKR as the seed of an enormous literature (t-intersecting families, the complete-intersection theorem of Ahlswede-Khachatrian, cross-intersecting variants, EKR for permutations and vector spaces). The statement quantifies over finite set systems with a cardinality bound expressed via binomial coefficients — explicitly in the number-theoretic-function and combinatorial-structure regimes the daemon's polynomial-congruence DSL cannot touch.",
+   "source": "Erdos, P., Ko, C., and Rado, R., 'Intersection theorems for systems of finite sets', Quarterly J. Math. Oxford (2) 12 (1961), 313-320. Cyclic-permutation proof: Katona, G.O.H., 'A simple proof of the Erdos-Chao Ko-Rado theorem', J. Combin. Theory Ser. B 13 (1972), 183-184.",
+   "math_features": "Domain: finite set systems (families of k-subsets of [n]) — combinatorial structures, DSL feature 9, with an intersection predicate on pairs of sets. Quantifier structure: ∀ intersecting families F (with the side condition n ≥ 2k), an unbounded-∀ over a structure family parameterized by (n,k) (DSL feature 2), plus an ∃-uniqueness claim on the star extremizer. Bound C(n-1,k-1) is a binomial coefficient — a number-theoretic/combinatorial function of two variables (DSL feature 7), inexpressible with the DSL's constant-exponent powers and constant-modulus arithmetic; cardinalities |F| are set sizes, not modular residues.",
+   "area": "discrete-extremal",
+   "expressible_in_dsl": false,
+   "missing_features": [
+    "SETS/COMBINATORIAL STRUCTURES",
+    "NUMBER-THEORETIC FUNCTIONS",
+    "EXISTENTIAL / ∃",
+    "UNBOUNDED-∀ / INFINITUDE"
+   ],
+   "modest_sound_extension_would_capture": false,
+   "extension_note": "The DSL ranges only over integer variables on a bounded box [0,64], with predicates from arithmetic, comparisons, constant-exponent powers, constant-divisor mod/div, and only min/max. EKR's universally quantified object is a *family of k-subsets of [n]* with a pairwise-intersection predicate — a combinatorial structure (feature 9) the DSL cannot represent at all; there is no encoding of \"for all intersecting families F\" over a bounded integer box. The bound C(n-1,k-1) is a two-argument binomial coefficient (feature 7), outside the {min,max} whitelist, and |F| is a set-system cardinality, not a modular residue. The \"attained only by a star\" clause adds an ∃-uniqueness / extremal characterization (feature 3) plus genuinely unbounded ∀ over set systems (feature 2). A modest SOUND extension (gcd/φ lookup table, variable modulus, bounded Σ) does not help: even adding a binomial lookup table leaves the binding obstacle — quantification over families of subsets and the existential extremal-uniqueness clause — with no sound bounded integer-box check. Lean-statable but only judge-checkable here; routes to JUDGED tier, not the sound envelope.",
+   "novelty_recheck": "textbook"
+  }
+ ],
+ "adjudication": {
+  "final_count": 0,
+  "n_expressible": 0,
+  "n_out": 24,
+  "n_textbook_rejected": 22,
+  "missing_feature_histogram": {
+   "2 UNBOUNDED-∀": 19,
+   "7 NT-FUNCTIONS": 14,
+   "3 EXISTENTIAL/∀∃": 12,
+   "4 SUMMATION/PRODUCT": 11,
+   "1 REALS": 9,
+   "8 SEQUENCES/RECURRENCES": 7,
+   "9 SETS/COMBINATORIAL": 7,
+   "6 VARIABLE-MODULUS": 6,
+   "5 VARIABLE-EXPONENT": 6,
+   "10 HIGHER-ORDER": 6
+  },
+  "language_is_bottleneck": false,
+  "top_extensions_by_unlock": [
+   "Bounded Σ/Π (touches #4 on 11/24) — unlocks 0 alone: every Σ target also carries the unfixable #2 unbounded-∀ core",
+   "NT-function bounded lookup tables: gcd/φ/μ/binomial (touches #7 on 14/24) — unlocks 0 alone: stranded behind #2/#1",
+   "Automatic-sequence / base-b decision procedure (only path to SOUND ∀n for Motzkin-mod8, Catalan-ν₂, Stern) — a NEW sound backend, not a modest DSL extension; still cannot name p(n) or Apéry double-sums",
+   "Variable-modulus % m (touches #6 on 6/24) — unlocks 0 alone: the modulus is the quantified variable p, re-introducing #2",
+   "Real-domain / SOS-Positivstellensatz backend (would touch the 4 inequality-algebra targets) — a fundamentally different decision procedure, not a bounded extension"
+  ],
+  "verdict_paragraph": "Almost nothing novel is expressible: the number is 0. Of the 24 classified targets, the novelty recheck marks 22 as textbook, leaving exactly 2 genuinely-nontextbook survivors (Motzkin numbers mod 8; the Apéry-number supercongruence) — and both are OUT of the DSL, so 0 of the nontextbook survivors are expressible. The result is identical under the lenient reading that ignores the (internally contradictory) textbook flags: all 24 targets are expressible_in_dsl=false, so 0 are expressible either way. There are no false-positives to overturn (zero targets are labeled IN) and no false-negatives (the closest-to-IN cases — Ramanujan p(5n+4) with legal '5n+4 %5', and the SOS/Schur real polynomials whose operators are all in-grammar — are correctly OUT: p(n) cannot be named, and an integer-box check of a real-domain inequality is unsound near its equality locus). Every modest_sound_extension_would_capture=false verdict is real and consistent: the contemplated bounded extensions (lookup tables, variable modulus, bounded Σ) can make a predicate well-formed for a fixed instance but cannot make a universal-over-infinitely-many-primes/n claim sound on [0,64]. The binding constraint is therefore NOT the surface grammar — it is soundness over an infinite domain. #2 UNBOUNDED-∀ appears on 19/24 targets and is the one feature no bounded extension can repair; #1 REALS (9/24) and #3 ∀∃-alternation (12/24) are likewise paradigm-level, not vocabulary-level. The bounded-box decision-procedure paradigm itself, not the operator set, excludes research-grade number theory and combinatorics; a different sound backend would be required, and even those reach only a handful of targets.",
+  "caveats": [
+   "The novelty_recheck field is internally contradictory: 22/24 are flagged 'textbook' yet each target's own novelty_justification argues it is research-grade (Wolstenholme, Zsygmondy, Roth, Gelfond-Schneider, Apery zeta(3), EGZ, Cauchy-Davenport, EKR, Turan, Brooks, Ramsey R(4,4) are not first-year). I followed the explicit recheck flag for the drop count (22) per the task instruction, but the 0-expressible conclusion is robust to the mislabel since all 24 are OUT regardless.",
+   "The task anticipated deduping to ~20 genuinely-nontextbook targets; unreachable from this input — only 2 survive the recheck flag. The limiter is the input recheck labels, not dedup. No exact duplicates exist; near-duplicate genre clusters are {Motzkin-poly, Choi-Lam} (PSD-not-SOS), {Apery-zeta(3), Apery-supercongruence} (share Apery numbers, distinct theorems), {Ramsey, Turan, Brooks, EKR} (same #9+#3 combinatorial-structure genre).",
+   "Histogram is reported over ALL 24 OUT targets (the informative distribution); over just the 2 strict survivors it is {#2:2, #4:2, #7:2, #8:2, #6:1, #5:1}.",
+   "top_extensions_by_unlock lists extensions by which missing-feature they touch; the honest net unlock of every one is 0 under the strict gate reading, because the touched targets also carry an unfixable #1/#2/#3 core. The ranking is by potential reach, not realized novel-target gain.",
+   "Feature-tag normalization: targets mixed numeric ('1'-'10') and verbose tag formats; I canonicalized to the dsl_spec.md 1-10 vocabulary before tallying."
+  ]
+ }
+}

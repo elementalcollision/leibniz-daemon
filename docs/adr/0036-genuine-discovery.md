@@ -6,7 +6,7 @@ Kimi, GLM 5.2, Gemini 3.5 Thinking — `docs/external-review-novelty-frontier.md
 **A round-2 external review of *this synthesis* (6 models incl. Fugu Ultra —
 `docs/external-review-2-genuine-discovery.md`) substantially revises the recommendation. §10 records
 that reconciliation and SUPERSEDES §3, §6, and §8 where they conflict. Read §10 first.**
-**§11 records the first measurement result, M1 (proof-compression), and its adversarial audit.**
+**§11 records M1 (proof-compression) and its adversarial audit; §12 records M2 gate i (expressibility).**
 **Date:** 2026-06-25
 **Predecessors:** ADR 0034 (conjecturer-side novelty — §12 kill), ADR 0035 (faithfulness-DSL
 expressiveness — Stage A killed as a novelty lever; **§7.1 correction**).
@@ -392,3 +392,44 @@ compressor calls bridgeless?" — which a compressor cannot answer. So the next 
 promote the latent abstraction the readers found — the reduction lemma `(P n) % m = (P (n%m)) % m`
 plus the residue ⟺ divisibility reframing — to a real Lean lemma-schema and measure whether it lets
 the daemon reach proofs/novelty **not** in the corpus, especially across the POLY/POW boundary.
+
+---
+
+## 12. M2 gate i measured — expressibility audit
+
+The cheap first gate of M2 (no generator/prover compute) is run. Full record:
+`docs/m2-expressibility-audit-finding.md`; provenance `docs/results/m2_expressibility_audit_report.json`;
+method a 31-agent assemble→classify→adjudicate workflow over 24 genuinely non-textbook target
+theorems, classified against the sound-faithfulness DSL grammar read directly from
+`leibniz/backends/smt_z3.py`.
+
+- **Result: 0 of 24 novel theorems are expressible** in the sound DSL (4/4 OUT in every area:
+  number theory, additive/combinatorial, sequences, analysis/irrationality, inequalities, discrete).
+  The language cannot *state* research-grade mathematics. Round-2's "if you can't express them,
+  language is the bottleneck" is confirmed at gate i.
+- **But the binding constraint is the bounded-box soundness *paradigm*, not the vocabulary.** This
+  refines the naïve hypothesis: adding operators (Σ, gcd/φ tables, variable modulus) makes a
+  predicate *well-formed for a fixed instance* but cannot make a **universal-over-infinitely-many**
+  claim *sound* on `[0,64]`. #2 UNBOUNDED-∀ blocks 19/24 and no bounded extension repairs it; #1
+  reals (9/24) and #3 ∀∃ (12/24) are likewise paradigm-level. So the **"modest certifying-fragment
+  DSL extension" path (§10.1) is largely dead** — escaping needs a *different sound backend*
+  (Walnut/automatic-sequences for ∀n base-b facts; SOS/Positivstellensatz for real inequalities;
+  the kernel bridge / Stage B in general), each a distinct sound engine, not a DSL tweak.
+- **M1 + M2 converge.** M1: mining the corpus recovers only the textbook genre. M2: the language can
+  only *express* the textbook genre, blocked by the bounded-box paradigm. Both independently confirm
+  §10's root cause — the pointwise bounded-box check as the sole sound faithfulness arbiter. Neither
+  a better proposer (0034), a richer in-box grammar (0035), nor abstraction mining over the current
+  corpus (M1) escapes it; only a different sound checking paradigm does.
+- **Honesty:** the per-target `novelty_recheck` mislabelled 22/24 "textbook" (conflating "famous"
+  with "first-year"); the adjudicator caught it, and the 0-expressible result is robust to it (all
+  24 OUT regardless). One genuine *vocabulary-only* gap exists (Ramsey R(4,4)=18: finite-decidable
+  but no graph/set vocabulary) — 1/24, and a sound bounded graph backend is itself a large build.
+
+**Consequence for the plan:** M2 gates (ii) generator-reach and (iii) bridge-synthesis are **moot
+for the current DSL** — there is no expressible novel target to reach or bridge. The live question
+becomes targeted: *does a specific new sound backend admit a real novel class?* The three candidates
+M2 surfaces, in rough order of effort/reach: an **automatic-sequence (Walnut) decision procedure**
+(sound ∀n over base-b sequences — the cheapest genuinely-new sound class, and it directly attacks
+the sequence/recurrence targets); an **SOS/Positivstellensatz** real-inequality backend; and the
+**kernel bridge (Stage B)** for the general case. Each is its own measure-before-build decision; none
+is a modest extension. This is the decision point to bring back to the operator.
