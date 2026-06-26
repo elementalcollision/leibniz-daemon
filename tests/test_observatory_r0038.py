@@ -87,12 +87,24 @@ def test_missing_walnut_predicate_is_malformed():
         is FinishReason.MALFORMED
 
 
-# --- laundering: a fabricated bare "true" must not be DECIDED ----------------
+# --- closed-sentence decisions (the common decider form) --------------------
+# For the Observatory, the runner IS the real Walnut (freshness+exit guards), so a bare
+# `true`/`false` is Walnut's sound DECISION of a closed-sentence theorem (Walnut in the TCB,
+# non-Q.E.D.). The injected runner here stands in for that real run.
 
-def test_fabricated_bare_true_is_not_decided():
-    # a bare token has no universal automaton -> recheck fails -> not decided.
+def test_bare_true_sentence_is_decided():
     prop = _decide("true")
-    assert prop.finish_reason is not FinishReason.WALNUT_DECIDED
+    assert prop.finish_reason is FinishReason.WALNUT_DECIDED
+    assert is_walnut_decided(prop) is True
+    edge = next(e for e in prop.edges if e.edge == WALNUT_DECISION_EDGE)
+    assert edge.detail["reason"] == "decided_sentence"
+    # still strictly non-Q.E.D.
+    assert prop.promulgated is False and prop.demonstratio is None
+
+
+def test_bare_false_sentence_is_refuted():
+    prop = _decide("false")
+    assert prop.finish_reason is FinishReason.REFUTED
     assert is_walnut_decided(prop) is False
 
 

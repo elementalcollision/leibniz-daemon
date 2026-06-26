@@ -53,71 +53,81 @@ class WalnutObservatory:
 
     runner: Callable[..., Optional[str]] = field(default=_default_runner)
 
+    def _file(self, prop: Propositio, reason: FinishReason, verdict: Verdict, why: str,
+              cert_data: str | None = None, numeration: str | None = None) -> Propositio:
+        """Record a provenance edge (NEVER a promotion edge) with a diagnostic ``why`` and set
+        the finish reason. Sets no ``promulgated``/``Demonstratio``/Q.E.D. (kernel-only)."""
+        detail: dict = {"reason": why}
+        if cert_data is not None:
+            detail.update(automaton=cert_data, numeration=numeration)
+        prop.record(EdgeEvidence(
+            edge=WALNUT_DECISION_EDGE, tier=TrustTier.MECHANICAL, verdict=verdict,
+            detail=detail, producer="walnut/decide",
+        ))
+        prop.finish_reason = reason
+        return prop
+
     def decide(self, prop: Propositio) -> Propositio:
-        """Run Walnut on the claim's predicate and file the outcome. Returns ``prop`` with:
-          * ``FinishReason.WALNUT_DECIDED`` iff Walnut decided it TRUE over unbounded n AND the
-            gate's independent re-check confirms the certificate is a universal automaton;
-          * ``FinishReason.REFUTED``       iff Walnut found it false (a reachable rejecting state);
-          * ``FinishReason.UNPROVEN``      iff it cannot be soundly decided (no binary, malformed,
-            indeterminate, numeration mismatch) — never guessed;
-          * ``FinishReason.MALFORMED``     iff the claim carries no Walnut predicate/numeration.
-        It NEVER sets ``promulgated`` and never creates a proof/Q.E.D. (kernel-only).
+        """Run Walnut on the claim's predicate and file the outcome (with a diagnostic reason
+        on a provenance edge). Returns ``prop`` with:
+          * ``WALNUT_DECIDED`` — Walnut decided it TRUE over unbounded n: either a closed
+            SENTENCE Walnut returned ``true`` (Walnut, the real runner, is the trusted decision
+            procedure for this non-Q.E.D. tier), or a free-variable predicate whose agreement
+            automaton an INDEPENDENT re-check confirms universal;
+          * ``REFUTED`` — Walnut found it false (``false`` token, or a reachable rejecting state);
+          * ``UNPROVEN`` — cannot be soundly decided (no result / numeration mismatch /
+            indeterminate) — never guessed;
+          * ``MALFORMED`` — the claim carries no Walnut predicate/numeration.
+        NEVER sets ``promulgated`` and never creates a proof/Q.E.D. (kernel-only, invariants 1&7).
+
+        TRUST: a closed-sentence ``true`` is trusted as Walnut's sound decision — sound only
+        because the production ``runner`` is ``_default_runner`` (real Walnut with input
+        sanitization + stale-file deletion + clean-exit + fresh-read guards). The injectable
+        ``runner`` is for tests only; it is NOT a trust surface. The tier is non-Q.E.D.
         """
-        # A prop that already carries a kernel proof belongs to the Q.E.D. path, NOT this
-        # tier: never re-file it as WALNUT_DECIDED (defense-in-depth so a proof and the tier
-        # flag can never coexist on one record). Leave it untouched.
+        # A prop that already carries a kernel proof belongs to the Q.E.D. path, NOT this tier.
         if prop.demonstratio is not None:
             return prop
 
         ex = prop.expressio
         if not (ex is not None and ex.walnut_predicate and ex.walnut_numeration):
-            prop.quarantine(FinishReason.MALFORMED)
-            return prop
+            return self._file(prop, FinishReason.MALFORMED, Verdict.DEFER, "no_walnut_predicate")
 
         result_text = self.runner(ex.walnut_predicate, ex.walnut_numeration)
         if result_text is None:
-            prop.quarantine(FinishReason.UNPROVEN)  # Walnut unavailable / errored => cannot decide
-            return prop
+            # Walnut unavailable, inputs unsafe, or a nonzero exit (e.g. a predicate syntax
+            # error). Run with LEIBNIZ_WALNUT_DEBUG=1 to see Walnut's stderr.
+            return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "no_result")
 
         aut = parse_walnut_automaton(result_text)
-        # numeration self-consistency: the result must be over the numeration we asked for.
-        if aut.is_sentence or aut.numeration != ex.walnut_numeration:
-            prop.quarantine(FinishReason.UNPROVEN)
-            return prop
 
+        # Closed-SENTENCE theorem (all variables bound): Walnut's true/false IS the decision.
+        # There is no structural object to re-derive for a 0-track result; we trust Walnut
+        # (the real runner; see TRUST above). This is the common form for combinatorics-on-words
+        # theorems ("RS is overlap-free").
+        if aut.is_sentence:
+            if aut.is_true:
+                return self._file(prop, FinishReason.WALNUT_DECIDED, Verdict.PASS,
+                                  "decided_sentence", cert_data=result_text,
+                                  numeration=ex.walnut_numeration)
+            return self._file(prop, FinishReason.REFUTED, Verdict.FAIL, "refuted_sentence")
+
+        # Free-variable predicate -> a structured agreement automaton. Require the numeration we
+        # asked for, then INDEPENDENTLY verify universality (does not merely trust Walnut's say-so).
+        if aut.numeration != ex.walnut_numeration:
+            return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "numeration_mismatch")
         verdict = classify_agreement(aut)
+        if verdict == "universal":
+            cert = Certificate(kind=WALNUT_CERT_KIND, rechecked=False, data=result_text,
+                               detail={"numeration": ex.walnut_numeration})
+            if recheck_walnut_certificate(cert):
+                return self._file(prop, FinishReason.WALNUT_DECIDED, Verdict.PASS,
+                                  "decided_universal", cert_data=result_text,
+                                  numeration=ex.walnut_numeration)
+            return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "recheck_failed")
         if verdict == "refuted":
-            prop.quarantine(FinishReason.REFUTED)
-            return prop
-        if verdict != "universal":  # indeterminate: cannot be soundly decided
-            prop.quarantine(FinishReason.UNPROVEN)
-            return prop
-
-        # DECIDED-TRUE: require the gate's OWN independent re-check (the certificate is a
-        # universal automaton) before filing — a self-reported pass is never enough. The
-        # `rechecked` flag starts False (the backend asserts nothing); the gate's re-check
-        # below is authoritative and re-derives universality from cert.data, never the flag.
-        cert = Certificate(
-            kind=WALNUT_CERT_KIND, rechecked=False, data=result_text,
-            detail={"numeration": ex.walnut_numeration, "predicate": ex.walnut_predicate},
-        )
-        if not recheck_walnut_certificate(cert):
-            prop.quarantine(FinishReason.UNPROVEN)
-            return prop
-
-        # File in the non-Q.E.D. tier. The certificate is recorded as PROVENANCE (a
-        # non-promotion edge), NOT a proof edge: this NEVER sets promulgated and never
-        # creates a Demonstratio/Q.E.D. (kernel-only, invariants 1 & 7).
-        prop.record(EdgeEvidence(
-            edge=WALNUT_DECISION_EDGE,
-            tier=TrustTier.MECHANICAL,           # a sound decision procedure, re-checked — not a judge
-            verdict=Verdict.PASS,
-            detail={"certificate_kind": cert.kind, "automaton": cert.data,
-                    "numeration": ex.walnut_numeration},
-            producer="walnut/decide",
-        ))
-        prop.finish_reason = FinishReason.WALNUT_DECIDED
-        return prop
+            return self._file(prop, FinishReason.REFUTED, Verdict.FAIL, "refuted_automaton")
+        return self._file(prop, FinishReason.UNPROVEN, Verdict.DEFER, "indeterminate")
 
 
 def is_walnut_decided(prop: Propositio) -> bool:
