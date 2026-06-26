@@ -66,9 +66,18 @@ class FaithfulnessVerdict:
 1. **Exact-or-DEFER.** A backend returns `PASS` only when it has *soundly decided* the claim;
    otherwise `DEFER`. `DEFER` **never** silently becomes `PASS`. (This is the ADR 0020/0030
    vacuous-PASS rule, made structural.)
-2. **PASS carries a re-checked certificate.** Like a Lean proof, the certificate is *re-verified by
-   an independent checker*, not trusted because the backend said so. `PASS` without a certificate
-   that re-checks is a bug, caught by a guard test.
+2. **PASS carries a certificate re-checked by the *gate*, not self-reported.** Like a Lean proof, the
+   certificate is *re-verified by an independent checker*, not trusted because the backend said so.
+   The gate holds its **own** registry of re-checkers keyed by `certificate.kind`
+   (automaton-emptiness for `walnut-automaton`, `ring` for `sos`, the kernel for `kernel-bridge`) and
+   accepts a backend PASS only when a re-checker for that kind exists **and returns True**. The
+   backend's `Certificate.rechecked` flag is *advisory*; the gate's own re-check is authoritative —
+   pinning soundness structurally the way the proof edge pins `producer == KERNEL`. With no re-checker
+   registered for a kind, a PASS of that kind **cannot** be accepted, so the dormant default (no
+   backends, no re-checkers) is maximally safe. `PASS` without a certificate, of an unregistered kind,
+   or whose re-check fails, is downgraded to fall-through — caught by guard tests. *(This is the
+   hardening the Slice-1 adversarial soundness review recommended; adopted in Slice 1 rather than
+   deferred, so the honor-system flag is never load-bearing.)*
 3. **MECHANICAL, never JUDGED.** A `SoundFaithfulnessBackend` is by definition not the LLM judge.
    The existing OPEN_FORM judge fallback stays exactly as today (flagged, budget-bounded), reached
    only when *every* sound backend `DEFER`s.
