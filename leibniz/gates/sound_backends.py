@@ -32,12 +32,19 @@ from leibniz.propositio import Propositio
 from leibniz.types import Verdict
 
 # An independent re-checker for a certificate KIND, owned by the gate (not the
-# backend): automaton-emptiness for "walnut-automaton", `ring` for "sos", the Lean
+# backend): automaton-universality for "walnut-automaton", `ring` for "sos", the Lean
 # kernel for "kernel-bridge". The gate accepts a PASS only if the re-checker for the
-# certificate's kind exists AND returns True -- so `Certificate.rechecked` (set by
-# the backend) is ADVISORY; the gate's own re-check is authoritative. This pins
-# soundness structurally, the way the proof edge pins producer == KERNEL_PRODUCER,
-# rather than trusting an honest tag.
+# certificate's kind exists AND returns True -- so `Certificate.rechecked` (set by the
+# backend) is ADVISORY; the gate's own re-check is authoritative, defeating a backend
+# that merely *reports* a pass.
+#
+# HONESTY about strength: the re-check is an independent STRUCTURAL check of the
+# certificate, and how much it re-derives depends on the kind. For the kernel-bridge it
+# re-derives everything (a full kernel re-check of a proof term, like the proof edge's
+# producer==KERNEL pin). For backends that wrap a trusted decision procedure (Walnut, and
+# Z3 on the gaming spine) it verifies a structural property of the produced certificate
+# (e.g. the agreement automaton is universal) while the decision procedure ITSELF stays in
+# the faithfulness TCB -- it is NOT a kernel-style re-derivation of that engine's decision.
 CertificateRechecker = Callable[["Certificate"], bool]
 
 
@@ -45,12 +52,11 @@ CertificateRechecker = Callable[["Certificate"], bool]
 class Certificate:
     """A re-checkable witness for a sound faithfulness decision.
 
-    ``rechecked`` is True iff ``data`` was *independently re-verified* by a checker
-    smaller than the engine that produced it -- an automaton-emptiness check for
-    Walnut, ``ring`` for an SOS decomposition, the Lean kernel for a bridge proof.
-    It is the faithfulness analogue of re-running a proof through the kernel: the
-    certificate is checked, not trusted. The gate refuses a PASS whose certificate
-    is not ``rechecked``.
+    ``rechecked`` is True iff ``data`` was *independently re-verified* by the gate's own
+    re-checker for this kind -- an automaton-UNIVERSALITY check for Walnut, ``ring`` for an
+    SOS decomposition, the Lean kernel for a bridge proof. The certificate is checked, not
+    trusted; the gate refuses a PASS whose certificate is not ``rechecked`` (see
+    ``CertificateRechecker`` for the honest strength of each kind's re-check).
     """
 
     kind: str                       # "walnut-automaton" | "sos" | "kernel-bridge" | ...
