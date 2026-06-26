@@ -28,9 +28,10 @@ gate tries, strongest first:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Protocol
 
+from leibniz.gates.sound_backends import CertificateRechecker, SoundFaithfulnessBackend
 from leibniz.propositio import Propositio
 from leibniz.types import ClaimType, EdgeEvidence, FinishReason, TrustTier, Verdict
 from leibniz.trust import FAITHFULNESS_EDGE, JUDGE_PRODUCER
@@ -59,6 +60,17 @@ class FaithfulnessGate:
     judge: FaithfulnessJudge
     judge_threshold: float = 0.9
     gaming_bound: int = 64
+    # ADR 0037: additional SOUND checkers (Walnut, SOS, kernel bridge). Each is
+    # exact-or-DEFER with a re-checked certificate; run cheapest-first AFTER the
+    # gaming spine (kept as a kill-only lint) and BEFORE the claim-type probe.
+    sound_backends: tuple[SoundFaithfulnessBackend, ...] = ()
+    # The gate's OWN independent re-checkers, keyed by certificate.kind. A backend
+    # PASS is accepted only if a re-checker for its certificate kind exists and
+    # returns True -- the backend's self-reported `rechecked` flag is advisory. With
+    # no re-checker registered for a kind, a PASS of that kind cannot be accepted
+    # (the dormant default is therefore maximally safe). This pins soundness
+    # structurally rather than trusting an honest tag.
+    recheckers: dict[str, CertificateRechecker] = field(default_factory=dict)
 
     def check(self, prop: Propositio) -> EdgeEvidence:
         assert prop.expressio is not None, "formalize before faithfulness"
@@ -90,6 +102,47 @@ class FaithfulnessGate:
                 cost_units=2.0,
                 producer="SMTVerifier.gaming_witness",  # ADR 0013 §2
             )
+
+        # 1b. Sound faithfulness backends (ADR 0037), cheapest first. Each is
+        # exact-or-DEFER with a RE-CHECKED certificate. A PASS lacking one is NOT
+        # a pass (downgraded to fall-through); DEFER never becomes PASS. MECHANICAL,
+        # never a judge -- the LLM judge below is reached only when all of these
+        # (and the probe) decline.
+        for backend in sorted(self.sound_backends, key=lambda b: b.cost_rank):
+            if not backend.applies(prop):
+                continue
+            v = backend.check(prop)
+            if v.verdict is Verdict.FAIL:
+                prop.quarantine(FinishReason.UNFAITHFUL)
+                return EdgeEvidence(
+                    edge=FAITHFULNESS_EDGE,
+                    tier=TrustTier.MECHANICAL,
+                    verdict=Verdict.FAIL,
+                    detail={"backend": backend.name, **v.detail},
+                    cost_units=2.0,
+                    producer=v.producer,  # ADR 0013 §2 (mechanical, never a judge)
+                )
+            if v.is_pass_with_certificate():
+                # Authoritative: the GATE independently re-checks the certificate via
+                # its own re-checker for this kind. A self-reported PASS with no
+                # registered re-checker, or one whose re-check fails, is NOT a pass.
+                rechecker = self.recheckers.get(v.certificate.kind)
+                if rechecker is not None and rechecker(v.certificate):
+                    return EdgeEvidence(
+                        edge=FAITHFULNESS_EDGE,
+                        tier=TrustTier.MECHANICAL,
+                        verdict=Verdict.PASS,
+                        detail={
+                            "backend": backend.name,
+                            "certificate_kind": v.certificate.kind,
+                            "rechecked_by_gate": True,
+                            **v.detail,
+                        },
+                        cost_units=2.0,
+                        producer=v.producer,  # ADR 0013 §2 (mechanical, never a judge)
+                    )
+            # PASS with no/failed independent re-check, or DEFER: not a pass. Fall
+            # through to the next backend, then the probe / DEFER / judge logic.
 
         # 2. Mechanical fast path, dispatched by claim type.
         probe = self.probes.get(en.claim_type)
