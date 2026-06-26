@@ -208,6 +208,17 @@ def autoformalizer_with_failover(primary: object, meter: object | None = None) -
     return FailoverProvider([primary, *backups]) if backups else primary
 
 
+def build_conjecturer(meter: object | None = None) -> object:
+    """The CONJECTURE/FORMALIZE provider (autoformalizer + ADR 0029 failover) — the same
+    construction `build_daemon` uses, exposed for opt-in entrypoints (e.g. the ADR 0038
+    Walnut Observatory run). Proposal-only; configure creds via env (load_env() first)."""
+    primary = AnthropicProvider(
+        model=os.environ.get("LEIBNIZ_CONJECTURE_MODEL", "claude-opus-4-8"),
+        meter=meter,
+    )
+    return autoformalizer_with_failover(primary, meter=meter)
+
+
 def _proof_verifier(cli_lean: LeanVerifier, repl_image: str | None = None) -> LeanVerifier:
     """The verifier the consensus ensemble discharges through (ADR 0011).
 
