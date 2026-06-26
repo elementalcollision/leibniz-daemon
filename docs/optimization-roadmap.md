@@ -36,6 +36,46 @@ public account in `docs/cycles-report-novelty-frontier.md`). Both levers remain 
 opt-in/default-off** — useful as *yield* levers (proving large volumes of true elementary number
 theory, e.g. seeding a Lean library) if breadth, not novelty, becomes the goal.
 
+## Sound-backend discovery arc — CONCLUDED (2026-06-26)
+
+The 0625 conclusion said the bottleneck was the faithfulness **test** (the bounded `[0,64]` box) and
+the escape was **proof-carrying faithfulness** — pluggable *sound backends* that decide
+unbounded/exact classes the box cannot (ADR 0036 → the `SoundFaithfulnessBackend` protocol, ADR 0037).
+That escape was then **built and measured**, crawl-then-walk, each behind a measure-before-build gate:
+
+- **Crawl — Walnut (automatic-sequence FO): built, run live.** Trust machinery validated end-to-end
+  across three runs (3 artifacts filed → 2 caught by the ADR 0039 lint → 0 unsound, diverse, faithful).
+  Run-3 = **11 sound, diverse, faithful decided records, all textbook** (12-agent verification, 0
+  plausibly-novel). ADR 0038 (non-Q.E.D. Observatory tier) + ADR 0039 (faithfulness lint + formal-first).
+- **Walk — SOS/Positivstellensatz: probed, build DEFERRED.** Soundness + box-OUT reach GREEN (exact
+  rational re-check proven stdlib-only; reaches `∀x∈ℝⁿ`; and a genuinely-**Q.E.D.** *prover* seam exists,
+  unlike Walnut). But the novelty go/no-go is **RED**: 0/12 in-reach + box-out + plausibly-novel in both
+  default and frontier-steered arms (ADR 0037 §8/§8.1).
+
+**Concluded finding (the capstone — `docs/discovery-ceiling-cross-backend-finding.md`):** across **two
+independent sound backends**, the *soundly-checkable **and** finitely-encodable region is the textbook
+region.* A perfect anti-correlation held — everything in-reach was textbook; everything plausibly-novel
+left the backend's encodable class (graphon/flag moment bodies, non-existence meta-statements). The
+binding constraint has moved one level deeper and is now empirically pinned: **novelty at the
+*producer* — a structural ENCODING gap — not soundness, reach, or prover power.** The escape worked (the
+box is no longer the wall); it revealed the next wall.
+
+**Disposition:** the sound-backend discovery arc is **concluded with a measured finding.** The daemon's
+honest standing: a **vindicated sound verification / non-Q.E.D. decision instrument** behind an unbroken
+trust boundary (0 unsound across both backends; no LLM ever decided; `tests/test_invariants.py`
+byte-identical throughout), that reliably produces correct, diverse, **textbook** mathematics — not (yet)
+a novel-discovery engine.
+
+- **More sound backends will not help** — the constraint is the producer, confirmed twice. The **kernel
+  bridge** (the "run" rung, task #54) stays **gated** for the same reason; this finding strengthens, not
+  weakens, that gate.
+- **Re-open gate:** the SOS build (and the discovery quest generally) goes GREEN only when a re-run of the
+  WALK novelty micro-probe shows a non-empty in-reach + box-out + plausibly-novel intersection in even the
+  default arm — which requires **producer-side** work (a flag-algebra/graphon-moment encoder that emits
+  finite SDP-ready objects; an in-loop symbolic self-check to kill false/misformalized claims), **not**
+  another checker. That is the one identified lever left, a substantial domain-specific bet, and is
+  **not** authorized here.
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are

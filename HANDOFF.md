@@ -1,10 +1,19 @@
 # Leibniz · *Calculemus* — Handoff & Porting Manual
 
 **Audience:** Claude Code (and the operator directing it).
-**State (updated 2026-06-23):** the rung climb **R1 → R6 is substantially complete**; the
+**State (updated 2026-06-26):** the rung climb **R1 → R6 is substantially complete**; the
 project is now in the **post-R6 optimization phase** (discovery yield — see
-`docs/optimization-roadmap.md`, the live work plan). The original assembly note is kept in §12
-for history. Capsule of what is real now (all behind the unchanged trust boundary):
+`docs/optimization-roadmap.md`, the live work plan). **The sound-backend discovery arc is now
+CONCLUDED with a measured finding** (`docs/discovery-ceiling-cross-backend-finding.md`): across two
+independent sound backends (Walnut automatic-sequences, built + run live; SOS/Positivstellensatz,
+probed), the *soundly-checkable **and** finitely-encodable region is the textbook region*. The binding
+constraint is **novelty at the producer — a structural encoding gap** — not soundness, reach, or prover
+power. The daemon is a **vindicated sound verification / non-Q.E.D. decision instrument** (0 unsound; no
+LLM ever decided; `test_invariants.py` byte-identical), producing correct, diverse, **textbook**
+mathematics. More sound backends will not help; the kernel bridge stays gated (task #54); the only
+identified lever left is producer-side (a frontier-encoder), unauthorized/unstarted. The original
+assembly note is kept in §12 for history. Capsule of what is real now (all behind the unchanged trust
+boundary):
 - **R1 — real kernel: DONE, but via Docker, NOT LeanDojo.** The `LeanBackend` is
   `backends/lean_cli.py` + `backends/lean_repl.py`, shelling out to a pinned Lean 4.31 +
   Mathlib container (`leibniz-lean:v4.31.0` / `leibniz-lean-repl:v4.31.0`), per ADR 0003/0011.
