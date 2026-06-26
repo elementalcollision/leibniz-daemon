@@ -69,10 +69,15 @@ class FaithfulnessVerdict:
 2. **PASS carries a certificate re-checked by the *gate*, not self-reported.** Like a Lean proof, the
    certificate is *re-verified by an independent checker*, not trusted because the backend said so.
    The gate holds its **own** registry of re-checkers keyed by `certificate.kind`
-   (automaton-emptiness for `walnut-automaton`, `ring` for `sos`, the kernel for `kernel-bridge`) and
-   accepts a backend PASS only when a re-checker for that kind exists **and returns True**. The
-   backend's `Certificate.rechecked` flag is *advisory*; the gate's own re-check is authoritative —
-   pinning soundness structurally the way the proof edge pins `producer == KERNEL`. With no re-checker
+   (automaton-**universality** for `walnut-automaton`, `ring` for `sos`, the kernel for
+   `kernel-bridge`) and accepts a backend PASS only when a re-checker for that kind exists **and
+   returns True**. The backend's `Certificate.rechecked` flag is *advisory*; the gate's own re-check is
+   authoritative, defeating a backend that merely *reports* a pass. **Honest strength varies by kind:**
+   the kernel-bridge re-check re-derives everything (a full kernel re-check, like the proof edge's
+   `producer == KERNEL` pin); the Walnut/SOS re-checks verify a *structural property* of the produced
+   certificate (e.g. the agreement automaton is universal) while the underlying decision procedure
+   (Walnut, like Z3 on the gaming spine) stays in the **faithfulness** TCB — not a kernel-style
+   re-derivation of that engine's decision. With no re-checker
    registered for a kind, a PASS of that kind **cannot** be accepted, so the dormant default (no
    backends, no re-checkers) is maximally safe. `PASS` without a certificate, of an unregistered kind,
    or whose re-check fails, is downgraded to fall-through — caught by guard tests. *(This is the
@@ -100,7 +105,7 @@ The bounded box is thus no longer the *sole* arbiter: it is one lint plus *n* so
 
 | Stage | Backend | Decidable class (the unbounded-∀ etc. it reaches) | Certificate | Re-checked by |
 |---|---|---|---|---|
-| **Crawl** | **Walnut / automatic-sequences** | FO statements over k-automatic sequences — genuine sound **∀n** (Büchi–Bruyère decidable) | the synthesized automaton / Walnut transcript | independent automaton emptiness/equivalence check |
+| **Crawl** | **Walnut / automatic-sequences** | FO over k-automatic sequences — genuine sound **∀n** (Büchi–Bruyère) | the synthesized **agreement automaton** | independent automaton-**universality** check (Walnut itself trusted, like Z3) |
 | **Walk** | **SOS / Positivstellensatz** | real multivariate polynomial nonnegativity / semialgebraic | rational SOS decomposition `P = Σ cᵢ Qᵢ²` | `ring` (kernel) expands & checks the identity |
 | **Run** | **Kernel bridge (Stage B)** | general `claim_prop ↔ statement` | a Lean proof term | the Lean kernel (`LeanVerifier`-style re-check) |
 
@@ -174,6 +179,35 @@ The §4 measure-before-build gate for the crawl rung is run. Full record:
   operator authorization.
 
 **Decision:** the crawl rung is cleared to build — the Walnut backend (protocol + lint-demotion
-dispatch + Walnut integration with the automaton-emptiness re-checker behind an adversarial soundness
+dispatch + Walnut integration with the automaton-universality re-checker behind an adversarial soundness
 review), then a blind-panel novelty read on its output. The walk rung (SOS) and run rung (kernel
 bridge) remain gated on their own probes.
+
+---
+
+## 7. Slice 2 landed — the Walnut backend (`leibniz/backends/walnut.py`)
+
+Built and merged **OFF BY DEFAULT** (not wired into `assembly.py`; no re-checker registered → the gate
+cannot accept a `walnut-automaton` PASS until the operator opts in). Faithfulness is rendered as a
+free-variable **agreement predicate** `claim(n) ↔ statement(n)`; Walnut emits the agreement automaton;
+the gate-owned re-checker independently verifies it is **universal** (a tri-state classifier —
+`universal`/`refuted`/`indeterminate` — returns `universal` only for a *complete, deterministic* DFAO
+over a modeled numeration alphabet, every reachable state accepting).
+
+**Soundness took three adversarial-review rounds** (the discipline working): round 1 caught a string-
+compare re-checker over-claimed as a kernel-style pin (fixed → real universality check); round 2 caught
+that universality was unsound for *partial/dangling* automata + a command-injection surface (fixed →
+completeness enforced via kept transition labels + numeration alphabet; predicate/numeration sanitized);
+round 3 returned **safe_to_merge, 0 blocking, no laundering paths**. Both reproduced laundering strings
+(`msd_2\n\n0 1\n0 -> 0\n`; `… 0 -> 7 …`) and the injection now DEFER, with regression tests. Walnut +
+the renderer are honestly placed in the **faithfulness** TCB (like Z3); the proof-edge TCB (Lean kernel)
+is untouched; `tests/test_invariants.py` byte-identical.
+
+**MUST-DO BEFORE THE OPERATOR ENABLES IT** (each errs to DEFER today — sound, but the PASS path is
+validated only on synthetic fixtures): (1) **validate the PASS path against a real Walnut predicate-
+automaton `Result/*.txt`** and extend the parser/alphabet to the live label format (it may use bracketed
+labels `[0],[1]` + a `{…}` header my parser does not yet model → currently DEFERs); (2) **prop-binding**
+— a partial numeration-match seam is in; tighten the deeper automaton↔claim binding or accept it as the
+documented Walnut+renderer TCB; (3) **runner home derivation** hardening (`$LEIBNIZ_WALNUT_HOME`). Until
+(1) is done, the live backend is sound but non-functional (DEFERs real output), so enabling it changes
+nothing until validated — which is the safe order.
