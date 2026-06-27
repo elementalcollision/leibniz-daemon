@@ -1,9 +1,9 @@
 # ADR 0041 — Trust boundary for tool use, tool building, and research ingestion
 
-- **Status:** PROPOSED (draft for operator sign-off). **Pre-witness-round:** a 7-model external
-  review is in flight (`docs/external-witness-brief-tool-foundation.md`); surviving guidance will be
-  folded in before sign-off. **No code is built from this ADR until the operator approves §5 + the
-  sign-off checklist.**
+- **Status:** PROPOSED — **ready for operator sign-off.** The 7-model external-witness round is complete
+  and reconciled (§10): it VALIDATED the trust architecture (no defect in E1–E7), and its surviving
+  guidance is folded in (A1–A10). **No code is built from this ADR until the operator approves §5 + the
+  §9 sign-off checklist.**
 - **Date:** 2026-06-27
 - **Deciders:** Operator (sign-off required before any DECIDER-admission or any change to `trust.py`)
 - **Siblings:** ADR 0001 (charter & trust hierarchy), ADR 0013 (trust-edge provenance hardening),
@@ -68,6 +68,15 @@ pin with **zero new code in `trust.py` for the proof edge**; the *only* `trust.p
 mandates is a faithfulness-edge producer allowlist (§7, ATTACK 2), which strengthens — never relaxes —
 the boundary.
 
+**Framing as a decision criterion (A1; ratified 7/7 by the round-3 witness review, §10).** This ADR
+builds the **trust boundary and the capability substrate**; it does **NOT** assert that tool-building
+moves the producer wall — the measured binding constraint is the *producer* (mathematical taste /
+representation), not infrastructure, and the FunSearch pilot was *already* autonomous tool-building that
+beat zero records. Accordingly the validated near-term product is **verification amplification** of
+human- and research-supplied targets; the *autonomous-discovery* phases (4–6) are gated on a measured
+**producer-wall diagnostic (Gate D0, §4)**. Absent D0 evidence, do not justify Phases 4–6 as a discovery
+unlock.
+
 ---
 
 ## 2. The trust model
@@ -104,7 +113,11 @@ DEFER-never-becomes-PASS);
 (b) the certificate's re-checker is an **independent, SMALLER, separately-reviewed, HUMAN-provenance**
 checker — ideally only the small re-checker enters the TCB while the built engine stays a proposer (the
 de Bruijn / LCF criterion; the ADR-0037 §8 SOS finding where the float SDP solver stays off-TCB and
-`ring` re-checks);
+`ring` re-checks). **A6 (round-3):** if the re-checker is *more than a thin wrapper* over the kernel or an
+existing decision procedure (i.e. it embodies new deciding logic), the **PREFERRED** admission is a
+**kernel-checked soundness statement** for the re-checker (Lean-implemented or proof-reconstructed), not
+merely a strength tag + adversarial review; passing tests / being audited is **insufficient** for a
+non-thin re-checker (`spec_author != proof_author`). Thin re-checkers keep the lighter (a)–(d) route;
 (c) an **honest re-check-STRENGTH tag** bound to the kind (kernel-grade re-derivation vs
 structural-property check vs engine-in-faithfulness-TCB), enforced at `validate_path`, not documentary;
 (d) an **adversarial soundness review** that reproduces a kind-collision / weaker-statement laundering
@@ -153,12 +166,29 @@ enforced byte-identical by `tests/test_invariants.py`.
 - **E5 — Untrusted tool code executes ONLY inside the sandbox isolation boundary; the host never execs
   it in-process** (restates a precondition as invariant). The real backstops are the host wall-clock
   deadline + bounded stdout read + force-reap + no `-v` mount + sha256-digest-pinned image; the
-  in-container SIGALRM is best-effort only. *Blocks F6 (sandbox escape / supply-chain).*
+  in-container SIGALRM is best-effort only. **A7 (round-3, build-surface ban):** the proposer supplies the
+  tool BODY and witness DATA only — it MUST NOT generate build scripts, compiler/linker flags,
+  container/manifest entries, or dependency specs (all operator-owned). Builds use pinned deps,
+  reproducible images, no dynamic/network downloads, a credential-free workspace, and record an SBOM.
+  Re-checking the *output* does not cover a compiler/build side-channel. *Blocks F6 (sandbox escape /
+  supply-chain).*
 - **E6 — Certificate-kind honesty: claimed re-check strength must match the re-checker's actual
   strength** (new explicit guard for the generalization). Kernel-grade re-derivation, structural-property
   check, and engine-in-faithfulness-TCB are tagged distinctly and never conflated; the re-checker must
   **re-derive from `certificate.data`, never trust `certificate.kind` or `certificate.rechecked`**.
   *Blocks F7 (certificate-kind laundering).*
+- **E6′ — Axiom/`sorry`/native-mechanism closure audit + the Lean compiler is attack surface** (A8,
+  round-3 — Gemini's strongest point + Qwen). A trusted re-check must REJECT any proof term containing
+  `sorry`, a new `axiom`, or unapproved imports, and verify the **absence** of axioms against an explicit
+  allowlist (presence of `Q.E.D.` is not enough). `native_decide`, `unsafeCast`, `@[extern]`,
+  `@[implemented_by]`, and unsafe/native execution are **banned in trusted re-check paths** (they route to
+  host code). The Lean elaboration/compilation step itself runs **inside the same sandbox isolation** as
+  candidate code — the compiler is part of the attack surface, not trusted infrastructure. *Hardens F3/F7.*
+- **E8 — Held-out evaluation integrity** (A3, round-3 — named by 6/7 as the top measurement-integrity
+  failure). Any tool whose *utility* gates a phase transition is evaluated ONLY on a **held-out,
+  pre-registered, cryptographically-committed-before-the-tool-is-built** instance set drawn from
+  independent config the agent cannot read or modify. **Tool-generated test suites are admission filters,
+  never promotion evidence.** *Blocks eval-on-self.*
 - **E7 — Statement-template ownership** (new; the keystone the adversarial review demanded — §7 ATTACK
   1). For every result kind, the theorem-statement generator (the generalized `render_*_lean`) is
   **operator-owned, fixed, and proposer-inaccessible**. An untrusted tool/seed supplies ONLY the witness
@@ -216,7 +246,15 @@ the word "faithfulness."
     a pluggable oracle to build a `Certificate`. CWC becomes the first registered instance.
 - **`leibniz/tools/evidence.py`** — `ToolEvidence`, a sibling of `EdgeEvidence` carrying `producer`,
   `tier`, `certificate_kind`, `rechecked_by_registry`. It **never** sets `PROOF_EDGE` and **never** names
-  `KERNEL_PRODUCER`.
+  `KERNEL_PRODUCER`. **A9 (round-3):** also records a reproducibility envelope — `tool_version_hash`,
+  `image_digest`, `input_artifact_hashes`, `capabilities`, `sandbox_profile`, `resource_usage`,
+  `nondeterminism_seed`, `environment_hash` — so promotions are replayable (A4).
+- **`leibniz/tools/ledger.py`** (A4, round-3 — Fugu/Fugu-Ultra "text logs are not receipts") — an
+  **append-only, replayable** record: every proposal, sandbox execution, certificate, re-checker
+  decision, registration, promotion, and quarantine appends an immutable entry. A promotion MUST be
+  **replayable from the ledger + pinned artifacts** (image digest, input hashes, seed, env hash) and
+  requires a matching **re-check receipt carrying the exact decided-statement hash** (not a text log).
+  Strengthens ATTACK-1 forensics.
 
 ### 3.2 The research-seeding pipeline (`leibniz/seeds.py`)
 
@@ -242,7 +280,10 @@ nothing it carries reaches a decider except by independent mechanical re-derivat
   program for `SandboxedTool`, re-validated, any beat re-decided by the Lean kernel.
 - **Stage 4 — WRITE / quarantine.** Promulgation only via `TrustPolicy.validate_path` (inv 2). Rejected
   seeds are quarantined with a `FinishReason` (inv 6), removed from retrieval/composition so they cannot
-  re-enter a feedback loop, never deleted.
+  re-enter a feedback loop, never deleted. **A10 (round-3):** when an ingested claim and a mechanical
+  re-check **disagree**, store the seed as **`CONFLICT`** (retained, surfaced, removed from the floor
+  computation) — distinct from silent quarantine, so a paper-vs-checker contradiction is preserved for
+  review.
 
 ### 3.3 The build → assemble → test → prove → register lifecycle (with its trust gate)
 
@@ -253,6 +294,7 @@ nothing it carries reaches a decider except by independent mechanical re-derivat
 | **TEST** | Runs **only** inside `SandboxedTool` against property/spec tests. Output is UNTRUSTED DATA; fitness re-validated by a **separate** checker (never the search-fitness fn — preserve the `verify_cwc` vs `cwc_check.py` split as an *enforced invariant*). | State 1 |
 | **PROVE** (optional) | The tool emits a certificate. If its kind has a kernel-backed re-checker bound to an operator-owned statement template, this is the *path* to State 2 — but PROVE happening does **not** auto-admit. | State 1 |
 | **REGISTER** | Adds the tool to `tools` (State 1) — always, autonomously, TCB+0. Adds a re-checker + template to the operator-owned registry (State 2) — **only on operator act**, gated by §2.2 (a)–(d). | State 1 always; State 2 only on operator opt-in |
+| **MONITOR** (A5, round-3; continuous, for any State 2-admitted kind) | Periodic replay against held-out cases, dependency/version-drift detection, axiom-closure re-audit (E6′). On any mismatch the kind is **AUTO-DEMOTED to State 1** (outputs revert to re-checked-only) and quarantined pending operator review. Auto-demote DOWN is safe and needs no operator; re-admission UP stays operator-gated. | demotion autonomous; re-admission operator-only |
 
 ---
 
@@ -267,9 +309,24 @@ nothing it carries reaches a decider except by independent mechanical re-derivat
 | **5 — Propose/repair-a-tool loop** | Promote `funsearch_llm_pilot.py::LLMProposer` to a first-class `leibniz/providers/` provider; reuse the single-source prompt builders. | Measured discovery yield justifies the loop. | DEFERRED |
 | **6 — First DECIDER-ADMITTED tool (operator-gated)** | Operator registers one kind→(template, re-checker, strength tag) after the full §2.2 (a)–(d) ritual. | Only on operator sign-off, per ADR; never autonomous. | DEFERRED — explicitly behind operator review |
 
+**Gate D0 — producer-wall / expressivity diagnostic (A2, round-3; the single most-requested new
+mechanism, operationalizing the 7/7 strategic dissent). Runs BEFORE Phases 4–6.** Manually encode the
+best-known *human* construction for ≥3 open Brouwer cells and attempt Lean verification through the
+existing checker:
+- **RED** (the kernel verifies a construction the autonomous proposer never found) ⇒ the bottleneck is
+  the **producer**, not tooling ⇒ **HALT autonomous tool-building (Phases 4–6)** and pivot to
+  verification amplification of human/research-supplied targets.
+- **GREEN** (the checker/encoding cannot even *express* the known construction) ⇒ a genuine
+  **expressivity/representation gap** exists ⇒ tool-building *targeting representation* (e.g. a richer
+  encoder/DSL) is justified.
+
+This converts the strategic dissent ("is this the right bet?") from a faith claim into a falsifiable
+precondition. Phases 1–3 (boundary hardening + FunSearch unification + sound FLOOR seeds) are correct
+and cheap **regardless** of D0; only the autonomous-discovery phases wait on it.
+
 The **measure-before-build** discipline: Phase 1's value is *proving the anti-TCB-growth property is real
 before a single tool exists*. Phases 3–6 are each gated on the prior phase's guards being green AND on
-evidence the capability is on the binding constraint (novelty yield).
+evidence the capability is on the binding constraint (Gate D0 + held-out yield per E8).
 
 ---
 
@@ -415,6 +472,50 @@ edge with an arbitrary producer is fully admissible.
 3. Approve the **`.claude/` PreToolUse hard-block hook** for `recheckers`/`templates` mutation.
 4. Confirm `tests/test_invariants.py` byte-identical for the existing seven.
 5. Confirm no DECIDER-admission (State 2) in Phases 1–5; Phase 6 returns for separate sign-off per kind.
+6. Endorse **Gate D0** (the producer-wall diagnostic) as the precondition for Phases 4–6, and **E8**
+   (held-out, pre-registered eval) as the gate-transition evidence standard.
+7. Endorse **E6′/A8** (axiom-closure audit + sandboxing the Lean compilation step; ban
+   `native_decide`/`@[extern]`/unsafe in trusted paths) and **A7** (privileged-build-artifact ban).
 
-*This ADR is a draft pending the round-3 external-witness synthesis
-(`docs/external-witness-brief-tool-foundation.md`). Surviving guidance folds in before sign-off.*
+---
+
+## 10. Round-3 external-witness reconciliation (applied)
+
+**Verdict: the 7-model round VALIDATES this ADR's trust architecture** — no witness found a defect in
+E1–E7 / State1–State2 / ATTACK 1–2. The unanimous "framing" correction (verification-amplification, not
+the discovery unlock) was already the ADR's position; the witnesses ratify it and ask it be held harder
+(now A1). Fugu's "one thing you're getting wrong = specification authority" lands **exactly** on E7, the
+keystone. Witnesses: Fugu, Fugu Ultra, Deepseek v4 Pro, Kimi, GLM 5.2, Gemini 3.5 Thinking, Qwen 3.7
+Max. Source: `docs/external-witness-brief-tool-foundation.md`; raw responses retained by the operator.
+
+**ADOPTED (folded in above):** A1 framing-as-criterion (§1.3); **A2 Gate D0** producer-wall diagnostic
+with RED-HALT branch (§4, §9.6); **A3 E8** held-out/pre-registered eval (§2.4); **A8 E6′** axiom-closure
++ compiler-sandboxing + ban native_decide/extern/unsafe (§2.4); **A4** append-only replayable ledger +
+statement-hash receipts (§3.1) and **A5** lifecycle MONITOR + auto-demote-to-State1 on drift (§3.3);
+**A6** kernel-checked-soundness as the preferred route for *non-thin* re-checkers (§2.2b); **A7**
+privileged-build-artifact ban (§2.4 E5); **A9** reproducibility envelope (§3.1); **A10** CONFLICT status
+for paper-vs-checker disagreement (§3.2).
+
+**NOTED (not adopted into the trust ADR; routed to phase tickets / optimization-roadmap):** specific
+numeric phase thresholds (≥2×, ≥10×, etc.) — adopt the *principle* (pre-registered numeric gates) via
+A2/A3, leave the constants to each phase ticket; TaskCard as a first-class schema (a discovery-yield
+structure, not a trust mechanism); restricting the self-mod *language* to a Lean/WASM DSL (rides on the
+D0 outcome); heavy external infra (MCP gateway / Cedar / SPIFFE / microVMs) — adopt the *properties*
+(default-deny, signed identity) if Phase 5 lands, not the vendor stack; breadth-quota scheduling (belongs
+in the KFM/MAP-Elites archive). A formal **capability-token API** (Fugu) is noted: the *property* is
+already achieved structurally (E2/E3 + single `kernel_verified` writer); adopt the vocabulary, defer the
+mechanism.
+
+**REJECTED (would weaken the boundary or contradict measured findings):** autonomous proof-driven
+self-promotion (a tool promoting itself by emitting a proof of its own correctness) — violates §6 / the
+de Bruijn rationale; promotion stays operator-only. Compiling/static-linking a built tool *into the
+kernel binary* (Kimi) — a larger, more brittle TCB expansion than the de Bruijn small-re-checker split;
+keep the registry-admitted small re-checker instead. Abandoning tool-building outright now
+(Deepseek/Qwen strongest form) — that strategic bet is what Gate D0 settles empirically; pre-committing
+to abandonment discards the cheap, boundary-positive Phase 1–2 work that is correct regardless.
+Mandatory human review on *every* seed (GLM) — seeds are HINTS that never decide (E4); the automated
+guards keep them off the decision path without a human bottleneck; human review stays where it is
+load-bearing (State 2 admission).
+
+*All round-3 edits are additive ratchets (they only tighten). The proof edge and the existing seven in
+`tests/test_invariants.py` are untouched. The ADR is now ready for the §9 operator sign-off.*
