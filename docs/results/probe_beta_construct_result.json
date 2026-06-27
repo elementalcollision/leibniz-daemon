@@ -1,0 +1,57 @@
+{
+  "what": "Probe \u03b2 piece 3c \u2014 CPU construction search (stochastic greedy + penalty/swap local search), the witness round's unanimous pivot, prototyped",
+  "verdict": "RED \u2014 and notably WEAKER than CP-SAT. Naive unstructured construction search plateaus far below records.",
+  "headline": {
+    "cells": 6,
+    "records_beaten": 0,
+    "reached_record": 0
+  },
+  "key_datapoint": "A(14,6,6): construction found 25 vs CP-SAT 30 vs best_known 42 \u2014 heuristic search is WORSE than exact search here, and both are far below the structured record.",
+  "per_cell": [
+    {
+      "cell": "A(14,6,6)",
+      "nodes": 3003,
+      "found": 25,
+      "best_known": 42,
+      "secs": 60.0
+    },
+    {
+      "cell": "A(15,6,5)",
+      "nodes": 3003,
+      "found": 24,
+      "best_known": 42,
+      "secs": 60.0
+    },
+    {
+      "cell": "A(14,6,5)",
+      "nodes": 2002,
+      "found": 19,
+      "best_known": 28,
+      "secs": 60.0
+    },
+    {
+      "cell": "A(13,6,5)",
+      "nodes": 1287,
+      "found": 15,
+      "best_known": 18,
+      "secs": 60.0
+    },
+    {
+      "cell": "A(17,6,4)",
+      "nodes": 2380,
+      "found": 18,
+      "best_known": 20,
+      "secs": 60.0
+    },
+    {
+      "cell": "A(18,6,4)",
+      "nodes": 3060,
+      "found": 19,
+      "best_known": 22,
+      "secs": 60.0
+    }
+  ],
+  "validity": "prototype is correct (reaches known optima 4/7/3 on small cells A(6,4,3)/A(7,4,3)/A(9,6,4); all outputs verify) \u2014 so the RED on large cells is a real plateau, not a bug.",
+  "reading": "Unstructured search \u2014 exact (CP-SAT) OR heuristic (local search) \u2014 plateaus far below records; the records require STRUCTURE (automorphism-prescribed / algebraic / learned-construction a la FunSearch). This KILLS the 'naive massively-parallel construction' sleeper (parallelizing a method that loses to CP-SAT won't reach records) and sharpens the remaining autonomous lever to the STRUCTURED forms \u2014 which are substantial builds (FunSearch needs an LLM+GPU loop; automorphism-prescribed needs a symmetry-collapse encoder).",
+  "caveat": "the local search is naive (O(k^2)/move, 64-sample swap); a tuned heuristic might reach CP-SAT's level but the gap to the structured record (e.g. 42) is large and not bridged by generic search."
+}
