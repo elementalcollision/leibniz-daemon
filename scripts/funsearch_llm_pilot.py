@@ -46,9 +46,30 @@ _CODE_RE = re.compile(r"```(?:python)?\s*(.*?)```", re.DOTALL)
 
 def extract_program(text: str) -> str:
     """Pull the Python program from an LLM reply (fenced block if present, else the raw text)."""
-    m = _CODE_RE.search(text)
-    src = m.group(1) if m else text
+    m = _CODE_RE.search(text or "")
+    src = m.group(1) if m else (text or "")
     return src.strip()
+
+
+def _parse_completion(data: dict) -> str:
+    """Robustly pull the assistant text from an OpenAI/OpenRouter chat response. Handles: an error
+    object; an empty `choices`; and a null `content` (common for REASONING models that put output in
+    `reasoning`/`reasoning_content`, or that hit the token cap mid-reasoning). Raises a descriptive
+    error (incl. finish_reason) rather than letting a None reach the regex — that null-content case is
+    exactly what voided the first pilot run."""
+    if isinstance(data, dict) and data.get("error"):
+        raise RuntimeError(f"API error: {str(data['error'])[:300]}")
+    choices = (data or {}).get("choices") or []
+    if not choices:
+        raise RuntimeError(f"no choices in response: {str(data)[:200]}")
+    ch = choices[0]
+    msg = ch.get("message") or {}
+    content = msg.get("content") or msg.get("reasoning") or msg.get("reasoning_content")
+    if not content:
+        raise RuntimeError(f"empty content (finish_reason={ch.get('finish_reason')}); the model may be "
+                           "a reasoning model that exhausted the token budget — raise --max-tokens or "
+                           "choose a non-reasoning code model via LEIBNIZ_FUNSEARCH_MODEL")
+    return content
 
 
 def _prompt(n: int, d: int, w: int, floor: int, exemplars: list[tuple[str, int]]) -> str:
@@ -105,7 +126,7 @@ class LLMProposer:
     """OpenRouter LLM proposer (stdlib urllib; OPENROUTER_API_KEY). Counts calls so the caller can
     enforce the pre-registered budget cap."""
 
-    def __init__(self, model: str, max_tokens: int = 1500, timeout_s: int = 120):
+    def __init__(self, model: str, max_tokens: int = 4096, timeout_s: int = 120):
         self.model, self.max_tokens, self.timeout_s = model, max_tokens, timeout_s
         self.calls = 0
 
@@ -195,13 +216,15 @@ def main() -> int:
     ap.add_argument("--max-programs", type=int, default=240)
     ap.add_argument("--per-cell", type=int, default=20)
     ap.add_argument("--wall-min", type=float, default=60.0)
+    ap.add_argument("--max-tokens", type=int, default=4096,
+                    help="per-call token cap (raise for reasoning models that return null content)")
     args = ap.parse_args()
 
     if not args.fake:
         from leibniz.env import load_env
         load_env()
     snap, _ = ora.load_snapshot()
-    proposer = FakeProposer() if args.fake else LLMProposer(args.model)
+    proposer = FakeProposer() if args.fake else LLMProposer(args.model, max_tokens=args.max_tokens)
     targets = load_targets()
     deadline = time.time() + args.wall_min * 60
     rows, budget = [], args.max_programs
