@@ -75,7 +75,7 @@ def test_targets_are_preregistered_and_well_formed():
 def test_run_cell_no_beat_when_below_floor(monkeypatch):
     snap = _snap()
     monkeypatch.setattr(pilot.sandbox, "evaluate_program",
-                        lambda src, n, d, w, sn: {"valid": True, "fitness": 1, "size": 1})
+                        lambda src, n, d, w, sn: {"sandbox_ok": True, "valid": True, "fitness": 1, "size": 1})
     r = pilot.run_cell(pilot.FakeProposer(), 18, 10, 6, snap, per_cell=3, budget_left=3,
                        wall_deadline=time.time() + 30)
     assert r["beat"] is None and r["best_size"] == 1 and r["programs"] == 3
@@ -85,7 +85,7 @@ def test_beat_requires_kernel_confirmation(monkeypatch):
     snap = _snap()
     # evaluator claims a valid code above the floor on every program
     monkeypatch.setattr(pilot.sandbox, "evaluate_program",
-                        lambda src, n, d, w, sn: {"valid": True, "fitness": 99, "size": 99})
+                        lambda src, n, d, w, sn: {"sandbox_ok": True, "valid": True, "fitness": 99, "size": 99})
     # witness must itself exceed the floor (4) for the size-gate; content irrelevant (kernel mocked)
     monkeypatch.setattr(pilot, "_rerun_for_witness", lambda src, n, d, w: [[0, 1, 2, 3, 4, 5]] * 5)
     # (1) kernel REFUSES -> NOT a beat (oracle/evaluator flag alone is never sufficient)
@@ -107,7 +107,7 @@ def test_nondeterministic_rerun_to_floor_size_is_not_a_beat(monkeypatch):
     snap = _snap()
     floor = pilot.effective_best_known(18, 10, 6, snap)       # 4
     monkeypatch.setattr(pilot.sandbox, "evaluate_program",
-                        lambda src, n, d, w, sn: {"valid": True, "fitness": floor + 1, "size": floor + 1})
+                        lambda src, n, d, w, sn: {"sandbox_ok": True, "valid": True, "fitness": floor + 1, "size": floor + 1})
     monkeypatch.setattr(pilot, "_rerun_for_witness",
                         lambda src, n, d, w: [[0]] * floor)     # only floor codewords on re-run
     monkeypatch.setattr(pilot, "_kernel_confirms", lambda witness, n, d, w: True)
@@ -119,7 +119,7 @@ def test_nondeterministic_rerun_to_floor_size_is_not_a_beat(monkeypatch):
 def test_run_cell_respects_budget(monkeypatch):
     snap = _snap()
     monkeypatch.setattr(pilot.sandbox, "evaluate_program",
-                        lambda src, n, d, w, sn: {"valid": False, "fitness": 0, "size": 0})
+                        lambda src, n, d, w, sn: {"sandbox_ok": True, "valid": False, "fitness": 0, "size": 0, "verify_reason": "x"})
     r = pilot.run_cell(pilot.FakeProposer(), 18, 10, 6, snap, per_cell=20, budget_left=3,
                        wall_deadline=time.time() + 30)
     assert r["programs"] <= 3                              # global budget cap honored

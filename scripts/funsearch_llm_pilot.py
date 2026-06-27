@@ -37,8 +37,11 @@ _SYSTEM = (
     "A(n,d,w) is a set of w-subsets of {0..n-1} (codewords) with pairwise Hamming distance >= d, i.e. "
     "any two codewords share at most w - ceil(d/2) elements. Output ONLY one Python code block defining "
     "`construct(n, d, w)` that RETURNS a list of codewords (each a list/tuple of w distinct ints in "
-    "[0,n)), as LARGE as possible. No prose, no I/O, no imports beyond the standard library. You "
-    "PROPOSE; a verifier and the Lean kernel DECIDE — do not claim correctness."
+    "[0,n)), as LARGE as possible. CRITICAL: the sandbox is CPython 3.12 with the STANDARD LIBRARY "
+    "ONLY — there is NO numpy, scipy, networkx, sympy, or any third-party package; importing one "
+    "raises ImportError and scores 0. Use only stdlib (e.g. itertools, random, math). No prose, no "
+    "I/O, no file/network access. You PROPOSE; a verifier and the Lean kernel DECIDE — never claim "
+    "correctness."
 )
 
 _CODE_RE = re.compile(r"```(?:python)?\s*(.*?)```", re.DOTALL)
@@ -159,6 +162,7 @@ def run_cell(proposer, n, d, w, snap, *, per_cell: int, budget_left: int,
     best = {"size": 0, "valid": False}
     used = 0
     beat = None
+    diag = {"sandbox_fail": 0, "invalid": 0, "valid": 0, "samples": []}  # so a best=0 is diagnosable
     for _ in range(min(per_cell, budget_left)):
         if time.time() > wall_deadline:
             break
@@ -167,10 +171,19 @@ def run_cell(proposer, n, d, w, snap, *, per_cell: int, budget_left: int,
             src = proposer.propose(n, d, w, floor, exemplars)
         except Exception as e:                                   # proposer failure is not a crash
             return {"n": n, "d": d, "w": w, "floor": floor, "programs": used,
-                    "best_size": best["size"], "beat": None, "error": f"proposer: {e}"}
+                    "best_size": best["size"], "beat": None, "diag": diag, "error": f"proposer: {e}"}
         used += 1
         ev = sandbox.evaluate_program(src, n, d, w, snap)        # UNTRUSTED -> sandbox
-        if ev["valid"]:
+        if not ev["sandbox_ok"]:
+            diag["sandbox_fail"] += 1
+            if len(diag["samples"]) < 5:
+                diag["samples"].append({"kind": "sandbox", "msg": str(ev.get("sandbox_error"))[:240]})
+        elif not ev["valid"]:
+            diag["invalid"] += 1
+            if len(diag["samples"]) < 5:
+                diag["samples"].append({"kind": "invalid", "msg": str(ev.get("verify_reason"))[:240]})
+        else:
+            diag["valid"] += 1
             db.append((src, ev["fitness"]))
             if ev["size"] > best["size"]:
                 best = {"size": ev["size"], "valid": True}
@@ -184,7 +197,7 @@ def run_cell(proposer, n, d, w, snap, *, per_cell: int, budget_left: int,
                     beat = {"size": len(witness), "floor": floor, "witness": witness, "program": src}
                     break
     return {"n": n, "d": d, "w": w, "floor": floor, "programs": used,
-            "best_size": best["size"], "beat": beat}
+            "best_size": best["size"], "beat": beat, "diag": diag}
 
 
 def _rerun_for_witness(src, n, d, w):
@@ -239,8 +252,13 @@ def main() -> int:
         if r.get("beat"):
             beats.append(r["beat"])
         tag = "*** KERNEL-VERIFIED BEAT ***" if r.get("beat") else "no beat"
+        dg = r.get("diag") or {}
         print(f"   A({t['n']},{t['d']},{t['w']}) floor={r['floor']} best={r['best_size']} "
-              f"programs={r['programs']} -> {tag}")
+              f"programs={r['programs']} [valid={dg.get('valid', 0)} invalid={dg.get('invalid', 0)} "
+              f"sandbox_fail={dg.get('sandbox_fail', 0)}] -> {tag}")
+        if dg.get("samples") and r["best_size"] == 0:            # surface WHY a cell got nothing
+            for s in dg["samples"][:2]:
+                print(f"       {s['kind']}: {s['msg']}")
         if r.get("beat"):                                        # stop rule: one verified beat ends it
             break
     summary = {"mode": "fake" if args.fake else f"llm:{args.model}", "cells": len(rows),
