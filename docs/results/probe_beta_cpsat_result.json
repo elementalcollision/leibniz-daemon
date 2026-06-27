@@ -1,0 +1,68 @@
+{
+  "what": "Probe \u03b2 piece 3b \u2014 CP-SAT strong-solver record-beating push on larger non-tight cells (25s/cell)",
+  "solver": "ortools CP-SAT, 8 workers (installed operator-local; not a project/CI dep)",
+  "result": {
+    "cells": 6,
+    "records_beaten": 0,
+    "newly_confirmed_exact": 2
+  },
+  "verdict": "RED \u2014 0 records beaten. CP-SAT MATCHED best_known on all 6 cells (C(n,w) 1001-1716) and PROVED 2 more exact; the other 4 matched-but-unproved in 25s. Confirms the RED is NOT a weak-solver artifact.",
+  "cumulative_exact_proved": "12 cells (10 pure-Python piece-3 + 2 CP-SAT)",
+  "per_cell": [
+    {
+      "cell": "A(14,6,4)",
+      "nodes": 1001,
+      "found": 14,
+      "best_known": 14,
+      "proved_optimal": true,
+      "secs": 1.9,
+      "beats": false
+    },
+    {
+      "cell": "A(13,6,5)",
+      "nodes": 1287,
+      "found": 18,
+      "best_known": 18,
+      "proved_optimal": false,
+      "secs": 25.4,
+      "beats": false
+    },
+    {
+      "cell": "A(13,8,5)",
+      "nodes": 1287,
+      "found": 3,
+      "best_known": 3,
+      "proved_optimal": false,
+      "secs": 26.2,
+      "beats": false
+    },
+    {
+      "cell": "A(15,6,4)",
+      "nodes": 1365,
+      "found": 15,
+      "best_known": 15,
+      "proved_optimal": false,
+      "secs": 25.6,
+      "beats": false
+    },
+    {
+      "cell": "A(13,8,6)",
+      "nodes": 1716,
+      "found": 4,
+      "best_known": 4,
+      "proved_optimal": false,
+      "secs": 26.8,
+      "beats": false
+    },
+    {
+      "cell": "A(13,10,6)",
+      "nodes": 1716,
+      "found": 2,
+      "best_known": 2,
+      "proved_optimal": true,
+      "secs": 14.2,
+      "beats": false
+    }
+  ],
+  "reading": "Even a strong multi-worker solver reaches but does not exceed Brouwer's lower bounds on the tractable band; beating would need research-grade compute/constructions, not an autonomous laptop run."
+}

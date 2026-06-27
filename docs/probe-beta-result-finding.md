@@ -46,9 +46,17 @@ proved exact** (max-clique = best_known, optimality proved). Two things follow:
   the automated oracle) are *exactly* what a human-proposes / daemon-soundly-checks system needs — so this
   build is not wasted even though piece 3 is RED.
 
+## Strong-solver push (piece 3b, CP-SAT) — still RED, and now confirmed not a weak-solver artifact
+The pure-Python max-clique was confined to tiny cells. The honest follow-up: **CP-SAT** (ortools, 8
+workers, operator-local) on the *larger* non-tight cells pure-Python couldn't reach (C(n,w) 1001–1716),
+25 s/cell. Result (`docs/results/probe_beta_cpsat_result.json`): **0 records beaten** — CP-SAT **matched**
+best_known on all 6 cells and **proved 2 more exact** (A(14,6,4), A(13,10,6); cumulative **12 cells proved
+exact**). So a strong multi-worker solver *reaches but does not exceed* Brouwer's bounds — the RED is **not
+a weak-solver artifact**. Beating these records needs research-grade compute/constructions, not an
+autonomous laptop run (the witnesses' "modest odds", resolving toward RED).
+
 ## Disposition
-- Probe β: **complete and RED on record-beating**; the autonomous record-factory is built, sound, and
-  measured. A serious record-beating attempt (CP-SAT + compute on large open cells) is a separate, heavy,
-  modest-odds investment — **not authorized here**.
+- Probe β: **complete and RED on record-beating**, now confirmed with a strong solver. The autonomous
+  record-factory is built, sound, and measured; it reaches and *proves* records but does not beat them.
 - The two reusable assets (witness-checker, table oracle) carry forward to verification amplification.
 - Kernel bridge (task #54) unchanged.
