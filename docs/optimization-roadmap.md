@@ -132,9 +132,14 @@ producer. Full synthesis: **`docs/autonomous-discovery-arc-capstone.md`**.
 
 - **Strategic home: verification amplification** (human proposes frontier content; daemon soundly checks) —
   the built assets already support this mode today.
-- **The one un-pulled lever (deferred, not taken): FunSearch-style learned construction** (LLM proposes
-  construction *programs*; evolutionary loop on GPU; survivors Lean-checked). Witness-rated *modest* odds;
-  a billable GPU+LLM build; **held pending an explicit operator decision**, not pursued autonomously.
+- **The last lever — FunSearch learned construction — was pulled (operator GO) and is RED too
+  (2026-06-27).** A bounded CPU-first tranche: an LLM (`qwen/qwen3-coder-next`) proposed construction
+  *programs* → untrusted-code sandbox → `verify_cwc` → post-Rosin oracle → kernel re-check on any beat.
+  **240 programs / 12 pre-registered cells / 0 records beaten** (matched 11/12; out-reached the
+  structural baseline on 5; below it on the one open flagship cell). Closed per the pre-registered stop
+  rule — a bounded-tranche RED, re-open only on a *separate* GO (GPU/island, stronger model, wider
+  cells). Detail: `docs/funsearch-pilot-result-finding.md`. The reusable assets (sandbox, LLM-free
+  evaluator, harness, post-Rosin oracle cross-check) stand.
 - **Kernel bridge (task #54) stays gated.** A fourth backend faces the same producer constraint, now
   confirmed three times.
 
