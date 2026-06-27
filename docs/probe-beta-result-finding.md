@@ -84,3 +84,15 @@ substantial builds (FunSearch needs an LLM+GPU loop). Provenance:
   not raw compute or unstructured search — the unanimous witness conclusion, now empirically corroborated.
 - The two reusable assets (witness-checker, table oracle) carry forward to verification amplification.
 - Kernel bridge (task #54) unchanged.
+
+## Automorphism-prescribed search (piece 3d) — STRUCTURE reaches what unstructured search cannot
+The witnesses' structural lever, built (`scripts/probe_beta_automorphism.py`): a G-invariant code is a
+union of G-orbits, collapsing C(n,w) codewords to ~C(n,w)/|G| orbits → a small max-weight clique on the
+orbit graph → union of selected orbits = a valid (Lean-checkable) code. **Headline: on A(14,6,6),
+cyclic-orbit search reached the record 42 in 0.0 s** — where exact CP-SAT got 30 and heuristic
+construction got 25. *Structure is decisively the lever.* Still **0 records beaten** (cyclic/affine matches
+records whose construction shares that symmetry, falls below where the record uses a different structure),
+but the orbit search is **~instant**, so the autonomous engine is a **broad sweep** (cyclic + affine +
+cyclic subgroups × many open cells, best-over-groups) hunting a cell where the best prescribed-group code
+exceeds Brouwer. Provenance: `docs/results/probe_beta_automorphism_result.json`. This is the arc's most
+promising autonomous result: cheap, sound, and it reaches where exact/heuristic search plateaus.

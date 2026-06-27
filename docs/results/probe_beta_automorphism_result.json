@@ -1,0 +1,76 @@
+{
+  "what": "Probe \u03b2 piece 3d \u2014 automorphism-prescribed (cyclic+affine) construction; the witnesses' structural lever",
+  "headline": "VALIDATES the structural thesis: A(14,6,6) cyclic-orbit search reached 42 = best_known in 0.0s, where unstructured search plateaued (CP-SAT 30, local-search 25). Structure IS the lever.",
+  "result": {
+    "cells": 7,
+    "records_beaten": 0,
+    "reached_record": 1
+  },
+  "per_cell": [
+    {
+      "cell": "A(14,6,6)",
+      "group": "cyclic",
+      "orbits": 217,
+      "includable": 81,
+      "found": 42,
+      "best_known": 42,
+      "reaches": true
+    },
+    {
+      "cell": "A(15,6,5)",
+      "group": "cyclic",
+      "orbits": 201,
+      "includable": 85,
+      "found": 33,
+      "best_known": 42,
+      "reaches": false
+    },
+    {
+      "cell": "A(14,6,5)",
+      "group": "cyclic",
+      "orbits": 143,
+      "includable": 53,
+      "found": 14,
+      "best_known": 28,
+      "reaches": false
+    },
+    {
+      "cell": "A(13,6,5)",
+      "group": "cyclic",
+      "orbits": 99,
+      "includable": 27,
+      "found": 13,
+      "best_known": 18,
+      "reaches": false
+    },
+    {
+      "cell": "A(17,6,4)",
+      "group": "cyclic",
+      "orbits": 140,
+      "includable": 32,
+      "found": 17,
+      "best_known": 20,
+      "reaches": false
+    },
+    {
+      "cell": "A(18,6,4)",
+      "group": "cyclic",
+      "orbits": 172,
+      "includable": 24,
+      "found": 18,
+      "best_known": 22,
+      "reaches": false
+    },
+    {
+      "cell": "A(19,6,4)",
+      "group": "cyclic",
+      "orbits": 204,
+      "includable": 60,
+      "found": 19,
+      "best_known": 25,
+      "reaches": false
+    }
+  ],
+  "reading": "Cyclic/affine orbit search MATCHES records where Brouwer's construction shares that symmetry (A(14,6,6)) and falls below where the record uses a different structure (quasi-cyclic / other group / non-group). 0 beats yet \u2014 but the orbit search is ~INSTANT (0.0s/cell after the orbit collapse), so the real autonomous engine is a BROAD SWEEP: many prescribed groups (cyclic, affine, all cyclic subgroups, quasi-cyclic block groups) x many open cells, taking best-over-groups, hunting a cell where the best prescribed-group code exceeds Brouwer's lower bound. This is the most promising autonomous result of the arc: cheap + sound + reaches where exact/heuristic search cannot.",
+  "trust": "prescribed-group code is a fully valid code (verify_cwc); a beat would be Lean-checked (witness IS the proof). Untrusted search; trust boundary untouched."
+}
