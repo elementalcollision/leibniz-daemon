@@ -57,6 +57,23 @@ def group_elements(n: int, kind: str) -> list[tuple[int, ...]]:
         order = n // gcd(n, step) if step else 1
         for m in range(order):
             elems.append(tuple((i + m * step) % n for i in range(n)))
+    elif kind.startswith("affsub:"):
+        # translations x->x+b extended by the MULTIPLIER SUBGROUP <a>: x -> a^j*x + b.
+        # Interpolates cyclic (a=1) .. full affine (a primitive). a=n-1 is the dihedral group.
+        a = int(kind.split(":")[1]) % n
+        powers, p = [], 1 % n
+        for _ in range(n):                               # collect <a> (multiplicative order)
+            if p in powers:
+                break
+            powers.append(p)
+            p = (p * a) % n
+        for j in powers:
+            for b in range(n):
+                elems.append(tuple((j * i + b) % n for i in range(n)))
+    elif kind == "fixcyc":
+        # fix coordinate n-1, cyclic Z_{n-1} on {0..n-2} (the "shortened-code" structure)
+        for k in range(n - 1):
+            elems.append(tuple(((i + k) % (n - 1)) if i < n - 1 else i for i in range(n)))
     else:
         raise ValueError(kind)
     return elems
@@ -69,6 +86,17 @@ def candidate_groups(n: int) -> list[str]:
     for k in range(2, n):
         if n % k == 0:                                   # subgroup of order n/k
             kinds.append(f"sub:{k}")
+    return kinds
+
+
+def candidate_groups_rich(n: int) -> list[str]:
+    """candidate_groups + richer families: affine multiplier-subgroups <a> (incl. dihedral a=n-1) and
+    fixed-point cyclic. These reach structures cyclic/affine/cyclic-subgroups cannot express."""
+    kinds = candidate_groups(n)
+    units = [a for a in range(2, n) if gcd(a, n) == 1]
+    for a in units:
+        kinds.append(f"affsub:{a}")
+    kinds.append("fixcyc")
     return kinds
 
 

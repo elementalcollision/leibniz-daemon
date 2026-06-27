@@ -39,6 +39,18 @@ def test_structure_reaches_a_record_unstructured_search_missed():
     assert r["reaches_record"] is True and r["beats_record"] is False
 
 
+def test_richer_groups_are_valid_permutations_and_codes_verify():
+    # affine multiplier-subgroups (incl. dihedral a=n-1) and fixed-point cyclic must be real
+    # permutation groups, and any code they yield must verify.
+    snap = _snap()
+    for kind in ("affsub:12", "fixcyc"):                         # a=12 is a unit mod 13
+        elems = pa.group_elements(13, kind)
+        assert all(sorted(e) == list(range(13)) for e in elems)  # each element is a permutation
+    assert "fixcyc" in pa.candidate_groups_rich(13)
+    r = pa.attempt(13, 8, 5, snap, kind="fixcyc", budget_s=8)
+    assert r["verified"] is True and (r["found"] <= r["best_known"] or r["beats_record"])
+
+
 def test_prescribed_group_code_always_verifies():
     from probe_beta_cwc_pilot import verify_cwc
     snap = _snap()
