@@ -96,3 +96,13 @@ but the orbit search is **~instant**, so the autonomous engine is a **broad swee
 cyclic subgroups × many open cells, best-over-groups) hunting a cell where the best prescribed-group code
 exceeds Brouwer. Provenance: `docs/results/probe_beta_automorphism_result.json`. This is the arc's most
 promising autonomous result: cheap, sound, and it reaches where exact/heuristic search plateaus.
+
+### Broad automorphism sweep — 0 beats, but structure MATCHES 53% of records (the autonomous ceiling)
+Sweeping all 78 tractable non-tight cells × candidate groups (cyclic + affine + cyclic subgroups
+`sub:k`, best-over-groups, ~257 s): **0 records beaten; 41/78 (53%) MATCHED** the published record —
+where unstructured search (CP-SAT/heuristic) plateaued far below. The subgroup sweep earned its keep (24
+of the matches came from `sub:k`, not full cyclic). Near-misses: **1 short-by-1, 8 short-by-2**; 24 cells
+short by >3 use structure beyond cyclic/affine/cyclic-subgroups (quasi-cyclic / algebraic / non-group).
+**Capstone: the autonomous track REACHES records with the right (structural) method but does not BEAT
+them** — beating needs research-grade construction structure (richer prescribed groups, or FunSearch-style
+learned construction). Provenance: `docs/results/probe_beta_automorphism_sweep_result.json`.
