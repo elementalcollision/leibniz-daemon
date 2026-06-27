@@ -55,6 +55,14 @@ exact**). So a strong multi-worker solver *reaches but does not exceed* Brouwer'
 a weak-solver artifact**. Beating these records needs research-grade compute/constructions, not an
 autonomous laptop run (the witnesses' "modest odds", resolving toward RED).
 
+**Extended sweep (20 non-tight cells, C(n,w) ≤ 4000, 90 s/cell, ~26 min):** still **0 records beaten**;
+CP-SAT matched 19/20 and proved 5 optimal. The decisive datapoint: on **A(14,6,6) it found only 30 vs
+Brouwer's known 42** in 90 s — *a strong solver could not even MATCH a known construction.* That is
+evidence the binding constraint is **algorithmic/constructive, not raw laptop compute**: the records come
+from clever constructions, so throwing a generic accelerator (GPU/Codon) at the *same brute search* would
+not help — the lever would be smarter constructions / ML-guided search. (Provenance:
+`docs/results/probe_beta_cpsat_sweep_result.json`.) This pre-answers Q1 of the acceleration witness brief.
+
 ## Disposition
 - Probe β: **complete and RED on record-beating**, now confirmed with a strong solver. The autonomous
   record-factory is built, sound, and measured; it reaches and *proves* records but does not beat them.
