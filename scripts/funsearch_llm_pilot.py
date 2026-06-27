@@ -48,10 +48,17 @@ _CODE_RE = re.compile(r"```(?:python)?\s*(.*?)```", re.DOTALL)
 
 
 def extract_program(text: str) -> str:
-    """Pull the Python program from an LLM reply (fenced block if present, else the raw text)."""
-    m = _CODE_RE.search(text or "")
-    src = m.group(1) if m else (text or "")
-    return src.strip()
+    """Pull the Python program from an LLM reply. Prefers the LAST fenced code block that defines
+    `construct` (handles replies with explanation + multiple blocks, or a reasoning trace followed by
+    the final program); falls back to the last block, then the raw text."""
+    text = text or ""
+    blocks = _CODE_RE.findall(text)
+    if blocks:
+        for b in reversed(blocks):
+            if "def construct" in b:
+                return b.strip()
+        return blocks[-1].strip()
+    return text.strip()
 
 
 def _parse_completion(data: dict) -> str:
@@ -177,11 +184,13 @@ def run_cell(proposer, n, d, w, snap, *, per_cell: int, budget_left: int,
         if not ev["sandbox_ok"]:
             diag["sandbox_fail"] += 1
             if len(diag["samples"]) < 5:
-                diag["samples"].append({"kind": "sandbox", "msg": str(ev.get("sandbox_error"))[:240]})
+                diag["samples"].append({"kind": "sandbox", "msg": str(ev.get("sandbox_error"))[:240],
+                                        "src": (src or "")[:200]})
         elif not ev["valid"]:
             diag["invalid"] += 1
             if len(diag["samples"]) < 5:
-                diag["samples"].append({"kind": "invalid", "msg": str(ev.get("verify_reason"))[:240]})
+                diag["samples"].append({"kind": "invalid", "msg": str(ev.get("verify_reason"))[:240],
+                                        "src": (src or "")[:200]})
         else:
             diag["valid"] += 1
             db.append((src, ev["fitness"]))
@@ -259,6 +268,8 @@ def main() -> int:
         if dg.get("samples") and r["best_size"] == 0:            # surface WHY a cell got nothing
             for s in dg["samples"][:2]:
                 print(f"       {s['kind']}: {s['msg']}")
+                if s.get("src"):
+                    print(f"         sent-src[:200]: {s['src']!r}")
         if r.get("beat"):                                        # stop rule: one verified beat ends it
             break
     summary = {"mode": "fake" if args.fake else f"llm:{args.model}", "cells": len(rows),
