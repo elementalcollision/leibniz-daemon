@@ -35,6 +35,29 @@ def test_extract_program_fenced_and_raw():
     assert pilot.extract_program("def construct(n,d,w):\n  return []").startswith("def construct")
 
 
+def test_parse_completion_handles_null_content_reasoning_and_errors():
+    import pytest
+    # normal content
+    assert "code" in pilot._parse_completion(
+        {"choices": [{"message": {"content": "code"}}]})
+    # null content but reasoning present (reasoning models) -> fall back
+    assert "fromreason" in pilot._parse_completion(
+        {"choices": [{"message": {"content": None, "reasoning": "fromreason"}}]})
+    # the exact failure that voided run 1: null content, no reasoning -> descriptive raise (not a None)
+    with pytest.raises(RuntimeError, match="empty content"):
+        pilot._parse_completion({"choices": [{"message": {"content": None}, "finish_reason": "length"}]})
+    # API error object -> raise
+    with pytest.raises(RuntimeError, match="API error"):
+        pilot._parse_completion({"error": {"message": "bad model"}})
+    # no choices -> raise (never index into nothing)
+    with pytest.raises(RuntimeError, match="no choices"):
+        pilot._parse_completion({"choices": []})
+
+
+def test_extract_program_tolerates_none():
+    assert pilot.extract_program(None) == ""        # never crashes on null content
+
+
 def test_fake_proposer_cycles_and_counts():
     p = pilot.FakeProposer()
     a = p.propose(11, 8, 5, 2, [])
