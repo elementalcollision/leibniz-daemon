@@ -76,13 +76,15 @@ def _prop(claim_type=ClaimType.COMPLEXITY_BOUND) -> Propositio:
 class _Backend:
     """A fake SoundFaithfulnessBackend with controllable verdict/cert."""
 
-    def __init__(self, name, cost_rank, verdict, *, rechecked=None, kind="fake", applies=True):
+    def __init__(self, name, cost_rank, verdict, *, rechecked=None, kind="fake", applies=True,
+                 producer=None):
         self.name = name
         self.cost_rank = cost_rank
         self._verdict = verdict
         self._rechecked = rechecked
         self._kind = kind
         self._applies = applies
+        self._producer = producer or f"fake/{name}"   # ADR 0041: validate_path now allowlists producers
         self.checked = False
 
     def applies(self, prop):
@@ -94,7 +96,7 @@ class _Backend:
         if self._rechecked is not None:
             cert = Certificate(kind=self._kind, rechecked=self._rechecked, data="c")
         return FaithfulnessVerdict(
-            verdict=self._verdict, producer=f"fake/{self.name}", certificate=cert,
+            verdict=self._verdict, producer=self._producer, certificate=cert,
         )
 
 
@@ -199,7 +201,10 @@ def test_no_backends_is_unchanged_behavior():
 # --- end-to-end: a sound-backend PASS promotes through the trust policy ------
 
 def test_sound_backend_pass_survives_validate_path():
-    b = _Backend("b", 1, Verdict.PASS, rechecked=True)
+    # ADR 0041: a MECHANICAL faithfulness edge must name an operator-admitted producer
+    # (FAITHFULNESS_PRODUCERS). A real sound backend uses an admitted producer; the fake here borrows
+    # "walnut/recheck" to model that. A non-admitted producer is rejected (see test_tool_trust.py).
+    b = _Backend("b", 1, Verdict.PASS, rechecked=True, producer="walnut/recheck")
     prop = _prop()
     prop.record(EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS))
     prop.record(_gate((b,)).check(prop))                      # the MECHANICAL faithfulness PASS

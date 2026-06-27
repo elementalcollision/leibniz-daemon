@@ -16,6 +16,9 @@ plus the executable invariants):
   leibniz/gates/faithfulness.py    -- the gaming-witness / DEFER routing
   leibniz/gates/novelty.py         -- novelty == MECHANICAL only
   tests/test_invariants.py         -- the 11 invariant tests (never edit to pass)
+  leibniz/tools/registry.py        -- ADR 0041 State-2 admission seam (recheckers/templates registries)
+  leibniz/tools/protocol.py        -- ADR 0041 ToolEvidence / Certificate re-export
+  tests/test_tool_trust.py         -- ADR 0041 sealed tool-trust guards (never edit to pass)
 
 Input: a PreToolUse JSON event on stdin.
 Output: a PreToolUse JSON decision on stdout ("ask" when a guarded file is the
@@ -35,6 +38,9 @@ PROTECTED_SUFFIXES = (
     "leibniz/gates/faithfulness.py",
     "leibniz/gates/novelty.py",
     "tests/test_invariants.py",
+    "leibniz/tools/registry.py",      # ADR 0041: State-2 deciding registries (recheckers/templates)
+    "leibniz/tools/protocol.py",      # ADR 0041: ToolEvidence / Certificate re-export
+    "tests/test_tool_trust.py",       # ADR 0041: sealed tool-trust guards
 )
 
 
