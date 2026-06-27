@@ -66,3 +66,28 @@ def test_validate_rejects_a_corrupted_snapshot():
     mono[(8, 4, 3)] = 1                                       # < A(7,4,3)=7
     ok2, probs2 = ora.validate(mono)
     assert not ok2 and any("monotonicity" in p for p in probs2)
+
+
+# --- Rosin-2026 cross-check guard (FunSearch precondition; arXiv 2603.00174) --------------------
+_rc_spec = importlib.util.spec_from_file_location(
+    "cwc_rosin_crosscheck", Path(__file__).resolve().parent.parent / "scripts" / "cwc_rosin_crosscheck.py")
+rc = importlib.util.module_from_spec(_rc_spec)
+import sys as _sys  # noqa: E402
+_sys.modules["cwc_rosin_crosscheck"] = rc
+_rc_spec.loader.exec_module(rc)
+
+
+def test_snapshot_floor_dominates_all_rosin_2026_bounds():
+    # the novelty floor must be post-Rosin: snapshot >= Rosin's published bound on every improved cell,
+    # else a search re-discovering a Rosin code would be falsely flagged novel. A snapshot refresh that
+    # regresses below Rosin fails HERE, loudly.
+    ok, violations = rc.assert_post_rosin()
+    assert ok, f"snapshot is STALE vs Rosin 2026 on cells: {violations}"
+    assert len(rc.ROSIN_2026) == 24                      # all 24 improved cells present
+
+
+def test_rosin_crosscheck_report_is_consistent():
+    rep = rc.crosscheck()
+    assert rep["snapshot_dominates_rosin"] is True
+    assert rep["cells_stale"] == 0 and rep["cells_untabulated"] == 0
+    assert rep["cells_equal"] + rep["cells_beyond"] == 24

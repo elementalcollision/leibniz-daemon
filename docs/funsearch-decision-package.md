@@ -76,11 +76,14 @@ The pilot's evaluator and re-check are therefore the *existing* `verify_cwc` (un
 
 ## 6. Hard preconditions (must hold before the pilot runs)
 
-1. **Oracle refresh + Rosin cross-check.** Re-fetch the current Brouwer table AND cross-check the
-   target cells against Rosin's published 24 improvements, so a "beat" cannot be a re-discovery of an
-   already-claimed record. The current committed snapshot is the canonical Brouwer table fetched
-   2026-06-27, but it must be confirmed to reflect post-Rosin values for the *specific* target cells
-   before any novelty is claimed. (This is a precondition of *claiming*, not of *searching*.)
+1. **Oracle refresh + Rosin cross-check. ✅ SATISFIED (2026-06-27).** All 24 of Rosin's improved
+   bounds (arXiv 2603.00174 Table 1, two independent web extractions agreeing) were cross-checked
+   against the committed Brouwer snapshot: the snapshot **dominates Rosin on every cell** (19 equal,
+   5 strictly beyond — the table advanced further since Feb 2026; 0 stale). So the oracle's novelty
+   floor is already post-Rosin; no overlay is needed. The property is now LOCKED by a regression test
+   (`tests/test_cwc_table_oracle.py::test_snapshot_floor_dominates_all_rosin_2026_bounds`) so a future
+   snapshot refresh cannot silently regress below Rosin. Reproducible via
+   `scripts/cwc_rosin_crosscheck.py`; artifact at `docs/results/cwc_oracle_rosin_crosscheck.json`.
 2. **Untrusted-code sandbox reviewed.** No LLM-generated program is executed until the isolation design
    is built and adversarially reviewed.
 3. **Cells pre-registered.** The target list is fixed and written down before the run (anti-cherry-pick).
