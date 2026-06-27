@@ -1,0 +1,42 @@
+{
+  "what": "Probe \u03b1 (zero-LLM enumeration audit) \u2014 result + adversarial verification (run wyfd15i8b)",
+  "batch": {
+    "evals": 144,
+    "decided_true": 61,
+    "decided_false": 83,
+    "indeterminate": 0,
+    "non_named_decided_true_survivors": 36
+  },
+  "soundness_crosscheck": {
+    "decided_true_prefix_clean": "61/61",
+    "contradictions": 0,
+    "decided_false_corroborated_by_prefix_counterexample": "83/83",
+    "external": "12/12 k=3 survivors' decided exponents CONSISTENT with Khodier 2026 (Waterloo) Table 5.1 published critical exponents \u2014 independent confirmation Walnut is correct"
+  },
+  "two_slogans": {
+    "LLM_bias_reachability (if-LLM-doesnt-name-it-its-unreachable)": "FALSIFIED \u2014 36 sound, aperiodic, LLM-never-proposed decided-true theorems exist with the LLM confound removed",
+    "finitely_encodable_implies_textbook (the interesting half)": "NOT falsified \u2014 corroborated: the survivors are catalogued/published prior art"
+  },
+  "literature_check": {
+    "sampled": 8,
+    "catalogued_in_OEIS": "8/8",
+    "genuinely_uncatalogued": 0,
+    "k3_family_12of36": "fully prior art \u2014 OEIS A189628 comment block enumerates the binary 3-uniform morphism->A-number family; Khodier 2026 thesis Table 5.1 IS this experiment (sequence + Walnut critical exponent)",
+    "textbook_case": "a36 0->001 1->110 = A064990 Mephisto Waltz, stated 4th-power-free in Allouche-Shallit, Automatic Sequences (Cambridge 2003) p.25",
+    "probe_named_match_was_false_negative": "the enumerator only knew Thue-Morse + period-doubling; OEIS shows all sampled survivors are named",
+    "thin_sliver": "k=2 ternary fixed points (A096271/A101614/A101664/A101671): SEQUENCE catalogued but specific power-free THEOREM sometimes unstated in OEIS (~2-3 distinct after symmetry) \u2014 marginal, exercise-class"
+  },
+  "shallow": {
+    "verdict": "yes \u2014 strongly",
+    "why": "min decided exponent 3-or-4 (none squarefree/overlap-free); design only decided integer e in {2,3,4} so it STRUCTURALLY cannot surface a critical-exponent surprise (e.g. Dejean threshold); 36/48=75% survival => power-freeness is generic over the tiny aperiodic space; only non-generic subclass (6 binary cube-free) is the most classical object in the field, symmetry-collapses to ~3"
+  },
+  "invariant4_discipline": "pre-registered GREEN has 4 conjuncts (non-named, aperiodic, literature-check, HUMAN blind panel). (i)+(ii) met; (iii) now run informally => AGAINST novelty; (iv) human panel unrun. An agent may NOT stamp slogan-falsification \u2014 novelty is the human's call. The earlier interim 'structurally falsifies our slogan' OVERREACHED (conflated the two slogans).",
+  "verdict": "PENDING-GREEN on the LLM-bias question (settled for \u03b1); effectively-RED on the textbook question (survivors are catalogued/published). The slogan's INTERESTING half survives.",
+  "disposition": {
+    "autonomous_discovery": "effectively concluded \u2014 4 converging probes (genre A/B, Walnut run-3, SOS, zero-LLM enumeration); removing the LLM still yields catalogued/textbook",
+    "lever_if_any": "search over EXTERNALLY-MEANINGFUL objects (Probe \u03b2: finite-witness record factory; novelty = objective public-table improvement) \u2014 as a SIDE-track under verification amplification, NOT the main track",
+    "critical_lesson": "a literature/OEIS oracle must be a FIRST-CLASS AUTOMATED stage of any search track \u2014 the name-detector false-negatived 8/8; 'improves the table' is only credible with a real automated table-of-record lookup, never LLM-judged",
+    "strategic_home": "verification amplification (witnesses' unanimous #1)",
+    "forward_to_human_panel": "at most the de-duplicated k=2 ternary theorem-level sliver (~2-3), and only after an automated OEIS filter is run + committed; do NOT forward the 12 k=3 (published) or 6 binary cube-free (textbook)"
+  }
+}
