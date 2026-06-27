@@ -58,6 +58,12 @@ def test_extract_program_tolerates_none():
     assert pilot.extract_program(None) == ""        # never crashes on null content
 
 
+def test_extract_program_prefers_block_defining_construct():
+    reply = ("Here's a sketch:\n```python\nx = 1\n```\nand the final program:\n"
+             "```python\ndef construct(n, d, w):\n    return []\n```\n")
+    assert pilot.extract_program(reply).startswith("def construct")   # picks the construct block
+
+
 def test_fake_proposer_cycles_and_counts():
     p = pilot.FakeProposer()
     a = p.propose(11, 8, 5, 2, [])
