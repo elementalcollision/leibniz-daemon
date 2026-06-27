@@ -1,0 +1,201 @@
+{
+  "cells": 5,
+  "beats": 0,
+  "rows": [
+    {
+      "n": 14,
+      "d": 6,
+      "w": 6,
+      "floor": 42,
+      "best_size": 42,
+      "best_gene": "sub:7",
+      "beats": false,
+      "beats_detail": [],
+      "evals": 10,
+      "kinds_available": 10,
+      "history": [
+        {
+          "gen": 0,
+          "best_size": 42,
+          "evals": 10
+        },
+        {
+          "gen": 1,
+          "best_size": 42,
+          "evals": 10
+        },
+        {
+          "gen": 2,
+          "best_size": 42,
+          "evals": 10
+        },
+        {
+          "gen": 3,
+          "best_size": 42,
+          "evals": 10
+        },
+        {
+          "gen": 4,
+          "best_size": 42,
+          "evals": 10
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "d": 6,
+      "w": 5,
+      "floor": 18,
+      "best_size": 15,
+      "best_gene": "fixcyc",
+      "beats": false,
+      "beats_detail": [],
+      "evals": 13,
+      "kinds_available": 14,
+      "history": [
+        {
+          "gen": 0,
+          "best_size": 15,
+          "evals": 13
+        },
+        {
+          "gen": 1,
+          "best_size": 15,
+          "evals": 13
+        },
+        {
+          "gen": 2,
+          "best_size": 15,
+          "evals": 13
+        },
+        {
+          "gen": 3,
+          "best_size": 15,
+          "evals": 13
+        },
+        {
+          "gen": 4,
+          "best_size": 15,
+          "evals": 13
+        }
+      ]
+    },
+    {
+      "n": 17,
+      "d": 6,
+      "w": 4,
+      "floor": 20,
+      "best_size": 17,
+      "best_gene": "cyclic",
+      "beats": false,
+      "beats_detail": [],
+      "evals": 16,
+      "kinds_available": 18,
+      "history": [
+        {
+          "gen": 0,
+          "best_size": 17,
+          "evals": 14
+        },
+        {
+          "gen": 1,
+          "best_size": 17,
+          "evals": 16
+        },
+        {
+          "gen": 2,
+          "best_size": 17,
+          "evals": 16
+        },
+        {
+          "gen": 3,
+          "best_size": 17,
+          "evals": 16
+        },
+        {
+          "gen": 4,
+          "best_size": 17,
+          "evals": 16
+        }
+      ]
+    },
+    {
+      "n": 21,
+      "d": 6,
+      "w": 4,
+      "floor": 31,
+      "best_size": 30,
+      "best_gene": "sub:7",
+      "beats": false,
+      "beats_detail": [],
+      "evals": 13,
+      "kinds_available": 16,
+      "history": [
+        {
+          "gen": 0,
+          "best_size": 30,
+          "evals": 13
+        },
+        {
+          "gen": 1,
+          "best_size": 30,
+          "evals": 13
+        },
+        {
+          "gen": 2,
+          "best_size": 30,
+          "evals": 13
+        },
+        {
+          "gen": 3,
+          "best_size": 30,
+          "evals": 13
+        },
+        {
+          "gen": 4,
+          "best_size": 30,
+          "evals": 13
+        }
+      ]
+    },
+    {
+      "n": 18,
+      "d": 10,
+      "w": 6,
+      "floor": 4,
+      "best_size": 3,
+      "best_gene": "affsub:13",
+      "beats": false,
+      "beats_detail": [],
+      "evals": 11,
+      "kinds_available": 12,
+      "history": [
+        {
+          "gen": 0,
+          "best_size": 3,
+          "evals": 11
+        },
+        {
+          "gen": 1,
+          "best_size": 3,
+          "evals": 11
+        },
+        {
+          "gen": 2,
+          "best_size": 3,
+          "evals": 11
+        },
+        {
+          "gen": 3,
+          "best_size": 3,
+          "evals": 11
+        },
+        {
+          "gen": 4,
+          "best_size": 3,
+          "evals": 11
+        }
+      ]
+    }
+  ]
+}
