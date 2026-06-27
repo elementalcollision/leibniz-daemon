@@ -35,6 +35,20 @@ KERNEL_PRODUCER = "LeanVerifier.discharge"
 JUDGE_PRODUCER = "FaithfulnessJudge"
 JUDGE_PRODUCERS = frozenset({JUDGE_PRODUCER})
 
+# ADR 0041 (ATTACK 2): the operator-owned allowlist of legitimate producers of a MECHANICAL
+# faithfulness edge -- the same pin pattern as PROOF_EDGE/KERNEL_PRODUCER. A mechanical faithfulness
+# edge naming a producer outside this set is a mislabel (e.g. a self-built tool's re-checker that was
+# never operator-admitted to State 2) and is rejected structurally. Legacy/unstamped edges carry
+# producer=None and are unaffected, so the executable invariants stay byte-identical and green. A NEW
+# faithfulness producer (a tool admitted per ADR 0041 §2.2) is added HERE by an operator, never
+# autonomously -- this constant lives in the PreToolUse-guarded trust core.
+FAITHFULNESS_PRODUCERS = frozenset({
+    "SMTVerifier.gaming_witness",   # the bounded-Z3 gaming-witness FAIL spine
+    "ClaimProbe",                   # the per-ClaimType mechanical probe
+    "FaithfulnessGate",             # the gate's own DEFER / refusal (not a judge)
+    "walnut/recheck",               # the Walnut sound backend (ADR 0037 / 0038)
+})
+
 
 class TrustViolation(Exception):
     """Raised when a promotion path would trust an LLM where it must not."""
@@ -74,6 +88,18 @@ class TrustPolicy:
             raise TrustViolation(
                 f"{ev.tier.value} edge {ev.edge!r} produced by judge "
                 f"{ev.producer!r}; a judged verdict may not be tagged {ev.tier.value}"
+            )
+        # ADR 0041 (ATTACK 2): a MECHANICAL faithfulness edge must carry a producer from the
+        # operator-owned allowlist (mirrors the KERNEL_PRODUCER pin on the proof edge). This blocks a
+        # tool/built-checker from laundering a faithfulness PASS with an arbitrary producer string.
+        # producer=None (legacy/unstamped) is unaffected, keeping the executable invariants
+        # byte-identical.
+        if (ev.edge == FAITHFULNESS_EDGE and ev.tier is TrustTier.MECHANICAL
+                and ev.producer is not None and ev.producer not in FAITHFULNESS_PRODUCERS):
+            raise TrustViolation(
+                f"mechanical faithfulness edge produced by {ev.producer!r}, which is not an "
+                f"operator-admitted faithfulness producer (ADR 0041); a tool or built checker cannot "
+                f"earn a faithfulness edge without operator registration in FAITHFULNESS_PRODUCERS"
             )
 
     def validate_path(self, edges: Iterable[EdgeEvidence]) -> None:
