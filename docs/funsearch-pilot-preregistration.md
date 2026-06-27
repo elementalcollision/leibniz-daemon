@@ -27,7 +27,9 @@ larger code exists, so `verify_cwc` simply never confirms one — no false beat 
 
 ## Budget (hard caps, enforced in code)
 - **≤ 240 total LLM program proposals** across the whole pilot (≤ 20 per cell).
-- **≤ 60 min** wall-clock; **≤ 1500 tokens** per proposal.
+- **≤ 60 min** wall-clock; **≤ 4096 tokens** per proposal (raised from 1500 after the first run voided:
+  a reasoning model exhausted a 1500-cap mid-reasoning and returned null content; `--max-tokens` is
+  configurable and the proposer now handles null content / reasoning fields robustly).
 - Model via `LEIBNIZ_FUNSEARCH_MODEL` (OpenRouter); CPU evaluator only (no GPU this tranche).
 - Estimated spend: low-tens of USD at a mid-tier model — a genuinely small tranche.
 
