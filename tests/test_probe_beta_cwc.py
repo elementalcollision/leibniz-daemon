@@ -69,3 +69,63 @@ def test_search_is_deterministic():
     a = pb.search_cwc(7, 4, 3, 7)
     b = pb.search_cwc(7, 4, 3, 7)
     assert {frozenset(c) for c in a} == {frozenset(c) for c in b}   # seeded LCG => reproducible
+
+
+# --- the Lean witness-checker renderer (the genuinely-Q.E.D. re-check) --------------------------
+
+FANO_CODE = [(0, 1, 2), (0, 3, 4), (0, 5, 6), (1, 3, 5), (1, 4, 6), (2, 3, 6), (2, 4, 5)]
+
+
+def test_render_produces_decide_closed_theorem():
+    src = pb.render_cwc_lean(7, 4, 3, FANO_CODE)
+    assert "theorem cwc_7_4_3_ge_7 :" in src
+    assert "validCWC [[0, 1, 2]," in src and "7 4 3 7 = true := by" in src
+    assert src.rstrip().endswith("decide")
+    assert "import Mathlib" not in src              # core Lean only => minimal TCB
+
+
+def test_render_refuses_a_false_witness():
+    # two weight-3 words sharing 2 elements => distance 2 < 4; rendering must refuse
+    import pytest
+    with pytest.raises(ValueError):
+        pb.render_cwc_lean(7, 4, 3, [(0, 1, 2), (0, 1, 3)])
+
+
+# --- Docker-gated end-to-end kernel checks (skipped when the Lean image is absent, e.g. CI) -----
+def _lean_image():
+    try:
+        from leibniz.backends.lean_cli import DEFAULT_IMAGE, available
+        return DEFAULT_IMAGE if available() else None
+    except Exception:
+        return None
+
+
+def _kernel_exit(source: str) -> int:
+    import subprocess
+    import tempfile
+    from pathlib import Path as _P
+    img = _lean_image()
+    with tempfile.TemporaryDirectory() as td:
+        (_P(td) / "Thm.lean").write_text(source)
+        proc = subprocess.run(
+            ["docker", "run", "--rm", "-v", f"{td}:/scratch:ro", "-w", "/work/lean-project",
+             img, "lake", "env", "lean", "/scratch/Thm.lean"],
+            capture_output=True, text=True, timeout=240)
+    return proc.returncode
+
+
+def test_lean_kernel_accepts_the_fano_witness():
+    import pytest
+    if _lean_image() is None:
+        pytest.skip("Lean docker image not available")
+    assert _kernel_exit(pb.render_cwc_lean(7, 4, 3, FANO_CODE)) == 0   # genuinely Q.E.D.
+
+
+def test_lean_kernel_rejects_a_false_witness():
+    import pytest
+    if _lean_image() is None:
+        pytest.skip("Lean docker image not available")
+    # bypass the renderer's guard to hand the KERNEL a false claim; it must reject it.
+    bad = (pb._LEAN_HELPERS + "\n\ntheorem bad :\n"
+           "    validCWC [[0, 1, 2], [0, 1, 3]] 7 4 3 2 = true := by\n  decide\n")
+    assert _kernel_exit(bad) != 0

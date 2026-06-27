@@ -32,11 +32,22 @@ beatable — that needs CP-SAT/ILP), and the oracle here is a hand-curated *prov
 automated table-of-record the full build requires.
 
 ## Full-build scope (the three pieces, in trust order)
-1. **Lean witness-checker (the trusted re-check).** The Python verifier mirrored as a Lean theorem
-   `A(n,d,w) ≥ M` whose proof is the explicit witness, kernel-checked by computation (`decide`/`native_
-   decide` on the finite properties). This is the soundness root — ships behind an adversarial review like
-   every TCB addition. **A β record is real only when the Lean kernel re-checks the witness** (and, unlike
-   Walnut, this path is genuinely Q.E.D. — the witness *is* the proof of the existential).
+1. **Lean witness-checker (the trusted re-check) — BUILT + VALIDATED (2026-06-26).** The Python verifier
+   mirrored as a self-contained **core-Lean** (no Mathlib ⇒ minimal TCB, fast) theorem
+   `validCWC witness n d w M = true`, kernel-checked by `decide` (pure kernel — NOT `native_decide`, which
+   would put the compiler in the TCB). `scripts/probe_beta_cwc_pilot.py::render_cwc_lean` emits it and
+   refuses to render a false statement. **Validated end-to-end against the real Lean 4.31 kernel**
+   (Docker-gated tests in `tests/test_probe_beta_cwc.py`): the **Fano `A(7,4,3) ≥ 7` theorem is
+   kernel-ACCEPTED** (genuinely Q.E.D. — the witness *is* the proof, the first Q.E.D.-bearing result of
+   the whole discovery arc), and a **too-close pair claimed at `d=4` is kernel-REJECTED** (`decide` proved
+   it false — sound + non-vacuous). Dual-use: this *is* the checker verification-amplification needs for
+   "verify this claimed code."
+   - **Finding for the full build (triviality gate):** `decide` is in `lean_cli.DEFAULT_TRIVIAL_TACTICS`,
+     so although the kernel sets `kernel_verified=True`, the downstream triviality gate would **quarantine**
+     a CWC witness theorem as "closed by a trivial tactic." A record-beating witness closed by `decide` is
+     *not* trivial — so the full build needs a **witness-non-triviality carve-out** (e.g. recognize a
+     decide over an explicit table-beating witness as non-trivial) before such a theorem can be promulgated
+     rather than quarantined. This is an ADR-level decision for the full build, surfaced here.
 2. **Automated table-of-record oracle (the α lesson, non-negotiable).** A parser of a real best-known
    table (Brouwer's constant-weight-code tables / Colbourn covering-array tables) → best-known lower bound
    per cell. Novelty = "beats this entry," judged by the automated lookup, **never** LLM-judged (Probe α
