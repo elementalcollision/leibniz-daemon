@@ -76,6 +76,31 @@ a novel-discovery engine.
   another checker. That is the one identified lever left, a substantial domain-specific bet, and is
   **not** authorized here.
 
+## Witness round + Probe α — the producer-bias confound, tested and closed (2026-06-26)
+
+A 7-model external-witness round (`docs/external-witness-round-synthesis-2026-06-26.md`) narrowed the
+above conclusion: maybe the wall was the LLM *producer's* catalogue bias, not finite-encodability. The
+test — **Probe α, the zero-LLM enumeration audit** (`docs/probe-alpha-result-finding.md`,
+`docs/results/probe_alpha_result.json`): remove the LLM, exhaustively enumerate un-named uniform morphisms,
+have Walnut decide power-freeness of their fixed points. Result (adversarially verified, run `wyfd15i8b`):
+
+- **The decider is sound** — 61/61 decided-TRUE prefix-clean (0 contradictions), 83/83 decided-FALSE
+  corroborated; 12/12 k=3 exponents match Khodier 2026 (Waterloo) Table 5.1's published critical exponents.
+- **Two slogans, separated:** *"unreachable unless the LLM names it"* is **falsified** (36 sound, aperiodic,
+  LLM-never-proposed decided-true theorems exist). But *"soundly-checkable ∧ finitely-encodable ⇒ textbook"*
+  — the binding claim — is **corroborated, not broken**: 8/8 sampled survivors are catalogued OEIS sequences
+  (0 un-catalogued); the k=3 family is fully prior art (A064990 Mephisto Waltz is stated 4th-power-free in
+  the Allouche–Shallit textbook). The probe's "non-named" was a false negative of its own detector.
+- **Shallow by construction** (min exponent 3-or-4; integer-only e∈{2,3,4} forecloses critical-exponent
+  surprises; 75% survival = generic). Only sliver: a ~2–3 k=2 ternary theorem-level cases, exercise-class.
+
+**This is the fourth converging probe** (genre A/B, Walnut run-3, SOS, zero-LLM enumeration) and the
+strongest: removing the LLM still yields catalogued/textbook. **Autonomous discovery by "enumerate +
+decide the cheap questions" is concluded as a measured negative.** The only remaining autonomous lever is
+**search over externally-meaningful objects with an automated table-of-record oracle** (Probe β — a *side*
+track, not the main line); **verification amplification stays the strategic home.** Per invariant 4 the
+novelty verdict on the thin sliver is the human panel's, not an agent's.
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
