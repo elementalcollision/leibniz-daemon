@@ -63,8 +63,24 @@ from clever constructions, so throwing a generic accelerator (GPU/Codon) at the 
 not help — the lever would be smarter constructions / ML-guided search. (Provenance:
 `docs/results/probe_beta_cpsat_sweep_result.json`.) This pre-answers Q1 of the acceleration witness brief.
 
+## Construction-search pivot (piece 3c) — the witnesses' #1 lever, prototyped, also RED
+The 7-model acceleration round was unanimous: the constraint is *algorithm/domain*, and we were using an
+*optimality prover* to find *lower-bound witnesses* — the right objective is direct **construction
+search** (find a big code; no optimality proof). I prototyped it on CPU (stochastic greedy + penalty/swap
+local search; `scripts/probe_beta_construct.py`). It is *correct* — it reaches the known optima on small
+cells (A(6,4,3)=4, A(7,4,3)=7, A(9,6,4)=3) — but on the larger open cells it is **RED, and notably
+*weaker* than CP-SAT**: on **A(14,6,6) it found only 25 vs CP-SAT's 30 vs Brouwer's 42.** So *unstructured*
+search — exact **or** heuristic — plateaus far below records. This **kills the "naive massively-parallel
+construction" sleeper** (parallelizing a method that loses to CP-SAT won't reach records) and sharpens the
+remaining autonomous lever to the **structured** forms the witnesses named — automorphism-prescribed
+search (assume a symmetry group, collapse variables) and learned construction à la FunSearch — which are
+substantial builds (FunSearch needs an LLM+GPU loop). Provenance:
+`docs/results/probe_beta_construct_result.json`; synthesis: `docs/external-witness-round-acceleration-synthesis.md`.
+
 ## Disposition
-- Probe β: **complete and RED on record-beating**, now confirmed with a strong solver. The autonomous
-  record-factory is built, sound, and measured; it reaches and *proves* records but does not beat them.
+- Probe β: **complete and RED on record-beating**, confirmed across a strong solver (CP-SAT) *and* a
+  construction search. The autonomous record-factory is built, sound, and measured; it reaches and
+  *proves* records but does not beat them. Records require **structure** (automorphism/algebraic/learned),
+  not raw compute or unstructured search — the unanimous witness conclusion, now empirically corroborated.
 - The two reusable assets (witness-checker, table oracle) carry forward to verification amplification.
 - Kernel bridge (task #54) unchanged.
