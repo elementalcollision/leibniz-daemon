@@ -101,6 +101,43 @@ decide the cheap questions" is concluded as a measured negative.** The only rema
 track, not the main line); **verification amplification stays the strategic home.** Per invariant 4 the
 novelty verdict on the thin sliver is the human panel's, not an agent's.
 
+## Probe β + the autonomous arc — CONCLUDED (2026-06-26)
+
+The remaining autonomous lever from Probe α — *search over externally-meaningful objects with an automated
+table-of-record oracle* — was then built and swept end-to-end on **binary constant-weight codes**
+(A(n,d,w) lower bounds vs Brouwer's public table, 839 cells). This removed the encoding excuse: the
+witnesses **are** finite, self-contained, Lean-checkable, and novelty is an objective lookup. So the
+*producer's construction method* became the variable, and it was swept exhaustively:
+
+- **Exact** (CP-SAT max-clique) → matched/proved-optimal, **0 beats**; even found only 30 vs known 42 on
+  A(14,6,6) (a strong solver can't match a clever construction).
+- **Heuristic** (greedy + local search) → *weaker* than CP-SAT (25 on A(14,6,6)), **0 beats** (kills the
+  naive-parallel-construction sleeper).
+- **Structural** (automorphism-prescribed: cyclic/affine/subgroups) → the positive: reached **42 instantly**
+  on A(14,6,6) and **MATCHED 41/78 (53%) of records** where brute search plateaued — **0 beats**.
+- **Richer-structural** (multiplier-subgroups/dihedral/fixed-point) → closed 6 more near-misses to MATCH,
+  pushed A(21,6,4) to **one codeword short (30 vs 31)** — **0 beats**.
+
+**The refinement this adds:** even with encoding free, the producer constraint holds — **matching records
+is structural; beating them is research-grade.** The first Q.E.D. of the whole arc landed here (a
+kernel-accepted `A(7,4,3) ≥ 7` witness; a false witness kernel-rejected), and two reusable sound assets
+ship (the Lean witness-checker + the automated table oracle), both exactly what verification amplification
+needs.
+
+**Disposition — the autonomous discovery arc is concluded.** Three independent sound backends (Walnut,
+SOS, CWC record-factory), one consistent verdict: the daemon reliably produces correct, diverse
+mathematics behind an unbroken trust boundary (22 PRs #140–#161; `tests/test_invariants.py` byte-identical
+throughout; no LLM ever decided) and does **not** autonomously reach novelty — the constraint is the
+producer. Full synthesis: **`docs/autonomous-discovery-arc-capstone.md`**.
+
+- **Strategic home: verification amplification** (human proposes frontier content; daemon soundly checks) —
+  the built assets already support this mode today.
+- **The one un-pulled lever (deferred, not taken): FunSearch-style learned construction** (LLM proposes
+  construction *programs*; evolutionary loop on GPU; survivors Lean-checked). Witness-rated *modest* odds;
+  a billable GPU+LLM build; **held pending an explicit operator decision**, not pursued autonomously.
+- **Kernel bridge (task #54) stays gated.** A fourth backend faces the same producer constraint, now
+  confirmed three times.
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
