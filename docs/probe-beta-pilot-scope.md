@@ -48,10 +48,15 @@ automated table-of-record the full build requires.
      *not* trivial — so the full build needs a **witness-non-triviality carve-out** (e.g. recognize a
      decide over an explicit table-beating witness as non-trivial) before such a theorem can be promulgated
      rather than quarantined. This is an ADR-level decision for the full build, surfaced here.
-2. **Automated table-of-record oracle (the α lesson, non-negotiable).** A parser of a real best-known
-   table (Brouwer's constant-weight-code tables / Colbourn covering-array tables) → best-known lower bound
-   per cell. Novelty = "beats this entry," judged by the automated lookup, **never** LLM-judged (Probe α
-   showed a hand/LLM detector false-negatives). A wrong oracle poisons every claim.
+2. **Automated table-of-record oracle (the α lesson) — BUILT + VALIDATED (2026-06-26).**
+   `scripts/cwc_table_oracle.py` parses Andries Brouwer's A(n,d,w) lower-bound tables (BSSS 1990 +
+   Brouwer–Etzion 2011) into a committed snapshot (`docs/results/brouwer_cwc_lower_bounds.json`, **839
+   cells, d∈{4,6,8,10,12,14,16,18}**, with fetch provenance: URL + date + page sha256). Novelty =
+   `is_improvement(n,d,w,found)` ⇔ `found > best_known(n,d,w)` — **automated lookup, never LLM-judged**.
+   The α safeguard is enforced: `load_snapshot` VALIDATES against ground-truth anchors (Fano A(7,4,3)=7,
+   STS(13) A(13,4,3)=26, …) + monotonicity-in-n and **refuses a snapshot that fails**; out-of-table cells
+   (trivial small-w matchings/packings Brouwer omits) return **None** (never a fabricated bound, never a
+   false novelty claim). 0 validation violations on the live parse. Refreshable via `build_snapshot`.
 3. **Untrusted heavy search.** CP-SAT / ILP / SAT (cvxpy is for SOS; here it's e.g. OR-Tools CP-SAT or a
    MaxSAT encoding) + symmetry breaking + local-search repair, on a pre-registered set of **non-tight**
    cells. LLM may propose encodings / symmetry breaks / restart schedules (proposal-only).
