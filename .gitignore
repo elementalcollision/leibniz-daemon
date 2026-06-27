@@ -46,3 +46,6 @@ Walnut/
 # Observatory live-run artifacts (ADR 0038/0039) — operator-local, never committed
 observatory_ledger*.json
 observatory_run*.log
+
+# Probe α enumeration output (operator-local Walnut batch + manifest)
+probe_alpha_out/
