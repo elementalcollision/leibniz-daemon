@@ -106,3 +106,14 @@ short by >3 use structure beyond cyclic/affine/cyclic-subgroups (quasi-cyclic / 
 **Capstone: the autonomous track REACHES records with the right (structural) method but does not BEAT
 them** — beating needs research-grade construction structure (richer prescribed groups, or FunSearch-style
 learned construction). Provenance: `docs/results/probe_beta_automorphism_sweep_result.json`.
+
+### Richer-group sweep on the near-misses — 0 beats, one codeword short (definitive capstone)
+Added richer prescribed groups (affine multiplier-subgroups incl. dihedral; fixed-point cyclic
+`fixcyc`) and swept the 13 near-miss cells. **0 beats** — but the richer groups *closed 6 more
+near-misses to MATCH* (`fixcyc` expresses the small "shortened" codes the orbit method missed) and pushed
+**A(21,6,4) from short-3 to short-1 (30 vs 31)** — one codeword from a record, but not a record.
+**Definitive capstone:** the autonomous record-beating track — pushed through exact (CP-SAT), heuristic
+construction, structural (cyclic/affine/subgroups), and richer-structural (multiplier-subgroups /
+dihedral / fixed-point) over 78+13 cells — **matches many records but beats none.** Beating Brouwer needs
+FunSearch-style learned construction (GPU/LLM, modest odds) or research-grade construction insight, beyond
+an autonomous laptop daemon. Provenance: `docs/results/probe_beta_richgroup_result.json`.
