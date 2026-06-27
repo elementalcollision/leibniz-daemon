@@ -68,19 +68,26 @@ constraint is real even when encoding is free: **matching is structural; beating
 
 ## Disposition — the autonomous track is concluded
 
-- **Autonomous record-beating: RED and closed.** 0 beats across exact, heuristic, structural, and
-  richer-structural over 78+13 cells. The cheap autonomous method space is genuinely exhausted; closest
-  result is one codeword short, and even closing it yields a MATCH, not a beat.
+- **Autonomous record-beating: RED and closed across EVERY lever.** 0 beats across exact, heuristic,
+  structural, richer-structural (78+13 cells), AND learned construction (LLM FunSearch, 12 cells / 240
+  programs). The autonomous method space — including the witnesses' highest-ceiling lever — is genuinely
+  exhausted; closest result is one codeword short, and even closing it yields a MATCH, not a beat.
 - **The strategic home stands: verification amplification.** The daemon's defensible identity today is a
   *sound verification / non-Q.E.D. decision* instrument — it reliably produces correct, diverse, textbook
   mathematics and *proves* records behind an unbroken trust boundary. "Decided" and "sound" are not
   "novel," and the daemon now measures the difference honestly across three backends.
-- **The one un-pulled lever (held, not taken): FunSearch-style learned construction.** An LLM proposes
-  construction *programs*; an evolutionary loop evaluates them (GPU); survivors are Lean-checked. It
-  searches the space of *constructions* (where records live) rather than codewords or fixed group
-  families — the paradigm that cracked cap-set records. It is a billable GPU+LLM build with
-  witness-rated *modest* odds, and it is **deferred pending an explicit operator decision**, not pursued
-  autonomously, because it is a genuine strategic + budget commitment.
+- **The last lever — FunSearch-style learned construction — was then pulled, and is RED too (2026-06-27).**
+  Operator-authorized as a bounded CPU-first tranche. An LLM (`qwen/qwen3-coder-next`) proposed
+  construction *programs*; each ran in an untrusted-code sandbox, scored by `verify_cwc`, judged against
+  the post-Rosin floor, with any beat Lean-kernel re-checked. **240 programs over 12 pre-registered cells:
+  0 records beaten.** The LLM matched the record on 11/12 and *out-reached* the daemon's own structural
+  baseline on 5 cells — but exceeded no record, and on the one genuinely-open flagship cell (A(21,6,4))
+  it did *worse* than the richer-group structural search (29 vs 30 vs record 31). Per the pre-registered
+  stop rule the track **closes**. This is a bounded-tranche RED (one model, CPU, 240 programs), not a
+  universal impossibility — re-open needs a separate operator GO (GPU/island, another model). Detail:
+  `docs/funsearch-pilot-result-finding.md`; provenance `docs/results/funsearch_pilot_result_q3cn.json`.
+  The reusable assets (untrusted-code sandbox, LLM-free evaluator, evolutionary harness, post-Rosin
+  oracle cross-check) stand regardless.
 - **Kernel bridge (task #54) stays gated.** Adding a fourth sound backend faces the same producer
   constraint, now confirmed three times; building it for discovery yield is not justified by these data.
 
@@ -90,7 +97,8 @@ The autonomous discovery track re-opens — without relitigating any of the abov
 changes:
 1. a producer-side encoder/self-check lifts the SOS novelty micro-probe to a non-empty GREEN intersection
    in the default arm (the gate in the cross-backend finding); or
-2. the operator green-lights the FunSearch learned-construction bet (GPU/LLM); or
+2. the operator green-lights a *larger* FunSearch tranche — GPU/island scale, a different/stronger
+   model, or a wider cell set — beyond the bounded CPU pilot that came back RED (2026-06-27); or
 3. a human supplies frontier conjectures/constructions for the daemon to *soundly check* — the
    verification-amplification mode, which the built assets already support today.
 

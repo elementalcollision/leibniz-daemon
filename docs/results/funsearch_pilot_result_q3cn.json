@@ -1,0 +1,303 @@
+{
+  "mode": "llm:qwen/qwen3-coder-next",
+  "cells": 12,
+  "programs_used": 240,
+  "beats": 0,
+  "beats_detail": [],
+  "rows": [
+    {
+      "n": 18,
+      "d": 10,
+      "w": 6,
+      "floor": 4,
+      "programs": 20,
+      "best_size": 4,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 2,
+        "invalid": 2,
+        "valid": 16,
+        "samples": [
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 4, 6, 10, 13],[0, 3, 4, 8, 12, 15] at distance 8 < 10",
+            "src": "import itertools\nimport math\n\ndef construct(n=18, d=10, w=6):\n    # For (n=18, d=10, w=6), the maximum allowed intersection is t = w - ceil(d/2) = 6 - 5 = 1\n    # We aim to construct 6 codewords, whic"
+          },
+          {
+            "kind": "sandbox",
+            "msg": "program error: ",
+            "src": "import itertools\nimport math\n\ndef construct(n=18, d=10, w=6):\n    # For (n=18, d=10, w=6): maximum allowed intersection t = w - ceil(d/2) = 6 - 5 = 1\n    \n    # We'll construct a known optimal code wi"
+          },
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 9, 10, 11],[1, 3, 7, 9, 12, 15] at distance 8 < 10",
+            "src": "import itertools\nimport math\n\ndef construct(n, d, w):\n    # For (n=18, d=10, w=6), maximum allowed intersection t = w - ceil(d/2) = 6 - 5 = 1\n    # We aim to construct at least 6 codewords (exceeding "
+          },
+          {
+            "kind": "sandbox",
+            "msg": "program error: construct exceeded time limit",
+            "src": "import itertools\nimport math\nimport random\n\ndef construct(n, d, w):\n    # For (n=18, d=10, w=6), maximum allowed intersection t = w - ceil(d/2) = 6 - 5 = 1\n    # We aim to construct a (18,10,6) consta"
+          }
+        ]
+      }
+    },
+    {
+      "n": 11,
+      "d": 8,
+      "w": 5,
+      "floor": 2,
+      "programs": 20,
+      "best_size": 2,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 0,
+        "valid": 20,
+        "samples": []
+      }
+    },
+    {
+      "n": 13,
+      "d": 10,
+      "w": 6,
+      "floor": 2,
+      "programs": 20,
+      "best_size": 2,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 2,
+        "invalid": 0,
+        "valid": 18,
+        "samples": [
+          {
+            "kind": "sandbox",
+            "msg": "program error: name 'itertools' is not defined",
+            "src": "def construct(n, d, w):\n    # For n=13, d=10, w=6: need |A \u2229 B| <= w - d/2 = 6 - 5 = 1\n    # We'll construct a larger set using finite geometry ideas\n    \n    # Key idea: Use blocks from the projectiv"
+          },
+          {
+            "kind": "sandbox",
+            "msg": "program error: division by zero",
+            "src": "import itertools\n\ndef construct(n, d, w):\n    # For n=13, d=10, w=6: need pairwise intersections <= w - d/2 = 1\n    # We'll construct a large set of 6-subsets of Z_13 with pairwise intersections <= 1\n"
+          }
+        ]
+      }
+    },
+    {
+      "n": 15,
+      "d": 12,
+      "w": 7,
+      "floor": 2,
+      "programs": 20,
+      "best_size": 2,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 2,
+        "invalid": 0,
+        "valid": 18,
+        "samples": [
+          {
+            "kind": "sandbox",
+            "msg": "program error: invalid syntax (<string>, line 1)",
+            "src": "```python\nimport itertools\n\ndef construct(n=15, d=12, w=7):\n    # For constant-weight codes, pairwise Hamming distance >= d means\n    # |A \u2229 B| <= w - ceil(d/2)\n    # Here w=7, d=12 => ceil(12/2)=6, s"
+          },
+          {
+            "kind": "sandbox",
+            "msg": "program error: invalid syntax (<string>, line 1)",
+            "src": "```python\nimport itertools\nimport math\n\ndef construct(n=15, d=12, w=7):\n    # For constant-weight codes, d <= 2(w - |intersection|), so intersection <= w - d/2\n    # Here d=12, w=7 => intersection <= "
+          }
+        ]
+      }
+    },
+    {
+      "n": 17,
+      "d": 12,
+      "w": 8,
+      "floor": 2,
+      "programs": 20,
+      "best_size": 2,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 1,
+        "invalid": 0,
+        "valid": 19,
+        "samples": [
+          {
+            "kind": "sandbox",
+            "msg": "program error: construct.<locals>.make_affine_hyperplane() missing 2 required positional arguments: 'c' and 'd'",
+            "src": "import itertools\n\ndef construct(n=17, d=12, w=8):\n    # For constant-weight code with parameters (n=17, d=12, w=8):\n    # Minimum Hamming distance d implies maximum intersection size = w - ceil(d/2) ="
+          }
+        ]
+      }
+    },
+    {
+      "n": 17,
+      "d": 14,
+      "w": 8,
+      "floor": 2,
+      "programs": 20,
+      "best_size": 2,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 1,
+        "invalid": 1,
+        "valid": 18,
+        "samples": [
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 4, 8, 13, 15, 16],[1, 3, 4, 5, 9, 10, 11, 13] at distance 10 < 14",
+            "src": "def construct(n=17, d=14, w=8):\n    # For n=17, d=14, w=8: need 8-subsets with pairwise intersections \u2264 1\n    # Using finite field GF(17) and constructing blocks via polynomial images\n    \n    # Metho"
+          },
+          {
+            "kind": "sandbox",
+            "msg": "program error: invalid character '\u2264' (U+2264) (<string>, line 1)",
+            "src": "Looking at the problem: we need a constant-weight code with parameters n=17, d=14, w=8. The key constraint is that any two codewords (8-subsets of {0,...,16}) must have intersection size \u2264 w - \u2308d/2\u2309 ="
+          }
+        ]
+      }
+    },
+    {
+      "n": 13,
+      "d": 8,
+      "w": 5,
+      "floor": 3,
+      "programs": 20,
+      "best_size": 3,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 5,
+        "valid": 15,
+        "samples": [
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 4, 7, 10],[0, 1, 4, 5, 6] at distance 4 < 8",
+            "src": "def construct(n=13, d=8, w=5):\n    # For (n,d,w) = (13,8,5), intersection constraint: |A \u2229 B| <= w - ceil(d/2) = 5 - 4 = 1\n    # Known optimal value is 13, achievable via the unique 2-(13,4,1) project"
+          },
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 4, 8],[1, 3, 7, 8, 11] at distance 6 < 8",
+            "src": "def construct(n=13, d=8, w=5):\n    # For (n,d,w) = (13,8,5), intersection constraint: |A \u2229 B| <= w - ceil(d/2) = 5 - 4 = 1\n    # We'll use a cyclic construction based on a (13,5,1) difference family\n "
+          },
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 4, 8],[1, 3, 7, 8, 11] at distance 6 < 8",
+            "src": "def construct(n=13, d=8, w=5):\n    # A(13,8,5) = 13, with intersection constraint |A \u2229 B| \u2264 1\n    # Use the following verified optimal set of 13 codewords\n    \n    return [\n        [0, 1, 2, 4, 8],\n  "
+          },
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 4, 8],[1, 3, 7, 8, 11] at distance 6 < 8",
+            "src": "def construct(n=13, d=8, w=5):\n    # For (n, d, w) = (13, 8, 5), we need codewords of size 5 with pairwise intersection \u2264 1\n    # Known optimal solution: A(13,8,5) = 13\n    \n    # Construction based o"
+          },
+          {
+            "kind": "invalid",
+            "msg": "pair [0, 1, 2, 4, 8],[1, 3, 7, 8, 11] at distance 6 < 8",
+            "src": "def construct(n=13, d=8, w=5):\n    # For (13,8,5), intersection constraint: |A \u2229 B| <= 1\n    # Use known optimal construction from finite geometry: projective plane PG(2,3)\n    # PG(2,3) has 13 points"
+          }
+        ]
+      }
+    },
+    {
+      "n": 17,
+      "d": 10,
+      "w": 6,
+      "floor": 3,
+      "programs": 20,
+      "best_size": 3,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 0,
+        "valid": 20,
+        "samples": []
+      }
+    },
+    {
+      "n": 13,
+      "d": 8,
+      "w": 6,
+      "floor": 4,
+      "programs": 20,
+      "best_size": 4,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 0,
+        "valid": 20,
+        "samples": []
+      }
+    },
+    {
+      "n": 19,
+      "d": 10,
+      "w": 6,
+      "floor": 4,
+      "programs": 20,
+      "best_size": 4,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 1,
+        "invalid": 2,
+        "valid": 17,
+        "samples": [
+          {
+            "kind": "sandbox",
+            "msg": "program error: 'break' outside loop (<string>, line 116)",
+            "src": "import itertools\n\ndef construct(n=19, d=10, w=6):\n    \"\"\"\n    Construct a constant-weight code A(19,10,6) with >4 codewords.\n    \n    Requirements:\n    - Binary vectors of length n=19, weight w=6, min"
+          },
+          {
+            "kind": "invalid",
+            "msg": "codeword [2, 8, 12] not a w-subset of [0,19)",
+            "src": "def construct(n=19, d=10, w=6):\n    \"\"\"\n    Construct a large constant-weight code A(19,10,6).\n    \n    For binary vectors of weight w=6 and minimum Hamming distance d=10,\n    the intersection of any "
+          },
+          {
+            "kind": "invalid",
+            "msg": "codeword [13, 19, 21, 25, 27, 28] not a w-subset of [0,19)",
+            "src": "import itertools\n\ndef construct(n=19, d=10, w=6):\n    \"\"\"\n    Construct a large constant-weight code A(19,10,6), i.e., a family of 6-subsets\n    of {0,...,18} with pairwise intersections \u2264 1.\n    \n   "
+          }
+        ]
+      }
+    },
+    {
+      "n": 17,
+      "d": 10,
+      "w": 7,
+      "floor": 5,
+      "programs": 20,
+      "best_size": 5,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 1,
+        "valid": 19,
+        "samples": [
+          {
+            "kind": "invalid",
+            "msg": "codeword [0, 2, 4, 8, 9, 13, 15, 16] not a w-subset of [0,17)",
+            "src": "import itertools\n\ndef construct(n, d, w):\n    # For A(17,10,7): subsets of size 7 with pairwise intersections <= 2\n    # (since intersection <= w - ceil(d/2) = 7 - 5 = 2)\n    \n    codewords = []\n    \n"
+          }
+        ]
+      }
+    },
+    {
+      "n": 21,
+      "d": 6,
+      "w": 4,
+      "floor": 31,
+      "programs": 20,
+      "best_size": 29,
+      "beat": null,
+      "diag": {
+        "sandbox_fail": 0,
+        "invalid": 1,
+        "valid": 19,
+        "samples": [
+          {
+            "kind": "invalid",
+            "msg": "codeword [4, 7, 14, 22] not a w-subset of [0,21)",
+            "src": "import itertools\n\ndef construct(n=21, d=6, w=4):\n    # For (n=21, d=6, w=4): d=6 => intersection <= w - ceil(d/2) = 4 - 3 = 1\n    # We need a family of 4-subsets of {0..20} with pairwise intersections"
+          }
+        ]
+      }
+    }
+  ]
+}
