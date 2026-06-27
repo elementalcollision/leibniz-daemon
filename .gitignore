@@ -49,3 +49,6 @@ observatory_run*.log
 
 # Probe α enumeration output (operator-local Walnut batch + manifest)
 probe_alpha_out/
+
+# Probe β pilot output (operator-local)
+probe_beta_out/
