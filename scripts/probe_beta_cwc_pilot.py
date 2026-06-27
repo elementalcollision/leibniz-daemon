@@ -130,6 +130,43 @@ def run(out_path: Path) -> dict:
     return summary
 
 
+# --- the Lean witness-checker (the trusted, genuinely-Q.E.D. re-check) -------------------------
+# Core-Lean ONLY (no Mathlib => minimal TCB, fast). VALIDATED end-to-end against Lean 4.31:
+# the Fano A(7,4,3)>=7 theorem is kernel-ACCEPTED, and a too-close pair claimed at d=4 is
+# kernel-REJECTED ("decide proved ... is false"). `validCWC witness n d w M = true` is a faithful
+# encoding of A(n,d,w) >= M (the witness IS the proof). NB: `decide` is in the pipeline's
+# DEFAULT_TRIVIAL_TACTICS, so the full build needs a witness-non-triviality carve-out before such a
+# (record-beating) theorem can be promulgated rather than quarantined as "trivially closed".
+_LEAN_HELPERS = """\
+-- constant-weight-code witness checker (core Lean 4; no Mathlib)
+def interLen (a b : List Nat) : Nat := (a.filter (fun x => b.contains x)).length
+def distinctSyms (c : List Nat) : Bool := c.all (fun x => (c.filter (fun y => x == y)).length == 1)
+def codewordOK (c : List Nat) (n w : Nat) : Bool :=
+  (c.length == w) && c.all (fun x => decide (x < n)) && distinctSyms c
+def distinctCodewords (C : List (List Nat)) : Bool :=
+  C.all (fun c => (C.filter (fun c' => c == c')).length == 1)
+def pairwiseDist (C : List (List Nat)) (d w : Nat) : Bool :=
+  C.all (fun a => C.all (fun b => (a == b) || decide (d ≤ 2 * (w - interLen a b))))
+def validCWC (C : List (List Nat)) (n d w M : Nat) : Bool :=
+  (C.length == M) && distinctCodewords C && C.all (fun c => codewordOK c n w) && pairwiseDist C d w"""
+
+
+def render_cwc_lean(n: int, d: int, w: int, code, thm_name: str | None = None) -> str:
+    """Render a self-contained, core-Lean, kernel-`decide`-able theorem `A(n,d,w) >= |code|`,
+    with the witness inlined. Refuses to render a FALSE theorem (the Python verifier pre-check;
+    the kernel would reject it anyway, but we never emit a knowingly-false statement)."""
+    code_sets = [frozenset(c) for c in code]
+    ok, reason = verify_cwc(code_sets, n, d, w)
+    if not ok:
+        raise ValueError(f"refusing to render a false CWC theorem: {reason}")
+    m = len(code_sets)
+    name = thm_name or f"cwc_{n}_{d}_{w}_ge_{m}"
+    lits = "[" + ", ".join("[" + ", ".join(str(x) for x in sorted(c)) + "]"
+                           for c in code_sets) + "]"
+    return (f"{_LEAN_HELPERS}\n\ntheorem {name} :\n"
+            f"    validCWC {lits} {n} {d} {w} {m} = true := by\n  decide\n")
+
+
 def main() -> int:
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("probe_beta_out/cwc_pilot.json")
     out.parent.mkdir(parents=True, exist_ok=True)
