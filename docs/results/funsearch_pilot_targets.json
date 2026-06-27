@@ -1,0 +1,89 @@
+{
+  "preregistered_at": "2026-06-27",
+  "protocol": "FunSearch LLM pilot \u2014 CPU-first, bounded, pre-registered (operator GO).",
+  "target_selection": "structural-sweep shortfall cells (where the deterministic baseline fell short), tabulated (has an oracle floor), EXCLUDING Rosin 2026's 24 improved cells; small floors first (most tractable to exceed) + flagship near-miss A(21,6,4). Fixed before running (anti-cherry-pick).",
+  "novelty_floor": "effective_best_known = max(committed Brouwer snapshot, Rosin 2026). A beat must STRICTLY EXCEED the record and pass the Lean kernel re-check (cwc_check).",
+  "budget": {
+    "max_programs_total": 240,
+    "per_cell_programs": 20,
+    "wall_clock_min": 60,
+    "per_call_max_tokens": 1500,
+    "model_env": "LEIBNIZ_FUNSEARCH_MODEL"
+  },
+  "stop_rule": "Zero kernel-verified beats after the full budget => track CLOSES (record RED, do not silently retry). One kernel-verified beat => STOP, record witness for ADR 0040 carve-out + operator review; GPU/island escalation requires a SEPARATE operator GO.",
+  "trust": "Programs are UNTRUSTED -> executed only in the funsearch_sandbox. Fitness (verify_cwc) is untrusted. A beat is decided by the Lean kernel + automated oracle, never the LLM. Nothing is promulgated by the pilot.",
+  "targets": [
+    {
+      "n": 18,
+      "d": 10,
+      "w": 6,
+      "floor_to_beat": 4
+    },
+    {
+      "n": 11,
+      "d": 8,
+      "w": 5,
+      "floor_to_beat": 2
+    },
+    {
+      "n": 13,
+      "d": 10,
+      "w": 6,
+      "floor_to_beat": 2
+    },
+    {
+      "n": 15,
+      "d": 12,
+      "w": 7,
+      "floor_to_beat": 2
+    },
+    {
+      "n": 17,
+      "d": 12,
+      "w": 8,
+      "floor_to_beat": 2
+    },
+    {
+      "n": 17,
+      "d": 14,
+      "w": 8,
+      "floor_to_beat": 2
+    },
+    {
+      "n": 13,
+      "d": 8,
+      "w": 5,
+      "floor_to_beat": 3
+    },
+    {
+      "n": 17,
+      "d": 10,
+      "w": 6,
+      "floor_to_beat": 3
+    },
+    {
+      "n": 13,
+      "d": 8,
+      "w": 6,
+      "floor_to_beat": 4
+    },
+    {
+      "n": 19,
+      "d": 10,
+      "w": 6,
+      "floor_to_beat": 4
+    },
+    {
+      "n": 17,
+      "d": 10,
+      "w": 7,
+      "floor_to_beat": 5
+    },
+    {
+      "n": 21,
+      "d": 6,
+      "w": 4,
+      "floor_to_beat": 31
+    }
+  ]
+}
