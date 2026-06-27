@@ -1,0 +1,106 @@
+{
+  "what": "Probe \u03b2 piece 3 \u2014 record-beating exact max-clique on the 10 smallest non-tight Brouwer cells",
+  "result": {
+    "cells": 10,
+    "records_beaten": 0,
+    "confirmed_exact": 10
+  },
+  "verdict": "RED on record-beating (0 beats); but 10/10 PROVED EXACT (max-clique = best_known, optimality proved) \u2014 an independent cross-check of Brouwer (10/10 lower bounds tight) and a minor sound result (closes the missing upper-bound proof for those cells)",
+  "per_cell": [
+    {
+      "cell": "A(8,6,4)",
+      "nodes": 70,
+      "found": 2,
+      "best_known": 2,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(9,6,4)",
+      "nodes": 126,
+      "found": 3,
+      "best_known": 3,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(10,8,5)",
+      "nodes": 252,
+      "found": 2,
+      "best_known": 2,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(10,6,4)",
+      "nodes": 210,
+      "found": 5,
+      "best_known": 5,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(11,8,5)",
+      "nodes": 462,
+      "found": 2,
+      "best_known": 2,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(10,6,5)",
+      "nodes": 252,
+      "found": 6,
+      "best_known": 6,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(11,6,4)",
+      "nodes": 330,
+      "found": 6,
+      "best_known": 6,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(12,8,5)",
+      "nodes": 792,
+      "found": 3,
+      "best_known": 3,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(12,10,6)",
+      "nodes": 924,
+      "found": 2,
+      "best_known": 2,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    },
+    {
+      "cell": "A(12,8,6)",
+      "nodes": 924,
+      "found": 4,
+      "best_known": 4,
+      "proved_optimal": true,
+      "beats": false,
+      "confirms_exact": true
+    }
+  ],
+  "structural_finding": "tractable = already optimal; open = intractable for naive search. The smallest non-tight cells are all ALREADY TIGHT (exact max-clique = best_known); the genuinely-open cells have C(n,w) too large for pure-stdlib exhaustive max-clique. This is the SAME wall as the prior 4 probes, now in the record-factory domain (5th converging confirmation).",
+  "pipeline_complete": "all 3 Probe \u03b2 pieces built + validated: (1) Lean witness-checker (genuinely Q.E.D.), (2) automated Brouwer oracle (\u03b1-safeguarded), (3) max-clique search + non-triviality carve-out. End-to-end sound; produced a minor genuine result (10 exactness proofs).",
+  "carve_out": "record_is_nontrivial(n,d,w,found) = is_improvement; wiring into lean_cli's triviality gate DEFERRED (0 beats => moot; avoid a premature trust-edge change)",
+  "what_a_real_shot_needs": "CP-SAT/ILP (not pure stdlib; ortools unavailable here) + serious compute on the LARGE open cells, with still-modest odds (witnesses rated this the best-remaining-autonomous-bet but uncertain)",
+  "strategic_home": "verification amplification \u2014 and the checker + oracle are directly reusable there"
+}
