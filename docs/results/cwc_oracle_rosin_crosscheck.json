@@ -1,0 +1,282 @@
+{
+  "provenance": {
+    "source_name": "Christopher D. Rosin, Automated Discovery of Improved Constant Weight Binary Codes",
+    "arxiv_id": "2603.00174v1",
+    "published": "2026-02-26",
+    "table": "Table 1 (24 improved lower bounds, 6<=d<=18, 18<=n<=35)",
+    "extraction": "two independent web extractions (arXiv HTML + ar5iv) agreed exactly on all 24 cells",
+    "fetched_at": "2026-06-27"
+  },
+  "snapshot_dominates_rosin": true,
+  "cells_total": 24,
+  "cells_equal": 19,
+  "cells_beyond": 5,
+  "cells_stale": 0,
+  "cells_untabulated": 0,
+  "rows": [
+    {
+      "cell": [
+        18,
+        6,
+        6
+      ],
+      "snapshot": 133,
+      "rosin_prev": 132,
+      "rosin_new": 133,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        22,
+        8,
+        9
+      ],
+      "snapshot": 292,
+      "rosin_prev": 280,
+      "rosin_new": 292,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        22,
+        10,
+        8
+      ],
+      "snapshot": 25,
+      "rosin_prev": 24,
+      "rosin_new": 25,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        23,
+        8,
+        9
+      ],
+      "snapshot": 412,
+      "rosin_prev": 400,
+      "rosin_new": 412,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        23,
+        8,
+        10
+      ],
+      "snapshot": 648,
+      "rosin_prev": 616,
+      "rosin_new": 648,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        24,
+        8,
+        9
+      ],
+      "snapshot": 656,
+      "rosin_prev": 640,
+      "rosin_new": 656,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        24,
+        8,
+        11
+      ],
+      "snapshot": 1378,
+      "rosin_prev": 1288,
+      "rosin_new": 1378,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        25,
+        8,
+        7
+      ],
+      "snapshot": 255,
+      "rosin_prev": 254,
+      "rosin_new": 255,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        25,
+        8,
+        9
+      ],
+      "snapshot": 837,
+      "rosin_prev": 829,
+      "rosin_new": 837,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        25,
+        8,
+        11
+      ],
+      "snapshot": 1702,
+      "rosin_prev": 1662,
+      "rosin_new": 1702,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        25,
+        8,
+        12
+      ],
+      "snapshot": 2610,
+      "rosin_prev": 2576,
+      "rosin_new": 2610,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        25,
+        10,
+        8
+      ],
+      "snapshot": 51,
+      "rosin_prev": 48,
+      "rosin_new": 50,
+      "status": "snapshot>rosin (table advanced further)"
+    },
+    {
+      "cell": [
+        26,
+        8,
+        7
+      ],
+      "snapshot": 259,
+      "rosin_prev": 257,
+      "rosin_new": 259,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        26,
+        8,
+        8
+      ],
+      "snapshot": 763,
+      "rosin_prev": 760,
+      "rosin_new": 763,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        26,
+        8,
+        11
+      ],
+      "snapshot": 2037,
+      "rosin_prev": 1988,
+      "rosin_new": 2030,
+      "status": "snapshot>rosin (table advanced further)"
+    },
+    {
+      "cell": [
+        27,
+        8,
+        10
+      ],
+      "snapshot": 1721,
+      "rosin_prev": 1600,
+      "rosin_new": 1704,
+      "status": "snapshot>rosin (table advanced further)"
+    },
+    {
+      "cell": [
+        28,
+        8,
+        6
+      ],
+      "snapshot": 131,
+      "rosin_prev": 130,
+      "rosin_new": 131,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        28,
+        8,
+        10
+      ],
+      "snapshot": 2067,
+      "rosin_prev": 1867,
+      "rosin_new": 2028,
+      "status": "snapshot>rosin (table advanced further)"
+    },
+    {
+      "cell": [
+        28,
+        10,
+        7
+      ],
+      "snapshot": 38,
+      "rosin_prev": 37,
+      "rosin_new": 38,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        30,
+        12,
+        9
+      ],
+      "snapshot": 44,
+      "rosin_prev": 42,
+      "rosin_new": 43,
+      "status": "snapshot>rosin (table advanced further)"
+    },
+    {
+      "cell": [
+        31,
+        16,
+        13
+      ],
+      "snapshot": 17,
+      "rosin_prev": 16,
+      "rosin_new": 17,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        31,
+        16,
+        14
+      ],
+      "snapshot": 24,
+      "rosin_prev": 21,
+      "rosin_new": 24,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        32,
+        16,
+        13
+      ],
+      "snapshot": 25,
+      "rosin_prev": 24,
+      "rosin_new": 25,
+      "status": "snapshot==rosin"
+    },
+    {
+      "cell": [
+        35,
+        18,
+        16
+      ],
+      "snapshot": 22,
+      "rosin_prev": 21,
+      "rosin_new": 22,
+      "status": "snapshot==rosin"
+    }
+  ]
+}
