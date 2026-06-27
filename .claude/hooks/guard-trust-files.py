@@ -41,6 +41,8 @@ PROTECTED_SUFFIXES = (
     "leibniz/tools/registry.py",      # ADR 0041: State-2 deciding registries (recheckers/templates)
     "leibniz/tools/protocol.py",      # ADR 0041: ToolEvidence / Certificate re-export
     "tests/test_tool_trust.py",       # ADR 0041: sealed tool-trust guards
+    "leibniz/seeds.py",               # ADR 0041 Phase 3: research-seed validation (floor-raising guard)
+    "tests/test_seed_trust.py",       # ADR 0041 Phase 3: sealed seed-trust guards
 )
 
 

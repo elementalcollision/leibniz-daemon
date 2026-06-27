@@ -94,6 +94,21 @@ def assert_post_rosin(snap=None) -> tuple[bool, list[tuple[int, int, int]]]:
     return (not bad, bad)
 
 
+def rosin_bound_seed():
+    """The first BoundSeed (ADR 0041 Phase 3): Rosin 2026's 24 improved A(n,d,w) bounds packaged as an
+    UNTRUSTED FLOOR seed for leibniz/seeds.py. Validating it against the committed snapshot leaves the
+    floor UNCHANGED — the snapshot already dominates all 24 cells (verified) — i.e. no behavior change,
+    exactly the Phase-3 gate. extraction_agreement=2 (two independent web extractions agreed)."""
+    from leibniz.seeds import Seed, SeedKind, SeedProvenance
+    cells = {(n, d, w): new for (n, d, w), (_prev, new) in ROSIN_2026.items()}
+    prov = SeedProvenance(
+        source_id=PROVENANCE["arxiv_id"], url="https://arxiv.org/abs/2603.00174",
+        fetched_at=PROVENANCE["fetched_at"], extraction_method=PROVENANCE["extraction"])
+    return Seed(kind=SeedKind.FLOOR, payload={"cells": cells}, provenance=prov,
+                extraction_agreement=2,
+                proof_of_use="arXiv 2603.00174 Table 1 (two independent extractions agreed on all 24)")
+
+
 def main() -> int:
     report = crosscheck()
     out = Path(__file__).resolve().parent.parent / "docs" / "results" / "cwc_oracle_rosin_crosscheck.json"
