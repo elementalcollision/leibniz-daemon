@@ -148,6 +148,17 @@ class LeanCliBackend:
         res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
         return res is not None and res.kernel_ok
 
+    def check_source(self, source: str) -> Optional[bool]:
+        """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already
+        assembled). True iff it elaborates cleanly with no sorry; False if the kernel rejects it;
+        None if the backend is unavailable (no docker/image). Like check_proof, this only REPORTS
+        what the kernel said — it never touches Demonstratio.kernel_verified (LeanVerifier.discharge
+        remains the sole writer). Used by the standalone CWC audit CLI (scripts/cwc_check.py), which
+        renders a self-contained `validCWC ... = true := by decide` file; that file carries its own
+        `def`s, so it must NOT go through _join_proof (which splits on the first `:=`)."""
+        res = self._run_lean(source)
+        return None if res is None else res.kernel_ok
+
     def check_proof_with_error(self, expr: Expressio, proof_src: str) -> tuple[bool, str]:
         """Like check_proof, but also return the kernel diagnostics (ADR 0029).
 
