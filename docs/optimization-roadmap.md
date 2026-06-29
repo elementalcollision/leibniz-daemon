@@ -143,6 +143,35 @@ producer. Full synthesis: **`docs/autonomous-discovery-arc-capstone.md`**.
 - **Kernel bridge (task #54) stays gated.** A fourth backend faces the same producer constraint, now
   confirmed three times.
 
+## ADR 0041 tool-use substrate + Gate D0 — built, and the producer-wall confirmed (2026-06-27)
+
+ADR 0041 hardened the trust boundary for *tool use, tool building, and research ingestion* and shipped
+its first four phases, all State-1 (autonomous, TCB+0): the tool seam (`leibniz/tools/`), FunSearch
+unified as the first `SandboxedTool`, sound research-seeding (`leibniz/seeds.py`, FLOOR raise-only), and
+seed intake to proposer seams only (`leibniz/seed_intake.py`). Then its falsifiable precondition,
+**[Gate D0](gate-d0-producer-wall-finding.md)**, ran and came back **RED**: exact CP-SAT found + the Lean
+kernel verified the record on 5/5 cells the daemon's structural search missed (incl. A(21,6,4) 30→31).
+**No representation gap; the producer is the wall; stronger producers match records but never beat them**
+(and where exact ran to optimality the record is *proven optimal* — nothing to beat). Autonomous novelty
+stays RED. Disposition recorded in ADR 0041 (Phases 5–6 frozen as autonomous-novelty bets).
+
+## Post-D0 program — verification amplification spine, second-domain scout, decider-admission (2026-06-29)
+
+Operator decision after D0 RED: pursue the three preconditions that make a producer-strength swing
+*meaningful*, sequenced **A → B → C → meaningful-D**. Scoped in **[ADR 0042](adr/0042-post-d0-program.md)**:
+
+- **Track A — verification amplification as the spine** (build first; highest certainty). Batch intake →
+  existing sound audit path (`verify_cwc → render_cwc_lean → Lean kernel`) → a provenance'd
+  kernel-checked corpus + reading-room. Audit-tier, never promulgates. *(A1 in flight.)*
+- **Track B — second-domain D0 scout** (critical path to a meaningful swing). Gate B0: find a finite-witness
+  domain with a *soft/unproven frontier* or a representation *GREEN* before building any new checker —
+  D0 RED was CWC-specific (proven-optimal frontier, no encoding gap).
+- **Track C — sound decider-admission** (ADR 0041 Phase 6), aimed at amplification: admit a *verified*
+  stronger checker as a State-2 decider so a re-checked certificate becomes PASS not DEFER. Operator-only;
+  first admission gets its own ADR.
+- **Track D — the producer-strength swing**, made meaningful by A (verify a beat) + B (beatable frontier)
+  + C (admit a stronger producer). Operator-gated, billable.
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
