@@ -32,13 +32,23 @@ def test_amplify_one_valid_records_provenance_no_kernel():
     assert r["verify_ok"] is True
     assert r["domain"] == "cwc" and r["cell"] == "A(7,4,3)" and r["size"] == 2
     assert r["source"] == "test:valid" and r["stamped"] == "2026-06-29"
-    assert r["witness_sha"] and r["code"] == [[0, 1, 2], [3, 4, 5]]
+    assert r["witness_sha"] and r["witness"] == [[0, 1, 2], [3, 4, 5]]
     assert r["kernel"] == "not run (--no-kernel)"          # audit-tier; no claim of verification
 
 
 def test_amplify_one_false_witness_flagged_not_crashed():
     r = amp.amplify_one(FALSE, run_kernel=False)
     assert r["verify_ok"] is False and "skipped" not in r   # audited, just failed the pre-check
+
+
+def test_covering_domain_audits_through_the_spine():
+    sts9 = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [1, 5, 6], [2, 3, 7], [0, 5, 7], [1, 3, 8], [2, 4, 6]]
+    r = amp.amplify_one({"domain": "covering", "v": 9, "k": 3, "t": 2, "blocks": sts9,
+                         "source": "test:sts9"}, run_kernel=False)
+    assert r["verify_ok"] is True and r["domain"] == "covering" and r["cell"] == "C(9,3,2)"
+    assert r["size"] == 12 and r["best_known"] == 12 and "equals record" in r["novelty"]
+    assert r["witness_sha"] and r["kernel"] == "not run (--no-kernel)"
 
 
 def test_unsupported_domain_is_skipped():
