@@ -43,6 +43,8 @@ PROTECTED_SUFFIXES = (
     "tests/test_tool_trust.py",       # ADR 0041: sealed tool-trust guards
     "leibniz/seeds.py",               # ADR 0041 Phase 3: research-seed validation (floor-raising guard)
     "tests/test_seed_trust.py",       # ADR 0041 Phase 3: sealed seed-trust guards
+    "leibniz/seed_intake.py",         # ADR 0041 Phase 4: seeds -> proposer seams only (no decider)
+    "tests/test_seed_intake.py",      # ADR 0041 Phase 4: sealed seed-intake guards
 )
 
 
