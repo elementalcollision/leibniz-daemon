@@ -67,6 +67,22 @@ D0 RED is CWC-specific. The swing is only meaningful in a domain with a **soft/u
 - **B1 (only if B0 yields a candidate):** build that domain's verifier/encoder (its own ADR), then run
   its D0 to confirm a beatable/GREEN frontier.
 
+> **✅ GATE B0 RESULT — covering designs (measured 2026-06-29).** Triangulated across a 7-model witness
+> panel, a 43-agent adversarial landscape scout, and four zero-spend pre-build probes (full finding:
+> [`docs/gate-b0-second-domain-finding.md`](../gate-b0-second-domain-finding.md)). **The producer wall is
+> domain-specific, not universal.** The criterion sharpened to a **4-way conjunction** — MECHANISM
+> (search-set, recently beaten) ∧ HEADROOM (non-optimal cells *with small witnesses*) ∧ **ORACLE** (one
+> machine-readable integer table, no merge — the most common cause of death) ∧ NON-COINCIDENCE. Results:
+> **covering designs C(v,k,t)** and **Ramsey lower bounds** clear all four; **deletion codes** (the
+> apparent FunSearch beat is really the VT optimum + a generic MIS solver, no single oracle) and **LABS**
+> (frozen/fragmented oracle) do **not**. Measured: 5,460 LJCR cells are small-witness ∩ gap≥2 (2,251 with
+> <100 blocks) against a single DOI-pinned oracle that ships witnesses; the VT-reduced Ramsey kernel check
+> runs in ≤0.07 s at n=240. **Recommended B1 = covering designs** (best oracle + largest small-witness
+> headroom + simplest sound verifier — the `cwc_check.py`/`amplify.py` pattern); Ramsey second
+> (cyclic-witness condition), Grassmannian third (construction-dominated mechanism), deletion dead.
+> **Residual gate before any billable swing:** a CPU *reproduction probe* (can a baseline search reduce
+> several current best-knowns?) — the verifier itself is justified by Track A regardless of D.
+
 ### Track C — sound decider-admission (ADR 0041 Phase 6), aimed at amplification
 Build the foreclosed-by-nothing leg: the operator-gated ritual to admit a **verified** stronger checker
 as a sound decider (`registry.register_decider`, State 2), so a re-checked certificate becomes a PASS
@@ -101,6 +117,13 @@ Track A delivers standalone value immediately (a growing kernel-checked corpus) 
 - Every billable / GPU / live-producer run happens in the operator's terminal on explicit go.
 
 ## 5. Status
-- **A1** — building now (this PR or the next).
-- **B0, C, D** — scoped here; each starts at its gate. B1 and the first C-admission each get their own
-  ADR.
+- **A1** — ✅ BUILT (`scripts/amplify.py`, 6/6 kernel-verified seed corpus; PR #181).
+- **B0** — ✅ MEASURED → **covering designs** recommended for B1; the producer wall is domain-specific
+  (see the Gate B0 result block above + `docs/gate-b0-second-domain-finding.md`). The 4-way conjunction
+  is the binding criterion; the ORACLE leg is the most common cause of death.
+- **B1** — next: build the covering-designs verifier (its own ADR) — audit-tier, the `cwc_check.py`
+  pattern, extending the amplification spine (Track A value) regardless of the swing.
+- **Reproduction gate** — after B1: a CPU probe (baseline search vs current best-knowns) gates any
+  billable producer swing.
+- **C, D** — scoped; each starts at its gate. C and the first decider-admission get their own ADR; **D
+  is a gated diagnostic** (operator-only, billable), unblocked only by a GREEN reproduction gate.
