@@ -121,9 +121,13 @@ Track A delivers standalone value immediately (a growing kernel-checked corpus) 
 - **B0** — ✅ MEASURED → **covering designs** recommended for B1; the producer wall is domain-specific
   (see the Gate B0 result block above + `docs/gate-b0-second-domain-finding.md`). The 4-way conjunction
   is the binding criterion; the ORACLE leg is the most common cause of death.
-- **B1** — next: build the covering-designs verifier (its own ADR) — audit-tier, the `cwc_check.py`
-  pattern, extending the amplification spine (Track A value) regardless of the swing.
-- **Reproduction gate** — after B1: a CPU probe (baseline search vs current best-knowns) gates any
-  billable producer swing.
-- **C, D** — scoped; each starts at its gate. C and the first decider-admission get their own ADR; **D
-  is a gated diagnostic** (operator-only, billable), unblocked only by a GREEN reproduction gate.
+- **B1** — ✅ BUILT (ADR 0043): covering-designs verifier; the amplification corpus now spans two
+  domains, 8/8 kernel-verified.
+- **Reproduction gate** — ✅ **GREEN (2026-06-29).** A generic baseline reproduces the LJCR best-known on
+  6/10 pre-registered cells (9/10 within 2 blocks; 0 beaten; all valid), including gap-2 cells — the
+  producer *reaches the frontier*, unlike CWC. Finding:
+  [`docs/covering-reproduction-probe-finding.md`](../covering-reproduction-probe-finding.md).
+- **C, D** — scoped; each starts at its gate. C and the first decider-admission get their own ADR. **D
+  is now UNBLOCKED as a priced, operator-gated, billable bet** (reproduction GREEN) — but reproduction
+  ≠ beating; the swing is a legitimate experiment to run only on explicit operator go, weighed against
+  the panel's meta-caution that the durable product is the Track-A/C amplification instrument.
