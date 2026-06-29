@@ -163,9 +163,13 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
 - **Track A — verification amplification as the spine** (build first; highest certainty). Batch intake →
   existing sound audit path (`verify_cwc → render_cwc_lean → Lean kernel`) → a provenance'd
   kernel-checked corpus + reading-room. Audit-tier, never promulgates. *(A1 in flight.)*
-- **Track B — second-domain D0 scout** (critical path to a meaningful swing). Gate B0: find a finite-witness
-  domain with a *soft/unproven frontier* or a representation *GREEN* before building any new checker —
-  D0 RED was CWC-specific (proven-optimal frontier, no encoding gap).
+- **Track B — second-domain scout.** ✅ **Gate B0 MEASURED (2026-06-29):** the producer wall is
+  *domain-specific*. Triangulated (7-model panel + 43-agent scout + 4 zero-spend probes), the criterion
+  sharpened to a 4-way conjunction (MECHANISM ∧ HEADROOM ∧ **ORACLE** ∧ NON-COINCIDENCE). **Covering
+  designs** and **Ramsey** clear it; deletion codes + LABS do not (oracle leg). **Recommended B1 =
+  covering designs** (LJCR single DOI-pinned oracle; 5,460 small-witness gap≥2 cells; simplest sound
+  verifier). Residual gate before any billable swing: a CPU reproduction probe. Full finding:
+  `docs/gate-b0-second-domain-finding.md`.
 - **Track C — sound decider-admission** (ADR 0041 Phase 6), aimed at amplification: admit a *verified*
   stronger checker as a State-2 decider so a re-checked certificate becomes PASS not DEFER. Operator-only;
   first admission gets its own ADR.
