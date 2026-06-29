@@ -127,7 +127,15 @@ Track A delivers standalone value immediately (a growing kernel-checked corpus) 
   6/10 pre-registered cells (9/10 within 2 blocks; 0 beaten; all valid), including gap-2 cells — the
   producer *reaches the frontier*, unlike CWC. Finding:
   [`docs/covering-reproduction-probe-finding.md`](../covering-reproduction-probe-finding.md).
-- **C, D** — scoped; each starts at its gate. C and the first decider-admission get their own ADR. **D
-  is now UNBLOCKED as a priced, operator-gated, billable bet** (reproduction GREEN) — but reproduction
-  ≠ beating; the swing is a legitimate experiment to run only on explicit operator go, weighed against
-  the panel's meta-caution that the durable product is the Track-A/C amplification instrument.
+- **D — NOT JUSTIFIED on reachable cells (measured 2026-06-29).** After the reproduction GREEN, the
+  operator chose "stronger CPU producer first." The strongest *free* producer — exact CP-SAT set-cover —
+  beats nothing and **proves the records optimal on 4/6 headroom cells** (the other two reproduced/near,
+  budget-limited): the Gate-B0 "headroom" was Schönheim weakness, not beatable slack. On the reachable
+  small-witness band the record *is* the ceiling, so no producer (free or billable) can beat it. The
+  swing is frozen as not-justified; re-open only for a specific larger cell with open optimality AND a
+  kernel-renderable witness. Finding:
+  [`docs/covering-exact-producer-finding.md`](../covering-exact-producer-finding.md). The measure-before-
+  spend ladder thus ran to completion on **zero billable spend**.
+- **C** — the remaining free, on-mission build: sound decider-admission (own ADR + operator sign-off).
+- **Outcome:** the durable product is the **two-domain verification-amplification instrument** (A);
+  autonomous record-beating is measured not-justified (now *proven optimal* on the reachable band).

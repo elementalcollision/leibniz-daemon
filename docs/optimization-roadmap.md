@@ -178,6 +178,11 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   a generic baseline reproduces the LJCR best-known on 6/10 pre-registered cells (9/10 within 2 blocks),
   so the producer *reaches the frontier* (unlike CWC) — the swing is now a priced, operator-gated bet
   (reproduction ≠ beating). Finding: `docs/covering-reproduction-probe-finding.md`.
+  **Escalation (2026-06-29):** "stronger CPU producer first" → an exact CP-SAT set-cover beats nothing
+  and **proves 4/6 reachable records optimal** — the Gate-B0 headroom was Schönheim weakness, not
+  beatable slack. **The swing is not justified on the reachable small-witness band** (no producer can
+  beat a proven-optimal record), established for *zero billable spend*. Bank Track A (+ C). Finding:
+  `docs/covering-exact-producer-finding.md`.
 
 ## The ADRs
 
