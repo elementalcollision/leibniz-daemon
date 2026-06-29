@@ -37,12 +37,13 @@ _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT / "scripts"))
 sys.path.insert(0, str(_ROOT))
 
+import covering_check  # noqa: E402  (ADR 0043 Track B1: 2nd domain — covering designs)
 import cwc_check  # noqa: E402  (audit path: verify -> render -> kernel -> oracle)
 
 DEFAULT_CORPUS = _ROOT / "docs" / "results" / "amplification_corpus.json"
 
-# Track B will register additional finite-witness domains here. For slice A1, only CWC.
-SUPPORTED_DOMAINS = ("cwc",)
+# Finite-witness domains whose witnesses the spine can audit through the sound kernel path.
+SUPPORTED_DOMAINS = ("cwc", "covering")
 
 
 def _norm_code(code) -> list[list[int]]:
@@ -57,35 +58,42 @@ def _witness_hash(code) -> str:
 
 
 def corpus_key(report: dict) -> str:
-    """Stable dedup key: a re-run that newly kernel-verifies an entry REPLACES the older record."""
-    return (f"{report['domain']}:{report['n']}:{report['d']}:{report['w']}:"
-            f"{report['size']}:{report.get('source', 'unknown')}:{report['witness_sha']}")
+    """Stable, domain-agnostic dedup key: a re-run that newly kernel-verifies an entry REPLACES the
+    older record. `cell` encodes the domain's parameters (e.g. 'A(13,6,5)' or 'C(9,3,2)')."""
+    return (f"{report['domain']}:{report['cell']}:{report['size']}:"
+            f"{report.get('source', 'unknown')}:{report['witness_sha']}")
 
 
 def amplify_one(entry: dict, *, run_kernel: bool = True, stamp: str | None = None) -> dict:
-    """Audit one construction entry. Returns an augmented report (never mutates any ledger).
-
-    A non-CWC domain is recorded as skipped (Track B adds domains) rather than raising, so a mixed feed
-    still processes its CWC entries."""
+    """Audit one construction entry through the sound kernel path. Returns an augmented report (never
+    mutates any ledger). An unsupported domain / malformed entry is recorded as skipped rather than
+    raising, so a mixed feed still processes its valid entries."""
     domain = (entry.get("domain") or "cwc").strip().lower()
     source = entry.get("source", "unknown")
     if domain not in SUPPORTED_DOMAINS:
         return {"domain": domain, "source": source, "skipped":
-                f"unsupported domain {domain!r} (only {SUPPORTED_DOMAINS} in slice A1; Track B will add domains)"}
+                f"unsupported domain {domain!r} (supported: {SUPPORTED_DOMAINS})"}
     try:
-        n, d, w = int(entry["n"]), int(entry["d"]), int(entry["w"])
-        code = _norm_code(entry["code"])
+        if domain == "cwc":
+            n, d, w = int(entry["n"]), int(entry["d"]), int(entry["w"])
+            witness = _norm_code(entry["code"])
+            report = cwc_check.check(n, d, w, witness, run_kernel=run_kernel)
+            cell = f"A({n},{d},{w})"
+        else:  # covering
+            v, k, t = int(entry["v"]), int(entry["k"]), int(entry["t"])
+            witness = _norm_code(entry["blocks"])
+            report = covering_check.check(v, k, t, witness, run_kernel=run_kernel)
+            cell = f"C({v},{k},{t})"
     except (KeyError, TypeError, ValueError) as e:
-        return {"domain": domain, "source": source, "skipped": f"malformed CWC entry: {e}"}
+        return {"domain": domain, "source": source, "skipped": f"malformed {domain} entry: {e}"}
 
-    report = cwc_check.check(n, d, w, code, run_kernel=run_kernel)  # audit-only; never promulgates
-    report.update({
+    report.update({  # audit-only; never promulgates
         "domain": domain,
-        "cell": f"A({n},{d},{w})",
+        "cell": cell,
         "source": source,
         "note": entry.get("note"),
-        "witness_sha": _witness_hash(code),
-        "code": code,
+        "witness_sha": _witness_hash(witness),
+        "witness": witness,
         "stamped": stamp,
     })
     return report
@@ -102,7 +110,7 @@ def merge_corpus(existing: list[dict], new: list[dict]) -> list[dict]:
     for r in new:
         by_key[corpus_key(r)] = r
     return sorted(by_key.values(),
-                  key=lambda r: (r["domain"], r["n"], r["d"], r["w"], r["size"]))
+                  key=lambda r: (r["domain"], r.get("cell", ""), r["size"]))
 
 
 def _verified(report: dict) -> bool:
