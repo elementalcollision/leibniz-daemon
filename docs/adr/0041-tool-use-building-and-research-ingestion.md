@@ -306,8 +306,8 @@ nothing it carries reaches a decider except by independent mechanical re-derivat
 | **2 — Unify the existing FunSearch instance** | `leibniz/tools/sandbox.py` (`SandboxedTool` + `SandboxTask`, docker runner INJECTED so the isolation code stays single-sourced in `scripts/funsearch_sandbox.py`); `scripts/cwc_tool.py` (CWC wired as the first SandboxedTool — State 1; the re-checker + template are provided for Phase 6, NOT registered). **No behavior change, no spend.** | CWC runs through `ToolRegistry.run` and matches `evaluate_program` (docker-gated test); with no decider, a candidate beat is DEFER (State 1); E7 template recomputes the statement from witness data. | **✅ BUILT (2026-06-27; 10 tests incl. docker-gated end-to-end; State 1 only — no decider admitted)** |
 | **3 — Sound research-seeding (FLOOR only)** | `leibniz/seeds.py` (Seed + validate_seed: proof-of-use, ≥2 agreeing extractions for FLOOR, bidirectional snapshot cross-check, CONFLICT on failed re-derivation; `effective_floor` one-directional; `seed_from_feed_record` maps the scraper's `leibniz.json`); `scripts/cwc_rosin_crosscheck.py::rosin_bound_seed()` as the first `BoundSeed`. Scraper augmented with a Leibniz-only `--leibniz-topic` tactical pull (Stage 0). Sealed `tests/test_seed_trust.py` under the hook. | A dominated value is admitted but never lowers the floor; an un-re-derived raise above snapshot QUARANTINES; out-of-table → None (never fabricated); <2 extractions / missing proof-of-use quarantine; the seeds module imports no network client; the Rosin BoundSeed validates with the floor UNCHANGED. | **✅ BUILT (2026-06-27; 13 sealed guards; State-1 proposers only — seeds never decide)** |
 | **4 — TARGET & CONSTRUCTION seeds** | `leibniz/seed_intake.py`: validated seeds → PROPOSER seams only — TARGET → `seed_steering` (proposal-side context, gates nothing, à la ADR 0034); CONSTRUCTION → a `SandboxTask` for the `SandboxedTool` (runs only sandboxed); FLOOR → `effective_floor`. Quarantined/un-validated → NOTHING. Sealed `tests/test_seed_intake.py`. | A CONSTRUCTION seed becomes a sandbox job (never in-process); only VALIDATED TARGETs steer; no seed reaches a decider; the faithfulness→novelty→proof chain + trust policy unchanged. | **✅ BUILT (2026-06-27; the seam/adapter; 5 sealed guards; State-1 proposers only). Live organic seeded-conjecture run pending re-calibration.** |
-| **5 — Propose/repair-a-tool loop** | Promote `funsearch_llm_pilot.py::LLMProposer` to a first-class `leibniz/providers/` provider; reuse the single-source prompt builders. | Measured discovery yield justifies the loop. | DEFERRED |
-| **6 — First DECIDER-ADMITTED tool (operator-gated)** | Operator registers one kind→(template, re-checker, strength tag) after the full §2.2 (a)–(d) ritual. | Only on operator sign-off, per ADR; never autonomous. | DEFERRED — explicitly behind operator review |
+| **5 — Propose/repair-a-tool loop** | Promote `funsearch_llm_pilot.py::LLMProposer` to a first-class `leibniz/providers/` provider; reuse the single-source prompt builders. | Measured discovery yield justifies the loop. | **NOT JUSTIFIED for autonomous novelty (Gate D0 RED).** Producers match records, never beat them; the yield precondition is unmet. Frozen unless a future signal (a producer that *beats*, or a non-CWC GREEN domain) re-opens it. |
+| **6 — First DECIDER-ADMITTED tool (operator-gated)** | Operator registers one kind→(template, re-checker, strength tag) after the full §2.2 (a)–(d) ritual. | Only on operator sign-off, per ADR; never autonomous. | DEFERRED — explicitly behind operator review; and now also gated behind a future D0-style GREEN/beat signal. |
 
 **Gate D0 — producer-wall / expressivity diagnostic (A2, round-3; the single most-requested new
 mechanism, operationalizing the 7/7 strategic dissent). Runs BEFORE Phases 4–6.** Manually encode the
@@ -323,6 +323,20 @@ existing checker:
 This converts the strategic dissent ("is this the right bet?") from a faith claim into a falsifiable
 precondition. Phases 1–3 (boundary hardening + FunSearch unification + sound FLOOR seeds) are correct
 and cheap **regardless** of D0; only the autonomous-discovery phases wait on it.
+
+> **⏹ GATE D0 RESULT — RED (measured 2026-06-27).** On 5 open cells where the daemon's autonomous
+> *structural* search fell short, a stronger producer (exact CP-SAT) found the record construction and
+> the **Lean kernel verified all 5**: A(13,8,5)=3 (structural 0), A(13,8,6)=4 (0), A(13,6,5)=18 (13),
+> A(17,6,4)=20 (17), A(21,6,4)=31 (30). **No encoding/expressivity gap** (GREEN is falsified — every
+> record is a finite, kernel-checkable witness); **the wall is producer strength/reach.** But across the
+> full autonomous arc (exact CP-SAT + LLM FunSearch, 100+ cells) stronger producers **match records,
+> never beat them** — autonomous *novelty* stays RED. **Disposition: HALT Phases 5–6 and the FunSearch
+> GPU bet as autonomous-novelty bets** (not justified by these data); the justified home is **verification
+> amplification** — a stronger/human/research producer supplies a construction, the daemon soundly
+> verifies it (D0 itself kernel-verified 5 records; the end-to-end demo kernel-verified a 42-codeword
+> A(14,6,6)). The Phase 1–4 substrate stays valuable precisely as the amplification intake. Full finding:
+> [`docs/gate-d0-producer-wall-finding.md`](../gate-d0-producer-wall-finding.md); provenance:
+> `docs/results/gate_d0_result.json`.
 
 The **measure-before-build** discipline: Phase 1's value is *proving the anti-TCB-growth property is real
 before a single tool exists*. Phases 3–6 are each gated on the prior phase's guards being green AND on
