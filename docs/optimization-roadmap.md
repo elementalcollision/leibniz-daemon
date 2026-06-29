@@ -174,7 +174,10 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   stronger checker as a State-2 decider so a re-checked certificate becomes PASS not DEFER. Operator-only;
   first admission gets its own ADR.
 - **Track D — the producer-strength swing**, made meaningful by A (verify a beat) + B (beatable frontier)
-  + C (admit a stronger producer). Operator-gated, billable.
+  + C (admit a stronger producer). Operator-gated, billable. ✅ **Reproduction gate GREEN (2026-06-29):**
+  a generic baseline reproduces the LJCR best-known on 6/10 pre-registered cells (9/10 within 2 blocks),
+  so the producer *reaches the frontier* (unlike CWC) — the swing is now a priced, operator-gated bet
+  (reproduction ≠ beating). Finding: `docs/covering-reproduction-probe-finding.md`.
 
 ## The ADRs
 
