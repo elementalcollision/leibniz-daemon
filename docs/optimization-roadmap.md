@@ -205,12 +205,20 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   **GATE-1 broadened — validation-plan Tier 1 (2026-06-30): NO-REACHABLE-BEAT.** The exact ladder
   (greedy → CP-SAT, free-CPU) ran over **71 tractable OPEN cells spanning t=2..8** (vs the prior 6 cells
   at t=2) — every cell with best_known above the strongest cheap lower bound, within `C(v,k)≤2000,
-  C(v,t)≤5000, best≤50`. **0 beats** anywhere; 21 records machine-proven optimal, 40 reproduced-not-proven,
+  C(v,t)≤5000, best≤50`. **0 beats** anywhere; 22 records machine-proven optimal, 39 reproduced-not-proven,
   10 above-record (all budget-limited, none a beat). No reachable-and-beatable covering frontier exists on
   the tractable band; the deferred proof-edge stays dormant (no beat to make it non-dormant). The only
   remaining beat-path is the *larger-headroom* OPEN cells beyond the tractable band (exact intractable,
   operator-gated/billable, low-but-nonzero EV). Findings: `docs/results/tier1-results-2026-06-30.md`,
   `docs/validation-plan-2026-06-30.md`.
+  **DECISION — D-line BANKED (2026-06-30):** the covering producer-strength swing is **CLOSED** on the
+  reachable+tractable band — no producer can beat a record sitting at/above the exact optimum (0 beats / 22
+  proven-optimal over 71 cells, $0 spent). The **amplification spine (Track A) is the product**; the
+  construction proof-edge stays **deferred** (ADR 0045 §10) until a real record beat materializes (which now
+  requires the larger-headroom band or a new domain). Binding constraint reframed: not "producer too weak"
+  but **"no reachable-and-beatable frontier in this domain."** Post-bank work pivots to *hardening and
+  bounding the amplification spine* (Tier 2: soundness backstop + decide-wall + continuous CI guard), not
+  proof-edge enablement.
 
 ## The ADRs
 

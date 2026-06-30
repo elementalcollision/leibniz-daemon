@@ -13,6 +13,14 @@ scaffolding) and the construction **PROOF-edge is deferred 8/8** (ADR 0045 §10)
 implementation step we run a cost-ordered validation ladder that settles two forks and hardens the
 audit-tier guarantees. **Nothing here touches the trust core.**
 
+> **STATUS (2026-06-30, post-Tier-1).** Tier 0 ✅ merged (#200). Tier 1 ✅ merged (#201) — **GATE-1 =
+> NO-REACHABLE-BEAT** (0 beats / 22 proven-optimal over 71 OPEN cells). **The D-line is BANKED** (roadmap
+> Track D): the covering producer swing is closed; the **amplification spine is the product**; the
+> construction proof-edge stays deferred. This **re-scopes Tier 2** (see the § "Tier 2 re-scope" note
+> below): the proof-edge-de-risking items (GATE-3 cluster) are **deferred with the proof-edge**, and the
+> amplification-spine-hardening items (**GATE-4 soundness backstop, GATE-2 decide-wall, GATE-5 CI guard**)
+> are promoted to the active Tier-2 set.
+
 ## The two forks the ladder exists to settle
 1. **Does any beatable-AND-renderable covering cell exist beyond the proven-optimal reachable band?** —
    decides whether the dormant `discharge` proof-edge is ever worth un-deferring, or D is dead for $0.
@@ -48,12 +56,40 @@ machine, free) · **billable-llm** / **operator-only** (a human act or API spend
 The standalone "exact-reach frontier map" was **cut** (cartography that doesn't change which cells we attack; fold a 2–3 cell spot-check into the exact warm-up). → resolves **GATE-1**.
 
 ## Tier 2 — docker-local (real Lean kernel, operator machine, free)
+
+> **Tier 2 re-scope (post-bank, 2026-06-30).** With the D-line banked, Tier 2's purpose narrows from
+> "settle forks + de-risk the proof-edge" to **"harden and bound the amplification spine — the product."**
+> Execution is **operator/self-hosted** (needs docker + `leibniz-lean:v4.31.0`; the GitHub `ci` lane can't
+> run the kernel). I can author every harness/test free-CPU (no trust touch); the operator (or the
+> self-hosted `lean` nightly runner) runs the kernel lane. Today `scripts/run_kernel_tests.sh` exercises
+> only 2 of ~17 docker-gated files — GATE-5's "widen the lane" is concrete.
+>
+> **ACTIVE (spine-hardening, do these):**
+> 1. **GATE-4 — false-theorem rejection stress** *(top priority; the soundness backstop the product rests
+>    on)* — ≥20 known-false covering/CWC/Ramsey theorems all return kernel `False`, ≥10 true witnesses
+>    `True`. This is the kernel arm of "nothing false is ever KERNEL-VERIFIED."
+> 2. **kernel-soak full docker** *(baseline; supports 1 & 3)* — run the complete docker-gated set on the
+>    pinned image; expect 0 fail / 1 skip (live API key); record per-file timing.
+> 3. **GATE-2 — covering decide-wall measurement** — render a (v,k,t) ladder, time each on the real kernel,
+>    locate the `decide` intractability threshold; decide whether `render_covering_lean` needs a
+>    `RENDER_SUBSET_CAP`. Bounds the honest range of the amplification spine. (Covering's predicate is
+>    polynomial in C(v,t), unlike Ramsey's exponential one — expect a milder, higher wall.)
+> 4. **GATE-5 — CI skip-count guard + widen the kernel lane** — add a skip-count assert (catch a silently
+>    no-opping kernel/z3 gate) and extend `run_kernel_tests.sh` beyond its current 2 files to the full
+>    render→kernel set, so the audit-tier guarantee is continuously enforced.
+>
+> **DEFERRED (with the proof-edge — only if a beat ever revives it):** the **degenerate/vacuous-cell
+> battery**, the **domain-guard prototype**, and the **non-promoting ConstructionVerifier prototype**
+> (GATE-3 cluster). These de-risk a proof-edge build that is now parked; revisit them with ADR 0045 §10 if
+> a record beat materializes.
+
+*(original full Tier-2 item list, retained for when the proof-edge is revived:)*
 - **kernel-soak full docker** — complete gated set on the pinned images; expect 0 fail / 1 skip (live API key); per-file timing baseline.
 - **false-theorem rejection stress** — ≥20 known-false theorems across covering/CWC/Ramsey all rejected (GATE-4 kernel arm; cheap arm already ran in Tier 0).
 - **covering decide-wall measurement** — render a cell ladder + time each on the kernel to locate the intractability threshold → **GATE-2**.
-- **degenerate/vacuous-cell battery** — which degenerate cells (`t>v`, `k>v`, `t=0`, …) make `validCovering` vacuously true so `decide` stamps a meaningless bound.
-- **domain-guard prototype** *(new — critic fix)* — actually build+test the parameter-domain guard so GATE-3's "working domain guard" green is *reachable*.
-- **non-promoting ConstructionVerifier prototype** *(HARD re-scoped)* — scripts-local **only**: `construction_kernel_checked` set on a plain dataclass, with an explicit exit assertion that it imports nothing from `leibniz/propositio.py` or `leibniz/types.py` and adds no trust-core field; generate-not-parse over the locked prelude; confirm an axiom-injecting source is flagged where the text guard misses it. Depends on the battery + guard prototype → **GATE-3**.
+- **degenerate/vacuous-cell battery** *(deferred)* — which degenerate cells (`t>v`, `k>v`, `t=0`, …) make `validCovering` vacuously true so `decide` stamps a meaningless bound.
+- **domain-guard prototype** *(deferred)* — actually build+test the parameter-domain guard so GATE-3's "working domain guard" green is *reachable*.
+- **non-promoting ConstructionVerifier prototype** *(deferred; HARD-scoped)* — scripts-local **only**: `construction_kernel_checked` set on a plain dataclass, with an explicit exit assertion that it imports nothing from `leibniz/propositio.py` or `leibniz/types.py` and adds no trust-core field; generate-not-parse over the locked prelude; confirm an axiom-injecting source is flagged where the text guard misses it. Depends on the battery + guard prototype → **GATE-3**.
 - **CI skip-count guard** — throwaway-branch probe that catches a kernel/z3 gate silently no-opping; pairs with the soak for **GATE-5**.
 
 ## Tier 3 — operator-only / billable, CONDITIONAL (only behind a green gate)
