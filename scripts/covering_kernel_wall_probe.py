@@ -56,40 +56,62 @@ def witness_for(v, k, t, *, solve_cap=15.0):
     return blocks
 
 
-def probe(ladder=None, *, timeout_s=60.0, stop_after_timeouts=2) -> dict:
+def _classify(res):
+    """Map a LeanResult (or None) to (status, verdict). CRITICAL distinction: a resource limit
+    (maxRecDepth / heartbeats / timeout) is the WALL (intractable), NOT a rejection. Only `decide` actually
+    reducing the proposition to `false` is a genuine kernel rejection of a witness we believe is valid —
+    that, and only that, is a soundness alarm."""
+    if res is None:
+        return "intractable(timeout)", None
+    if res.kernel_ok:
+        return "verified", True
+    o = res.output.lower()
+    if "recursion depth" in o:
+        return "intractable(maxRecDepth)", False   # raise _MAX_REC_DEPTH; a resource limit, not a verdict
+    if "heartbeat" in o:
+        return "intractable(heartbeats)", False
+    if "deterministic" in o and "timeout" in o:
+        return "intractable(timeout)", False
+    if "proved that the proposition" in o or " is false" in o:
+        return "DECIDE-FALSE(soundness!)", False   # the kernel disproved a witness we think is valid
+    return f"error({o.strip()[:60]})", False
+
+
+def probe(ladder=None, *, timeout_s=60.0, stop_after_intractable=2) -> dict:
     from leibniz.backends.lean_cli import LeanCliBackend
     ladder = ladder or LADDER
     rows = []
-    consec_timeout = 0
+    consec_intractable = 0
     for (v, k, t) in ladder:
         blocks = witness_for(v, k, t)
         src = render_covering_lean(v, k, t, blocks)
         bk = LeanCliBackend(timeout_s=int(timeout_s))
         t0 = time.perf_counter()
-        verdict = bk.check_source(src)            # True / False / None(=timeout, docker confirmed present)
+        res = bk._run_lean(src)
         wall = round(time.perf_counter() - t0, 2)
-        status = ("verified" if verdict is True else "REJECTED(bug)" if verdict is False
-                  else "intractable(timeout)")
+        status, _verdict = _classify(res)
         rows.append({"v": v, "k": k, "t": t, "t_subsets": comb(v, t), "blocks": len(blocks),
                      "kernel": status, "wall_s": wall})
-        print(f"  C({v},{k},{t})  C(v,t)={comb(v, t):>6,d}  B={len(blocks):>4d}  {status:<22s} {wall:>6.2f}s")
-        consec_timeout = consec_timeout + 1 if verdict is None else 0
-        if consec_timeout >= stop_after_timeouts:
-            print(f"  [early stop: {consec_timeout} consecutive timeouts — past the wall]")
+        print(f"  C({v},{k},{t})  C(v,t)={comb(v, t):>6,d}  B={len(blocks):>4d}  {status:<26s} {wall:>6.2f}s")
+        consec_intractable = consec_intractable + 1 if status.startswith("intractable") else 0
+        if consec_intractable >= stop_after_intractable:
+            print(f"  [early stop: {consec_intractable} consecutive intractable cells — past the wall]")
             break
     verified = [r for r in rows if r["kernel"] == "verified"]
-    walled = [r for r in rows if r["kernel"] == "intractable(timeout)"]
-    bugs = [r for r in rows if r["kernel"] == "REJECTED(bug)"]
+    walled = [r for r in rows if r["kernel"].startswith("intractable")]
+    false_rej = [r for r in rows if r["kernel"].startswith("DECIDE-FALSE")]
     return {
         "timeout_s": timeout_s, "rows": rows,
         "largest_verified": (max(verified, key=lambda r: r["t_subsets"]) if verified else None),
         "smallest_intractable": (min(walled, key=lambda r: r["t_subsets"]) if walled else None),
-        "kernel_rejected_a_valid_witness": [r for r in bugs],  # MUST be empty (would be a soundness bug)
-        "reading": ("GATE-2. 'verified' = the kernel decided the bound within the budget; "
-                    "'intractable(timeout)' = decide did not finish (past the wall). If the wall sits "
-                    "inside the snapshot's tabulated range, render_covering_lean needs a RENDER_SUBSET_CAP "
-                    "and record-sized covering proofs need a certificate architecture (cf. Ramsey, Gate "
-                    "B2). If it sits well above the amplification 'small band', render is honest as-is."),
+        "kernel_rejected_a_valid_witness": false_rej,  # MUST be empty; a genuine decide=false = soundness bug
+        "reading": ("GATE-2. 'verified' = the kernel decided the bound within budget. "
+                    "'intractable(...)' = a RESOURCE wall (maxRecDepth / heartbeats / timeout), NOT a "
+                    "rejection — past the tractable range. 'DECIDE-FALSE' = the kernel reduced the witness "
+                    "to false (a real soundness alarm; must be empty). If the wall sits inside the "
+                    "snapshot's tabulated range, record-sized covering proofs need a certificate "
+                    "architecture (cf. Ramsey, Gate B2); if well above the amplification small band, the "
+                    "spine is honest as-is."),
     }
 
 

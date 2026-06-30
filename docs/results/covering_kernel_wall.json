@@ -1,0 +1,133 @@
+{
+  "timeout_s": 60.0,
+  "rows": [
+    {
+      "v": 7,
+      "k": 3,
+      "t": 2,
+      "t_subsets": 21,
+      "blocks": 7,
+      "kernel": "verified",
+      "wall_s": 1.01
+    },
+    {
+      "v": 9,
+      "k": 3,
+      "t": 2,
+      "t_subsets": 36,
+      "blocks": 12,
+      "kernel": "verified",
+      "wall_s": 0.66
+    },
+    {
+      "v": 13,
+      "k": 3,
+      "t": 2,
+      "t_subsets": 78,
+      "blocks": 26,
+      "kernel": "verified",
+      "wall_s": 0.75
+    },
+    {
+      "v": 10,
+      "k": 4,
+      "t": 3,
+      "t_subsets": 120,
+      "blocks": 30,
+      "kernel": "verified",
+      "wall_s": 0.88
+    },
+    {
+      "v": 20,
+      "k": 4,
+      "t": 2,
+      "t_subsets": 190,
+      "blocks": 36,
+      "kernel": "verified",
+      "wall_s": 1.27
+    },
+    {
+      "v": 12,
+      "k": 4,
+      "t": 3,
+      "t_subsets": 220,
+      "blocks": 59,
+      "kernel": "verified",
+      "wall_s": 1.43
+    },
+    {
+      "v": 14,
+      "k": 4,
+      "t": 3,
+      "t_subsets": 364,
+      "blocks": 102,
+      "kernel": "verified",
+      "wall_s": 3.3
+    },
+    {
+      "v": 15,
+      "k": 5,
+      "t": 3,
+      "t_subsets": 455,
+      "blocks": 63,
+      "kernel": "verified",
+      "wall_s": 2.4
+    },
+    {
+      "v": 16,
+      "k": 5,
+      "t": 3,
+      "t_subsets": 560,
+      "blocks": 79,
+      "kernel": "verified",
+      "wall_s": 3.37
+    },
+    {
+      "v": 18,
+      "k": 5,
+      "t": 3,
+      "t_subsets": 816,
+      "blocks": 120,
+      "kernel": "verified",
+      "wall_s": 5.85
+    },
+    {
+      "v": 20,
+      "k": 5,
+      "t": 3,
+      "t_subsets": 1140,
+      "blocks": 169,
+      "kernel": "verified",
+      "wall_s": 10.87
+    },
+    {
+      "v": 15,
+      "k": 4,
+      "t": 4,
+      "t_subsets": 1365,
+      "blocks": 1365,
+      "kernel": "intractable(heartbeats)",
+      "wall_s": 8.44
+    }
+  ],
+  "largest_verified": {
+    "v": 20,
+    "k": 5,
+    "t": 3,
+    "t_subsets": 1140,
+    "blocks": 169,
+    "kernel": "verified",
+    "wall_s": 10.87
+  },
+  "smallest_intractable": {
+    "v": 15,
+    "k": 4,
+    "t": 4,
+    "t_subsets": 1365,
+    "blocks": 1365,
+    "kernel": "intractable(heartbeats)",
+    "wall_s": 8.44
+  },
+  "kernel_rejected_a_valid_witness": [],
+  "reading": "GATE-2. 'verified' = the kernel decided the bound within budget. 'intractable(...)' = a RESOURCE wall (maxRecDepth / heartbeats / timeout), NOT a rejection \u2014 past the tractable range. 'DECIDE-FALSE' = the kernel reduced the witness to false (a real soundness alarm; must be empty). If the wall sits inside the snapshot's tabulated range, record-sized covering proofs need a certificate architecture (cf. Ramsey, Gate B2); if well above the amplification small band, the spine is honest as-is."
+}
