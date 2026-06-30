@@ -1,0 +1,11 @@
+{
+  "_note": "ADR 0044 E8 held-out admission filter for the covering-construction decider. Pre-registered valid + invalid coverings drawn from classical designs (independent of any producer). The decider MUST accept every valid entry (kernel-verified) and reject every invalid one. Tool-generated cases are never promotion evidence (E8); this is a fixed, committed admission filter.",
+  "valid": [
+    {"v": 7, "k": 3, "t": 2, "blocks": [[0,1,2],[0,3,4],[0,5,6],[1,3,5],[1,4,6],[2,3,6],[2,4,5]], "_design": "Fano / STS(7), C(7,3,2)=7"},
+    {"v": 9, "k": 3, "t": 2, "blocks": [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[1,5,6],[2,3,7],[0,5,7],[1,3,8],[2,4,6]], "_design": "AG(2,3) / STS(9), C(9,3,2)=12"}
+  ],
+  "invalid": [
+    {"v": 9, "k": 3, "t": 2, "blocks": [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[1,5,6],[2,3,7],[0,5,7],[1,3,8]], "_why": "STS(9) minus {2,4,6}; pair {2,4} now uncovered"},
+    {"v": 7, "k": 3, "t": 2, "blocks": [[0,1,2],[0,3,4],[0,5,6],[1,3,5],[1,4,6],[2,3,6]], "_why": "Fano minus {2,4,5}; pair {4,5} now uncovered"}
+  ]
+}
