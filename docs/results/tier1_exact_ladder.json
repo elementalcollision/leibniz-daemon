@@ -1,0 +1,2153 @@
+{
+  "status": "complete",
+  "gate1": "NO-REACHABLE-BEAT",
+  "band": {
+    "max_candidate_blocks": 2000,
+    "max_t_subsets": 5000,
+    "max_best_known": 50
+  },
+  "n_cells": 71,
+  "beats": 0,
+  "optimal": 22,
+  "reproduced_not_proven": 39,
+  "above_record": 10,
+  "still_open": 0,
+  "bugs": 0,
+  "optimality_proven": "22/71",
+  "elapsed_s": 128.5,
+  "frozen_cell_list": [
+    {
+      "cell": "C(7,4,2)",
+      "v": 7,
+      "k": 4,
+      "t": 2,
+      "best_known": 5,
+      "candidate_blocks": 35,
+      "t_subsets": 21
+    },
+    {
+      "cell": "C(7,4,3)",
+      "v": 7,
+      "k": 4,
+      "t": 3,
+      "best_known": 12,
+      "candidate_blocks": 35,
+      "t_subsets": 35
+    },
+    {
+      "cell": "C(8,5,3)",
+      "v": 8,
+      "k": 5,
+      "t": 3,
+      "best_known": 8,
+      "candidate_blocks": 56,
+      "t_subsets": 56
+    },
+    {
+      "cell": "C(8,5,4)",
+      "v": 8,
+      "k": 5,
+      "t": 4,
+      "best_known": 20,
+      "candidate_blocks": 56,
+      "t_subsets": 70
+    },
+    {
+      "cell": "C(9,6,3)",
+      "v": 9,
+      "k": 6,
+      "t": 3,
+      "best_known": 7,
+      "candidate_blocks": 84,
+      "t_subsets": 84
+    },
+    {
+      "cell": "C(9,6,4)",
+      "v": 9,
+      "k": 6,
+      "t": 4,
+      "best_known": 12,
+      "candidate_blocks": 84,
+      "t_subsets": 126
+    },
+    {
+      "cell": "C(9,6,5)",
+      "v": 9,
+      "k": 6,
+      "t": 5,
+      "best_known": 30,
+      "candidate_blocks": 84,
+      "t_subsets": 126
+    },
+    {
+      "cell": "C(10,7,3)",
+      "v": 10,
+      "k": 7,
+      "t": 3,
+      "best_known": 6,
+      "candidate_blocks": 120,
+      "t_subsets": 120
+    },
+    {
+      "cell": "C(10,7,4)",
+      "v": 10,
+      "k": 7,
+      "t": 4,
+      "best_known": 10,
+      "candidate_blocks": 120,
+      "t_subsets": 210
+    },
+    {
+      "cell": "C(10,7,6)",
+      "v": 10,
+      "k": 7,
+      "t": 6,
+      "best_known": 45,
+      "candidate_blocks": 120,
+      "t_subsets": 210
+    },
+    {
+      "cell": "C(10,7,5)",
+      "v": 10,
+      "k": 7,
+      "t": 5,
+      "best_known": 20,
+      "candidate_blocks": 120,
+      "t_subsets": 252
+    },
+    {
+      "cell": "C(9,5,2)",
+      "v": 9,
+      "k": 5,
+      "t": 2,
+      "best_known": 5,
+      "candidate_blocks": 126,
+      "t_subsets": 36
+    },
+    {
+      "cell": "C(9,4,2)",
+      "v": 9,
+      "k": 4,
+      "t": 2,
+      "best_known": 8,
+      "candidate_blocks": 126,
+      "t_subsets": 36
+    },
+    {
+      "cell": "C(9,5,3)",
+      "v": 9,
+      "k": 5,
+      "t": 3,
+      "best_known": 12,
+      "candidate_blocks": 126,
+      "t_subsets": 84
+    },
+    {
+      "cell": "C(9,5,4)",
+      "v": 9,
+      "k": 5,
+      "t": 4,
+      "best_known": 30,
+      "candidate_blocks": 126,
+      "t_subsets": 126
+    },
+    {
+      "cell": "C(11,8,4)",
+      "v": 11,
+      "k": 8,
+      "t": 4,
+      "best_known": 9,
+      "candidate_blocks": 165,
+      "t_subsets": 330
+    },
+    {
+      "cell": "C(11,8,5)",
+      "v": 11,
+      "k": 8,
+      "t": 5,
+      "best_known": 16,
+      "candidate_blocks": 165,
+      "t_subsets": 462
+    },
+    {
+      "cell": "C(11,8,6)",
+      "v": 11,
+      "k": 8,
+      "t": 6,
+      "best_known": 29,
+      "candidate_blocks": 165,
+      "t_subsets": 462
+    },
+    {
+      "cell": "C(10,4,2)",
+      "v": 10,
+      "k": 4,
+      "t": 2,
+      "best_known": 9,
+      "candidate_blocks": 210,
+      "t_subsets": 45
+    },
+    {
+      "cell": "C(10,6,3)",
+      "v": 10,
+      "k": 6,
+      "t": 3,
+      "best_known": 10,
+      "candidate_blocks": 210,
+      "t_subsets": 120
+    },
+    {
+      "cell": "C(10,6,4)",
+      "v": 10,
+      "k": 6,
+      "t": 4,
+      "best_known": 20,
+      "candidate_blocks": 210,
+      "t_subsets": 210
+    },
+    {
+      "cell": "C(10,6,5)",
+      "v": 10,
+      "k": 6,
+      "t": 5,
+      "best_known": 50,
+      "candidate_blocks": 210,
+      "t_subsets": 252
+    },
+    {
+      "cell": "C(12,9,4)",
+      "v": 12,
+      "k": 9,
+      "t": 4,
+      "best_known": 8,
+      "candidate_blocks": 220,
+      "t_subsets": 495
+    },
+    {
+      "cell": "C(12,9,5)",
+      "v": 12,
+      "k": 9,
+      "t": 5,
+      "best_known": 12,
+      "candidate_blocks": 220,
+      "t_subsets": 792
+    },
+    {
+      "cell": "C(12,9,7)",
+      "v": 12,
+      "k": 9,
+      "t": 7,
+      "best_known": 40,
+      "candidate_blocks": 220,
+      "t_subsets": 792
+    },
+    {
+      "cell": "C(12,9,6)",
+      "v": 12,
+      "k": 9,
+      "t": 6,
+      "best_known": 22,
+      "candidate_blocks": 220,
+      "t_subsets": 924
+    },
+    {
+      "cell": "C(10,5,3)",
+      "v": 10,
+      "k": 5,
+      "t": 3,
+      "best_known": 17,
+      "candidate_blocks": 252,
+      "t_subsets": 120
+    },
+    {
+      "cell": "C(13,10,4)",
+      "v": 13,
+      "k": 10,
+      "t": 4,
+      "best_known": 7,
+      "candidate_blocks": 286,
+      "t_subsets": 715
+    },
+    {
+      "cell": "C(13,10,5)",
+      "v": 13,
+      "k": 10,
+      "t": 5,
+      "best_known": 11,
+      "candidate_blocks": 286,
+      "t_subsets": 1287
+    },
+    {
+      "cell": "C(13,10,6)",
+      "v": 13,
+      "k": 10,
+      "t": 6,
+      "best_known": 16,
+      "candidate_blocks": 286,
+      "t_subsets": 1716
+    },
+    {
+      "cell": "C(13,10,7)",
+      "v": 13,
+      "k": 10,
+      "t": 7,
+      "best_known": 30,
+      "candidate_blocks": 286,
+      "t_subsets": 1716
+    },
+    {
+      "cell": "C(11,7,3)",
+      "v": 11,
+      "k": 7,
+      "t": 3,
+      "best_known": 8,
+      "candidate_blocks": 330,
+      "t_subsets": 165
+    },
+    {
+      "cell": "C(11,7,4)",
+      "v": 11,
+      "k": 7,
+      "t": 4,
+      "best_known": 17,
+      "candidate_blocks": 330,
+      "t_subsets": 330
+    },
+    {
+      "cell": "C(11,7,5)",
+      "v": 11,
+      "k": 7,
+      "t": 5,
+      "best_known": 34,
+      "candidate_blocks": 330,
+      "t_subsets": 462
+    },
+    {
+      "cell": "C(14,11,5)",
+      "v": 14,
+      "k": 11,
+      "t": 5,
+      "best_known": 10,
+      "candidate_blocks": 364,
+      "t_subsets": 2002
+    },
+    {
+      "cell": "C(14,11,6)",
+      "v": 14,
+      "k": 11,
+      "t": 6,
+      "best_known": 14,
+      "candidate_blocks": 364,
+      "t_subsets": 3003
+    },
+    {
+      "cell": "C(14,11,8)",
+      "v": 14,
+      "k": 11,
+      "t": 8,
+      "best_known": 40,
+      "candidate_blocks": 364,
+      "t_subsets": 3003
+    },
+    {
+      "cell": "C(14,11,7)",
+      "v": 14,
+      "k": 11,
+      "t": 7,
+      "best_known": 22,
+      "candidate_blocks": 364,
+      "t_subsets": 3432
+    },
+    {
+      "cell": "C(15,12,5)",
+      "v": 15,
+      "k": 12,
+      "t": 5,
+      "best_known": 9,
+      "candidate_blocks": 455,
+      "t_subsets": 3003
+    },
+    {
+      "cell": "C(11,6,2)",
+      "v": 11,
+      "k": 6,
+      "t": 2,
+      "best_known": 6,
+      "candidate_blocks": 462,
+      "t_subsets": 55
+    },
+    {
+      "cell": "C(11,5,3)",
+      "v": 11,
+      "k": 5,
+      "t": 3,
+      "best_known": 20,
+      "candidate_blocks": 462,
+      "t_subsets": 165
+    },
+    {
+      "cell": "C(11,6,4)",
+      "v": 11,
+      "k": 6,
+      "t": 4,
+      "best_known": 32,
+      "candidate_blocks": 462,
+      "t_subsets": 330
+    },
+    {
+      "cell": "C(12,8,4)",
+      "v": 12,
+      "k": 8,
+      "t": 4,
+      "best_known": 12,
+      "candidate_blocks": 495,
+      "t_subsets": 495
+    },
+    {
+      "cell": "C(12,8,5)",
+      "v": 12,
+      "k": 8,
+      "t": 5,
+      "best_known": 26,
+      "candidate_blocks": 495,
+      "t_subsets": 792
+    },
+    {
+      "cell": "C(16,13,5)",
+      "v": 16,
+      "k": 13,
+      "t": 5,
+      "best_known": 8,
+      "candidate_blocks": 560,
+      "t_subsets": 4368
+    },
+    {
+      "cell": "C(13,9,3)",
+      "v": 13,
+      "k": 9,
+      "t": 3,
+      "best_known": 6,
+      "candidate_blocks": 715,
+      "t_subsets": 286
+    },
+    {
+      "cell": "C(13,9,4)",
+      "v": 13,
+      "k": 9,
+      "t": 4,
+      "best_known": 10,
+      "candidate_blocks": 715,
+      "t_subsets": 715
+    },
+    {
+      "cell": "C(13,9,5)",
+      "v": 13,
+      "k": 9,
+      "t": 5,
+      "best_known": 19,
+      "candidate_blocks": 715,
+      "t_subsets": 1287
+    },
+    {
+      "cell": "C(13,9,6)",
+      "v": 13,
+      "k": 9,
+      "t": 6,
+      "best_known": 39,
+      "candidate_blocks": 715,
+      "t_subsets": 1716
+    },
+    {
+      "cell": "C(12,7,2)",
+      "v": 12,
+      "k": 7,
+      "t": 2,
+      "best_known": 5,
+      "candidate_blocks": 792,
+      "t_subsets": 66
+    },
+    {
+      "cell": "C(12,5,2)",
+      "v": 12,
+      "k": 5,
+      "t": 2,
+      "best_known": 9,
+      "candidate_blocks": 792,
+      "t_subsets": 66
+    },
+    {
+      "cell": "C(12,7,3)",
+      "v": 12,
+      "k": 7,
+      "t": 3,
+      "best_known": 11,
+      "candidate_blocks": 792,
+      "t_subsets": 220
+    },
+    {
+      "cell": "C(12,5,3)",
+      "v": 12,
+      "k": 5,
+      "t": 3,
+      "best_known": 29,
+      "candidate_blocks": 792,
+      "t_subsets": 220
+    },
+    {
+      "cell": "C(12,7,4)",
+      "v": 12,
+      "k": 7,
+      "t": 4,
+      "best_known": 24,
+      "candidate_blocks": 792,
+      "t_subsets": 495
+    },
+    {
+      "cell": "C(12,6,3)",
+      "v": 12,
+      "k": 6,
+      "t": 3,
+      "best_known": 15,
+      "candidate_blocks": 924,
+      "t_subsets": 220
+    },
+    {
+      "cell": "C(12,6,4)",
+      "v": 12,
+      "k": 6,
+      "t": 4,
+      "best_known": 41,
+      "candidate_blocks": 924,
+      "t_subsets": 495
+    },
+    {
+      "cell": "C(14,10,4)",
+      "v": 14,
+      "k": 10,
+      "t": 4,
+      "best_known": 9,
+      "candidate_blocks": 1001,
+      "t_subsets": 1001
+    },
+    {
+      "cell": "C(14,10,5)",
+      "v": 14,
+      "k": 10,
+      "t": 5,
+      "best_known": 14,
+      "candidate_blocks": 1001,
+      "t_subsets": 2002
+    },
+    {
+      "cell": "C(14,10,6)",
+      "v": 14,
+      "k": 10,
+      "t": 6,
+      "best_known": 29,
+      "candidate_blocks": 1001,
+      "t_subsets": 3003
+    },
+    {
+      "cell": "C(13,5,2)",
+      "v": 13,
+      "k": 5,
+      "t": 2,
+      "best_known": 10,
+      "candidate_blocks": 1287,
+      "t_subsets": 78
+    },
+    {
+      "cell": "C(13,8,3)",
+      "v": 13,
+      "k": 8,
+      "t": 3,
+      "best_known": 10,
+      "candidate_blocks": 1287,
+      "t_subsets": 286
+    },
+    {
+      "cell": "C(13,5,3)",
+      "v": 13,
+      "k": 5,
+      "t": 3,
+      "best_known": 34,
+      "candidate_blocks": 1287,
+      "t_subsets": 286
+    },
+    {
+      "cell": "C(13,8,4)",
+      "v": 13,
+      "k": 8,
+      "t": 4,
+      "best_known": 18,
+      "candidate_blocks": 1287,
+      "t_subsets": 715
+    },
+    {
+      "cell": "C(13,8,5)",
+      "v": 13,
+      "k": 8,
+      "t": 5,
+      "best_known": 42,
+      "candidate_blocks": 1287,
+      "t_subsets": 1287
+    },
+    {
+      "cell": "C(15,11,4)",
+      "v": 15,
+      "k": 11,
+      "t": 4,
+      "best_known": 8,
+      "candidate_blocks": 1365,
+      "t_subsets": 1365
+    },
+    {
+      "cell": "C(15,11,5)",
+      "v": 15,
+      "k": 11,
+      "t": 5,
+      "best_known": 13,
+      "candidate_blocks": 1365,
+      "t_subsets": 3003
+    },
+    {
+      "cell": "C(13,7,2)",
+      "v": 13,
+      "k": 7,
+      "t": 2,
+      "best_known": 6,
+      "candidate_blocks": 1716,
+      "t_subsets": 78
+    },
+    {
+      "cell": "C(13,7,3)",
+      "v": 13,
+      "k": 7,
+      "t": 3,
+      "best_known": 13,
+      "candidate_blocks": 1716,
+      "t_subsets": 286
+    },
+    {
+      "cell": "C(13,6,3)",
+      "v": 13,
+      "k": 6,
+      "t": 3,
+      "best_known": 21,
+      "candidate_blocks": 1716,
+      "t_subsets": 286
+    },
+    {
+      "cell": "C(13,7,4)",
+      "v": 13,
+      "k": 7,
+      "t": 4,
+      "best_known": 30,
+      "candidate_blocks": 1716,
+      "t_subsets": 715
+    },
+    {
+      "cell": "C(16,12,5)",
+      "v": 16,
+      "k": 12,
+      "t": 5,
+      "best_known": 12,
+      "candidate_blocks": 1820,
+      "t_subsets": 4368
+    }
+  ],
+  "rows": [
+    {
+      "cell": "C(7,4,2)",
+      "v": 7,
+      "k": 4,
+      "t": 2,
+      "best_known": 5,
+      "cheap_lb": 4,
+      "greedy": {
+        "found": 5,
+        "status": "REPRODUCED",
+        "secs": 0.0
+      },
+      "exact": {
+        "found": 5,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.0,
+        "candidate_blocks": 35
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(7,4,3)",
+      "v": 7,
+      "k": 4,
+      "t": 3,
+      "best_known": 12,
+      "cheap_lb": 11,
+      "greedy": {
+        "found": 12,
+        "status": "REPRODUCED",
+        "secs": 0.0
+      },
+      "exact": {
+        "found": 12,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.0,
+        "candidate_blocks": 35
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(8,5,3)",
+      "v": 8,
+      "k": 5,
+      "t": 3,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 8,
+        "status": "REPRODUCED",
+        "secs": 0.0
+      },
+      "exact": {
+        "found": 8,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.0,
+        "candidate_blocks": 56
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(8,5,4)",
+      "v": 8,
+      "k": 5,
+      "t": 4,
+      "best_known": 20,
+      "cheap_lb": 18,
+      "greedy": {
+        "found": 20,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 20,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 1.1,
+        "candidate_blocks": 56
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,6,3)",
+      "v": 9,
+      "k": 6,
+      "t": 3,
+      "best_known": 7,
+      "cheap_lb": 6,
+      "greedy": {
+        "found": 8,
+        "status": "CLOSE",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 7,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.2,
+        "candidate_blocks": 84
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,6,4)",
+      "v": 9,
+      "k": 6,
+      "t": 4,
+      "best_known": 12,
+      "cheap_lb": 11,
+      "greedy": {
+        "found": 12,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 12,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.3,
+        "candidate_blocks": 84
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,6,5)",
+      "v": 9,
+      "k": 6,
+      "t": 5,
+      "best_known": 30,
+      "cheap_lb": 27,
+      "greedy": {
+        "found": 32,
+        "status": "CLOSE",
+        "secs": 0.2
+      },
+      "exact": {
+        "found": 30,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 25.2,
+        "candidate_blocks": 84
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(10,7,3)",
+      "v": 10,
+      "k": 7,
+      "t": 3,
+      "best_known": 6,
+      "cheap_lb": 5,
+      "greedy": {
+        "found": 6,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 6,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.2,
+        "candidate_blocks": 120
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(10,7,4)",
+      "v": 10,
+      "k": 7,
+      "t": 4,
+      "best_known": 10,
+      "cheap_lb": 9,
+      "greedy": {
+        "found": 12,
+        "status": "PLATEAU",
+        "secs": 0.2
+      },
+      "exact": {
+        "found": 10,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 3.1,
+        "candidate_blocks": 120
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(10,7,6)",
+      "v": 10,
+      "k": 7,
+      "t": 6,
+      "best_known": 45,
+      "cheap_lb": 39,
+      "greedy": {
+        "found": 47,
+        "status": "CLOSE",
+        "secs": 0.4
+      },
+      "exact": {
+        "found": 45,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 120
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(10,7,5)",
+      "v": 10,
+      "k": 7,
+      "t": 5,
+      "best_known": 20,
+      "cheap_lb": 16,
+      "greedy": {
+        "found": 20,
+        "status": "REPRODUCED",
+        "secs": 0.3
+      },
+      "exact": {
+        "found": 20,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 120
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(9,5,2)",
+      "v": 9,
+      "k": 5,
+      "t": 2,
+      "best_known": 5,
+      "cheap_lb": 4,
+      "greedy": {
+        "found": 5,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 5,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.0,
+        "candidate_blocks": 126
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,4,2)",
+      "v": 9,
+      "k": 4,
+      "t": 2,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 8,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 8,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.3,
+        "candidate_blocks": 126
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,5,3)",
+      "v": 9,
+      "k": 5,
+      "t": 3,
+      "best_known": 12,
+      "cheap_lb": 11,
+      "greedy": {
+        "found": 12,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 12,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 17.5,
+        "candidate_blocks": 126
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(9,5,4)",
+      "v": 9,
+      "k": 5,
+      "t": 4,
+      "best_known": 30,
+      "cheap_lb": 26,
+      "greedy": {
+        "found": 30,
+        "status": "REPRODUCED",
+        "secs": 0.3
+      },
+      "exact": {
+        "found": 30,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 9.9,
+        "candidate_blocks": 126
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(11,8,4)",
+      "v": 11,
+      "k": 8,
+      "t": 4,
+      "best_known": 9,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 9,
+        "status": "REPRODUCED",
+        "secs": 0.6
+      },
+      "exact": {
+        "found": 9,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 18.4,
+        "candidate_blocks": 165
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(11,8,5)",
+      "v": 11,
+      "k": 8,
+      "t": 5,
+      "best_known": 16,
+      "cheap_lb": 13,
+      "greedy": {
+        "found": 17,
+        "status": "CLOSE",
+        "secs": 0.8
+      },
+      "exact": {
+        "found": 16,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 165
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(11,8,6)",
+      "v": 11,
+      "k": 8,
+      "t": 6,
+      "best_known": 29,
+      "cheap_lb": 22,
+      "greedy": {
+        "found": 31,
+        "status": "PLATEAU",
+        "secs": 1.0
+      },
+      "exact": {
+        "found": 29,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 165
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(10,4,2)",
+      "v": 10,
+      "k": 4,
+      "t": 2,
+      "best_known": 9,
+      "cheap_lb": 8,
+      "greedy": {
+        "found": 9,
+        "status": "REPRODUCED",
+        "secs": 0.1
+      },
+      "exact": {
+        "found": 9,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 0.1,
+        "candidate_blocks": 210
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(10,6,3)",
+      "v": 10,
+      "k": 6,
+      "t": 3,
+      "best_known": 10,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 10,
+        "status": "REPRODUCED",
+        "secs": 0.2
+      },
+      "exact": {
+        "found": 10,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 210
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(10,6,4)",
+      "v": 10,
+      "k": 6,
+      "t": 4,
+      "best_known": 20,
+      "cheap_lb": 19,
+      "greedy": {
+        "found": 20,
+        "status": "REPRODUCED",
+        "secs": 0.6
+      },
+      "exact": {
+        "found": 20,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 210
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(10,6,5)",
+      "v": 10,
+      "k": 6,
+      "t": 5,
+      "best_known": 50,
+      "cheap_lb": 44,
+      "greedy": {
+        "found": 50,
+        "status": "REPRODUCED",
+        "secs": 0.9
+      },
+      "exact": {
+        "found": 50,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 210
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,9,4)",
+      "v": 12,
+      "k": 9,
+      "t": 4,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 9,
+        "status": "CLOSE",
+        "secs": 1.4
+      },
+      "exact": {
+        "found": 8,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 29.6,
+        "candidate_blocks": 220
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(12,9,5)",
+      "v": 12,
+      "k": 9,
+      "t": 5,
+      "best_known": 12,
+      "cheap_lb": 10,
+      "greedy": {
+        "found": 15,
+        "status": "PLATEAU",
+        "secs": 2.2
+      },
+      "exact": {
+        "found": 12,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 220
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,9,7)",
+      "v": 12,
+      "k": 9,
+      "t": 7,
+      "best_known": 40,
+      "cheap_lb": 30,
+      "greedy": {
+        "found": 40,
+        "status": "REPRODUCED",
+        "secs": 2.5
+      },
+      "exact": {
+        "found": 40,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 220
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,9,6)",
+      "v": 12,
+      "k": 9,
+      "t": 6,
+      "best_known": 22,
+      "cheap_lb": 18,
+      "greedy": {
+        "found": 26,
+        "status": "PLATEAU",
+        "secs": 2.6
+      },
+      "exact": {
+        "found": 22,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 220
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(10,5,3)",
+      "v": 10,
+      "k": 5,
+      "t": 3,
+      "best_known": 17,
+      "cheap_lb": 14,
+      "greedy": {
+        "found": 18,
+        "status": "CLOSE",
+        "secs": 0.5
+      },
+      "exact": {
+        "found": 17,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 252
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,10,4)",
+      "v": 13,
+      "k": 10,
+      "t": 4,
+      "best_known": 7,
+      "cheap_lb": 6,
+      "greedy": {
+        "found": 7,
+        "status": "REPRODUCED",
+        "secs": 2.0
+      },
+      "exact": {
+        "found": 7,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 24.3,
+        "candidate_blocks": 286
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(13,10,5)",
+      "v": 13,
+      "k": 10,
+      "t": 5,
+      "best_known": 11,
+      "cheap_lb": 10,
+      "greedy": {
+        "found": 12,
+        "status": "CLOSE",
+        "secs": 4.7
+      },
+      "exact": {
+        "found": 11,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 286
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,10,6)",
+      "v": 13,
+      "k": 10,
+      "t": 6,
+      "best_known": 16,
+      "cheap_lb": 13,
+      "greedy": {
+        "found": 22,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 16,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 286
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,10,7)",
+      "v": 13,
+      "k": 10,
+      "t": 7,
+      "best_known": 30,
+      "cheap_lb": 24,
+      "greedy": {
+        "found": 35,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 30,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 286
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(11,7,3)",
+      "v": 11,
+      "k": 7,
+      "t": 3,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 8,
+        "status": "REPRODUCED",
+        "secs": 0.7
+      },
+      "exact": {
+        "found": 8,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 25.9,
+        "candidate_blocks": 330
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(11,7,4)",
+      "v": 11,
+      "k": 7,
+      "t": 4,
+      "best_known": 17,
+      "cheap_lb": 11,
+      "greedy": {
+        "found": 18,
+        "status": "CLOSE",
+        "secs": 1.6
+      },
+      "exact": {
+        "found": 17,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 330
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(11,7,5)",
+      "v": 11,
+      "k": 7,
+      "t": 5,
+      "best_known": 34,
+      "cheap_lb": 30,
+      "greedy": {
+        "found": 37,
+        "status": "PLATEAU",
+        "secs": 1.9
+      },
+      "exact": {
+        "found": 34,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 330
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,11,5)",
+      "v": 14,
+      "k": 11,
+      "t": 5,
+      "best_known": 10,
+      "cheap_lb": 8,
+      "greedy": {
+        "found": 10,
+        "status": "REPRODUCED",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 10,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 364
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,11,6)",
+      "v": 14,
+      "k": 11,
+      "t": 6,
+      "best_known": 14,
+      "cheap_lb": 13,
+      "greedy": {
+        "found": 18,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 14,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 364
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,11,8)",
+      "v": 14,
+      "k": 11,
+      "t": 8,
+      "best_known": 40,
+      "cheap_lb": 31,
+      "greedy": {
+        "found": 49,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 40,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 364
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,11,7)",
+      "v": 14,
+      "k": 11,
+      "t": 7,
+      "best_known": 22,
+      "cheap_lb": 17,
+      "greedy": {
+        "found": 30,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 23,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 364
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(15,12,5)",
+      "v": 15,
+      "k": 12,
+      "t": 5,
+      "best_known": 9,
+      "cheap_lb": 8,
+      "greedy": {
+        "found": 10,
+        "status": "CLOSE",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 9,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.2,
+        "candidate_blocks": 455
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(11,6,2)",
+      "v": 11,
+      "k": 6,
+      "t": 2,
+      "best_known": 6,
+      "cheap_lb": 4,
+      "greedy": {
+        "found": 6,
+        "status": "REPRODUCED",
+        "secs": 0.2
+      },
+      "exact": {
+        "found": 6,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 7.5,
+        "candidate_blocks": 462
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(11,5,3)",
+      "v": 11,
+      "k": 5,
+      "t": 3,
+      "best_known": 20,
+      "cheap_lb": 18,
+      "greedy": {
+        "found": 22,
+        "status": "PLATEAU",
+        "secs": 0.8
+      },
+      "exact": {
+        "found": 20,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 462
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(11,6,4)",
+      "v": 11,
+      "k": 6,
+      "t": 4,
+      "best_known": 32,
+      "cheap_lb": 26,
+      "greedy": {
+        "found": 35,
+        "status": "PLATEAU",
+        "secs": 1.7
+      },
+      "exact": {
+        "found": 32,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 462
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,8,4)",
+      "v": 12,
+      "k": 8,
+      "t": 4,
+      "best_known": 12,
+      "cheap_lb": 11,
+      "greedy": {
+        "found": 15,
+        "status": "PLATEAU",
+        "secs": 2.4
+      },
+      "exact": {
+        "found": 12,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 495
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,8,5)",
+      "v": 12,
+      "k": 8,
+      "t": 5,
+      "best_known": 26,
+      "cheap_lb": 17,
+      "greedy": {
+        "found": 29,
+        "status": "PLATEAU",
+        "secs": 3.8
+      },
+      "exact": {
+        "found": 27,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 495
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(16,13,5)",
+      "v": 16,
+      "k": 13,
+      "t": 5,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 8,
+        "status": "REPRODUCED",
+        "secs": 5.1
+      },
+      "exact": {
+        "found": 8,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 560
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,9,3)",
+      "v": 13,
+      "k": 9,
+      "t": 3,
+      "best_known": 6,
+      "cheap_lb": 5,
+      "greedy": {
+        "found": 7,
+        "status": "CLOSE",
+        "secs": 1.7
+      },
+      "exact": {
+        "found": 6,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 2.3,
+        "candidate_blocks": 715
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(13,9,4)",
+      "v": 13,
+      "k": 9,
+      "t": 4,
+      "best_known": 10,
+      "cheap_lb": 9,
+      "greedy": {
+        "found": 14,
+        "status": "PLATEAU",
+        "secs": 4.5
+      },
+      "exact": {
+        "found": 10,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 715
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,9,5)",
+      "v": 13,
+      "k": 9,
+      "t": 5,
+      "best_known": 19,
+      "cheap_lb": 16,
+      "greedy": {
+        "found": 25,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 21,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 715
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(13,9,6)",
+      "v": 13,
+      "k": 9,
+      "t": 6,
+      "best_known": 39,
+      "cheap_lb": 25,
+      "greedy": {
+        "found": 46,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 41,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 715
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(12,7,2)",
+      "v": 12,
+      "k": 7,
+      "t": 2,
+      "best_known": 5,
+      "cheap_lb": 4,
+      "greedy": {
+        "found": 5,
+        "status": "REPRODUCED",
+        "secs": 0.5
+      },
+      "exact": {
+        "found": 5,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 1.2,
+        "candidate_blocks": 792
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(12,5,2)",
+      "v": 12,
+      "k": 5,
+      "t": 2,
+      "best_known": 9,
+      "cheap_lb": 8,
+      "greedy": {
+        "found": 9,
+        "status": "REPRODUCED",
+        "secs": 0.5
+      },
+      "exact": {
+        "found": 9,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 792
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,7,3)",
+      "v": 12,
+      "k": 7,
+      "t": 3,
+      "best_known": 11,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 11,
+        "status": "REPRODUCED",
+        "secs": 1.5
+      },
+      "exact": {
+        "found": 11,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 792
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,5,3)",
+      "v": 12,
+      "k": 5,
+      "t": 3,
+      "best_known": 29,
+      "cheap_lb": 27,
+      "greedy": {
+        "found": 31,
+        "status": "PLATEAU",
+        "secs": 1.7
+      },
+      "exact": {
+        "found": 30,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 792
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(12,7,4)",
+      "v": 12,
+      "k": 7,
+      "t": 4,
+      "best_known": 24,
+      "cheap_lb": 19,
+      "greedy": {
+        "found": 26,
+        "status": "PLATEAU",
+        "secs": 4.2
+      },
+      "exact": {
+        "found": 25,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 792
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(12,6,3)",
+      "v": 12,
+      "k": 6,
+      "t": 3,
+      "best_known": 15,
+      "cheap_lb": 14,
+      "greedy": {
+        "found": 15,
+        "status": "REPRODUCED",
+        "secs": 1.8
+      },
+      "exact": {
+        "found": 15,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 924
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(12,6,4)",
+      "v": 12,
+      "k": 6,
+      "t": 4,
+      "best_known": 41,
+      "cheap_lb": 36,
+      "greedy": {
+        "found": 53,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 44,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 924
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(14,10,4)",
+      "v": 14,
+      "k": 10,
+      "t": 4,
+      "best_known": 9,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 13,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 9,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1001
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,10,5)",
+      "v": 14,
+      "k": 10,
+      "t": 5,
+      "best_known": 14,
+      "cheap_lb": 13,
+      "greedy": {
+        "found": 21,
+        "status": "PLATEAU",
+        "secs": 5.1
+      },
+      "exact": {
+        "found": 14,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1001
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(14,10,6)",
+      "v": 14,
+      "k": 10,
+      "t": 6,
+      "best_known": 29,
+      "cheap_lb": 23,
+      "greedy": {
+        "found": 38,
+        "status": "PLATEAU",
+        "secs": 5.2
+      },
+      "exact": {
+        "found": 35,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1001
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(13,5,2)",
+      "v": 13,
+      "k": 5,
+      "t": 2,
+      "best_known": 10,
+      "cheap_lb": 8,
+      "greedy": {
+        "found": 10,
+        "status": "REPRODUCED",
+        "secs": 1.1
+      },
+      "exact": {
+        "found": 10,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 1287
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,8,3)",
+      "v": 13,
+      "k": 8,
+      "t": 3,
+      "best_known": 10,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 10,
+        "status": "REPRODUCED",
+        "secs": 3.1
+      },
+      "exact": {
+        "found": 10,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1287
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,5,3)",
+      "v": 13,
+      "k": 5,
+      "t": 3,
+      "best_known": 34,
+      "cheap_lb": 32,
+      "greedy": {
+        "found": 40,
+        "status": "PLATEAU",
+        "secs": 4.2
+      },
+      "exact": {
+        "found": 34,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1287
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,8,4)",
+      "v": 13,
+      "k": 8,
+      "t": 4,
+      "best_known": 18,
+      "cheap_lb": 12,
+      "greedy": {
+        "found": 21,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 19,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1287
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(13,8,5)",
+      "v": 13,
+      "k": 8,
+      "t": 5,
+      "best_known": 42,
+      "cheap_lb": 31,
+      "greedy": {
+        "found": 48,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 46,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1287
+      },
+      "verdict": "above-record"
+    },
+    {
+      "cell": "C(15,11,4)",
+      "v": 15,
+      "k": 11,
+      "t": 4,
+      "best_known": 8,
+      "cheap_lb": 7,
+      "greedy": {
+        "found": 10,
+        "status": "PLATEAU",
+        "secs": 5.2
+      },
+      "exact": {
+        "found": 8,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1365
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(15,11,5)",
+      "v": 15,
+      "k": 11,
+      "t": 5,
+      "best_known": 13,
+      "cheap_lb": 10,
+      "greedy": {
+        "found": 19,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 13,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1365
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,7,2)",
+      "v": 13,
+      "k": 7,
+      "t": 2,
+      "best_known": 6,
+      "cheap_lb": 4,
+      "greedy": {
+        "found": 6,
+        "status": "REPRODUCED",
+        "secs": 1.2
+      },
+      "exact": {
+        "found": 6,
+        "status": "OPTIMAL",
+        "proven_optimal": true,
+        "wall": 73.8,
+        "candidate_blocks": 1716
+      },
+      "verdict": "OPTIMAL"
+    },
+    {
+      "cell": "C(13,7,3)",
+      "v": 13,
+      "k": 7,
+      "t": 3,
+      "best_known": 13,
+      "cheap_lb": 12,
+      "greedy": {
+        "found": 14,
+        "status": "CLOSE",
+        "secs": 4.7
+      },
+      "exact": {
+        "found": 13,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1716
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,6,3)",
+      "v": 13,
+      "k": 6,
+      "t": 3,
+      "best_known": 21,
+      "cheap_lb": 18,
+      "greedy": {
+        "found": 22,
+        "status": "CLOSE",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 21,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1716
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(13,7,4)",
+      "v": 13,
+      "k": 7,
+      "t": 4,
+      "best_known": 30,
+      "cheap_lb": 26,
+      "greedy": {
+        "found": 35,
+        "status": "PLATEAU",
+        "secs": 5.0
+      },
+      "exact": {
+        "found": 30,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.0,
+        "candidate_blocks": 1716
+      },
+      "verdict": "reproduced-not-proven"
+    },
+    {
+      "cell": "C(16,12,5)",
+      "v": 16,
+      "k": 12,
+      "t": 5,
+      "best_known": 12,
+      "cheap_lb": 10,
+      "greedy": {
+        "found": 16,
+        "status": "PLATEAU",
+        "secs": 5.4
+      },
+      "exact": {
+        "found": 12,
+        "status": "FEASIBLE",
+        "proven_optimal": false,
+        "wall": 120.1,
+        "candidate_blocks": 1820
+      },
+      "verdict": "reproduced-not-proven"
+    }
+  ],
+  "reading": "GATE-1. The binding result is `beats`. BEAT-EXISTS = a free, kernel-checkable record beat on a reachable cell -> the deferred discharge proof-edge becomes worth reconsidering (operator+ADR; route any beat via covering_check.py). NO-REACHABLE-BEAT = neither greedy nor exact CP-SAT beat ANY record on the tractable OPEN band -> no reachable-and-beatable frontier for free; freeze the proof-edge. `optimal` cells are PROVEN tight (record == exact optimum); reproduced-not-proven/above-record cells found no beat but did not prove optimality within the per-cell budget (raising the budget could prove more, but cannot create a beat that exact search already failed to find)."
+}

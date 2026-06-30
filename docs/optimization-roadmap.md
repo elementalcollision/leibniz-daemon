@@ -202,6 +202,15 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   beatable slack. **The swing is not justified on the reachable small-witness band** (no producer can
   beat a proven-optimal record), established for *zero billable spend*. Bank Track A (+ C). Finding:
   `docs/covering-exact-producer-finding.md`.
+  **GATE-1 broadened — validation-plan Tier 1 (2026-06-30): NO-REACHABLE-BEAT.** The exact ladder
+  (greedy → CP-SAT, free-CPU) ran over **71 tractable OPEN cells spanning t=2..8** (vs the prior 6 cells
+  at t=2) — every cell with best_known above the strongest cheap lower bound, within `C(v,k)≤2000,
+  C(v,t)≤5000, best≤50`. **0 beats** anywhere; 21 records machine-proven optimal, 40 reproduced-not-proven,
+  10 above-record (all budget-limited, none a beat). No reachable-and-beatable covering frontier exists on
+  the tractable band; the deferred proof-edge stays dormant (no beat to make it non-dormant). The only
+  remaining beat-path is the *larger-headroom* OPEN cells beyond the tractable band (exact intractable,
+  operator-gated/billable, low-but-nonzero EV). Findings: `docs/results/tier1-results-2026-06-30.md`,
+  `docs/validation-plan-2026-06-30.md`.
 
 ## The ADRs
 
