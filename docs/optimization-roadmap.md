@@ -175,7 +175,13 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   (ADR 0044, 2026-06-30):** a kernel-backed valid-construction decider (covering-first), thin-over-the-
   kernel, with the §2.2 ritual + a live adversarial-review demo. PROPOSED, awaiting per-kind operator
   sign-off; the two admission edits (`register_decider` + `trust.py` allowlist) are operator-only and not
-  performed.
+  performed. Reviewable machinery landed (covering decider pieces, NOT registered).
+  **Integration scoped (ADR 0045, 2026-06-30):** how a construction becomes a `Propositio` through the
+  promulgation pipeline (proof=kernel, faithfulness=admitted decider, novelty=table oracle). A 3-vector
+  adversarial review found the first draft UNSOUND (3 CRITICAL/HIGH); the corrected design (locked Lean
+  prelude, E7-enforcing faithfulness route, tri-edge statement binding, validated oracle, release-only
+  carve-out) is folded in. One must-fix landed immediately: covering oracle snapshot validation
+  (ground-truth anchors + Schönheim floor + RAISE) — a real defect in shipping code.
 - **Track D — the producer-strength swing**, made meaningful by A (verify a beat) + B (beatable frontier)
   + C (admit a stronger producer). Operator-gated, billable. ✅ **Reproduction gate GREEN (2026-06-29):**
   a generic baseline reproduces the LJCR best-known on 6/10 pre-registered cells (9/10 within 2 blocks),
