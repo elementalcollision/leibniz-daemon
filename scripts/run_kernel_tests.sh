@@ -13,7 +13,11 @@ if ! python3 -c "import sys; sys.path.insert(0,'.'); from leibniz.backends.lean_
 fi
 
 # 2. run the kernel-exercising tests; -rs surfaces skip reasons so a silent skip is visible.
-out="$(python3 -m pytest tests/test_kernel_smoke.py tests/test_covering_decider.py -q -rs -p no:cacheprovider 2>&1)"
+#    These files are skip-FREE when the image is present (every test runs), so the zero-skip rule (step 3)
+#    holds. test_kernel_false_theorem_rejection is GATE-4: the audit-tier "nothing false is KERNEL-VERIFIED"
+#    backstop. (For BROAD coverage with a calibrated skip budget, use scripts/run_kernel_soak.sh instead.)
+out="$(python3 -m pytest tests/test_kernel_smoke.py tests/test_covering_decider.py \
+       tests/test_kernel_false_theorem_rejection.py -q -rs -p no:cacheprovider 2>&1)"
 echo "$out"
 
 # 3. a SKIP here means a kernel test did not actually run — treat as failure (no silent pass).
