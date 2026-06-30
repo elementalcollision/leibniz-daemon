@@ -171,8 +171,11 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   verifier). Residual gate before any billable swing: a CPU reproduction probe. Full finding:
   `docs/gate-b0-second-domain-finding.md`.
 - **Track C — sound decider-admission** (ADR 0041 Phase 6), aimed at amplification: admit a *verified*
-  stronger checker as a State-2 decider so a re-checked certificate becomes PASS not DEFER. Operator-only;
-  first admission gets its own ADR.
+  stronger checker as a State-2 decider so a re-checked certificate becomes PASS not DEFER. ✅ **DESIGNED
+  (ADR 0044, 2026-06-30):** a kernel-backed valid-construction decider (covering-first), thin-over-the-
+  kernel, with the §2.2 ritual + a live adversarial-review demo. PROPOSED, awaiting per-kind operator
+  sign-off; the two admission edits (`register_decider` + `trust.py` allowlist) are operator-only and not
+  performed.
 - **Track D — the producer-strength swing**, made meaningful by A (verify a beat) + B (beatable frontier)
   + C (admit a stronger producer). Operator-gated, billable. ✅ **Reproduction gate GREEN (2026-06-29):**
   a generic baseline reproduces the LJCR best-known on 6/10 pre-registered cells (9/10 within 2 blocks),

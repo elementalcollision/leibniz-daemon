@@ -136,6 +136,12 @@ Track A delivers standalone value immediately (a growing kernel-checked corpus) 
   kernel-renderable witness. Finding:
   [`docs/covering-exact-producer-finding.md`](../covering-exact-producer-finding.md). The measure-before-
   spend ladder thus ran to completion on **zero billable spend**.
-- **C** — the remaining free, on-mission build: sound decider-admission (own ADR + operator sign-off).
+- **C** — ✅ DESIGNED ([ADR 0044](0044-first-decider-admission.md)): the first decider-admission — a
+  kernel-backed *valid-construction* decider (covering-first; generalizes to CWC), thin-over-the-kernel
+  (A6 lighter route), with the §2.2 (a)–(d) + E6′/E7/E8 ritual and a live adversarial-review
+  demonstration (valid→PASS, E7 stronger-claim→DEFER, E6 invalid→DEFER). **PROPOSED, awaiting per-kind
+  operator sign-off.** The two admission edits (`register_decider` + the `trust.py` `FAITHFULNESS_PRODUCERS`
+  producer) are operator-only and **not performed**; the ADR recommends deferring the live edits until the
+  amplification→pipeline integration is scoped.
 - **Outcome:** the durable product is the **two-domain verification-amplification instrument** (A);
   autonomous record-beating is measured not-justified (now *proven optimal* on the reachable band).
