@@ -66,7 +66,17 @@ def load_snapshot(path: Path = SNAPSHOT) -> tuple[dict[tuple[int, int, int], int
     """Load + VALIDATE the committed LJCR snapshot. RAISES if it fails ground truth / the Schonheim floor
     (refuse a wrong oracle — ADR 0045 must-fix #4). Returns (bounds, meta)."""
     raw = json.loads(Path(path).read_text())
-    bounds = {tuple(int(x) for x in key.split(",")): int(val) for key, val in raw["bounds"].items()}
+    bounds: dict[tuple[int, int, int], int] = {}
+    seen_raw: dict[tuple[int, int, int], str] = {}
+    for key, val in raw["bounds"].items():
+        cell = tuple(int(x) for x in key.split(","))
+        # zero-padded / whitespace-variant keys (e.g. '07,3,2' and '7,3,2') collapse to the same cell on
+        # int-parse and would SILENTLY overwrite each other — refuse an ambiguous snapshot.
+        if cell in bounds and seen_raw[cell] != key:
+            raise ValueError(f"covering oracle snapshot: raw keys {seen_raw[cell]!r} and {key!r} both "
+                             f"parse to C{cell} (ambiguous/zero-padded key)")
+        bounds[cell] = int(val)
+        seen_raw[cell] = key
     ok, problems = validate(bounds)
     if not ok:
         raise ValueError(f"covering oracle snapshot failed validation: {problems[:5]}")

@@ -1,0 +1,16 @@
+{
+  "feed": 800,
+  "audited": 717,
+  "skipped": 83,
+  "covers_feed_length": true,
+  "corpus_unique": 559,
+  "unique_keys": true,
+  "idempotent": true,
+  "order_independent": true,
+  "verified_in_corpus": 0,
+  "false_witnesses_audited": 195,
+  "false_witnesses_verified": 0,
+  "witness_sha_collisions": 0,
+  "distinct_witness_sha": 126,
+  "wall_secs": 3.01
+}
