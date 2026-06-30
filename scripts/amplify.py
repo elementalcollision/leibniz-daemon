@@ -47,8 +47,12 @@ SUPPORTED_DOMAINS = ("cwc", "covering")
 
 
 def _norm_code(code) -> list[list[int]]:
-    """Canonical list-of-lists form (sorted within each codeword) for JSON + stable hashing."""
-    return [sorted(int(x) for x in cw) for cw in code]
+    """Fully canonical list-of-lists form for JSON + stable hashing: sorted WITHIN each codeword AND across
+    codewords. A covering/code is a SET of blocks, so block order is not semantic; canonicalizing it here
+    makes the stored `witness` order-invariant and consistent with the order-insensitive `witness_sha` —
+    otherwise a reordered duplicate dedups to the same key but stores a different block order, letting feed
+    order leak into the persisted corpus (a non-determinism the batch soak caught)."""
+    return sorted([sorted(int(x) for x in cw) for cw in code])
 
 
 def _witness_hash(code) -> str:
@@ -99,8 +103,17 @@ def amplify_one(entry: dict, *, run_kernel: bool = True, stamp: str | None = Non
     return report
 
 
+_REQUIRED_NEW_FIELDS = ("domain", "cell", "size", "witness_sha")
+
+
 def merge_corpus(existing: list[dict], new: list[dict]) -> list[dict]:
-    """Merge new audits into the corpus, deduped by `corpus_key` (new wins), sorted by cell then size."""
+    """Merge new audits into the corpus, deduped by `corpus_key` (new wins), sorted by cell then size.
+
+    EXISTING rows are tolerated if older-shape (a hand-edited row missing key fields is skipped, not fatal).
+    NEW rows are held to a hard precondition: a row missing any of `domain`/`cell`/`size`/`witness_sha`
+    raises a CLEAR ValueError (these are always present on an `amplify_one` audit; a missing field means a
+    skipped/malformed row reached merge, which is a caller bug — fail loud, not with a raw KeyError or a
+    silently dropped audit)."""
     by_key: dict[str, dict] = {}
     for r in existing:
         try:
@@ -108,9 +121,17 @@ def merge_corpus(existing: list[dict], new: list[dict]) -> list[dict]:
         except KeyError:
             continue  # tolerate hand-edited / older-shape rows
     for r in new:
+        missing = [f for f in _REQUIRED_NEW_FIELDS if f not in r]
+        if missing:
+            raise ValueError(f"merge_corpus: new audit row missing required field(s) {missing}; "
+                             f"got keys {sorted(r)} (a skipped/malformed row must not reach merge)")
         by_key[corpus_key(r)] = r
+    # sort by a TOTAL key (domain, cell, size, source, witness_sha) so the corpus order is canonical and
+    # reproducible regardless of feed order — (domain, cell, size) alone ties distinct witnesses, letting
+    # the input order leak into the persisted/rendered ledger.
     return sorted(by_key.values(),
-                  key=lambda r: (r["domain"], r.get("cell", ""), r["size"]))
+                  key=lambda r: (r["domain"], r.get("cell", ""), r["size"],
+                                 r.get("source", "unknown"), r.get("witness_sha", "")))
 
 
 def _verified(report: dict) -> bool:

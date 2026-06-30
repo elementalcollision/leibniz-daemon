@@ -1,0 +1,110 @@
+{
+  "rows": [
+    {
+      "v": 9,
+      "k": 3,
+      "t": 2,
+      "t_subsets": 36,
+      "enum_floor_secs": 0.0,
+      "completed": true
+    },
+    {
+      "v": 13,
+      "k": 3,
+      "t": 2,
+      "t_subsets": 78,
+      "enum_floor_secs": 0.0,
+      "completed": true
+    },
+    {
+      "v": 20,
+      "k": 4,
+      "t": 2,
+      "t_subsets": 190,
+      "enum_floor_secs": 0.0,
+      "completed": true
+    },
+    {
+      "v": 30,
+      "k": 5,
+      "t": 3,
+      "t_subsets": 4060,
+      "enum_floor_secs": 0.0,
+      "completed": true
+    },
+    {
+      "v": 40,
+      "k": 6,
+      "t": 3,
+      "t_subsets": 9880,
+      "enum_floor_secs": 0.001,
+      "completed": true
+    },
+    {
+      "v": 50,
+      "k": 6,
+      "t": 3,
+      "t_subsets": 19600,
+      "enum_floor_secs": 0.002,
+      "completed": true
+    },
+    {
+      "v": 40,
+      "k": 6,
+      "t": 4,
+      "t_subsets": 91390,
+      "enum_floor_secs": 0.008,
+      "completed": true
+    },
+    {
+      "v": 30,
+      "k": 6,
+      "t": 5,
+      "t_subsets": 142506,
+      "enum_floor_secs": 0.018,
+      "completed": true
+    },
+    {
+      "v": 35,
+      "k": 7,
+      "t": 5,
+      "t_subsets": 324632,
+      "enum_floor_secs": 0.038,
+      "completed": true
+    },
+    {
+      "v": 40,
+      "k": 8,
+      "t": 6,
+      "t_subsets": 3838380,
+      "enum_floor_secs": 0.419,
+      "completed": true
+    },
+    {
+      "v": 45,
+      "k": 8,
+      "t": 6,
+      "t_subsets": 8145060,
+      "enum_floor_secs": 0.897,
+      "completed": true
+    },
+    {
+      "v": 50,
+      "k": 9,
+      "t": 6,
+      "t_subsets": 15890700,
+      "enum_floor_secs": 1.753,
+      "completed": true
+    }
+  ],
+  "thresholds_smallest_cell_over_budget": {
+    "1.0": {
+      "cell": "C(50,9,6)",
+      "t_subsets": 15890700,
+      "enum_floor_secs": 1.753
+    },
+    "5.0": null,
+    "30.0": null
+  },
+  "note": "verify_covering cost is >= this enumeration floor (it also tests block coverage per subset). A render-time RENDER_SUBSET_CAP should refuse cells whose C(v,t) floor exceeds the chosen budget, mirroring ramsey's cap."
+}
