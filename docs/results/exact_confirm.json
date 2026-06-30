@@ -1,0 +1,16 @@
+{
+  "C(13,5,2)": {
+    "status": "FEASIBLE",
+    "proven_optimal": false,
+    "found": 10,
+    "candidate_blocks": 1287,
+    "wall": 600.3
+  },
+  "C(16,6,2)": {
+    "status": "FEASIBLE",
+    "proven_optimal": false,
+    "found": 11,
+    "candidate_blocks": 8008,
+    "wall": 600.0
+  }
+}
