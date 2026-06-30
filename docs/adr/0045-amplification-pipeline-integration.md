@@ -1,10 +1,12 @@
 # ADR 0045 — Amplification → promulgation pipeline integration (Track C continuation)
 
-- **Status:** PROPOSED — **design only; requires operator sign-off + a witness round before any build.**
-  An adversarial soundness review (§9) found the FIRST draft **unsound** (3 CRITICAL/HIGH paths to a
-  false/unwarranted promulgation). The architecture below is the **corrected** design; one of its
-  must-fixes (the oracle snapshot validation) is *already landed* in this PR. This PR is otherwise
-  docs-only; the build touches the faithfulness wiring, `trust.py`, and ADR 0040 — all operator-gated.
+- **Status:** PROPOSED — **PROOF-EDGE DEFERRED (8/8 witness round, 2026-06-30; see §10).** Constructions
+  stay **audit-tier**; the `LeanVerifier.discharge` edit is NOT made. An internal adversarial review (§9)
+  found the first draft unsound; the §2 architecture below was a partial correction, and an 8-model
+  witness round then found it **still too source-text-centric** and unanimously said **defer** — the
+  corrected design (§10) supersedes §2's discharge mechanism and is recorded for when a record beat
+  materialises. The oracle snapshot validation (must-fix #4) is landed and stands. This ADR is docs-only;
+  no trust-core change is made.
 - **Date:** 2026-06-30
 - **Deciders:** Operator (sign-off + the trust-edit gates in §5).
 - **Siblings:** ADR 0044 (the decider), ADR 0037 (faithfulness sound-backend seam), ADR 0040 (record-beat
@@ -142,3 +144,51 @@ returned **`design_is_sound: False`** on the first draft, with concrete exploits
   non-record. → §2.4 / fixed in this PR.
 Every must-fix is now reflected in the design above; the live risk stayed fully contained (design-only,
 operator-gated). Full findings: the run's transcript; provenance recorded here.
+
+## 10. Witness round + corrected design — PROOF EDGE DEFERRED (8/8, 2026-06-30)
+After §9, the §2 discharge mechanism (an **allowlist parse of a candidate `theorem_src`** + prelude
+re-verify + `check_source`) went to an 8-model external-witness round (Fugu, Fugu Ultra, Deepseek v4 Pro,
+Kimi, GLM 5.2, Gemini 3.5, Qwen 3.7 Max, Nex N2-Pro). Raw +
+synthesis: `docs/external-witness-round-construction-proof-edge{,-synthesis}.md`.
+
+**Verdict (8/8): DEFER the `discharge` edit.** Editing the sole `kernel_verified` writer for **dormant**
+infrastructure (no reachable record beat) is negative expected value; constructions stay audit-tier;
+greenlight only on a real beat + the full guard suite + a human ADR. Even the §2 corrected design was
+judged **still too source-text-centric**.
+
+**Corrected design (SUPERSEDES §2.1–§2.3's discharge mechanism; the spec for when a beat arrives):**
+- **Generate, don't parse.** The construction path takes **typed witness data + canonical params**; the
+  *trusted verifier generates the entire Lean source from a fixed template*. The witness controls **only
+  data literals**; a candidate never supplies raw `theorem_src` (if it does, it must byte-equal the
+  trusted rendering). This kills the `let`/`have` type-shadowing and comment/string-hiding attacks the
+  panel raised.
+- **Object-hash tri-edge binding.** Proof, faithfulness, and novelty all bind to one
+  `object_hash = hash(domain, params, bound, witness)`; the theorem is *rendered from* it and the oracle
+  *reads* it. Statement **laundering** (a true theorem for a different cell) is the central risk — not a
+  kernel failure, a ledger-integrity one.
+- **Explicit typed marker** (`expr.kind == CONSTRUCTION`, set by trusted ingestion) for routing — never
+  source-prefix detection.
+- **AST/`Environment`-diff guard**, not text: parse, then require **exactly one new `TheoremVal`**, zero
+  new defs/axioms/instances/macros vs the pristine prelude env; proof body exactly `by decide`.
+- **Axiom-closure audit** — the theorem's axiom footprint (`#print axioms`/`collectAxioms`) must be
+  **empty**; reject `sorryAx`/`axiom`/`opaque`/non-whitelisted.
+- **Semantically-bridged, hash-pinned prelude.** Byte-locked ≠ correct: a wrong `Decidable` instance can
+  make `decide` true for an invalid witness with no axiom. The prelude needs algorithmic `Decidable`, no
+  `opaque`/classical, and ideally a kernel-checked bridge lemma `validCovering ≡ spec`.
+- **Prove the actual claim**, not just witness validity (`∃ blocks, blocks.length = B ∧ validCovering …`
+  / a bridge to `C(v,k,t) ≤ B`).
+- **Certificate architecture for large cells.** Pure `by decide` OOMs on large witnesses and
+  `native_decide` expands the TCB (the Gate-B2 wall, now also for large covering proofs) → an external
+  fast-checker emitting a small kernel-checkable certificate.
+- **Hermetic, fail-closed** Lean run (pinned image hash, no candidate imports, fresh tmpdir, no network;
+  timeout/nonzero-exit/missing-or-mismatched-theorem/uncomputable-axiom-closure = failure).
+- **Inlined prelude vs in-image module:** split (~4/3); shared bright line — content-addressed,
+  operator-owned, axiom-audited, non-substitutable, reviewed as TCB.
+
+**Constructive intermediate (if/when wanted, before a beat):** a **non-promoting `ConstructionVerifier`**
+(`construction_kernel_checked`, *not* `kernel_verified`) that exercises this whole path without touching
+the trust core; flip to a real PROOF edge only on a beat + ADR.
+
+**Disposition:** the `discharge` edit is **HELD**; constructions remain audit-tier; `test_invariants.py`
+byte-identical. This section is the recorded spec for the proof-edge build whenever a record beat makes it
+non-dormant.

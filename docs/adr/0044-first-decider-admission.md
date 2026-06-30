@@ -1,8 +1,14 @@
 # ADR 0044 — First decider-admission: a kernel-backed valid-construction decider (Track C / ADR 0041 Phase 6)
 
-- **Status:** PROPOSED — **requires operator sign-off per kind** (ADR 0041 §9 checklist item 5: "Phase 6
-  returns for separate sign-off per kind"). **This PR is docs-only: no code, no registration, no
-  `trust.py` change.** The two admission edits (below) are operator acts, both PreToolUse-guarded.
+- **Status:** PROPOSED — **DORMANT; admission not performed** (2026-06-30). Requires operator sign-off per
+  kind (ADR 0041 §9 checklist item 5: "Phase 6 returns for separate sign-off per kind"). **This PR is
+  docs-only: no code, no registration, no `trust.py` change.** The two admission edits (below) are operator
+  acts, both PreToolUse-guarded. Sibling note: the *proof-edge* construction path (ADR 0045 §2/§10 — the
+  `LeanVerifier.discharge` edit) went to an 8-model witness round and was **unanimously deferred** (8/8,
+  2026-06-30) as premature for dormant infrastructure; constructions stay audit-tier. This faithfulness
+  decider is the separate, less-sensitive admission (proof edge untouched), but per §1's honest note it is
+  **dormant until amplification certificates route into the pipeline faithfulness gate** — so it, too, is
+  left unadmitted for now and revisited when a real beat makes either path non-dormant.
 - **Date:** 2026-06-30
 - **Deciders:** Operator (sign-off required before any State-2 admission or any `trust.py` change).
 - **Siblings:** ADR 0041 (the trust model — §2.2 ritual, E1–E8, ATTACK 1/2), ADR 0042 (post-D0 program,
