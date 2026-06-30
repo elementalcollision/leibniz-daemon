@@ -40,7 +40,16 @@ _FORBIDDEN = ("def ", "axiom ", "macro ", "notation ", "set_option", "instance "
 
 def theorem_structural_guard(theorem_src: str) -> tuple[bool, str]:
     """True iff theorem_src is a single clean `theorem … := <proof>` over literals (no defs/axioms/etc.,
-    one theorem, one ':='). The locked prelude is supplied separately, never here."""
+    one theorem, one ':='). The locked prelude is supplied separately, never here.
+
+    WARNING — NOT TRUST-PATH READY (internal adversarial review, 2026-06-30). This is a DENYLIST and was
+    shown BYPASSABLE: it admits run_cmd / elab / macro_rules / inductive / structure / class / abbrev /
+    attribute / namespace / section / open and other declaration/metaprogram forms (which need neither a
+    'theorem ' token nor a ':='), enabling axiom-injection that makes the kernel stamp a FALSE bound.
+    Before this gates any PROOF edge it MUST be replaced by an ALLOWLIST parse (exactly one
+    `theorem <id> : validCovering|validCWC <lits> = true := by decide`, verified by an Environment diff)
+    PLUS an empty-axiom-closure check PLUS an import-free source. It is currently wired to NOTHING in a
+    trust path (no discharge_construction exists). See docs/external-witness-brief-construction-proof-edge.md."""
     s = theorem_src
     for tok in _FORBIDDEN:
         if tok in s:
