@@ -138,6 +138,40 @@ def render_corpus(corpus: list[dict], *, title: str = "Kernel-checked constructi
     return "\n".join(head) + "\n"
 
 
+_DOMAIN_LABEL = {"cwc": "Constant-weight codes — A(n,d,w) lower bounds",
+                 "covering": "Covering designs — C(v,k,t) upper bounds"}
+
+
+def render_reading_room(corpus: list[dict],
+                        *, title: str = "Calculemus — Audit Annex (kernel-checked constructions)") -> str:
+    """Render the corpus as the Calculemus AUDIT ANNEX (ADR 0042 Track A3): grouped by domain, with
+    provenance. Explicitly NOT the Codex / published Calculemus — these are kernel re-checks, not laws."""
+    n_ver = sum(1 for r in corpus if _verified(r))
+    domains = sorted({r.get("domain", "?") for r in corpus})
+    out = [
+        f"# {title}",
+        "",
+        "*Kernel re-checks of externally-supplied / producer constructions (the verification-amplification "
+        "spine). This is an **AUDIT ANNEX**: NOT the Codex, NOT the published Calculemus — nothing here is "
+        "a promulgated law. Each row is a finite witness the Lean kernel independently re-checked; novelty "
+        "is an automated table-of-record lookup (never an LLM).*",
+        "",
+        f"**{n_ver}/{len(corpus)} kernel-verified, across {len(domains)} domain(s).**",
+        "",
+    ]
+    by_dom: dict[str, list[dict]] = {}
+    for r in corpus:
+        by_dom.setdefault(r.get("domain", "?"), []).append(r)
+    for dom in sorted(by_dom):
+        out += [f"## {_DOMAIN_LABEL.get(dom, dom)}", "",
+                "| cell | size | kernel | novelty | source |", "|---|---|---|---|---|"]
+        for r in sorted(by_dom[dom], key=lambda r: (r.get("cell", ""), r.get("size", 0))):
+            out.append(f"| {r.get('cell','?')} | {r.get('size','?')} | {r.get('kernel','?')} | "
+                       f"{r.get('novelty','?')} | {r.get('source','?')} |")
+        out.append("")
+    return "\n".join(out)
+
+
 def load_feed(path: Path) -> list[dict]:
     """A feed is a JSON list of entries, or {'constructions': [...]}."""
     data = json.loads(Path(path).read_text())
@@ -155,7 +189,8 @@ def main() -> int:
     ap.add_argument("--feed", required=True, help="JSON feed: [{domain,n,d,w,code,source,note}, ...]")
     ap.add_argument("--corpus", default=str(DEFAULT_CORPUS),
                     help=f"kernel-checked corpus JSON (read + merge + write); default {DEFAULT_CORPUS}")
-    ap.add_argument("--render", help="also write a reading-room markdown to this path")
+    ap.add_argument("--render", help="also write a plain reading-room markdown table to this path")
+    ap.add_argument("--reading-room", help="also write the Calculemus audit-annex markdown to this path")
     ap.add_argument("--no-kernel", action="store_true", help="skip the Lean kernel step (pre-check only)")
     ap.add_argument("--stamp", help="provenance timestamp to record on new entries (ISO string)")
     ap.add_argument("--json", action="store_true", help="print the per-entry reports as JSON")
@@ -174,6 +209,8 @@ def main() -> int:
 
     if args.render:
         Path(args.render).write_text(render_corpus(merged))
+    if args.reading_room:
+        Path(args.reading_room).write_text(render_reading_room(merged))
 
     if args.json:
         print(json.dumps(reports, indent=2))
