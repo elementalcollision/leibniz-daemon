@@ -182,6 +182,16 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   prelude, E7-enforcing faithfulness route, tri-edge statement binding, validated oracle, release-only
   carve-out) is folded in. One must-fix landed immediately: covering oracle snapshot validation
   (ground-truth anchors + Schönheim floor + RAISE) — a real defect in shipping code.
+  **PROOF EDGE DEFERRED — 8/8 witness round (ADR 0045 §10, 2026-06-30):** the `LeanVerifier.discharge`
+  construction branch (the sole `kernel_verified` writer) went to an 8-model external panel; *unanimous*
+  verdict = **defer** — editing the trust core for **dormant** infrastructure (no reachable record beat,
+  per Track D) is negative-EV, and even the corrected §2 design was judged too source-text-centric. The
+  panel's corrected design (generate-from-typed-data, object-hash tri-edge binding, AST/`Environment`-diff
+  guard, empty-axiom-closure audit, semantically-bridged hash-pinned prelude, the actual-claim/existential
+  theorem, a certificate architecture for large cells) is recorded in ADR 0045 §10 for when a beat
+  arrives. **Disposition: constructions stay audit-tier; discharge HELD; `test_invariants.py`
+  byte-identical.** The constructive intermediate (a non-promoting `ConstructionVerifier` /
+  `construction_kernel_checked`) is available if wanted before a beat.
 - **Track D — the producer-strength swing**, made meaningful by A (verify a beat) + B (beatable frontier)
   + C (admit a stronger producer). Operator-gated, billable. ✅ **Reproduction gate GREEN (2026-06-29):**
   a generic baseline reproduces the LJCR best-known on 6/10 pre-registered cells (9/10 within 2 blocks),
