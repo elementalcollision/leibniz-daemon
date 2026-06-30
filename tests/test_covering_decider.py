@@ -1,4 +1,4 @@
-"""Guard for the candidate covering-construction decider (ADR 0044 / Track C).
+"""SEALED guard for the candidate covering-construction decider (ADR 0044 / Track C; hook-sealed 2026-06-30).
 
 The covering decider pieces (`covering_tool.py`) are DEFINED but NOT registered; this proves they are
 sound IF admitted, and that nothing auto-admits them. The load-bearing dormancy + E1/E2/E6/E7 guarantees
