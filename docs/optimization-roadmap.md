@@ -352,11 +352,16 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     negatives (~1e-3@P=1e5 → ~1e-9@P=1e10), so an **exact rational LP** (min Σγ−ν s.t. stationarity + α,β1,γ≥0)
     is needed — the panel's predicted hard step (Kimi Q-dual-3; SDPA-GMP territory). Guarded by
     `tests/test_terwilliger_cert.py`.
-  - **NEXT — operator fork (Phase 2b completion):** (1) build the **exact rational LP** (two-phase simplex;
-    watch #213 bit-growth at n=19, mitigate with Bareiss), or (2) **SDPA-GMP** high-precision warm start (D6)
-    so rounding preserves nonnegativity directly, or (3) **Phase 3 kernel now** on the pipeline-verified small
-    cells (trivial nonneg cleanup there) to exercise the Lean leg end-to-end before the A(19,6) nonneg-LP. Tier
-    stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PHASE 2b GREEN for small cells (2026-07-01):** the nonneg step is solved by **high-precision iterative
+    clamping** (at P≥1e6 the complementary-slackness negatives are ~1e-7; clamp-to-0 + re-solve converges,
+    `dual_check` validates exactly). Full exact certificates A(4,2)→8, A(6,4)→4, A(7,4)→8, A(8,4)→16
+    (`certified 4/4`). **A(19,6) hits the #213 compute-trap** (measured: >10 min, no result) — the 20×20 blocks
+    × hundreds of clamp iterations blow up `Fraction` bit-length, exactly the panel's Q-pit-2 warning.
+  - **NEXT — the "all three" program (operator chose all):** (A) exact rational cert via clamp — **done, small
+    cells**; (B) **Phase 3 kernel** — render a small-cell exact cert to Lean and kernel-verify end-to-end (Lean
+    image is available), validating the full SDP→dual→exact-cert→kernel chain; (C) **scale to A(19,6)** —
+    normalized-block solve + Bareiss (D6) and/or SDPA-GMP high precision to beat the compute-trap and produce
+    the exact A(19,6) ≤ 1280 certificate. Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 

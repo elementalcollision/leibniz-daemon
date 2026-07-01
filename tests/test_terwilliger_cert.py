@@ -34,12 +34,11 @@ def test_dual_extraction_reproduces_optimum():
 
 
 @_needs
-@pytest.mark.parametrize("n,d,target", [(4, 2, 8), (6, 4, 4), (8, 4, 16)])
-def test_pipeline_verified_exact_stationarity_and_floor(n, d, target):
+@pytest.mark.parametrize("n,d,target", [(4, 2, 8), (6, 4, 4), (7, 4, 8), (8, 4, 16)])
+def test_exact_certificate_small_cells(n, d, target):
+    # Full exact certificate: exactly-PSD Z, exactly-zero stationarity residuals, α,β1,γ ≥ 0 (all exact,
+    # validated by dual_check), and ⌊Σγ−ν⌋ = A(n,d). Nonnegativity via high-precision clamping.
     r = tc.certify(n, d, target=target)
-    assert r["residual_zero"] is True          # stationarity residuals are EXACTLY 0 (exact rational)
-    assert r["psd_ok"] is True                 # Z, Z' are exactly PSD
-    assert r["floor"] == target                # the exact bound Σγ−ν floors to the correct A(n,d)
-    # the only gap to full certification is nonnegativity of boundary multipliers (exact LP, tracked separately);
-    # the violations are vanishing (~1e-3 at P=1e5, ~1e-9 at P=1e10) — bounded well below the multiplier scale
-    assert r["worst_multiplier"] > -1e-2
+    assert r["feasible"] is True and r["certified"] is True
+    assert r["residual_zero"] is True and r["psd_ok"] is True and r["nonneg_ok"] is True
+    assert r["floor"] == target
