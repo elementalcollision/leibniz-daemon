@@ -390,8 +390,19 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     native_decide needed.
   - **"All three" — RESOLVED, all legs:** (A) exact cert — done incl. A(19,6); (B) kernel verify — **done
     incl. A(19,6)**; (C) scale — done. **The full SDP→dual→exact-cert→kernel chain is GREEN on the record
-    cell.** Remaining rungs (both scoped, audit→Q.E.D. ladder): stationarity-in-Lean (D3 in full) and the
-    **bridge theorem** (formalize the Terwilliger reduction). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+    cell.** Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **FORMALIZATION SCOPE (2026-07-01) — the audit→Q.E.D. ladder, scoped for fresh sessions:**
+    `docs/terwilliger-formalization-scope-2026-07-01.md`. Measured sizing on the actual A(19,6) cert: the
+    LP-optimal dual is **sparse** (55/4621 multipliers nonzero — a basic vertex), 55 stationarity identities,
+    47-bit multipliers, 34-bit common denominator, 8076 nonzero β entries. Rungs: **F1** whole-cert-in-kernel
+    (β table verified against eq.7 in Lean + 55 integer identities + nonneg + bound; M, one session, no trust
+    touch); **F2a** weak duality over the abstract primal in Lean/Mathlib (M); **F2b** codes⇒feasible incl.
+    the block-diagonalization Theorem 1 (XL; **external formalization round candidate**, brief drafted);
+    **F2c** trust wiring for Q.E.D. (GATED: guarded-core edits, hook + operator + witness round; alternative =
+    Observatory tier per ADR 0038). **Discovery outlook (honest):** Table I reproduction validates machinery,
+    not new math — Schrijver computed n≤28; discovery needs the beyond-Table-I reach probe (cheap, first),
+    eq.(25) sharpenings, the Johnson-scheme build (D1), or post-2005 hierarchies. Recommended order:
+    ① reach probe ② F1 ③ F2a ④ operator decision on F2b/F2c.
 
 ## The ADRs
 
