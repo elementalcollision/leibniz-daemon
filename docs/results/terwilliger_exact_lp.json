@@ -1,6 +1,11 @@
 {
   "verdict": "GREEN",
   "certified": "5/5",
+  "a19_kernel": {
+    "valid_cert": true,
+    "bogus_cert": false,
+    "sound": true
+  },
   "rows": [
     {
       "n": 4,
@@ -85,8 +90,8 @@
       "bound_float": 1280.167,
       "floor": 1280,
       "certified": true,
-      "secs": 17.4
+      "secs": 17.1
     }
   ],
-  "reading": "Exact rational LP nonneg enforcement (one simplex vs hundreds of clamps)."
+  "reading": "Exact rational LP nonneg enforcement (one simplex vs hundreds of clamps). a19_kernel = the REAL Lean 4.31 kernel verdict on the A(19,6)<=1280 cert's 20 PSD blocks (per-block theorems; valid accepted, corrupted rejected)."
 }
