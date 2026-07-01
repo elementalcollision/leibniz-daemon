@@ -2,6 +2,11 @@
   "verdict": "GREEN",
   "certified": "4/4",
   "pipeline_verified": "4/4",
+  "kernel_leg": {
+    "valid_cert": true,
+    "bogus_cert": false,
+    "sound": true
+  },
   "rows": [
     {
       "n": 4,
@@ -80,5 +85,5 @@
       "cert_bits": 42
     }
   ],
-  "reading": "Phase 2b: EXACT-rational dual certificate through Phase-1 dual_check. The pipeline (extract dual with the pinned sign convention -> rationalize Z with a strict-PD margin -> min-norm exact restoration of stationarity) produces, on every small cell, an exactly-PSD dual with stationarity residuals EXACTLY 0 whose exact bound \u03a3\u03b3\u2212\u03bd floors to the correct A(n,d). GREEN additionally needs the boundary multipliers \u22650; the least-norm correction leaves complementary-slackness-zero multipliers at vanishing negatives (~1e-10 at P=1e10), so the final step is an EXACT RATIONAL LP over the multipliers (min \u03a3\u03b3\u2212\u03bd s.t. stationarity + nonneg) \u2014 the panel's predicted hard step (Kimi Q-dual-3; SDPA-GMP territory). AMBER(nonneg-LP-pending) = pipeline verified, that LP not yet built."
+  "reading": "Phase 2b (exact) + Path B (kernel). certify() produces, on every small cell, a full EXACT dual certificate \u2014 exactly-PSD Z, stationarity residuals EXACTLY 0, \u03b1,\u03b21,\u03b3\u22650 (nonneg via high-precision clamping) \u2014 whose \u230a\u03a3\u03b3\u2212\u03bd\u230b = A(n,d). kernel_verify() then renders the cert's PSD blocks to Lean and the REAL kernel accepts the valid cert and REJECTS a corrupted block: the full SDP\u2192dual\u2192exact-cert\u2192kernel chain is GREEN on small cells. A(19,6) is compute-bound (#213) \u2014 Path C (normalized solve + Bareiss / SDPA-GMP)."
 }

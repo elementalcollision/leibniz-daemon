@@ -357,11 +357,15 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     `dual_check` validates exactly). Full exact certificates A(4,2)→8, A(6,4)→4, A(7,4)→8, A(8,4)→16
     (`certified 4/4`). **A(19,6) hits the #213 compute-trap** (measured: >10 min, no result) — the 20×20 blocks
     × hundreds of clamp iterations blow up `Fraction` bit-length, exactly the panel's Q-pit-2 warning.
-  - **NEXT — the "all three" program (operator chose all):** (A) exact rational cert via clamp — **done, small
-    cells**; (B) **Phase 3 kernel** — render a small-cell exact cert to Lean and kernel-verify end-to-end (Lean
-    image is available), validating the full SDP→dual→exact-cert→kernel chain; (C) **scale to A(19,6)** —
-    normalized-block solve + Bareiss (D6) and/or SDPA-GMP high precision to beat the compute-trap and produce
-    the exact A(19,6) ≤ 1280 certificate. Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PATH B DONE (Phase 3 kernel, 2026-07-01):** `kernel_verify()` renders a small-cell exact cert's PSD
+    blocks to Lean (reusing #212/#215 `ldltOK`) and the **real Lean 4.31 kernel accepts the valid cert and
+    REJECTS a corrupted block** (`sound: True`) for A(4,2)/A(6,4) — the full **SDP→dual→exact-cert→kernel**
+    chain is GREEN on small cells. Docker-gated test added. (Kernel-attests the PSD content; the full
+    stationarity-in-Lean per D3 is a follow-on, Path B2.)
+  - **NEXT — the "all three" program:** (A) exact cert via clamp — **done, small cells**; (B) kernel verify —
+    **done, small cells**; (C) **scale to A(19,6)** — normalized-block solve + Bareiss (D6) and/or SDPA-GMP high
+    precision to beat the #213 compute-trap and produce the exact A(19,6) ≤ 1280 certificate (the remaining
+    piece); plus Path B2 (full stationarity system in Lean). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
