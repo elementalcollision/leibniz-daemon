@@ -240,6 +240,24 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
   reproduce a known code/covering upper bound via an untrusted LP dual + exact-rational kernel check; GREEN
   if the kernel verifies a rational dual matching/tightening a table UB. This is the make-or-break for the
   certificate pivot. (Aligns with the already-gated certificate item: Gate B2 / ADR 0045 §10 / kernel-bridge.)
+- **P1 RESULT — GREEN, sound end-to-end (#209):** 9/9 exact integer Delsarte certificates verified &
+  reproduced known A(n,d); the real kernel verifies a valid cert and rejects a bogus one; clearing
+  denominators keeps it integer → no decide-wall. The certificate architecture is mechanically feasible
+  under the trust boundary — the first non-dead discovery direction since covering.
+- **REACH RESULT — NO-TIGHTENING (#210):** across 39 open A(n,d) (n=12..24), 0 tightenings, 9 reproduce
+  best-known, 34/38 beat sphere-packing, certs kernel-verify to n=24. Plain 2-point LP is a sound, scalable
+  **verification** tool, not a discovery engine (tables already bake in the classical LP bound).
+- **DECISION (2026-07-01) — bank LP + scope SDP (operator chose "both"):**
+  - **BANKED:** the LP certificate architecture as an audit-tier **upper-bound verification asset** —
+    `scripts/delsarte_bank.py` builds a kernel-checked Delsarte UB-certificate corpus
+    (`docs/results/delsarte_ub_corpus.json`, 18/18 kernel-verified); the UB analog of the construction
+    amplification annex. Audit-tier (kernel checks certificate validity; the `certOK ⇒ A≤f(0)` Delsarte
+    bridge lemma is a deferred formalization slice, like the pending covering bridge).
+  - **NEXT (scoped, gated):** the **Schrijver SDP three-point certificate** — the real discovery bet
+    (strictly improves LP; source of modern best-known UBs). The hard part is an exactly-kernel-checkable
+    PSD certificate (integer LDLᵀ, denominators cleared). Scoping + first probe (reproduce an SDP-improved
+    cell e.g. A(12,5) 40→32 via a rational PSD certificate): `docs/sdp-three-point-scoping-2026-07-01.md`.
+    Recommend an external mini-round OR a $0 exact-PSD micro-probe before committing the multi-day build.
 
 ## The ADRs
 

@@ -1,0 +1,79 @@
+<!--
+Scoping (measure-before-build, design only) for the Schrijver SDP three-point certificate — the real
+discovery bet in the code-bounds family, after the plain Delsarte LP reach probe returned NO-TIGHTENING.
+No code, no trust touch. Decision-informing.
+-->
+
+# Scoping — the Schrijver SDP three-point certificate (2026-07-01)
+
+## Why
+The reach probe showed **plain 2-point Delsarte LP reproduces but does not tighten** best-known A(n,d) upper
+bounds (0/38) — because the tables already incorporate it. The cells where LP was *looser* than best-known
+(A(12,5): LP 40 vs 32; A(12,7): 5 vs 4; A(16,5): 425 vs 256; A(16,7): 50 vs 36) are exactly where a
+**stronger** method already won. That method is the **Schrijver semidefinite (three-point / Terwilliger
+algebra) bound** — the source of most modern best-known UB improvements over LP. It is the one surveyed path
+with a real shot at a *genuine, sound-checkable* discovery. This scopes it before any build.
+
+## Mechanism
+- **Untrusted producer:** an SDP solver finds a dual-feasible solution to the three-point relaxation over
+  the Terwilliger algebra (block-diagonalized). The dual certificate is a set of **PSD matrices** (one per
+  block) plus multipliers satisfying linear constraints; feasibility ⇒ an upper bound on A(n,d).
+- **Sound re-check (the kernel's job):** verify, in exact arithmetic, that (a) each certificate matrix is
+  **PSD**, and (b) the linear dual inequalities hold, and (c) the objective gives the claimed bound.
+
+## The hard part — an exactly-kernel-checkable PSD certificate
+LP's certificate was trivially integer (clear denominators). PSD is the fragile step (GLM flagged it):
+- **Rounding:** float SDP solutions must round to **exact rationals that remain PSD** while staying dual-
+  feasible — much harder than LP rounding (the PSD cone has no slack in the wrong directions). Standard
+  fixes: round the interior solution with margin, then re-project; or exploit the block structure.
+- **Kernel-checkable PSD proof (integer, no Mathlib — mirrors our covering/Delsarte checkers):** clear
+  denominators to an integer matrix `M`, then prove `M ⪰ 0` by one of:
+  1. **Integer LDLᵀ / Cholesky:** exhibit `M = L·D·Lᵀ` with rational `L` (unit lower-triangular) and `D ≥ 0`
+     diagonal; the kernel checks the product equals `M` and `D ≥ 0`. Cleanest; the producer supplies `L,D`.
+  2. **Sylvester's criterion:** all leading principal minors ≥ 0 via **exact integer determinants** — kernel-
+     computable, but O(size³) determinants and PSD (not PD) needs care with zero minors.
+  3. **Sum-of-squares:** `xᵀMx = Σ (linear form)²` with rational coefficients — a rational SOS certificate.
+  Option 1 (LDLᵀ, producer-supplied factors) is the recommended kernel target: verification is a matrix
+  multiply + diagonal-sign check, all integer after denominator clearing — no eigenvalues, no decide-wall.
+- **Size:** the Terwilliger blocks are modest for small n (the three-point matrices are indexed by triples
+  but block-diagonalize to size ~n/2 per block), so the integer certificate stays small — the same regime
+  where the LP certs kernel-verified to n=24.
+
+## Soundness posture
+Same as everything: the SDP solver + the rounding are **untrusted proposers**; the kernel decides the PSD
+factorization + linear inequalities. A bad certificate fails the exact re-check. `Q.E.D.`/promulgation still
+requires the analog of the Delsarte bridge lemma (`certificate ⇒ A(n,d) ≤ bound`, i.e. the three-point
+bound's correctness) — deferred, audit-tier until then, exactly like LP.
+
+## First probe (measure-before-build; the make-or-break)
+**Reproduce a known SDP-improved UB via an exact rational PSD certificate the kernel checks.** Target the
+smallest cell where SDP is known to beat LP — e.g. **A(12,5)** (LP 40, best-known 32) or A(16,5) (425 → 256).
+- Solve the three-point SDP (untrusted, float) → dual PSD solution.
+- Round to a rational PSD certificate; clear denominators; produce integer LDLᵀ factors.
+- Kernel-check: `M = L·D·Lᵀ`, `D ≥ 0`, linear dual inequalities hold → bound.
+- **GREEN:** a rational PSD certificate verifies (kernel) and reproduces the SDP-known bound (e.g. 32 for
+  A(12,5)). This proves the exact-PSD pipeline is feasible → then push to *open* cells for a real tightening.
+- **RED:** float→rational→exact-PSD rounding cannot produce a verifying certificate at reproduction scale →
+  plain SDP-certificate discovery is out of reach without heavier exact-SDP machinery; bank LP and stop.
+- **Cost:** an SDP solver dependency (e.g. SCS/CVXPY, float; operator-local) + the rounding/LDLᵀ tooling;
+  ~days of engineering. The probe itself is ~$0 compute.
+
+## Risks
+- **PSD exact-rounding fragility** (the #1 risk; LP rounding held, PSD is harder).
+- **Block-diagonalization complexity:** the Terwilliger reduction is intricate; a bug yields an invalid
+  certificate — caught by the kernel (safe, just no result), but engineering-heavy.
+- **Even reproduction may be hard;** and tightening an *open* cell is a research-grade outcome, not assured.
+- **Oracle:** a genuine tightening still needs the authoritative version-pinned UB oracle before any claim.
+
+## Recommendation
+This is a genuinely heavier bet with real fragility — appropriate for a **gate before committing**:
+- Option A: an **external mini-round** on SDP-three-point-certificate feasibility (the exact-PSD rounding +
+  kernel-checkable-PSD question specifically), like the discovery-frontier round.
+- Option B: a **$0 feasibility micro-probe** — attempt the exact rational LDLᵀ PSD certificate on one
+  SDP-improved cell (A(12,5)) directly; if the rounding+kernel-check works, greenlight the build; if not,
+  bank LP as the final word on this family.
+Either resolves whether the SDP discovery path is real before sinking a multi-day build into it.
+
+Prereqs already banked: the LP certificate architecture (`scripts/delsarte_lp_probe.py`,
+`scripts/delsarte_bank.py` — the kernel-checked UB corpus) and the core-Lean integer-certificate + Krawtchouk
+machinery this would extend.
