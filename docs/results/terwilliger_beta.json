@@ -1,0 +1,41 @@
+{
+  "anchors": {
+    "beta^0_{0,0,0} n=2": 1,
+    "beta^1_{1,1,0} n=2": 2,
+    "beta^1_{1,1,0} n=6": 6,
+    "beta^1_{1,1,1} n=4": 1,
+    "beta^0_{2,2,0} n=4": 6
+  },
+  "codes": {
+    "3": {
+      "singleton": true,
+      "repetition": true,
+      "even-weight": true,
+      "full-space": true
+    },
+    "4": {
+      "singleton": true,
+      "repetition": true,
+      "even-weight": true,
+      "full-space": true
+    },
+    "5": {
+      "singleton": true,
+      "repetition": true,
+      "even-weight": true,
+      "full-space": true
+    },
+    "6": {
+      "singleton": true,
+      "repetition": true,
+      "even-weight": true,
+      "full-space": true
+    }
+  },
+  "control": {
+    "corrupt_beta_breaks_psd": true
+  },
+  "verdict": "GREEN",
+  "oracle_entries": 372,
+  "reading": "GREEN = every real code's Terwilliger \u03b2-blocks (both families, all k) are exactly PSD AND the transposed-binomial corruption breaks PSD -> eq.(7) is transcribed correctly and the differential test has teeth. This validates the \u03b2 generator that the SDP three-point producer will use; the block-by-block PSD check matches the kernel dimension-wall escape. RED = a sign/index bug in \u03b2."
+}
