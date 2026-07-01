@@ -323,10 +323,20 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     (16/16 across n=3..6), the transposed-binomial corruption breaks PSD (teeth), reviewer anchors settled
     (GLM right, Kimi/Gemini wrong). Oracle published (`terwilliger_beta_oracle.tsv`, 372 entries); CI-guarded
     (`tests/test_terwilliger_beta.py`).
-  - **NEXT — Phase 1 (mechanical dual):** Python conic model prints the dual; checker **recomputes the slack
-    S_k(y,β)** + a per-orbit identity *system* (not "one scalar identity", per D3); no hand-derived signs (D5).
-    Then Phase 2 (normalized solve → feasibility-at-target → Bareiss round), Phase 3 (block-by-block kernel
-    PSD; pivoted-LDLᵀ only if a slack is singular), Phase 4 (reproduce A(19,6)=1280 before any open cell).
+  - **PHASE 1 COMPLETE (2026-07-01) — GREEN, free-CPU:** `docs/results/terwilliger-phase1-2026-07-01.md`,
+    `scripts/terwilliger_dual.py`. Mechanically-derived dual + checker: primal (eq.19/20/22, orbit/(iv)/even-d
+    reduction) → Lagrangian dual (PSD `Z_k,Z'_k`; nonneg `α,β1,γ`; free `ν`; bound `A(n,d) ≤ Σγ−ν`). Checker
+    `dual_check` **recomputes** the stationarity *system* + bound from `(duals,β)` (D3) and checks PSD + nonneg;
+    a dual-feasible point certifies the bound with **no primal witness** (weak duality). Validated three ways,
+    each with a corrupt-control: **Lagrangian identity** (collected==direct for all random points), **weak
+    duality** (`c·x ≤ L` on real-code x + feasible duals), **Delsarte tie** (k=0 objective vars = inner-dist
+    weights); GREEN on A(4,2)/A(5,2)/A(6,2)/A(6,4)/A(7,4). Adversarial panel (4 lenses): primal-fidelity,
+    dual-correctness, code/edge-cases all **SOUND**; the one CONCERN was scope-restatement (formulation not
+    machine-checked = the audit caveat; β validated in Phase 0). CI-guarded (`tests/test_terwilliger_dual.py`).
+  - **NEXT — Phase 2 (solver, operator-local):** feed the checker a numerically-solved dual — normalized-block
+    solve (cvxpy/Clarabel) → transform back to exact rationals → **feasibility-at-target** (D2a) → Bareiss
+    round (#215). Then Phase 3 (block-by-block kernel PSD; pivoted-LDLᵀ only if a slack is singular), Phase 4
+    (reproduce **A(19,6)=1280** end-to-end before any open cell). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
