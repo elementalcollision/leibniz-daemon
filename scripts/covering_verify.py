@@ -54,9 +54,18 @@ def validCovering (blocks : List (List Nat)) (v k t B : Nat) : Bool :=
   (combs t (List.range v)).all (fun s => covered s blocks)"""
 
 
+# `decide` reduction depth grows with the t-subset enumeration; Lean's default maxRecDepth (512) is hit at
+# modest C(v,t) for t>=3 (measured: GATE-2, docs/results/tier2-results-2026-06-30.md), surfacing as an
+# elaboration error that looks like a kernel rejection. Raising it is a pure RESOURCE limit — it cannot make
+# `decide` accept a false proposition (a false witness still reduces to `false` and the proof fails), so it
+# does not weaken the kernel check; it only lets a VALID t>=3 covering reduce to completion.
+_MAX_REC_DEPTH = 100000
+
+
 def render_covering_lean(v: int, k: int, t: int, blocks, thm_name: str | None = None) -> str:
     """Render a self-contained, core-Lean, kernel-`decide`-able theorem `C(v,k,t) <= |blocks|`, witness
-    inlined. Refuses to render a FALSE theorem (the Python pre-check; the kernel would reject it too)."""
+    inlined. Refuses to render a FALSE theorem (the Python pre-check; the kernel would reject it too).
+    Sets maxRecDepth so t>=3 coverings reduce (a sound resource limit; see _MAX_REC_DEPTH)."""
     block_sets = [frozenset(b) for b in blocks]
     ok, reason = verify_covering(block_sets, v, k, t)
     if not ok:
@@ -65,5 +74,5 @@ def render_covering_lean(v: int, k: int, t: int, blocks, thm_name: str | None = 
     name = thm_name or f"cov_{v}_{k}_{t}_le_{B}"
     lits = "[" + ", ".join("[" + ", ".join(str(x) for x in sorted(b)) + "]"
                            for b in block_sets) + "]"
-    return (f"{_LEAN_HELPERS}\n\ntheorem {name} :\n"
+    return (f"set_option maxRecDepth {_MAX_REC_DEPTH}\n{_LEAN_HELPERS}\n\ntheorem {name} :\n"
             f"    validCovering {lits} {v} {k} {t} {B} = true := by\n  decide\n")
