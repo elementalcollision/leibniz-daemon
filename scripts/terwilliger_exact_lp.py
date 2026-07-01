@@ -188,19 +188,51 @@ def certify_lp(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 
     return best or {"n": n, "d": d, "target": target, "status": "no exact LP cert at tried precisions"}
 
 
+def kernel_verify_lp(n, d, target=None, timeout_s=900):
+    """Path B2: certify a cell via the exact LP, render its PSD blocks as per-block Lean theorems, and
+    kernel-verify (valid accepted; a corrupted block rejected). This is how the A(19,6) ≤ 1280 certificate
+    becomes kernel-attested. Needs cvxpy (solve) + docker (Lean)."""
+    row = certify_lp(n, d, target=target, return_duals=True)
+    if not row.get("certified"):
+        return {"n": n, "d": d, "certified": False, "note": "no exact LP cert to render"}
+    blocks = cert.cert_psd_blocks(row["duals"])
+    out = {"n": n, "d": d, "target": row["target"], "exact_bound": row["exact_bound"],
+           "floor": row["floor"], "n_blocks": len(blocks),
+           "largest_block": max(len(b["M"]) for b in blocks)}
+    try:
+        from leibniz.backends.lean_cli import LeanCliBackend, available
+        if not available():
+            out["kernel"] = "unavailable (no docker/image)"
+            return out
+        bk = LeanCliBackend(timeout_s=timeout_s)
+        good = bk.check_source(cert.render_cert_lean(blocks))
+        bogus_blocks = [dict(blocks[0], d=[x - 10 ** 6 for x in blocks[0]["d"]])] + blocks[1:]
+        bogus = bk.check_source(cert.render_cert_lean(bogus_blocks))
+        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": good is True and bogus is False}
+    except Exception as e:  # pragma: no cover
+        out["kernel"] = f"unavailable ({type(e).__name__})"
+    return out
+
+
 def main() -> int:
     import json
     out = _ROOT / "docs" / "results" / "terwilliger_exact_lp.json"
     rows = [certify_lp(n, d, target=t)
             for (n, d, t) in [(4, 2, 8), (6, 4, 4), (7, 4, 8), (8, 4, 16), (19, 6, 1280)]]   # incl. the record cell
     certified = [r for r in rows if r.get("certified")]
+    kern = kernel_verify_lp(19, 6, target=1280)          # Path B2: kernel-attest the record certificate
     res = {"verdict": "GREEN" if len(certified) == len(rows) else "AMBER", "certified": f"{len(certified)}/{len(rows)}",
-           "rows": rows, "reading": "Exact rational LP nonneg enforcement (one simplex vs hundreds of clamps)."}
+           "a19_kernel": kern.get("kernel"), "rows": rows,
+           "reading": ("Exact rational LP nonneg enforcement (one simplex vs hundreds of clamps). a19_kernel = "
+                       "the REAL Lean 4.31 kernel verdict on the A(19,6)<=1280 cert's 20 PSD blocks (per-block "
+                       "theorems; valid accepted, corrupted rejected).")}
     out.write_text(json.dumps(res, indent=2) + "\n")
     print(f"terwilliger exact-LP cert: {res['verdict']} ({res['certified']})")
     for r in rows:
         print(f"  A({r['n']},{r['d']}): feasible={r.get('feasible')} bound={r.get('exact_bound')} "
               f"floor={r.get('floor')} certified={r.get('certified')} secs={r.get('secs')}")
+    print(f"  A(19,6) kernel leg: {kern.get('kernel')} (blocks={kern.get('n_blocks')}, "
+          f"largest={kern.get('largest_block')})")
     print(f"  -> {out}")
     return 0 if len(certified) == len(rows) else 1
 

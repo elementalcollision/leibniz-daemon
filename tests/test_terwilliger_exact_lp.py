@@ -21,6 +21,16 @@ def _load():
     return m
 
 
+def _lean_ok() -> bool:
+    try:
+        from leibniz.backends.lean_cli import available
+        return available()
+    except Exception:
+        return False
+
+
+_needs_docker = pytest.mark.skipif(not _lean_ok(), reason="docker/leibniz-lean image unavailable")
+
 lp = _load()
 
 
@@ -49,3 +59,16 @@ def test_exact_lp_certifies_a19_6_record_bound():
     assert r["certified"] is True
     assert r["feasible"] and r["residual_zero"] and r["psd_ok"] and r["nonneg_ok"]
     assert r["floor"] == 1280
+
+
+@_needs
+@_needs_docker
+def test_kernel_attests_a19_6_certificate_and_rejects_bogus():
+    # Path B2: the REAL Lean 4.31 kernel verifies ALL 20 PSD blocks of the A(19,6)<=1280 certificate
+    # (per-block theorems — the one-conjunction render was the resource wall, not the block content) and
+    # REJECTS a corrupted block. ~60s (solve+LP ~20s, two kernel invocations ~30s).
+    r = lp.kernel_verify_lp(19, 6, target=1280)
+    assert r["floor"] == 1280 and r["n_blocks"] == 20 and r["largest_block"] == 20
+    assert r["kernel"]["valid_cert"] is True
+    assert r["kernel"]["bogus_cert"] is False
+    assert r["kernel"]["sound"] is True
