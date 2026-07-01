@@ -371,9 +371,20 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     (min Σγ−ν s.t. stationarity + α,β1,γ≥0; Bareiss/integer-preserving pivoting to bound #213 bit-growth),
     self-contained, **or (b)** SDPA-GMP high-precision (operator-local install; panel D6). Guarded by
     `tests/test_terwilliger_scale_probe.py`.
-  - **"All three" status:** (A) exact cert — **done, small cells**; (B) kernel verify — **done, small cells**;
-    (C) A(19,6) — **diagnosed; blocked on rational-LP-w/-Bareiss or SDPA-GMP**. Also open: Path B2 (full
-    stationarity system in Lean, D3). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PATH C COMPLETE (2026-07-01) — A(19,6) ≤ 1280 exact certificate, self-contained:**
+    `docs/results/terwilliger-phasec-exact-lp-2026-07-01.md`, `scripts/terwilliger_exact_lp.py`. Option (a) —
+    an **exact two-phase rational simplex** (`min Σγ−ν s.t. stationarity + α,β1,γ≥0`) — replaces the O(hundreds)
+    clamp with ONE solve and, at **P=1e10/1e12**, returns a dual that `dual_check` validates exactly
+    (feasible + PSD + nonneg + residual-0) with **⌊Σγ−ν⌋ = 1280** in ~17s, **no `Fraction` bit-blowup** (the
+    #213 trap did not materialize). So the Schrijver record bound **A(19,6): 1289→1280 is reproduced as a
+    genuine exact-rational audit-tier certificate through our own SDP three-point pipeline — SDPA-GMP NOT
+    needed** (float64 Clarabel + high-precision rational rounding + the exact LP suffice). Guarded by
+    `tests/test_terwilliger_exact_lp.py` (incl. the A(19,6) test).
+  - **"All three" — RESOLVED:** (A) exact cert — **done incl. A(19,6)**; (B) kernel verify — **done small
+    cells**, A(19,6)'s 20×20 block hits a Lean `decide` **scaling** wall (not soundness; block IS PSD) →
+    **Path B2**: Bareiss `detSignOK` (#215, smaller minors) / higher maxRecDepth / native_decide; (C) scale —
+    **done at the audit tier**. Also open: Path B2 (kernel at n=19) + the bridge theorem for Q.E.D. Tier stays
+    audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
