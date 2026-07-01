@@ -171,7 +171,24 @@ def _min_deviation(rows, cols_idx, m_rounded, rhs):
     return [m0[c] + delta[c] for c in range(len(cols_idx))]
 
 
-def certify(n, d, target=None, precisions=(10, 100, 1000, 10 ** 4, 10 ** 5), tol=1e-6):
+def _assemble(n, d, Zq, Zpq, cols, mvals):
+    duals = {"Z": Zq, "Zp": Zpq, "a": {t: Fr(0) for t in td.valid_triples(n)},
+             "b1": {t: Fr(0) for t in td.valid_triples(n)},
+             "g": {t: Fr(0) for t in td.valid_triples(n)}, "nu": Fr(0)}
+    for ci, val in mvals.items():
+        col = cols[ci]
+        if col[0] == "nu":
+            duals["nu"] = val
+        else:
+            duals[col[0]][col[1:]] = val
+    return duals
+
+
+def certify(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10), tol=1e-6):
+    """Exact-rational dual certificate: rationalize the PSD blocks (strict-PD margin), then a min-norm exact
+    restoration of stationarity followed by iterative CLAMP-to-0 of the most-negative (complementary-slackness)
+    multiplier + re-solve, until every multiplier is ≥0. dual_check validates the result EXACTLY (residuals 0,
+    Z⪰0, α,β1,γ≥0); a feasible dual certifies A(n,d) ≤ ⌊Σγ−ν⌋ with no primal witness."""
     ex = extract_dual(n, d)
     target = target if target is not None else int(ex["value"] + 1e-6)
     keys, cols, A, bnd = _mult_structure(n, d)
@@ -184,34 +201,37 @@ def certify(n, d, target=None, precisions=(10, 100, 1000, 10 ** 4, 10 ** 5), tol
             continue
         base = _base_residual(n, d, Zq, Zpq)
         rhs = [-base[key] for key in keys]
-        m0 = {ci: Fr(round((ex["nu"] if cols[ci][0] == "nu" else ex[cols[ci][0]].get(cols[ci][1:], 0.0)) * P), P)
-              for ci in all_cols}
-        rows = [{ci: A.get((ci, key), 0) for ci in all_cols} for key in keys]
-        sol = _min_deviation(rows, all_cols, m0, rhs)
-        mvals = dict(zip(all_cols, sol))
-        duals = {"Z": Zq, "Zp": Zpq, "a": {t: Fr(0) for t in td.valid_triples(n)},
-                 "b1": {t: Fr(0) for t in td.valid_triples(n)},
-                 "g": {t: Fr(0) for t in td.valid_triples(n)}, "nu": Fr(0)}
-        for ci, val in mvals.items():
-            col = cols[ci]
-            if col[0] == "nu":
-                duals["nu"] = val
-            else:
-                duals[col[0]][col[1:]] = val
-        chk = td.dual_check(n, d, duals)
-        worst = min((mvals[ci] for ci in all_cols if cols[ci][0] in ("a", "b1", "g")), default=Fr(0))
-        b = chk["bound"]
-        row = {"n": n, "d": d, "status": ex["status"], "sdp_value": round(ex["value"], 4), "target": target,
-               "P": P, "residual_zero": chk["n_residuals_nonzero"] == 0, "psd_ok": chk["psd_ok"],
-               "nonneg_ok": chk["nonneg_ok"], "worst_multiplier": float(worst),
-               "exact_bound": str(b), "bound_float": round(float(b), 6),
-               "floor": (int(b) if b >= 0 else 0), "feasible": chk["feasible"],
-               "certified": bool(chk["feasible"] and b >= 0 and int(b) <= target)}
-        # keep the run with residuals zeroed, correct floor, and the least nonneg violation
-        if best is None or (row["residual_zero"] and row["floor"] == target and worst > Fr(best["worst_multiplier"]).limit_denominator(10 ** 12)):
-            best = row
-        if row["certified"]:
-            return row
+        m_all = {ci: Fr(round((ex["nu"] if cols[ci][0] == "nu" else ex[cols[ci][0]].get(cols[ci][1:], 0.0)) * P), P)
+                 for ci in all_cols}
+        fixed0 = set()
+        for _ in range(4 * len(cols) + 8):
+            act = [ci for ci in all_cols if ci not in fixed0]
+            rows = [{ci: A.get((ci, key), 0) for ci in act} for key in keys]
+            m0 = {ci: m_all[ci] for ci in act}
+            sol = _min_deviation(rows, act, m0, rhs)
+            mvals = {ci: Fr(0) for ci in fixed0}
+            mvals.update(dict(zip(act, sol)))
+            duals = _assemble(n, d, Zq, Zpq, cols, mvals)
+            chk = td.dual_check(n, d, duals)
+            worst = min((mvals[ci] for ci in act if cols[ci][0] in ("a", "b1", "g")), default=Fr(0))
+            b = chk["bound"]
+            row = {"n": n, "d": d, "status": ex["status"], "sdp_value": round(ex["value"], 4), "target": target,
+                   "P": P, "clamped": len(fixed0), "residual_zero": chk["n_residuals_nonzero"] == 0,
+                   "psd_ok": chk["psd_ok"], "nonneg_ok": chk["nonneg_ok"], "worst_multiplier": float(worst),
+                   "exact_bound": str(b), "bound_float": round(float(b), 6),
+                   "floor": (int(b) if b >= 0 else 0), "feasible": chk["feasible"],
+                   "certified": bool(chk["feasible"] and b >= 0 and int(b) <= target),
+                   "cert_bits": max((int(abs(x.numerator)).bit_length() + int(x.denominator).bit_length()
+                                     for M in (Zq, Zpq) for k in M for r in M[k] for x in r), default=0)}
+            if row["certified"]:
+                return row
+            if best is None or (row["residual_zero"] and row["floor"] == target
+                                and worst > Fr(best["worst_multiplier"]).limit_denominator(10 ** 15)):
+                best = row
+            negs = [(ci, mvals[ci]) for ci in act if cols[ci][0] in ("a", "b1", "g") and mvals[ci] < 0]
+            if not negs:
+                break
+            fixed0.add(min(negs, key=lambda x: x[1])[0])
     return best or {"n": n, "d": d, "status": ex["status"], "target": target, "feasible": False}
 
 
