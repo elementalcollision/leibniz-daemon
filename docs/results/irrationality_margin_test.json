@@ -1,0 +1,66 @@
+{
+  "verdict": "GREEN",
+  "n_graphs": 4,
+  "certifies_alpha": 4,
+  "overshoots": 0,
+  "min_achievable_tax": 0.001333,
+  "rows": [
+    {
+      "graph": "C5",
+      "alpha": 2,
+      "theta": 2.236068,
+      "solver_theta": 2.236068,
+      "best_P": 1000,
+      "cert_bound": 2.238,
+      "achievable_tax": 0.001932,
+      "cert_max_bits": 150,
+      "floor": 2,
+      "floors_to_alpha": true,
+      "status": "certifies-alpha",
+      "kernel": true
+    },
+    {
+      "graph": "C7",
+      "alpha": 3,
+      "theta": 3.317667,
+      "solver_theta": 3.317667,
+      "best_P": 1000,
+      "cert_bound": 3.319,
+      "achievable_tax": 0.001333,
+      "cert_max_bits": 478,
+      "floor": 3,
+      "floors_to_alpha": true,
+      "status": "certifies-alpha",
+      "kernel": true
+    },
+    {
+      "graph": "C9",
+      "alpha": 4,
+      "theta": 4.36009,
+      "solver_theta": 4.36009,
+      "best_P": 1000,
+      "cert_bound": 4.362,
+      "achievable_tax": 0.00191,
+      "cert_max_bits": 827,
+      "floor": 4,
+      "floors_to_alpha": true,
+      "status": "certifies-alpha",
+      "kernel": true
+    },
+    {
+      "graph": "C11",
+      "alpha": 5,
+      "theta": 5.386303,
+      "solver_theta": 5.386303,
+      "best_P": 1000,
+      "cert_bound": 5.388,
+      "achievable_tax": 0.001697,
+      "cert_max_bits": 1444,
+      "floor": 5,
+      "floors_to_alpha": true,
+      "status": "certifies-alpha",
+      "kernel": true
+    }
+  ],
+  "reading": "Revised SDP gate. certifies-alpha = a KERNEL-checked rational PSD certificate floored to \u230a\u03d1\u230b=\u03b1 despite an irrational optimum. achievable_tax = smallest (rational bound \u2212 \u03d1) at bounded bit-length -> predicts whether a NARROW code-cell margin survives. GREEN => tax shrinks below 0.01 at modest bits and floors correctly: the irrationality wall is surmountable, proceed to the three-point build (with Bareiss for scale). RED => overshoot or stuck-large tax: the wall is fatal, bank LP and drop the SDP bet."
+}
