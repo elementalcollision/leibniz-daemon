@@ -342,10 +342,21 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     13.7<16; the `possible()`/`i+j−t≤n` fix (in `terwilliger_dual.py` + the SDP build) restores A(8,4)=16 and a
     GREEN soundness sweep (no bound floors below a known lower bound). Free-CPU regression guards it. Caveats →
     Phase 2b: float floors are indicative (A(6,2)→31.9999) and the n≈20 k=0 solve is ill-conditioned (Q-pit-2).
-  - **NEXT — Phase 2b (exact dual, operator-local):** extract the dual from a **normalized** solve → transform
-    back to exact rationals → **feasibility-at-target** (fix t=1280, restore strict-PD; D2a) → **Bareiss**
-    round (#215) → Phase-1 `dual_check` for an **exact** audit-tier bound on A(19,6). Then Phase 3 (block-by-
-    block kernel PSD; pivoted-LDLᵀ only if a slack is singular). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PHASE 2b PIPELINE VERIFIED (2026-07-01) — AMBER(nonneg-LP-pending), operator-local (cvxpy):**
+    `docs/results/terwilliger-phase2b-2026-07-01.md`, `scripts/terwilliger_cert.py`. The exact-rational
+    dual-certificate pipeline is built and **verified 4/4** on small cells: dual extraction + the pinned sign
+    convention (**ν = −ν_cvxpy**), exact-PSD rationalized blocks, a min-norm exact-rational correction that
+    zeroes **every** stationarity residual, and an exact bound Σγ−ν that **floors to the correct A(n,d)**
+    (A(4,2)→8, A(6,4)→4, A(7,4)→8, A(8,4)→16). The **one** remaining step is boundary-multiplier
+    nonnegativity: the min-norm correction leaves complementary-slackness-zero multipliers at vanishing
+    negatives (~1e-3@P=1e5 → ~1e-9@P=1e10), so an **exact rational LP** (min Σγ−ν s.t. stationarity + α,β1,γ≥0)
+    is needed — the panel's predicted hard step (Kimi Q-dual-3; SDPA-GMP territory). Guarded by
+    `tests/test_terwilliger_cert.py`.
+  - **NEXT — operator fork (Phase 2b completion):** (1) build the **exact rational LP** (two-phase simplex;
+    watch #213 bit-growth at n=19, mitigate with Bareiss), or (2) **SDPA-GMP** high-precision warm start (D6)
+    so rounding preserves nonnegativity directly, or (3) **Phase 3 kernel now** on the pipeline-verified small
+    cells (trivial nonneg cleanup there) to exercise the Lean leg end-to-end before the A(19,6) nonneg-LP. Tier
+    stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
