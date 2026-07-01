@@ -92,6 +92,54 @@ def build_primal(n, d, k_max=None):
     return prob, xvar, psd, lin
 
 
+def build_labeled(n, d):
+    """Same primal, but returns LABELED constraint handles so Phase 2b can read each dual:
+      psd_h[(k,'M')] / psd_h[(k,'Mp')]  -> the two block-family PSD constraints (dual = Z_k / Z'_k)
+      i_h                                -> the x^0_{0,0}=1 equality (dual = ν)
+      ii_h[('a'|'b1'|'g', t,i,j)]        -> the three (20)(ii) inequality families (duals = α/β1/γ)
+    Constraint families are enumerated over td.valid_triples(n) in the SAME order as dual_check/collected."""
+    import cvxpy as cp
+    keys = td.free_keys(n, d)
+    xvar = {k: cp.Variable(name=".".join(map(str, k))) for k in keys}
+    psd_h, ii_h = {}, {}
+    cons = []
+    for k in range(n // 2 + 1):
+        idx = td.block_idx(n, k)
+        M = [[0.0] * len(idx) for _ in idx]
+        Mp = [[0.0] * len(idx) for _ in idx]
+        for a, i in enumerate(idx):
+            for b, j in enumerate(idx):
+                mk = mpk = 0.0
+                for t in range(min(i, j) + 1):
+                    s = i + j - 2 * t
+                    if not td.possible(n, i, j, t):
+                        continue
+                    bijk = td.beta(n, i, j, k, t)
+                    if not bijk:
+                        continue
+                    xv = _val(None, xvar, t, i, j, d)
+                    x0 = _val(None, xvar, 0, s, 0, d)
+                    mk = mk + bijk * xv
+                    mpk = mpk + bijk * (x0 - xv)
+                M[a][b] = mk
+                Mp[a][b] = mpk
+        cM, cMp = cp.bmat(M) >> 0, cp.bmat(Mp) >> 0
+        psd_h[(k, "M")], psd_h[(k, "Mp")] = cM, cMp
+        cons += [cM, cMp]
+    i_h = xvar[(0, 0, 0)] == 1
+    cons.append(i_h)
+    for (t, i, j) in td.valid_triples(n):
+        xv = _val(None, xvar, t, i, j, d)
+        x0i = _val(None, xvar, 0, i, 0, d)
+        x0j = _val(None, xvar, 0, j, 0, d)
+        ca, cb, cg = (xv >= 0), (xv <= x0i), (x0i + x0j <= 1 + xv)
+        ii_h[("a", t, i, j)], ii_h[("b1", t, i, j)], ii_h[("g", t, i, j)] = ca, cb, cg
+        cons += [ca, cb, cg]
+    obj = sum(td.obj_coeff(k, n) * xvar[k] for k in keys)
+    prob = cp.Problem(cp.Maximize(obj), cons)
+    return {"prob": prob, "xvar": xvar, "psd_h": psd_h, "i_h": i_h, "ii_h": ii_h}
+
+
 def solve_primal(n, d, k_max=None, solver="CLARABEL"):
     import cvxpy as cp
     prob, xvar, psd, lin = build_primal(n, d, k_max=k_max)
