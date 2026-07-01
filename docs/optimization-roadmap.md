@@ -290,11 +290,26 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     the solve; (ii) plain full-graph Lovász ϑ can be *weaker* than Delsarte LP (A(8,5): ϑ=6 vs 4) → the
     three-point bound must include the LP constraints (k=0 block = Delsarte). Findings:
     `docs/results/sdp-foundation-2026-07-01.md`.
-  - **NEXT — Terwilliger scaffolding = external round.** The one hard remaining piece (three-point
-    block-diagonalization) is scoped for external experts:
-    `docs/external-brief-terwilliger-threepoint-2026-07-01.md`. It also flags that the illustrative target
-    **"A(12,5) 40→32" is UNVERIFIED** (not in Schrijver's tables; confirmed alternatives A(19,6) 1289→1280,
-    A(17,6,7) 249→228) and must be corrected before the build. Soundness stays kernel-protected throughout.
+  - **EXTERNAL ROUND COMPLETE (2026-07-01) — synthesis + corrected plan:**
+    `docs/results/terwilliger-review-synthesis-2026-07-01.md` (6 substantive reviews). **§1 formulation
+    confirmed 6/6** (integer β, two block families, k=0=Delsarte); both foundation findings (#215 block-wall
+    escape + LP-inclusion) **validated**. **DROP A(12,5)** (6/6: illustrative/hallucinated). Two load-bearing
+    corrections: **(D1)** constant-weight A(17,6,7) needs the **Johnson scheme** (a *different* algebra) — first
+    target must be **unrestricted (Hamming)**: **A(19,6) 1289→1280** (4/6 canonical Table I), or the cheaper
+    **A(12,4) 135→132** (Gemini, unverified) if it text-checks against Table I; **(D2)** the **εI margin is
+    invalid for the full dual** (it breaks feasibility — #214's trick only worked for a *free* scalar t) →
+    replace with **feasibility-SDP-at-target** (margin restores strict-PD, no kernel change) + **pivoted LDLᵀ**
+    (`P·S·Pᵀ=L·D·Lᵀ`, D≥0; gated) as fallback for a singular optimal slack. Also: kernel must **recompute the
+    slack S_k(y,β) itself** and check a *system* of per-orbit identities (not "one scalar identity"); derive the
+    dual **mechanically**; solve **normalized** blocks and transform back exactly (SCS conditioning is the top
+    engineering risk); β anchors conflict → validate the generator's k=0 slice vs #209 Krawtchouk and publish
+    our own oracle.
+  - **REFRAMING (Fugu, echoed Qwen):** the kernel checks certificate *arithmetic*, not the *formulation* — a
+    consistent wrong-sign transcription yields a valid cert for the wrong SDP. So outputs are audit-tier
+    **`DUAL_CERTIFICATE_CHECKED`** (de-risked by reproduce-a-known-cell-before-discovery + k=0≡Delsarte
+    regression + primal-dual cross-check), **not Q.E.D.**, until a Lean **bridge theorem** formalizes the
+    Terwilliger reduction. **Two operator decisions open:** (1) trust tier — audit-now vs bridge-theorem-first;
+    (2) first cell — verify-then-A(12,4)-else-A(19,6). Soundness stays kernel-protected throughout.
 
 ## The ADRs
 
