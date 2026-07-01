@@ -23,6 +23,16 @@ def _load():
     return m
 
 
+def _lean_ok() -> bool:
+    try:
+        from leibniz.backends.lean_cli import available
+        return available()
+    except Exception:
+        return False
+
+
+_needs_docker = pytest.mark.skipif(not _lean_ok(), reason="docker/leibniz-lean image unavailable")
+
 tc = _load()
 
 
@@ -42,3 +52,14 @@ def test_exact_certificate_small_cells(n, d, target):
     assert r["feasible"] is True and r["certified"] is True
     assert r["residual_zero"] is True and r["psd_ok"] is True and r["nonneg_ok"] is True
     assert r["floor"] == target
+
+
+@_needs
+@_needs_docker
+def test_kernel_verifies_small_cell_cert_and_rejects_bogus():
+    # Path B: the REAL Lean kernel accepts the exact cert's PSD blocks and REJECTS a corrupted block.
+    r = tc.kernel_verify(4, 2, target=8)
+    assert r["floor"] == 8 and r["n_blocks"] > 0
+    assert r["kernel"]["valid_cert"] is True
+    assert r["kernel"]["bogus_cert"] is False
+    assert r["kernel"]["sound"] is True
