@@ -220,6 +220,27 @@ Operator decision after D0 RED: pursue the three preconditions that make a produ
   bounding the amplification spine* (Tier 2: soundness backstop + decide-wall + continuous CI guard), not
   proof-edge enablement.
 
+## Discovery-frontier direction — external round (2026-06-30)
+After the 7-family scout returned all-DEAD, the discovery question went to a 5-model external panel
+(`docs/external-round-discovery-frontier-synthesis.md`). Convergent outcome:
+- **Positive-witness table-beating is confirmed dead**, but the "structural law" was **overstated** — it is
+  a **scoped hypothesis** (positive/lower-bound public-table domains). It does NOT cover the escape bands.
+- **The escape is a NEGATIVE-witness / CERTIFICATE architecture:** stop *constructing* optimal objects;
+  *verify small certificates* from untrusted SOTA solvers for the **upper-bound / non-existence** band humans
+  don't dominate. Top new idea: **Delsarte LP dual polynomial** certificates (untrusted SDP finds a dual;
+  kernel checks it in exact rational arithmetic) — small certificate, attacks table UBs, ortools-reachable.
+- **The decide wall is part artifact** — Qwen's "naive-formalization wall" is *confirmed* by our GATE-2
+  maxRecDepth finding; the durable fix is an **external verified LRAT/DRAT certificate checker** (keeps the
+  TCB tight *and* scales). A TCB policy call (external-checker vs `native_decide` vs pure-`Array`) is now due.
+- **Reconstruction = amplification, not discovery** (unanimous); **Z3/Walnut identities = dead (oracle
+  wall)**; **new-domain scouting = don't fund**. **Falsification** is possible but carries a fatal H→S
+  *error-of-commission* risk (refuting a strawman = a false claim about the literature) → **deferred behind a
+  human-lock on the formalized statement.**
+- **Recommended first probe (measure-before-build, $0):** **P1 Delsarte LP dual-certificate reproduction** —
+  reproduce a known code/covering upper bound via an untrusted LP dual + exact-rational kernel check; GREEN
+  if the kernel verifies a rational dual matching/tightening a table UB. This is the make-or-break for the
+  certificate pivot. (Aligns with the already-gated certificate item: Gate B2 / ADR 0045 §10 / kernel-bridge.)
+
 ## The ADRs
 
 **Status: all five implemented and merged (2026-06-21).** ADRs 0009–0013 are
