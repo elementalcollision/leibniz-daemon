@@ -380,11 +380,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     genuine exact-rational audit-tier certificate through our own SDP three-point pipeline — SDPA-GMP NOT
     needed** (float64 Clarabel + high-precision rational rounding + the exact LP suffice). Guarded by
     `tests/test_terwilliger_exact_lp.py` (incl. the A(19,6) test).
-  - **"All three" — RESOLVED:** (A) exact cert — **done incl. A(19,6)**; (B) kernel verify — **done small
-    cells**, A(19,6)'s 20×20 block hits a Lean `decide` **scaling** wall (not soundness; block IS PSD) →
-    **Path B2**: Bareiss `detSignOK` (#215, smaller minors) / higher maxRecDepth / native_decide; (C) scale —
-    **done at the audit tier**. Also open: Path B2 (kernel at n=19) + the bridge theorem for Q.E.D. Tier stays
-    audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PATH B2 DONE (2026-07-01) — the A(19,6) certificate is KERNEL-ATTESTED:**
+    `docs/results/terwilliger-pathb2-2026-07-01.md`. The n=19 "scaling wall" was a **render artifact**: one
+    `decide` over the 20-block `&&` conjunction blew the elaborator budget, and `check_source` misread the
+    resource error as a rejection (the GATE-2 trap again) — the largest 20×20 block alone verifies in ~5 s.
+    Fix: `render_cert_lean` emits **one theorem per block** (+ `maxHeartbeats 0`); soundness identical (any
+    failed block fails the file). Measured: exact-LP A(19,6) cert ~17 s → **kernel True on all 20 blocks in
+    16 s; corrupted-block control False in 13 s** (`kernel_verify_lp`; docker-gated test added). No Bareiss /
+    native_decide needed.
+  - **"All three" — RESOLVED, all legs:** (A) exact cert — done incl. A(19,6); (B) kernel verify — **done
+    incl. A(19,6)**; (C) scale — done. **The full SDP→dual→exact-cert→kernel chain is GREEN on the record
+    cell.** Remaining rungs (both scoped, audit→Q.E.D. ladder): stationarity-in-Lean (D3 in full) and the
+    **bridge theorem** (formalize the Terwilliger reduction). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 

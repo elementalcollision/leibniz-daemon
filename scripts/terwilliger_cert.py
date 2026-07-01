@@ -273,11 +273,17 @@ def cert_psd_blocks(duals):
 
 
 def render_cert_lean(blocks) -> str:
-    """One Lean theorem asserting every block's ldltOK = true (conjunction). Reuses the #212 core-Lean helpers."""
-    conj = " &&\n    ".join(
-        f"ldltOK {pm._lit(b['M'])} {pm._lit(b['L'])} [{', '.join(map(str, b['d']))}] ({b['scale']})"
-        for b in blocks)
-    return f"{pm._LEAN_HELPERS}\n\ntheorem tw_cert_psd :\n    ({conj}) = true := by\n  decide\n"
+    """ONE Lean theorem PER block (ldltOK = true), heartbeats unlimited. Reuses the #212 core-Lean helpers.
+
+    Per-block theorems, NOT one conjunction: a single `decide` over the 20-block `&&` chain exceeded the
+    elaborator's resource budget at n=19 (the Path B2 wall) and check_source misread the resource error as a
+    rejection — while each block alone verifies in seconds. Soundness is identical (the source elaborates
+    cleanly iff EVERY theorem's decide succeeds; one corrupted block fails the whole file)."""
+    thms = [
+        (f"theorem tw_cert_psd_{i} :\n    ldltOK {pm._lit(b['M'])} {pm._lit(b['L'])} "
+         f"[{', '.join(map(str, b['d']))}] ({b['scale']}) = true := by\n  decide")
+        for i, b in enumerate(blocks)]
+    return "set_option maxHeartbeats 0\n" + pm._LEAN_HELPERS + "\n\n" + "\n\n".join(thms) + "\n"
 
 
 def kernel_verify(n, d, target=None, timeout_s=180):
