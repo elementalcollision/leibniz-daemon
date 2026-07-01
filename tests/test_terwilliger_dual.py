@@ -35,6 +35,19 @@ def test_weak_duality_holds_and_corruption_breaks_it():
         assert td.corruption_detected_wd(n, d) is True      # a flipped α-sign breaks weak duality
 
 
+def test_impossible_triples_are_excluded():
+    # Regression for the Phase-2 bug: a triple (X,Y,Z) needs binom(n; i−t,j−t,t) ≠ 0, i.e. i+j−t ≤ n.
+    # The impossible (t=4,i=8,j=8) at n=8 (i+j−t=12>8) must be rejected, so its phantom key (8,8,8) must
+    # NOT be a free variable — admitting it made the A(8,4) relaxation invalid (13.7 < 16).
+    assert td.possible(8, 8, 8, 8) is True          # the real (8,8,8)->orbit{0,8,8} triple
+    assert td.possible(8, 8, 8, 4) is False         # impossible: i+j−t = 12 > 8
+    assert (8, 8, 8) not in set(td.free_keys(8, 4))
+    assert (0, 8, 8) in set(td.free_keys(8, 4))     # x^0_{8,0} survives (possible)
+    # every free key has half-sum ≤ n (a+b+c even and (a+b+c)/2 ≤ n)
+    for (a, b, c) in td.free_keys(8, 4):
+        assert (a + b + c) % 2 == 0 and (a + b + c) // 2 <= 8
+
+
 def test_objective_variables_are_delsarte_weights():
     # A(6,4): even d, so weights are {0} ∪ {even i ≥ 4} = {0,4,6}.
     got = [k[1] for k in td.delsarte_objective_keys(6, 4)]
