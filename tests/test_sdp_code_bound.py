@@ -15,6 +15,8 @@ import pytest
 _ROOT = Path(__file__).resolve().parent.parent
 _HAS_CVXPY = importlib.util.find_spec("cvxpy") is not None and importlib.util.find_spec("numpy") is not None
 _needs_cvxpy = pytest.mark.skipif(not _HAS_CVXPY, reason="cvxpy/numpy are operator-local; SDP test skipped in CI")
+_HAS_ORTOOLS = importlib.util.find_spec("ortools") is not None
+_needs_ortools = pytest.mark.skipif(not _HAS_ORTOOLS, reason="ortools is operator-local; skipped in CI")
 
 
 def _load(mod, rel):
@@ -51,6 +53,7 @@ def test_confusability_graph_shape():
     assert len(edges) == 16 * 4 // 2 == 32
 
 
+@_needs_ortools
 def test_known_extension_matches_delsarte_lp_cert():
     """The three small cells added to KNOWN (needed because the kernel leg's matrix-dimension wall caps
     usable cells at n<=5) are cross-checked against the Delsarte LP probe's OWN exact-integer certificate,
