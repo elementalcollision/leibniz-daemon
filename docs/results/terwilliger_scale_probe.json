@@ -1,0 +1,73 @@
+{
+  "rows": [
+    {
+      "n": 8,
+      "d": 4,
+      "target": 16,
+      "sdp_value": 16.0,
+      "n_free_vars": 8,
+      "n_multipliers": 496,
+      "psd_round_P": 1000000,
+      "restore_solve_secs": 0.002,
+      "n_active": 71,
+      "residual_zero": false,
+      "bound_float": 16.0004,
+      "floor": 16,
+      "bound_floors_to_target": true,
+      "negative_multipliers": 0,
+      "feasible_one_shot": false
+    },
+    {
+      "n": 10,
+      "d": 4,
+      "target": null,
+      "sdp_value": 42.6667,
+      "n_free_vars": 14,
+      "n_multipliers": 859,
+      "psd_round_P": 1000000,
+      "restore_solve_secs": 0.004,
+      "n_active": 49,
+      "residual_zero": false,
+      "bound_float": 42.668,
+      "floor": 42,
+      "bound_floors_to_target": false,
+      "negative_multipliers": 0,
+      "feasible_one_shot": false
+    },
+    {
+      "n": 14,
+      "d": 6,
+      "target": null,
+      "sdp_value": 64.0,
+      "n_free_vars": 20,
+      "n_multipliers": 2041,
+      "psd_round_P": 1000000,
+      "restore_solve_secs": 0.025,
+      "n_active": 147,
+      "residual_zero": false,
+      "bound_float": 64.0254,
+      "floor": 64,
+      "bound_floors_to_target": false,
+      "negative_multipliers": 16,
+      "feasible_one_shot": false
+    },
+    {
+      "n": 19,
+      "d": 6,
+      "target": 1280,
+      "sdp_value": 1280.0824,
+      "n_free_vars": 55,
+      "n_multipliers": 4621,
+      "psd_round_P": 100000000,
+      "restore_solve_secs": 1.086,
+      "n_active": 874,
+      "residual_zero": true,
+      "bound_float": 1280.0841,
+      "floor": 1280,
+      "bound_floors_to_target": true,
+      "negative_multipliers": 655,
+      "feasible_one_shot": false
+    }
+  ],
+  "reading": "Path C scale probe. Confirms the exact A(19,6) certificate is COMPUTE-BOUND, not impossible: the dual blocks round to PSD at P=1e8, the min-norm restoration zeroes the stationarity residuals, and \u230a\u03a3\u03b3\u2212\u03bd\u230b = 1280 (the certificate EXISTS and floors correctly). The wall is EXACT NONNEGATIVITY \u2014 hundreds of multipliers come out negative, so the one-at-a-time clamp is O(hundreds \u00d7 seconds). Completing A(19,6) needs a bit-controlled rational LP (Bareiss/integer-preserving simplex, min \u03a3\u03b3\u2212\u03bd s.t. stationarity + \u03b1,\u03b21,\u03b3\u22650) and/or a high-precision solve (SDPA-GMP) so the duals are well-separated \u2014 the panel's D6. Small cells (n\u22648) are already full exact certs (terwilliger_cert, GREEN)."
+}

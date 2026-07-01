@@ -362,10 +362,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     REJECTS a corrupted block** (`sound: True`) for A(4,2)/A(6,4) — the full **SDP→dual→exact-cert→kernel**
     chain is GREEN on small cells. Docker-gated test added. (Kernel-attests the PSD content; the full
     stationarity-in-Lean per D3 is a follow-on, Path B2.)
-  - **NEXT — the "all three" program:** (A) exact cert via clamp — **done, small cells**; (B) kernel verify —
-    **done, small cells**; (C) **scale to A(19,6)** — normalized-block solve + Bareiss (D6) and/or SDPA-GMP high
-    precision to beat the #213 compute-trap and produce the exact A(19,6) ≤ 1280 certificate (the remaining
-    piece); plus Path B2 (full stationarity system in Lean). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PATH C DIAGNOSED (2026-07-01) — A(19,6) is compute-bound, not impossible:**
+    `docs/results/terwilliger-phasec-2026-07-01.md`, `scripts/terwilliger_scale_probe.py`. Three walls isolated:
+    (1) conditioning **surmountable** — the dual rounds to exactly-PSD at **P=1e8**; (2) restoration **cheap** —
+    residuals→0 in ~1s and **⌊Σγ−ν⌋ = 1280** (the cert exists and floors to Schrijver's bound); (3) the wall is
+    **exact non-negativity** — 655 negative multipliers after restoration, so the one-at-a-time clamp (fine ≤
+    n≈8) is O(hundreds×s) = hours. Completing A(19,6) needs **(a)** a bit-controlled rational LP
+    (min Σγ−ν s.t. stationarity + α,β1,γ≥0; Bareiss/integer-preserving pivoting to bound #213 bit-growth),
+    self-contained, **or (b)** SDPA-GMP high-precision (operator-local install; panel D6). Guarded by
+    `tests/test_terwilliger_scale_probe.py`.
+  - **"All three" status:** (A) exact cert — **done, small cells**; (B) kernel verify — **done, small cells**;
+    (C) A(19,6) — **diagnosed; blocked on rational-LP-w/-Bareiss or SDPA-GMP**. Also open: Path B2 (full
+    stationarity system in Lean, D3). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
