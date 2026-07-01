@@ -1,0 +1,115 @@
+{
+  "verdict": "GREEN",
+  "cells": [
+    {
+      "n": 4,
+      "d": 2,
+      "n_free_vars": 7,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "block_sizes": [
+        5,
+        3,
+        1
+      ],
+      "objective_weights": [
+        0,
+        2,
+        4
+      ],
+      "delsarte_objective_ok": true,
+      "largest_block": 5
+    },
+    {
+      "n": 5,
+      "d": 2,
+      "n_free_vars": 7,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "block_sizes": [
+        6,
+        4,
+        2
+      ],
+      "objective_weights": [
+        0,
+        2,
+        4
+      ],
+      "delsarte_objective_ok": true,
+      "largest_block": 6
+    },
+    {
+      "n": 6,
+      "d": 2,
+      "n_free_vars": 13,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "block_sizes": [
+        7,
+        5,
+        3,
+        1
+      ],
+      "objective_weights": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "delsarte_objective_ok": true,
+      "largest_block": 7
+    },
+    {
+      "n": 6,
+      "d": 4,
+      "n_free_vars": 7,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "block_sizes": [
+        7,
+        5,
+        3,
+        1
+      ],
+      "objective_weights": [
+        0,
+        4,
+        6
+      ],
+      "delsarte_objective_ok": true,
+      "largest_block": 7
+    },
+    {
+      "n": 7,
+      "d": 4,
+      "n_free_vars": 7,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "block_sizes": [
+        8,
+        6,
+        4,
+        2
+      ],
+      "objective_weights": [
+        0,
+        4,
+        6
+      ],
+      "delsarte_objective_ok": true,
+      "largest_block": 8
+    }
+  ],
+  "reading": "GREEN = the mechanically-collected dual (const + \u03a3 coeff_v\u00b7x_v) equals the Lagrangian for all random exact-rational (x, duals) [no hand-derived sign survives a mismatch], a one-sign corruption breaks it [the check has teeth], and the k=0 objective variables are exactly the Delsarte inner-distribution weights. The dual STRUCTURE + CHECKER are ready; Phase 2 finds a feasible dual (normalized solve -> feasibility-at-target -> Bareiss). RED = a sign/index bug in the dual derivation."
+}
