@@ -23,25 +23,28 @@ Phase 2b turns Phase 2a's float solve into an **exact-rational** dual certificat
 So extraction, the sign convention, exact PSD, and exact stationarity are all correct — the certificate is one
 step from complete.
 
-## The one remaining step (AMBER)
-The certificate additionally needs the **boundary multipliers ≥ 0**. The min-norm correction leaves the
-complementary-slackness-zero multipliers at *vanishing* negatives (~1e-3 at P=1e5, ~1e-9 at P=1e10) — never
-exactly 0. Enforcing nonnegativity exactly (while keeping the tight bound) is an **exact rational LP** over the
-multipliers: `min Σγ − ν s.t. stationarity (equalities) + α,β1,γ ≥ 0`. This is precisely the hard step the
-external panel predicted (Kimi Q-dual-3: "cannot just add εI… solve a feasibility/optimization exactly";
-Fugu/Qwen: SDPA-GMP high precision). It is **bounded and well-specified**, not open-ended.
+## Nonnegativity — SOLVED for small cells (high-precision clamping)
+The boundary multipliers (complementary-slackness zeros) sit at vanishing negatives after the min-norm
+correction. Enforcing exact `α,β1,γ ≥ 0` is done by **iterative clamp-to-0 at high precision**: at P≥1e6 the
+negatives are ~1e-7, so clamping the most-negative multiplier to 0 and re-solving barely moves the (tight)
+bound; the loop converges to a genuinely nonneg dual. `dual_check` validates the result **exactly** (residuals
+0, Z⪰0, α,β1,γ≥0). **GREEN on all small cells:** A(4,2)→8, A(6,4)→4, A(7,4)→8, A(8,4)→16 are now full exact
+certificates (`certified 4/4`), guarded by `tests/test_terwilliger_cert.py`.
 
-## The fork (operator decision)
-1. **Exact rational LP** (I build it): a two-phase rational simplex over the multipliers. Robust and self-
-   contained, but the `Fraction` bit-length can grow (the #213 compute-trap) at n=19 — mitigable with Bareiss/
-   pivoting, but needs care. Best path to an exact A(19,6) ≤ 1280 certificate.
-2. **High-precision solver (SDPA-GMP)** for the warm start (the panel's D6), so the interior-point duals are
-   strictly positive to many digits and rounding preserves nonnegativity directly — avoids the rational LP but
-   adds an operator-local dependency.
-3. **Kernel now on the pipeline-verified small cells** (Phase 3): the small-cell duals already satisfy exact
-   PSD + exact stationarity; a targeted nonneg cleanup there is trivial, so we could exercise the Lean kernel
-   leg end-to-end on a small cell first, deferring the A(19,6) nonneg-LP.
+## A(19,6) — hits the #213 compute-trap (measured)
+The same exact method **does not scale to n=19**: the run produced no result in >10 min. Root cause is exactly
+the panel's Q-pit-2 / #213 warning — the 20×20 blocks + hundreds of clamp iterations, each an exact rational
+`MMᵀ` solve, drive `Fraction` bit-length up. The record cell needs the panel's D6 remedy: **normalized-block
+solve** (better conditioning ⇒ lower-precision rationals) and **Bareiss** bit-length control (#215), and/or a
+high-precision warm start (**SDPA-GMP**, Path C) so far fewer clamps are needed.
 
-## Status
-AMBER(nonneg-LP-pending). Pipeline verified 4/4; the exact nonneg step is the sole gap. Audit-tier
-(`DUAL_CERTIFICATE_CHECKED`); no trust surface touched; `tests/test_invariants.py` byte-identical.
+## Status & next (the "all three" program)
+Phase 2b **GREEN for small cells** (genuine exact audit-tier certificates through the real checker); A(19,6)
+exact cert is compute-bound and is the next target. Sequenced:
+- **Path A (done, small cells):** exact rational certificate via clamp — GREEN ≤ n≈8.
+- **Path B (Phase 3 kernel):** render a small-cell exact cert to Lean and kernel-verify end-to-end (the Lean
+  image is available here) — validates the full SDP→dual→exact-cert→kernel chain before scaling.
+- **Path C (scale to A(19,6)):** normalized-block solve + Bareiss (D6), and/or SDPA-GMP high precision, to beat
+  the compute-trap and produce the exact A(19,6) ≤ 1280 certificate.
+
+Audit-tier (`DUAL_CERTIFICATE_CHECKED`); no trust surface touched; `tests/test_invariants.py` byte-identical.
