@@ -1,0 +1,99 @@
+{
+  "gate": "GREEN",
+  "rows": [
+    {
+      "n": 6,
+      "naive_cert_bits": 944,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 447,
+      "bareiss_minor_bits": 130,
+      "bareiss_verifies": true,
+      "reduction_x": 2.11
+    },
+    {
+      "n": 10,
+      "naive_cert_bits": 2966,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 1215,
+      "bareiss_minor_bits": 224,
+      "bareiss_verifies": true,
+      "reduction_x": 2.44
+    },
+    {
+      "n": 14,
+      "naive_cert_bits": 6108,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 2368,
+      "bareiss_minor_bits": 320,
+      "bareiss_verifies": true,
+      "reduction_x": 2.58
+    },
+    {
+      "n": 18,
+      "naive_cert_bits": 10484,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 3915,
+      "bareiss_minor_bits": 418,
+      "bareiss_verifies": true,
+      "reduction_x": 2.68
+    },
+    {
+      "n": 22,
+      "naive_cert_bits": 15963,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 5838,
+      "bareiss_minor_bits": 516,
+      "bareiss_verifies": true,
+      "reduction_x": 2.73
+    },
+    {
+      "n": 26,
+      "naive_cert_bits": 22692,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 8210,
+      "bareiss_minor_bits": 616,
+      "bareiss_verifies": true,
+      "reduction_x": 2.76
+    },
+    {
+      "n": 30,
+      "naive_cert_bits": 30773,
+      "naive_verifies": true,
+      "bareiss_cert_bits": 10982,
+      "bareiss_minor_bits": 717,
+      "bareiss_verifies": true,
+      "reduction_x": 2.8
+    }
+  ],
+  "kernel": {
+    "status": "checked",
+    "rows": [
+      {
+        "n": 6,
+        "form_a_valid": true,
+        "form_a_bogus_rejected": true,
+        "form_b_valid": true,
+        "form_b_bogus_rejected": true
+      },
+      {
+        "n": 10,
+        "form_a_valid": true,
+        "form_a_bogus_rejected": true,
+        "form_b_valid": true,
+        "form_b_bogus_rejected": true
+      },
+      {
+        "n": 14,
+        "form_a_valid": true,
+        "form_a_bogus_rejected": true,
+        "form_b_valid": true,
+        "form_b_bogus_rejected": true
+      }
+    ],
+    "sound": true
+  },
+  "biggest_naive_bits": 30773,
+  "biggest_bareiss_bits": 10982,
+  "reduction_x_at_largest": 2.8,
+  "reading": "Bareiss fraction-free elimination mitigation for the measured compute trap (psd_scaling_probe.py): replaces the naive whole-matrix LCM denominator-clearing with a scale built only from products of ADJACENT leading principal minors (Hadamard-bounded), LCM'd across columns. GREEN => certs verify (Python + kernel) at strictly smaller bit-length than the naive route, confirming the mitigation. RED => Bareiss route fails to verify or does not reduce bit-length."
+}

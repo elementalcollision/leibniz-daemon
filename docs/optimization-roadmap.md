@@ -280,6 +280,21 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     Terwilliger three-point + Bareiss for scale) + the actual open-code-cell margin (measurable only in-build).
     Proxy caveat: odd-cycle ϑ, not the code three-point SDP. **The three-point SDP build is now justified.**
     Findings: `docs/results/irrationality-margin-test-2026-07-01.md` (needs cvxpy, operator-local).
+  - **FOUNDATION built (2026-07-01, multi-agent workflow, Sonnet 5 agents + adversarial verify):** the
+    achievable+validatable pieces are landed audit-tier — `scripts/bareiss_ldlt.py` (fraction-free
+    determinant-bounded PSD certificate: n=30 cert bits 30,773→10,982; form (b) minors-positive is cheaper
+    and the kernel recomputes the minors itself) and `scripts/sdp_code_bound.py` (real code-SDP → dual →
+    rational-cert → kernel, reproduced A(4,2)/A(4,4)/A(5,2) kernel-verified). Two build-shaping findings:
+    (i) the core-Lean checker walls at matrix dim N≈32–64 → the three-point dual must be checked
+    block-by-block ((n+1)×(n+1)), so the Terwilliger reduction is essential for the *kernel check*, not just
+    the solve; (ii) plain full-graph Lovász ϑ can be *weaker* than Delsarte LP (A(8,5): ϑ=6 vs 4) → the
+    three-point bound must include the LP constraints (k=0 block = Delsarte). Findings:
+    `docs/results/sdp-foundation-2026-07-01.md`.
+  - **NEXT — Terwilliger scaffolding = external round.** The one hard remaining piece (three-point
+    block-diagonalization) is scoped for external experts:
+    `docs/external-brief-terwilliger-threepoint-2026-07-01.md`. It also flags that the illustrative target
+    **"A(12,5) 40→32" is UNVERIFIED** (not in Schrijver's tables; confirmed alternatives A(19,6) 1289→1280,
+    A(17,6,7) 249→228) and must be corrected before the build. Soundness stays kernel-protected throughout.
 
 ## The ADRs
 
