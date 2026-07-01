@@ -258,6 +258,20 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     PSD certificate (integer LDLᵀ, denominators cleared). Scoping + first probe (reproduce an SDP-improved
     cell e.g. A(12,5) 40→32 via a rational PSD certificate): `docs/sdp-three-point-scoping-2026-07-01.md`.
     Recommend an external mini-round OR a $0 exact-PSD micro-probe before committing the multi-day build.
+  - **SDP GATE #212 — mechanism GREEN:** exact-PSD certs (integer LDLᵀ) kernel-verify; float→exact PSD
+    rounding recovers 18/18 (`docs/results/psd-certificate-microprobe-2026-07-01.md`).
+  - **EXTERNAL CRITIQUE + measurements (2026-07-01, REVISES the risk):** an external agent flagged the
+    micro-probe GREEN as a *mechanism* result, not a discovery one. (1) mechanism = Strict-PD + rational
+    Cholesky (validated; not LDLᵀ-on-boundary). (2) **compute trap measured real** — naive rational Cholesky
+    cert bit-length 944→30,773 bits (n=6→30), `scripts/psd_scaling_probe.py`; mitigable by **Bareiss
+    fraction-free** elimination (required build technique, untested). (3) **Irrationality Wall = the primary,
+    untested, plausibly-fatal risk** — on open cells the SDP optimal dual may have no rational point, so a
+    rational cert + εI margin can overshoot the integer and fail to certify the tightening; the A(12,5) probe
+    is a *False GREEN* (small/symmetric). **Revised gate (needs an SDP solver): reproduce A(12,5) with
+    Bareiss, then falsify the False-GREEN on a non-tight cell (A(14,5)/A(16,5)) by measuring the irrationality
+    margin.** Recommendation: do NOT commit the build on the mechanism GREEN alone; run the margin test or
+    bank LP and treat SDP discovery as a low-confidence deferred bet. Synthesis of the critique in
+    `docs/sdp-three-point-scoping-2026-07-01.md` (Addendum).
 
 ## The ADRs
 
