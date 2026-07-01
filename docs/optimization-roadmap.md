@@ -310,6 +310,23 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     regression + primal-dual cross-check), **not Q.E.D.**, until a Lean **bridge theorem** formalizes the
     Terwilliger reduction. **Two operator decisions open:** (1) trust tier — audit-now vs bridge-theorem-first;
     (2) first cell — verify-then-A(12,4)-else-A(19,6). Soundness stays kernel-protected throughout.
+  - **OPERATOR DECISIONS (2026-07-01):** (1) **audit-tier now** (`DUAL_CERTIFICATE_CHECKED`, bridge theorem a
+    later rung); (2) **verify-then-A(12,4)-else-A(19,6)**.
+  - **PHASE 0 COMPLETE (2026-07-01) — GREEN, free-CPU:** `docs/results/terwilliger-phase0-2026-07-01.md`.
+    (a) **Table I gate from Schrijver's actual paper:** **A(19,6) 1289→1280 CONFIRMED** (smallest-n row);
+    **A(12,4) is NOT in Table I** (Gemini hallucinated it — the table starts at n=19), so the verify-leg fails
+    and **the first cell resolves to A(19,6)**; A(12,5) absent (dropped); Table I is from (19)+(20), **no
+    split-Terwilliger**; constant-weight is a separate Johnson construction (confirms D1). Authoritative
+    **eq.(7)** extracted: `β=Σ_u (−1)^{u−t} C(u,t) C(n−2k,u−k) C(n−k−u,i−u) C(n−k−u,j−u)` — it is **C(u,t)**,
+    settling the reviewer conflict. (b) **Integer β generator** (`scripts/terwilliger_beta.py`) **validated
+    against combinatorial ground truth**: every real code's β-blocks (both families, all k) are exactly PSD
+    (16/16 across n=3..6), the transposed-binomial corruption breaks PSD (teeth), reviewer anchors settled
+    (GLM right, Kimi/Gemini wrong). Oracle published (`terwilliger_beta_oracle.tsv`, 372 entries); CI-guarded
+    (`tests/test_terwilliger_beta.py`).
+  - **NEXT — Phase 1 (mechanical dual):** Python conic model prints the dual; checker **recomputes the slack
+    S_k(y,β)** + a per-orbit identity *system* (not "one scalar identity", per D3); no hand-derived signs (D5).
+    Then Phase 2 (normalized solve → feasibility-at-target → Bareiss round), Phase 3 (block-by-block kernel
+    PSD; pivoted-LDLᵀ only if a slack is singular), Phase 4 (reproduce A(19,6)=1280 before any open cell).
 
 ## The ADRs
 
