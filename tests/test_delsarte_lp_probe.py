@@ -8,7 +8,14 @@ import importlib.util
 from math import comb
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent
+
+# ortools is an operator-local dependency (not in CI); the LP-solving tests skip cleanly when it is absent.
+# The Krawtchouk + render tests below are ortools-free and always run.
+_HAS_ORTOOLS = importlib.util.find_spec("ortools") is not None
+_needs_ortools = pytest.mark.skipif(not _HAS_ORTOOLS, reason="ortools is operator-local; LP probe skipped in CI")
 
 
 def _load(mod, rel):
@@ -29,6 +36,7 @@ def test_krawtchouk_identities():
     assert all(dl.krawtchouk(k, 0, n) == comb(n, k) for k in range(n + 1))  # K_k(0) = C(n,k)
 
 
+@_needs_ortools
 def test_verify_rejects_bogus_and_accepts_valid():
     n, d = 7, 3
     sol = dl.solve_dual_lp(n, d)
@@ -42,6 +50,7 @@ def test_verify_rejects_bogus_and_accepts_valid():
     assert bad_ok is False and probs                   # all-zero cert must fail the exact re-check
 
 
+@_needs_ortools
 def test_probe_green_and_no_cert_below_known():
     res = dl.probe()
     assert res["gate"] == "GREEN"
