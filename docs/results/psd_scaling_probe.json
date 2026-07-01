@@ -1,0 +1,67 @@
+{
+  "verdict": "COMPUTE-TRAP-CONFIRMED",
+  "D": 1000000,
+  "max_bits_at_largest": 30773,
+  "exact_verified": 7,
+  "kernel_verified": 4,
+  "rows": [
+    {
+      "n": 6,
+      "max_cert_bits": 944,
+      "scale_bits": 944,
+      "producer_secs": 0.0,
+      "exact_verifies": true,
+      "kernel": true,
+      "kernel_secs": 1.0
+    },
+    {
+      "n": 10,
+      "max_cert_bits": 2966,
+      "scale_bits": 2966,
+      "producer_secs": 0.001,
+      "exact_verifies": true,
+      "kernel": true,
+      "kernel_secs": 1.1
+    },
+    {
+      "n": 14,
+      "max_cert_bits": 6108,
+      "scale_bits": 6108,
+      "producer_secs": 0.002,
+      "exact_verifies": true,
+      "kernel": true,
+      "kernel_secs": 2.1
+    },
+    {
+      "n": 18,
+      "max_cert_bits": 10484,
+      "scale_bits": 10484,
+      "producer_secs": 0.005,
+      "exact_verifies": true,
+      "kernel": true,
+      "kernel_secs": 3.9
+    },
+    {
+      "n": 22,
+      "max_cert_bits": 15963,
+      "scale_bits": 15963,
+      "producer_secs": 0.009,
+      "exact_verifies": true
+    },
+    {
+      "n": 26,
+      "max_cert_bits": 22692,
+      "scale_bits": 22692,
+      "producer_secs": 0.01,
+      "exact_verifies": true
+    },
+    {
+      "n": 30,
+      "max_cert_bits": 30773,
+      "scale_bits": 30773,
+      "producer_secs": 0.019,
+      "exact_verifies": true
+    }
+  ],
+  "reading": "Tests the agent's compute-trap (gate #2): does the exact rational Cholesky certificate's integer bit-length / kernel time explode at Terwilliger scale? MANAGEABLE => bit-length stays bounded and the kernel checks in-budget (the trap is milder than feared for well-conditioned strict-PD certs). Does NOT test the Irrationality Wall (gate #1 \u2014 needs a real SDP solver)."
+}

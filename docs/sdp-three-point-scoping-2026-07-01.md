@@ -77,3 +77,51 @@ Either resolves whether the SDP discovery path is real before sinking a multi-da
 Prereqs already banked: the LP certificate architecture (`scripts/delsarte_lp_probe.py`,
 `scripts/delsarte_bank.py` — the kernel-checked UB corpus) and the core-Lean integer-certificate + Krawtchouk
 machinery this would extend.
+
+---
+
+## Addendum (2026-07-01) — external-agent critique + our measurements (REVISES the above)
+
+An external agent attacked this scoping. Its technical points are largely correct; folding them in materially
+changes the risk picture. The certificate MECHANISM is fine, but the DISCOVERY-critical risk was under-weighted.
+
+**(1) The mechanism is Strict-PD + rational Cholesky — NOT LDLᵀ on boundary PSD.** The agent is right that a
+tight SDP bound puts the optimal dual on the PSD-cone *boundary* (PSD-not-PD → LDLᵀ hits zero pivots → needs
+Bunch–Kaufman pivoting, a big Lean effort). The fix (and what the exact-PSD micro-probe #212 *already*
+implemented): push to the interior with an exact rational `εI`, giving strict PD → **rational Cholesky with
+no pivoting**. So the micro-probe's mechanism is validated — but note it dodged the boundary by construction,
+which is exactly why its GREEN is only a *mechanism* result.
+
+**(2) The compute trap is REAL — measured.** `scripts/psd_scaling_probe.py` (gate #2): with naive rational
+Cholesky the exact certificate's integer **bit-length grows ~quadratically — 944 bits (n=6) → 30,773 bits
+(n=30)** — and kernel-check time climbs (≈4 s at n=18). At Terwilliger-block scale this matches the agent's
+>10⁴-bit / kernel-timeout warning. **Mitigation (untested):** a **Bareiss / fraction-free** integer
+elimination bounds the certificate to determinant size (~hundreds of bits) — plausibly a naive-implementation
+wall, not fundamental (cf. the GATE-2 maxRecDepth artifact). A Bareiss LDLᵀ is a REQUIRED build technique, not
+optional.
+
+**(3) The Irrationality Wall is the PRIMARY, still-untested risk (likely fatal for discovery).** Spectrahedra
+have algebraic-irrational extreme points; on an *open* cell the optimal dual face may contain no rational
+point, so any rational dual-feasible certificate has objective strictly above the true optimum. The `εI` shift
+*adds* to the objective. If the SDP optimum sits just below the integer (e.g. 31.9…), the rational-over-
+approximation + `εI` margin can push `⌈objective⌉` to the next integer → **fails to certify the tighter
+bound**. The micro-probe (#212) did NOT test this — it ran on synthetic strict-PD matrices, and the scoping's
+original probe (reproduce A(12,5)=32, a small highly-symmetric cell with a wide rational face) is a **False
+GREEN**: reproducing it says nothing about open cells where the face is a single irrational point.
+
+**Revised gate (before any multi-day build) — needs an SDP solver (SCS/cvxpy, operator-local):**
+1. Reproduce A(12,5)=32 via a rational PSD (strict-PD Cholesky) certificate, using **Bareiss** to keep
+   bit-length bounded, kernel-checked. (Necessary, not sufficient.)
+2. **Falsify the False-GREEN:** run a slightly larger, *less-symmetric / non-tight* cell (e.g. A(14,5),
+   A(16,5)) and measure the **irrationality margin** — the gap between the rational-certified bound (with the
+   smallest `εI` that keeps denominators kernel-checkable) and the target integer. GREEN only if the margin
+   is positive on a cell where SDP must beat LP; RED if the rational+`εI` bound floors to the wrong integer.
+3. Confirm the Bareiss certificate stays kernel-checkable (bit-length + time) at the real block size.
+
+**Revised recommendation.** The build is **higher-risk than the micro-probe implied**: mechanism GREEN,
+compute-trap real-but-mitigable (Bareiss), and the **Irrationality Wall (agent's 95%) untested and plausibly
+fatal for discovery on open cells**. Do **not** commit the multi-day build on the micro-probe GREEN alone.
+Either (a) run the revised gate above (add an SDP solver → the irrationality-margin falsification test) — the
+honest measure-before-build step; or (b) **bank the LP win as the product and treat SDP discovery as a
+low-confidence, deferred bet.** Reproduction remains necessary-but-insufficient; the margin test is the real
+decision.
