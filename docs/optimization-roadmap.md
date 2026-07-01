@@ -272,6 +272,14 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     margin.** Recommendation: do NOT commit the build on the mechanism GREEN alone; run the margin test or
     bank LP and treat SDP discovery as a low-confidence deferred bet. Synthesis of the critique in
     `docs/sdp-three-point-scoping-2026-07-01.md` (Addendum).
+  - **REVISED GATE — irrationality-margin test GREEN (2026-07-01):** ran the agent's primary risk directly on
+    genuinely-irrational SDP optima (Lovász ϑ of odd cycles, ϑ(C₅)=√5) — a kernel-checked *rational* PSD
+    certificate floored to the correct integer α on 4/4 graphs with an achievable **irrationality tax ≈
+    0.002** (≪ 0.01). The irrationality wall is **surmountable**, not fatal (downgrades the agent's 95%). Both
+    SDP gates now GREEN (mechanism #212 + irrationality-margin). Residual = ordinary engineering (SDP solver +
+    Terwilliger three-point + Bareiss for scale) + the actual open-code-cell margin (measurable only in-build).
+    Proxy caveat: odd-cycle ϑ, not the code three-point SDP. **The three-point SDP build is now justified.**
+    Findings: `docs/results/irrationality-margin-test-2026-07-01.md` (needs cvxpy, operator-local).
 
 ## The ADRs
 
