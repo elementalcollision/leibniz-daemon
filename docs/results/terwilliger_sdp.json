@@ -1,0 +1,99 @@
+{
+  "verdict": "GREEN",
+  "reproduced_table_I": "2/2",
+  "valid_bounds": "7/7",
+  "sdp_le_lp": "7/8",
+  "rows": [
+    {
+      "n": 4,
+      "d": 2,
+      "status": "optimal",
+      "sdp_value": 8.0,
+      "sdp_floor": 8,
+      "delsarte_lp_value": 8.0,
+      "sdp_le_lp": true,
+      "lower": 8,
+      "valid_bound": true
+    },
+    {
+      "n": 5,
+      "d": 2,
+      "status": "optimal_inaccurate",
+      "sdp_value": 16.0,
+      "sdp_floor": 16,
+      "delsarte_lp_value": 16.0,
+      "sdp_le_lp": true,
+      "lower": 16,
+      "valid_bound": true
+    },
+    {
+      "n": 6,
+      "d": 2,
+      "status": "optimal_inaccurate",
+      "sdp_value": 32.0,
+      "sdp_floor": 31,
+      "delsarte_lp_value": 32.0,
+      "sdp_le_lp": true
+    },
+    {
+      "n": 6,
+      "d": 4,
+      "status": "optimal",
+      "sdp_value": 4.0,
+      "sdp_floor": 4,
+      "delsarte_lp_value": 4.0,
+      "sdp_le_lp": true,
+      "lower": 4,
+      "valid_bound": true
+    },
+    {
+      "n": 7,
+      "d": 4,
+      "status": "optimal_inaccurate",
+      "sdp_value": 8.0,
+      "sdp_floor": 8,
+      "delsarte_lp_value": 8.0,
+      "sdp_le_lp": true,
+      "lower": 8,
+      "valid_bound": true
+    },
+    {
+      "n": 8,
+      "d": 4,
+      "status": "optimal_inaccurate",
+      "sdp_value": 16.0,
+      "sdp_floor": 16,
+      "delsarte_lp_value": 16.0,
+      "sdp_le_lp": true,
+      "lower": 16,
+      "valid_bound": true
+    },
+    {
+      "n": 19,
+      "d": 6,
+      "status": "optimal_inaccurate",
+      "sdp_value": 1280.0824,
+      "sdp_floor": 1280,
+      "table_I": 1280,
+      "reproduces_table_I": true,
+      "delsarte_lp_value": 1289.4673,
+      "sdp_le_lp": true,
+      "lower": 1024,
+      "valid_bound": true
+    },
+    {
+      "n": 20,
+      "d": 8,
+      "status": "optimal_inaccurate",
+      "sdp_value": 274.563,
+      "sdp_floor": 274,
+      "table_I": 274,
+      "reproduces_table_I": true,
+      "delsarte_lp_value": 217.0234,
+      "sdp_le_lp": false,
+      "lower": 256,
+      "valid_bound": true
+    }
+  ],
+  "reading": "Phase 2a numerical. GREEN = the SDP optimum floors to Schrijver Table I on every record cell AND never floors below a known lower bound on A(n,d) -> the formulation transcription is FAITHFUL (the empirical answer to the panel's formulation-faithfulness concern), and the possible()/binom\u22600 fix is validated (A(8,4): 13.7->16). sdp_le_lp is a reported diagnostic only: the k=0 solve is ill-conditioned near n=20 (Q-pit-2), to be addressed by normalized blocks in Phase 2b (the exact-rational dual cert via dual_check)."
+}

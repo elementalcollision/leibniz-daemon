@@ -54,12 +54,20 @@ is_psd_exact = tb.is_psd_exact  # the real-code PSD differential test + a corrup
 
 # ---- primal structure ------------------------------------------------------------------------------------
 
+def possible(n, i, j, t):
+    """A triple (X,Y,Z) with |X△Y|=i, |X△Z|=j, |(X△Y)∩(X△Z)|=t can EXIST iff the disjoint-subset multinomial
+    binom(n; i−t, j−t, t) ≠ 0, i.e. (i−t)+(j−t)+t = i+j−t ≤ n with all parts ≥ 0. Schrijver eq. (10) SETS
+    x^t_{i,j}=0 in this impossible case, so such (i,j,t) are NOT free variables and carry NO (20) constraint —
+    omitting this is what wrongly admitted phantom variables (e.g. key (8,8,8) at n=8) and invalidated the SDP."""
+    return 0 <= t <= min(i, j) and i <= n and j <= n and 0 <= i + j - 2 * t and i + j - t <= n
+
+
 def valid_triples(n):
-    """Ordered (t,i,j): 0≤t≤min(i,j), 0≤i,j≤n, 0≤i+j−2t≤n."""
+    """Ordered POSSIBLE (t,i,j): 0≤t≤min(i,j), i,j≤n, 0≤i+j−2t, and i+j−t≤n (binom≠0)."""
     for i in range(n + 1):
         for j in range(n + 1):
             for t in range(min(i, j) + 1):
-                if 0 <= i + j - 2 * t <= n:
+                if possible(n, i, j, t):
                     yield t, i, j
 
 
@@ -120,7 +128,7 @@ def lagrangian(n, d, xass, duals, corrupt=False):
                 mpk = Fr(0)
                 for t in range(min(i, j) + 1):
                     s = i + j - 2 * t
-                    if not (0 <= s <= n):
+                    if not possible(n, i, j, t):
                         continue
                     bijk = beta(n, i, j, k, t)
                     if not bijk:
@@ -163,7 +171,7 @@ def collected(n, d, duals, corrupt=False):
             for b, j in enumerate(idx):
                 for t in range(min(i, j) + 1):
                     s = i + j - 2 * t
-                    if not (0 <= s <= n):
+                    if not possible(n, i, j, t):
                         continue
                     bijk = beta(n, i, j, k, t)
                     if not bijk:
