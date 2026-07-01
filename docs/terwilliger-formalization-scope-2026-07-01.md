@@ -56,15 +56,22 @@ claim of 1279). Small cells (A(4,2)/A(6,4)) as fast regressions. All docker-gate
 
 **Risks & mitigations.** (a) `decide` cost of the β verification (8076 entries × binomial sums): default
 strategy = one theorem per (k,t) slice; escalate to supplied-and-verified Pascal-row tables only if a slice
-exceeds ~60 s under `LeanCliBackend(timeout_s=900)`. (b) Source size (~1–2 MB with the β table): B2 showed
-164 KiB is fine; chunk into multiple `check_source` calls if the elaborator balks. **Size: M — one focused
-session.** No trusted-surface edits (standalone checker; `LeanVerifier.discharge` untouched).
+exceeds ~60 s under `LeanCliBackend(timeout_s=900)`. **Benchmark the k=0 slice FIRST** — it is the largest
+(i,j ∈ {0..19}, ~8000 of the entries live at small k) and decides the strategy for everything else; the #209
+Delsarte precedent (kernel binomials to n=24) suggests it passes, but that is unbenchmarked at this shape.
+(b) Source size: measured components put the full render at **~0.4–0.5 MB** (the 20-block PSD render is
+165 KiB; the β table adds ~0.2–0.3 MB at ~25–40 chars/entry) — ~3× the largest source the kernel has accepted
+so far (164 KiB, B2), so chunk into multiple `check_source` calls (e.g. per-k files) if the elaborator balks.
+**Size: M — one focused session.** No trusted-surface edits (standalone checker; `LeanVerifier.discharge`
+untouched).
 
 **Cold-start pointers (F1) — the specs are the existing implementations; transcribe, don't re-derive:**
 - The *exact* stationarity coefficient structure (orbit binding, block indexing, multiplier contributions) is
   `collected()` in `scripts/terwilliger_dual.py` — the Lean checker mirrors that function line-for-line; its
   correctness is already machine-validated (Lagrangian-identity + weak-duality tests with corrupt-controls).
-- β ground truth: `td.beta` (eq. 7 verbatim, Phase-0-validated) + `docs/results/terwilliger_beta_oracle.tsv`.
+- β ground truth: `td.beta` (eq. 7 verbatim, Phase-0-validated) + `docs/results/terwilliger_beta_oracle.tsv`
+  (TSV schema `n\tk\tt\ti\tj\tbeta`, nonzero entries only — n≤6 today; the renderer generates the n=19 table
+  the same way, from `td.beta` over `td.block_idx`/`td.possible`, and the kernel re-verifies it against eq. 7).
 - Certificate data source: `terwilliger_exact_lp.certify_lp(19, 6, target=1280, return_duals=True)` (~17 s;
   cache the duals — they are deterministic given the solver seed-free Clarabel run, but re-solves may vary
   slightly, so persist the certified duals to JSON as part of the build).
