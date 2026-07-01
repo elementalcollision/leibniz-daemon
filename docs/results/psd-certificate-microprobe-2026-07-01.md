@@ -8,7 +8,7 @@ specific SDP. Audit/measurement only; no trust touch; tests/test_invariants.py b
 
 The SDP three-point scoping flagged the make-or-break as the leg **unique to Leibniz's trust boundary**:
 can a float PSD solution be rounded to an **exact rational PSD certificate the kernel checks cheaply**? That
-is independent of the specific SDP, so this $0 probe isolates it (no SDP solver is installed — only numpy).
+is independent of the specific SDP, so this $0 probe isolates it (no SDP solver is installed).
 
 ## Kernel-checkable PSD certificate (integer, core Lean, no Mathlib)
 The producer supplies integer `L` (lower-triangular), integer diagonal `d`, positive integer `scale` with

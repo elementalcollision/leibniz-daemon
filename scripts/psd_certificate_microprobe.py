@@ -117,36 +117,39 @@ def render_ldlt_lean(M_int, L_int, d_int, scale) -> str:
 
 
 def _exact_pd(seed: int, n: int):
-    """Exact rational PD matrix M = AᵀA + I (A small-integer, +I => strictly PD). Returns M (Fraction), M_int
-    (== M here, integer) and its integer form for the certificate."""
-    import numpy as np
-    rng = np.random.default_rng(seed)
-    A = rng.integers(-3, 4, size=(n, n))
-    Mi = (A.T @ A) + np.eye(n, dtype=int) * (n)   # integer, strictly PD
-    M = [[Fr(int(Mi[i][j])) for j in range(n)] for i in range(n)]
-    return M, [[int(Mi[i][j]) for j in range(n)] for i in range(n)]
+    """Exact rational PD matrix M = AᵀA + n·I (A small-integer, +nI => strictly PD). Pure Python (no numpy).
+    Returns (M as Fractions, M_int integer)."""
+    import random
+    rng = random.Random(seed)
+    A = [[rng.randint(-3, 3) for _ in range(n)] for _ in range(n)]
+    M_int = [[sum(A[k][i] * A[k][j] for k in range(n)) + (n if i == j else 0) for j in range(n)]
+             for i in range(n)]
+    return [[Fr(M_int[i][j]) for j in range(n)] for i in range(n)], M_int
 
 
 def _rounding_recovers(seed: int, n: int) -> bool:
-    """Simulate a solver float PSD matrix: floatify an exact PD M + noise, round back to integers + a
-    diagonal shift to restore exact PD, and check an exact integer certificate recovers."""
-    import numpy as np
-    M, M_int = _exact_pd(seed, n)
-    Mf = np.array([[float(M[i][j]) for j in range(n)] for i in range(n)]) + \
-        np.random.default_rng(seed + 1).normal(0, 0.25, (n, n))
-    Mf = (Mf + Mf.T) / 2
-    Mr = np.rint(Mf).astype(int)
-    Mr = (Mr + Mr.T) // 2 * 2 // 2  # keep symmetric integer
+    """Simulate a solver float PSD matrix: floatify an exact PD M + symmetric Gaussian noise, round back to
+    integers + a diagonal shift to restore exact PD, and check an exact integer certificate recovers. Pure
+    Python (no numpy)."""
+    import random
+    _M, M_int = _exact_pd(seed, n)
+    rng = random.Random(seed + 1)
+    noise = [[0.0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(i, n):
+            noise[i][j] = noise[j][i] = rng.gauss(0, 0.25)
+    Mr = [[round(M_int[i][j] + noise[i][j]) for j in range(n)] for i in range(n)]
+    for i in range(n):                       # enforce integer symmetry after rounding
+        for j in range(i + 1, n):
+            Mr[j][i] = Mr[i][j]
     for shift in (0, 1, 2, 4, 8, 16, 32):
-        Ms = Mr + np.eye(n, dtype=int) * shift
-        Msym = [[Fr(int(Ms[i][j])) for j in range(n)] for i in range(n)]
-        res = ldlt(Msym)
+        Ms = [[Mr[i][j] + (shift if i == j else 0) for j in range(n)] for i in range(n)]
+        res = ldlt([[Fr(Ms[i][j]) for j in range(n)] for i in range(n)])
         if res is None:
             continue
         L, d = res
         Li, di, sc = clear_denoms(L, d)
-        Mi = [[int(Ms[i][j]) for j in range(n)] for i in range(n)]
-        if verify_int_cert(Mi, Li, di, sc):
+        if verify_int_cert(Ms, Li, di, sc):
             return True
     return False
 
