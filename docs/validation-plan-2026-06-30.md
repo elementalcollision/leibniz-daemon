@@ -20,6 +20,13 @@ audit-tier guarantees. **Nothing here touches the trust core.**
 > below): the proof-edge-de-risking items (GATE-3 cluster) are **deferred with the proof-edge**, and the
 > amplification-spine-hardening items (**GATE-4 soundness backstop, GATE-2 decide-wall, GATE-5 CI guard**)
 > are promoted to the active Tier-2 set.
+>
+> **Tier 2 ✅ RESOLVED (2026-06-30, docs/results/tier2-results-2026-06-30.md).** GATE-4 GREEN (20/20 false
+> rejected, 10/10 true accepted). GATE-2 measured — covering `decide` verifies to ~C(v,t)=1,140/~170 blocks;
+> a `maxRecDepth` artifact that was silently breaking all t≥3 covering kernel-checks is FIXED in
+> `render_covering_lean` (a sound resource limit; a real completeness gain); **no soundness alarm**. GATE-5
+> GREEN (full soak 861 passed / 1 expected skip; skip-guard + widened strict lane). The post-D0 validation
+> arc is complete: the amplification spine is sound, bounded, and continuously guarded.
 
 ## The two forks the ladder exists to settle
 1. **Does any beatable-AND-renderable covering cell exist beyond the proven-optimal reachable band?** —
