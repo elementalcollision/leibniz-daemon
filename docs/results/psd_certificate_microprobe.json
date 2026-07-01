@@ -1,0 +1,33 @@
+{
+  "gate": "GREEN",
+  "exact_certs_verified": "3/3",
+  "kernel": {
+    "status": "checked",
+    "valid_cert": true,
+    "bogus_cert": false,
+    "sound": true
+  },
+  "rounding": {
+    "trials": 18,
+    "recovered": 18,
+    "rate": 1.0
+  },
+  "rows": [
+    {
+      "n": 3,
+      "exact_cert_verifies": true,
+      "scale": 140608
+    },
+    {
+      "n": 4,
+      "exact_cert_verifies": true,
+      "scale": 205211101447478848696632
+    },
+    {
+      "n": 5,
+      "exact_cert_verifies": true,
+      "scale": 627154430724195283222745820005979648
+    }
+  ],
+  "reading": "Isolates the trust-boundary-unique make-or-break for the SDP bet: exact-PSD kernel-checkable certificates (integer LDL\u1d40) + rounding a noisy float PSD to an exact PSD cert. GREEN => both legs feasible; the residual build is (a) an SDP solver dep (SCS/cvxpy) and (b) the Terwilliger three-point formulation. RED => exact-PSD rounding/kernel-check infeasible; bank LP as the final word."
+}
