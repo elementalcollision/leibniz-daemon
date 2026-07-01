@@ -403,6 +403,11 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     not new math — Schrijver computed n≤28; discovery needs the beyond-Table-I reach probe (cheap, first),
     eq.(25) sharpenings, the Johnson-scheme build (D1), or post-2005 hierarchies. Recommended order:
     ① reach probe ② F1 ③ F2a ④ operator decision on F2b/F2c.
+  - **SESSION HANDOFF (2026-07-01):** `docs/handoff-terwilliger-sessions-2026-07-01.md` — the first file a
+    fresh session should read: state snapshot at `c666c8f`, code map, measured numbers not to re-derive, the
+    five standing traps (check_source-False-on-resource-error; `td.possible()`; macOS timeout; dep gating;
+    process constants), and per-ticket kickoff prompts + gates for ① (#99, full probe spec incl. the Brouwer
+    snapshot protocol and the GREEN(candidate)/DRY gate) ② (#100) ③ (#101).
 
 ## The ADRs
 
