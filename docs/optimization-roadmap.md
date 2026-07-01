@@ -333,10 +333,19 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     weights); GREEN on A(4,2)/A(5,2)/A(6,2)/A(6,4)/A(7,4). Adversarial panel (4 lenses): primal-fidelity,
     dual-correctness, code/edge-cases all **SOUND**; the one CONCERN was scope-restatement (formulation not
     machine-checked = the audit caveat; β validated in Phase 0). CI-guarded (`tests/test_terwilliger_dual.py`).
-  - **NEXT — Phase 2 (solver, operator-local):** feed the checker a numerically-solved dual — normalized-block
-    solve (cvxpy/Clarabel) → transform back to exact rationals → **feasibility-at-target** (D2a) → Bareiss
-    round (#215). Then Phase 3 (block-by-block kernel PSD; pivoted-LDLᵀ only if a slack is singular), Phase 4
-    (reproduce **A(19,6)=1280** end-to-end before any open cell). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
+  - **PHASE 2a COMPLETE (2026-07-01) — GREEN, operator-local (cvxpy):**
+    `docs/results/terwilliger-phase2a-2026-07-01.md`, `scripts/terwilliger_sdp.py`. The cvxpy/Clarabel solve of
+    the Schrijver primal **reproduces Table I: A(19,6) 1289→1280 and A(20,8)→274** — the empirical
+    formulation-faithfulness check (the panel's #1 concern), verified against *published* values. **Caught +
+    fixed a real formulation bug:** impossible triples (`binom(n;i−t,j−t,t)=0`, i.e. `i+j−t>n`; Schrijver
+    eq.10) were admitted as phantom variables (key `(8,8,8)` at n=8), making A(8,4) floor to an *invalid*
+    13.7<16; the `possible()`/`i+j−t≤n` fix (in `terwilliger_dual.py` + the SDP build) restores A(8,4)=16 and a
+    GREEN soundness sweep (no bound floors below a known lower bound). Free-CPU regression guards it. Caveats →
+    Phase 2b: float floors are indicative (A(6,2)→31.9999) and the n≈20 k=0 solve is ill-conditioned (Q-pit-2).
+  - **NEXT — Phase 2b (exact dual, operator-local):** extract the dual from a **normalized** solve → transform
+    back to exact rationals → **feasibility-at-target** (fix t=1280, restore strict-PD; D2a) → **Bareiss**
+    round (#215) → Phase-1 `dual_check` for an **exact** audit-tier bound on A(19,6). Then Phase 3 (block-by-
+    block kernel PSD; pivoted-LDLᵀ only if a slack is singular). Tier stays audit (`DUAL_CERTIFICATE_CHECKED`).
 
 ## The ADRs
 
