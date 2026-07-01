@@ -13,16 +13,24 @@ assessed candidate domains against the Gate-B0 4-way conjunction (MECHANISM ∧ 
 NON-COINCIDENCE) plus the two constraints this project has repeatedly found binding — producer-reachability
 and a clean witness-shipping oracle — and every one fails.
 
-## The structural law (the real finding)
-> Wherever a positive witness is cheap for the kernel to decide (polynomial predicate), the record at
-> reachable scale is already **proven-optimal, closed-form, or exhaustively classified** — the
-> sound-checkable-AND-finitely-renderable band and the open-headroom band **do not overlap.**
+## The structural hypothesis (scoped — see the external-round correction below)
+> In the surveyed public-table finite-witness **positive/lower-bound** domains, the intersection of cheap
+> kernel checking, a clean oracle, and reachable open headroom was **empty**: wherever a positive witness is
+> cheap for the kernel to decide, the reachable-scale record is already proven-optimal, closed-form, or
+> exhaustively classified.
 
 This generalizes the covering result (0 beats / 22 proven-optimal over 71 cells) to six more families. It is
 structural, not a failure of search effort: the objects with cheap kernel checks are exactly the well-studied
 ones whose small cases are settled; the objects with open headroom need exponential non-existence proofs
 (the Ramsey/Gate-B2 decide-wall) or human-directed prescribed-automorphism search (the CWC/Gate-D0 producer
 wall).
+
+> **External-round correction (2026-06-30, `docs/external-round-discovery-frontier-synthesis.md`).** The
+> external panel accepted this for positive-witness table-beating but flagged it was **overstated as a
+> "law"** — it is a **scoped hypothesis**. It does NOT cover the bands the panel identified as the escape:
+> **upper-bound / negative certificates** (e.g. Delsarte LP duals), **non-existence** (SAT-UNSAT), and
+> **falsification**. Those attack a different (continuous / search) band the scout never tested. Direction
+> pivots there; see the synthesis.
 
 ## Per-family (all DEAD)
 | family | mechanism | why DEAD |
