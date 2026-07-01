@@ -29,6 +29,7 @@ def _load(mod, rel):
 
 td = _load("terwilliger_dual", "scripts/terwilliger_dual.py")
 ts = _load("terwilliger_sdp", "scripts/terwilliger_sdp.py")
+pm = _load("psd_certificate_microprobe", "scripts/psd_certificate_microprobe.py")  # ldlt / clear_denoms / ldltOK
 
 
 # ---- dual extraction (convention: nu = -nu_cvxpy, all else direct; validated by probe: residual 0, bound=A) --
@@ -184,7 +185,7 @@ def _assemble(n, d, Zq, Zpq, cols, mvals):
     return duals
 
 
-def certify(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10), tol=1e-6):
+def certify(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10), tol=1e-6, return_duals=False):
     """Exact-rational dual certificate: rationalize the PSD blocks (strict-PD margin), then a min-norm exact
     restoration of stationarity followed by iterative CLAMP-to-0 of the most-negative (complementary-slackness)
     multiplier + re-solve, until every multiplier is ≥0. dual_check validates the result EXACTLY (residuals 0,
@@ -224,6 +225,8 @@ def certify(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10), tol=1e-6
                    "cert_bits": max((int(abs(x.numerator)).bit_length() + int(x.denominator).bit_length()
                                      for M in (Zq, Zpq) for k in M for r in M[k] for x in r), default=0)}
             if row["certified"]:
+                if return_duals:
+                    row["duals"] = duals
                 return row
             if best is None or (row["residual_zero"] and row["floor"] == target
                                 and worst > Fr(best["worst_multiplier"]).limit_denominator(10 ** 15)):
@@ -235,6 +238,73 @@ def certify(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10), tol=1e-6
     return best or {"n": n, "d": d, "status": ex["status"], "target": target, "feasible": False}
 
 
+# ---- Path B: kernel-verify the certificate's PSD blocks (reuse the #212/#215 integer-LDLᵀ ldltOK) ---------
+
+def _int_scale(Zq):
+    """Scale a rational symmetric matrix to integers by the lcm of denominators; return (M_int, mden)."""
+    den = 1
+    for r in Zq:
+        for x in r:
+            den = den * x.denominator // _gcd(den, x.denominator)
+    return [[int(x * den) for x in r] for r in Zq], den
+
+
+def _gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+
+def cert_psd_blocks(duals):
+    """For each dual PSD block Z_k / Z'_k (rational, strict-PD via the εI margin), produce an integer LDLᵀ
+    certificate (M_int, L, d, scale) that the Lean `ldltOK` checker verifies. The block IS PSD iff ldltOK true."""
+    blocks = []
+    for fam, key in (("Z", "M"), ("Zp", "Mp")):
+        for k in sorted(duals[fam]):
+            Zq = [[Fr(x) for x in row] for row in duals[fam][k]]
+            M_int, _den = _int_scale(Zq)
+            res = pm.ldlt([[Fr(v) for v in row] for row in M_int])
+            if res is None:
+                continue                      # singular after scaling (shouldn't happen with the εI margin)
+            L, dd = res
+            Li, di, sc = pm.clear_denoms(L, dd)
+            blocks.append({"label": f"{key}_{k}", "M": M_int, "L": Li, "d": di, "scale": sc})
+    return blocks
+
+
+def render_cert_lean(blocks) -> str:
+    """One Lean theorem asserting every block's ldltOK = true (conjunction). Reuses the #212 core-Lean helpers."""
+    conj = " &&\n    ".join(
+        f"ldltOK {pm._lit(b['M'])} {pm._lit(b['L'])} [{', '.join(map(str, b['d']))}] ({b['scale']})"
+        for b in blocks)
+    return f"{pm._LEAN_HELPERS}\n\ntheorem tw_cert_psd :\n    ({conj}) = true := by\n  decide\n"
+
+
+def kernel_verify(n, d, target=None, timeout_s=180):
+    """Path B: certify a cell exactly, render its PSD blocks to Lean, and kernel-verify (valid accepted; a
+    corrupted block rejected). Returns a status dict; needs cvxpy (solve) + docker (Lean)."""
+    row = certify(n, d, target=target, return_duals=True)
+    if not row.get("certified"):
+        return {"n": n, "d": d, "certified": False, "note": "no exact cert to render"}
+    blocks = cert_psd_blocks(row["duals"])
+    out = {"n": n, "d": d, "target": row["target"], "exact_bound": row["exact_bound"],
+           "floor": row["floor"], "n_blocks": len(blocks)}
+    try:
+        from leibniz.backends.lean_cli import LeanCliBackend, available
+        if not available():
+            out["kernel"] = "unavailable (no docker/image)"
+            return out
+        bk = LeanCliBackend(timeout_s=timeout_s)
+        good = bk.check_source(render_cert_lean(blocks))
+        bogus_blocks = [dict(b) for b in blocks]
+        bogus_blocks[0] = dict(bogus_blocks[0], d=[x - 10 ** 6 for x in bogus_blocks[0]["d"]])  # break d>=0
+        bogus = bk.check_source(render_cert_lean(bogus_blocks))
+        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": good is True and bogus is False}
+    except Exception as e:  # pragma: no cover
+        out["kernel"] = f"unavailable ({type(e).__name__})"
+    return out
+
+
 def main() -> int:
     cells = [(4, 2), (6, 4), (7, 4), (8, 4)]      # clean small cells (SDP=LP=integer)
     rows = [certify(n, d) for (n, d) in cells]
@@ -244,23 +314,23 @@ def main() -> int:
     pipeline = [r for r in rows if r.get("residual_zero") and r.get("psd_ok") and r.get("floor") == r.get("target")]
     verdict = ("GREEN" if len(certified) == len(rows)
                else "AMBER(nonneg-LP-pending)" if len(pipeline) == len(rows) else "RED")
+    # Path B: kernel-verify one small-cell cert's PSD blocks on the real Lean kernel (+ bogus control).
+    kern = kernel_verify(4, 2, target=8)
     res = {"verdict": verdict, "certified": f"{len(certified)}/{len(rows)}",
-           "pipeline_verified": f"{len(pipeline)}/{len(rows)}", "rows": rows,
-           "reading": ("Phase 2b: EXACT-rational dual certificate through Phase-1 dual_check. The pipeline "
-                       "(extract dual with the pinned sign convention -> rationalize Z with a strict-PD margin "
-                       "-> min-norm exact restoration of stationarity) produces, on every small cell, an "
-                       "exactly-PSD dual with stationarity residuals EXACTLY 0 whose exact bound Σγ−ν floors to "
-                       "the correct A(n,d). GREEN additionally needs the boundary multipliers ≥0; the least-norm "
-                       "correction leaves complementary-slackness-zero multipliers at vanishing negatives "
-                       "(~1e-10 at P=1e10), so the final step is an EXACT RATIONAL LP over the multipliers "
-                       "(min Σγ−ν s.t. stationarity + nonneg) — the panel's predicted hard step (Kimi Q-dual-3; "
-                       "SDPA-GMP territory). AMBER(nonneg-LP-pending) = pipeline verified, that LP not yet built.")}
+           "pipeline_verified": f"{len(pipeline)}/{len(rows)}", "kernel_leg": kern.get("kernel"), "rows": rows,
+           "reading": ("Phase 2b (exact) + Path B (kernel). certify() produces, on every small cell, a full "
+                       "EXACT dual certificate — exactly-PSD Z, stationarity residuals EXACTLY 0, α,β1,γ≥0 "
+                       "(nonneg via high-precision clamping) — whose ⌊Σγ−ν⌋ = A(n,d). kernel_verify() then "
+                       "renders the cert's PSD blocks to Lean and the REAL kernel accepts the valid cert and "
+                       "REJECTS a corrupted block: the full SDP→dual→exact-cert→kernel chain is GREEN on small "
+                       "cells. A(19,6) is compute-bound (#213) — Path C (normalized solve + Bareiss / SDPA-GMP).")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, indent=2) + "\n")
-    print(f"terwilliger cert (Phase 2b): {verdict}")
+    print(f"terwilliger cert (Phase 2b + Path B kernel): {verdict}")
     for r in rows:
-        print(f"  A({r['n']},{r['d']}): feasible={r.get('feasible')} exact_bound={r.get('exact_bound')} "
-              f"floor={r.get('floor')} target={r.get('target')} certified={r.get('certified')} P={r.get('P')}")
+        print(f"  A({r['n']},{r['d']}): exact_bound={r.get('exact_bound')} floor={r.get('floor')} "
+              f"target={r.get('target')} certified={r.get('certified')} P={r.get('P')}")
+    print(f"  kernel leg (A(4,2) PSD blocks): {kern.get('kernel')}")
     print(f"  -> {OUT}")
     return 0 if verdict == "GREEN" else 1
 

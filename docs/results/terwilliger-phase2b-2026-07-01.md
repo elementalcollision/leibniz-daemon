@@ -42,9 +42,13 @@ high-precision warm start (**SDPA-GMP**, Path C) so far fewer clamps are needed.
 Phase 2b **GREEN for small cells** (genuine exact audit-tier certificates through the real checker); A(19,6)
 exact cert is compute-bound and is the next target. Sequenced:
 - **Path A (done, small cells):** exact rational certificate via clamp — GREEN ≤ n≈8.
-- **Path B (Phase 3 kernel):** render a small-cell exact cert to Lean and kernel-verify end-to-end (the Lean
-  image is available here) — validates the full SDP→dual→exact-cert→kernel chain before scaling.
+- **Path B (Phase 3 kernel) — DONE (small cells):** `kernel_verify()` renders the exact cert's PSD blocks
+  (Z_k, Z'_k) to Lean via the proven #212/#215 `ldltOK` and the **real Lean 4.31 kernel accepts the valid cert
+  and REJECTS a corrupted block** (`sound: True`) for A(4,2) and A(6,4). The full **SDP → dual → exact-cert →
+  kernel** chain is GREEN on small cells. Guarded by `tests/test_terwilliger_cert.py` (docker-gated). NOTE:
+  Path B kernel-attests the PSD *content* (the kernel-nontrivial part); rendering the full stationarity system
+  in Lean (D3 "kernel recomputes S_k from β") is a larger follow-on (Path B2).
 - **Path C (scale to A(19,6)):** normalized-block solve + Bareiss (D6), and/or SDPA-GMP high precision, to beat
-  the compute-trap and produce the exact A(19,6) ≤ 1280 certificate.
+  the compute-trap and produce the exact A(19,6) ≤ 1280 certificate. (The remaining piece.)
 
 Audit-tier (`DUAL_CERTIFICATE_CHECKED`); no trust surface touched; `tests/test_invariants.py` byte-identical.
