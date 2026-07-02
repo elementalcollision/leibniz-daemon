@@ -29,4 +29,10 @@ RUN lake update \
  && lake exe cache get \
  && lake build
 
+# The cache tarballs ship per-module oleans but NOT the umbrella Mathlib.olean, so
+# `import Mathlib` — the pipeline's default import set — fails: loudly under
+# `lake env lean`, SILENTLY in the repl (it returns a coreless env with no error).
+# Elaborate the umbrella explicitly (~15s warm; also fills in Batteries.olean).
+RUN lake build Mathlib
+
 CMD ["bash"]
