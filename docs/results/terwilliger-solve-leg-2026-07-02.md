@@ -6,6 +6,16 @@ tests/test_invariants.py byte-identical.
 
 # Terwilliger solve-leg fix (D6 / Q-pit-2) + the d ≥ 10 faithfulness verdict (2026-07-02)
 
+> **SUPERSEDED IN PART (same day — D2, task #103, PR #238):** resolution path (a) below landed and REFUTES
+> two claims in this doc. (1) "target 87 does not certify at any tried precision" — it **does** certify:
+> the k_max-truncated dual, zero-padded on the dropped blocks, is a feasible full-problem dual, and the
+> exact LP through it certifies **A(22,10) ≤ 87.9734 → 87**, kernel-attested. (2) The 87.97 "stall
+> attractor" was **not** a provable under-solve — it was the honest truncated optimum all along; the
+> "proof" leaned on the pseudo-feasible 88.63 full-solve point, which the exact tier shows infeasible.
+> Likewise "(26,10): still stalls … Recorded, not reproduced" is closed: **A(26,10) ≤ 886** certifies the
+> same way. See `docs/results/terwilliger-anomaly-2026-07-02.md` + `docs/results/terwilliger_anomaly.json`;
+> the text below is kept unedited as the measurement record.
+
 The reach probe (task #99) measured that the three-point pipeline's binding constraint is the **float solve
 leg**: CLARABEL crash onset at ~4600 free variables ((23,6)), SCS under-convergence up to ~88×, every
 d ∈ {10,12} cell with n ≥ 20 failing both solvers, and chaotic k_max-bisect scatter at (22,10). This session

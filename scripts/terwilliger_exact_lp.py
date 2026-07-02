@@ -113,18 +113,38 @@ def exact_simplex(A, b, c, max_iter=100000):
     return x, sum(c[j] * x[j] for j in range(n))
 
 
+def _zero_fr(m):
+    return [[Fr(0)] * m for _ in range(m)]
+
+
 def certify_lp(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 12), tol=1e-5, time_cap_s=900,
-               return_duals=False):
-    ex = cert.extract_dual(n, d)
+               return_duals=False, k_max=None):
+    """k_max fixes the PSD blocks from the k_max-TRUNCATED dual (extract_dual relaxation): k <= k_max blocks
+    are rationalized with the usual strict-PD margin; k > k_max blocks stay EXACT ZERO (PSD, no margin, no
+    residual contribution). Everything downstream is unchanged — one exact simplex over all multipliers, then
+    dual_check decides — and a feasible result certifies A(n,d) <= floor(bound) for the FULL problem (the D2
+    stall rescue). The truncated solve must come back clean `optimal`: a stalled truncated dual is the same
+    artifact the truncation exists to escape, so it is gated, not fed to the exact leg. k_max=None is the
+    unchanged full-dual path."""
+    ex = cert.extract_dual(n, d, k_max=k_max)
+    if k_max is not None and ex["status"] != "optimal":
+        return {"n": n, "d": d, "k_max": k_max, "target": target,
+                "status": f"truncated solve not clean: {ex['status']}"}
     target = target if target is not None else int(ex["value"] + 1e-6)
     keys, cols, A, bnd = cert._mult_structure(n, d)
+    kmax_eff = n // 2 if k_max is None else min(k_max, n // 2)
     t_start = time.time()
     best = None
     for P in precisions:
         if time.time() - t_start > time_cap_s:
-            return {"n": n, "d": d, "target": target, "status": "time_cap"}
-        Zq = {k: cert._round_psd(ex["Z"][k], P) for k in ex["Z"]}
-        Zpq = {k: cert._round_psd(ex["Zp"][k], P) for k in ex["Zp"]}
+            row = {"n": n, "d": d, "target": target, "status": "time_cap"}
+            if k_max is not None:
+                row["k_max"] = k_max
+            return row
+        Zq = {k: (cert._round_psd(ex["Z"][k], P) if k <= kmax_eff
+                  else _zero_fr(len(td.block_idx(n, k)))) for k in ex["Z"]}
+        Zpq = {k: (cert._round_psd(ex["Zp"][k], P) if k <= kmax_eff
+                   else _zero_fr(len(td.block_idx(n, k)))) for k in ex["Zp"]}
         if not all(td.is_psd_exact(Zq[k]) and td.is_psd_exact(Zpq[k]) for k in Zq):
             continue
         base = cert._base_residual(n, d, Zq, Zpq)
@@ -179,40 +199,43 @@ def certify_lp(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 
                "exact_bound": str(b), "bound_float": round(float(b), 4),
                "floor": (int(b) if b >= 0 else 0), "certified": bool(chk["feasible"] and b >= 0 and int(b) <= target),
                "secs": secs}
+        if k_max is not None:
+            row.update({"k_max": k_max, "float_status": ex["status"], "float_value": round(ex["value"], 6)})
         if row["certified"]:               # feasible AND floors to the target -> the exact certificate
             if return_duals:
                 row["duals"] = duals
             return row
         if chk["feasible"] and (best is None or (b >= 0 and b < Fr(best["exact_bound"]))):
             best = row                     # feasible but bound too loose at this P -> try higher precision
-    return best or {"n": n, "d": d, "target": target, "status": "no exact LP cert at tried precisions"}
+    if best is None:
+        best = {"n": n, "d": d, "target": target, "status": "no exact LP cert at tried precisions"}
+        if k_max is not None:
+            best["k_max"] = k_max
+    return best
 
 
-def kernel_verify_lp(n, d, target=None, timeout_s=900, precisions=None, time_cap_s=900):
+def kernel_verify_lp(n, d, target=None, timeout_s=900, precisions=None, time_cap_s=900, k_max=None):
     """Path B2: certify a cell via the exact LP, render its PSD blocks as per-block Lean theorems, and
-    kernel-verify (valid accepted; a corrupted block rejected). This is how the A(19,6) ≤ 1280 certificate
-    becomes kernel-attested. Needs cvxpy (solve) + docker (Lean). precisions/time_cap_s forward to
-    certify_lp — the D6 cells (23,6) and (25,10) certify only at P=1e14, above the default ladder."""
+    kernel-verify (valid accepted; a corrupted block rejected — plus the corrupted-ZERO-block control when
+    k_max leaves padding blocks). This is how the A(19,6) ≤ 1280 certificate becomes kernel-attested. Needs
+    cvxpy (solve) + docker (Lean). precisions/time_cap_s/k_max forward to certify_lp — the D6 cells (23,6)
+    and (25,10) certify only at P=1e14, above the default ladder; the D2 cells (22,10)/(26,10) certify only
+    through a truncated (k_max) dual."""
     kw = {} if precisions is None else {"precisions": precisions}
+    if k_max is not None:                      # like precisions: no kwarg injected on the default path
+        kw["k_max"] = k_max
     row = certify_lp(n, d, target=target, return_duals=True, time_cap_s=time_cap_s, **kw)
     if not row.get("certified"):
         return {"n": n, "d": d, "certified": False, "note": "no exact LP cert to render"}
     blocks = cert.cert_psd_blocks(row["duals"])
+    if blocks is None:
+        return {"n": n, "d": d, "certified": True, "note": "LDLT failed on a nonzero block"}
     out = {"n": n, "d": d, "target": row["target"], "exact_bound": row["exact_bound"],
            "floor": row["floor"], "n_blocks": len(blocks),
            "largest_block": max(len(b["M"]) for b in blocks)}
-    try:
-        from leibniz.backends.lean_cli import LeanCliBackend, available
-        if not available():
-            out["kernel"] = "unavailable (no docker/image)"
-            return out
-        bk = LeanCliBackend(timeout_s=timeout_s)
-        good = bk.check_source(cert.render_cert_lean(blocks))
-        bogus_blocks = [dict(blocks[0], d=[x - 10 ** 6 for x in blocks[0]["d"]])] + blocks[1:]
-        bogus = bk.check_source(cert.render_cert_lean(bogus_blocks))
-        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": good is True and bogus is False}
-    except Exception as e:  # pragma: no cover
-        out["kernel"] = f"unavailable ({type(e).__name__})"
+    if k_max is not None:
+        out["k_max"] = k_max
+    out["kernel"] = cert.kernel_check_blocks(blocks, timeout_s=timeout_s)
     return out
 
 
