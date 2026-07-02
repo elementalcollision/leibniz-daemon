@@ -66,3 +66,34 @@ the proof stage dominates wall-clock and cost.
   degrades to conservative `False` on a dead process; the assembly's CLI fallback
   covers a missing image, not a mid-run crash).
 - Spend estimation accuracy across Anthropic vs OpenRouter pricing.
+
+## Amendment (2026-07-02) — silently-broken umbrella import
+
+**Defect.** `lake exe cache get` ships per-module oleans but NOT the umbrella
+`Mathlib.olean`, so `import Mathlib` — the pipeline's *default* import set
+(`pipeline._parse_expressio`) — failed on both backends: loudly under
+`lake env lean` ("object file … of module Mathlib does not exist"), and
+**silently** in the repl, which swallows a failed import and answers
+`{"env": N}` with no error messages. The resulting env is coreless (even
+`example : 1 = 1 := rfl` dies with ``Unknown constant `OfNat` ``); `_env_for`
+cached it, so every Mathlib-defaulted check fail-closed for the process
+lifetime with misleading diagnostics. No soundness impact (fail-closed), but
+Mathlib proposals could never verify via the repl backend.
+
+**Fix (both layers).**
+1. `docker/lean.Dockerfile` now runs `lake build Mathlib` after `cache get`
+   (~15 s warm; also fills in the missing `Batteries.olean`), so the umbrella
+   works in the base image (CLI backend) and the repl image layered on it.
+   Operators must rebuild both images (base first, then the repl image).
+2. `LeanReplBackend._env_for` probes every freshly created env with a
+   core-prelude, ASCII-only canary (`example : (1 : Nat) = 1 := rfl`) before
+   caching. A failed canary marks the env broken → `None` (the same
+   conservative fail-closed path as an unavailable backend), never a poisoned
+   cache. This guards against stale images and any future repl
+   swallowed-import behavior.
+
+The pipeline default stays `("Mathlib",)`: with the umbrella built it is the
+right maximal-coverage default for proposals that omit imports, and its
+one-time load cost is exactly what the env cache amortizes. Regression tests:
+`tests/test_lean_repl_broken_env.py` (fake repl, CI-safe) and the umbrella /
+swallowed-import cases in `tests/test_lean_repl_r0011.py` (docker-gated).

@@ -106,8 +106,18 @@ class LeanReplBackend:
             return None
         return holder.get("resp")
 
+    # Must compile in ANY healthy env: core-prelude only, ASCII only (a broken env has
+    # no notation, so a unicode canary would conflate "broken" with "missing notation").
+    _ENV_CANARY = "example : (1 : Nat) = 1 := rfl"
+
     def _env_for(self, key: tuple) -> Optional[int]:
-        """REPL env id with `key` imports preloaded (cached). None if they error."""
+        """REPL env id with `key` imports preloaded (cached). None if they error.
+
+        The repl SWALLOWS some failed imports (e.g. a module whose .olean is absent,
+        like an image without the umbrella Mathlib.olean): it answers {"env": N} with
+        no error messages, but the env is coreless — every later check in it dies with
+        "Unknown constant" noise. Probe each new env with a canary before caching; a
+        failed canary means the env is broken -> None (fail-closed), never cached."""
         if key in self._envs:
             return self._envs[key]
         resp = self._send({"cmd": "\n".join(f"import {m}" for m in key)})
@@ -115,8 +125,15 @@ class LeanReplBackend:
             return None
         if any(m.get("severity") == "error" for m in resp.get("messages", []) or []):
             return None
-        self._envs[key] = resp["env"]
-        return resp["env"]
+        env = resp["env"]
+        # The canary elaborates in a throwaway child env; `env` itself is untouched.
+        probe = self._send({"cmd": self._ENV_CANARY, "env": env})
+        if probe is None or any(
+            m.get("severity") == "error" for m in probe.get("messages", []) or []
+        ):
+            return None
+        self._envs[key] = env
+        return env
 
     def _run(self, decl: str, imports) -> Optional[dict]:
         key = tuple(imports or ())
