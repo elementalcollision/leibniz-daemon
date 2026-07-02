@@ -165,6 +165,23 @@ python3 -m pytest tests/test_invariants.py -q     # trust boundary (must stay gr
 
 ---
 
+## 7b. The solve-leg fix (D6/Q-pit-2, 2026-07-02)
+
+The float solve leg defaults to **SDPA-GMP** when `sdpap` is importable (`pip install sdpa-multiprecision`;
+needs brew `gmp`), paired with Schrijver's eq. (8) block normalization (`terwilliger_sdp.solve_primal` /
+`_solver_defaults`; the CLARABEL fallback keeps the pre-fix raw-β behavior when sdpap is absent).
+Measured-tight settings live in `terwilliger_sdp.SDPA_TIGHT` — do not loosen `epsilonStar` (early-stop
+under-solves: (20,8) "optimal" at 277.1 instead of 274.09) and do not add per-block scalar rescaling
+(measured regression; see `docs/results/terwilliger-solve-leg-2026-07-02.md`).
+
+| Script | Output JSON (under `docs/results/`) | GREEN means |
+|---|---|---|
+| `terwilliger_solve_leg.py` | `terwilliger_solve_leg.json` | regression cells floor to Table I at `optimal` AND the (23,6) crash cell returns ~13766; also runs the exact-cert escalation (A(23,6) ≤ 13766, A(25,10) ≤ 503) and the (22,10) k_max ladder (~5 min, operator-local: cvxpy+numpy+sdpap+scipy) |
+
+Standing caution from that session: **float-side audits are not bounds at this conditioning** — a point with
+−7e-19 block eigenvalues sat 0.38 above the exact dual certificate at (22,10) (1.5e9-scale multipliers). Only
+`certify_lp`/`dual_check` outputs decide anything.
+
 ## 8. Where this sits
 
 - **Phase 0 (§0) is the current front line** — it validated eq. (7) and fixed the first cell to **A(19,6)

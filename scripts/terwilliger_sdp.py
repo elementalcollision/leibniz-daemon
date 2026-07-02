@@ -30,6 +30,30 @@ TABLE_I = {(19, 6): 1280, (23, 6): 13766, (25, 6): 47998, (19, 8): 142, (20, 8):
 LOWER = {(4, 2): 8, (5, 2): 16, (6, 4): 4, (7, 4): 8, (8, 4): 16, (9, 4): 20, (10, 4): 40,
          (19, 6): 1024, (20, 8): 256}
 
+# The D6/Q-pit-2 solve-leg fix (2026-07-02): Schrijver's eq.(8) block normalization + the SDPA-GMP backend
+# (pip install sdpa-multiprecision, operator-local like cvxpy). Defaults below are measured: epsilonStar
+# looser than 1e-12 stops early ((20,8) "optimal" at 277.1 instead of 274.09); precision above 350 bits
+# changes nothing on the stall cells (the residual stalls are structural, not precision).
+SDPA_TIGHT = {"epsilonStar": 1e-12, "epsilonDash": 1e-12, "precision": 350, "maxIteration": 1000}
+
+
+def _has_sdpa():
+    return importlib.util.find_spec("sdpap") is not None
+
+
+def _solver_defaults(solver, normalize, solver_opts):
+    """Resolve the (solver, normalize, opts) triple. Measured pairing, do not mix-and-match blindly:
+    SDPA-GMP needs the eq.(8)-normalized blocks (raw β overflows its dataset scaling: SolverError at (22,10))
+    while CLARABEL is empirically BETTER on the raw integer blocks at n≤20 (1280.08 vs 1281.09 at (19,6) —
+    its cone equilibration fights the congruence) and is kept raw for byte-compatible fallback behavior."""
+    if solver is None:
+        solver = "SDPA" if _has_sdpa() else "CLARABEL"
+    if normalize is None:
+        normalize = solver == "SDPA"
+    if solver_opts is None:
+        solver_opts = dict(SDPA_TIGHT) if solver == "SDPA" else {}
+    return solver, normalize, solver_opts
+
 
 def _load(mod, rel):
     spec = importlib.util.spec_from_file_location(mod, _ROOT / rel)
@@ -47,8 +71,49 @@ def _val(key_of, xvar, t, i, j, d):
     return xvar[key] if td.classify(key, d) == "free" else 0.0
 
 
-def build_primal(n, d, k_max=None):
+def _block_exprs(n, d, k, xvar, normalize=True):
+    """The block-k cvxpy expressions (M, Mp) plus the scaling that produced them.
+
+    normalize=True restores, FOR THE FLOAT SOLVE ONLY, Schrijver's own eq. (8) block form: the
+    C(n−2k,i−k)^{−1/2} C(n−2k,j−k)^{−1/2} factor that the paper deletes to make β integer (see
+    terwilliger_beta.py). A positive diagonal congruence D·M·D ⪰ 0 ⟺ M ⪰ 0 is an exact PSD-equivalence, so
+    the feasible set and optimum are UNCHANGED — only the solver's conditioning is: the raw integer β spans
+    1..~10¹³ by n=26 (the measured Q-pit-2 wall: CLARABEL crash onset at (23,6), SCS up to ~88×
+    under-convergence); in eq. (8) form the span is 1..~10⁶. (A further per-block scalar σ_k normalizing the
+    largest coefficient to 1 was tried and REJECTED: it un-balances the blocks against the untouched
+    objective/linear coefficients and measurably degrades Clarabel — A(19,6) drifts 1280.08→1289.46.)
+    Returns (M, Mp, sigma, diag) with sigma kept for the dual map: the solver's dual Z̃ maps back to the
+    UNNORMALIZED block dual via Z = D·Z̃·D / σ_k (terwilliger_cert.extract_dual does this, so the
+    exact-rational legs see the same objects as before)."""
+    from math import sqrt
+    idx = td.block_idx(n, k)
+    diag = [1.0 / sqrt(td.C(n - 2 * k, i - k)) for i in idx] if normalize else [1.0] * len(idx)
+    M = [[0.0] * len(idx) for _ in idx]
+    Mp = [[0.0] * len(idx) for _ in idx]
+    for a, i in enumerate(idx):
+        for b, j in enumerate(idx):
+            mk = 0.0
+            mpk = 0.0
+            for t in range(min(i, j) + 1):
+                s = i + j - 2 * t
+                if not td.possible(n, i, j, t):            # skip impossible shapes (Schrijver eq.10: x=0)
+                    continue
+                bijk = td.beta(n, i, j, k, t)
+                if not bijk:
+                    continue
+                c = float(bijk) * diag[a] * diag[b] if normalize else bijk
+                xv = _val(None, xvar, t, i, j, d)
+                x0 = _val(None, xvar, 0, s, 0, d)
+                mk = mk + c * xv
+                mpk = mpk + c * (x0 - xv)
+            M[a][b] = mk
+            Mp[a][b] = mpk
+    return M, Mp, 1.0, diag
+
+
+def build_primal(n, d, k_max=None, normalize=True):
     """The Schrijver primal in cvxpy. k_max limits the block index (k_max=0 ⇒ the Delsarte-LP relaxation).
+    normalize rescales the PSD blocks for the float solver (exact PSD-equivalence; see _block_exprs).
     Returns (problem, xvar, psd_constraints, lin_constraints)."""
     import cvxpy as cp
     keys = td.free_keys(n, d)
@@ -57,26 +122,7 @@ def build_primal(n, d, k_max=None):
 
     psd, lin = [], []
     for k in range(kmax + 1):
-        idx = td.block_idx(n, k)
-        M = [[0.0] * len(idx) for _ in idx]
-        Mp = [[0.0] * len(idx) for _ in idx]
-        for a, i in enumerate(idx):
-            for b, j in enumerate(idx):
-                mk = 0.0
-                mpk = 0.0
-                for t in range(min(i, j) + 1):
-                    s = i + j - 2 * t
-                    if not td.possible(n, i, j, t):        # skip impossible shapes (Schrijver eq.10: x=0)
-                        continue
-                    bijk = td.beta(n, i, j, k, t)
-                    if not bijk:
-                        continue
-                    xv = _val(None, xvar, t, i, j, d)
-                    x0 = _val(None, xvar, 0, s, 0, d)
-                    mk = mk + bijk * xv
-                    mpk = mpk + bijk * (x0 - xv)
-                M[a][b] = mk
-                Mp[a][b] = mpk
+        M, Mp, _sigma, _diag = _block_exprs(n, d, k, xvar, normalize=normalize)
         psd.append(cp.bmat(M) >> 0)
         psd.append(cp.bmat(Mp) >> 0)
 
@@ -92,39 +138,25 @@ def build_primal(n, d, k_max=None):
     return prob, xvar, psd, lin
 
 
-def build_labeled(n, d):
+def build_labeled(n, d, normalize=False):
     """Same primal, but returns LABELED constraint handles so Phase 2b can read each dual:
       psd_h[(k,'M')] / psd_h[(k,'Mp')]  -> the two block-family PSD constraints (dual = Z_k / Z'_k)
       i_h                                -> the x^0_{0,0}=1 equality (dual = ν)
       ii_h[('a'|'b1'|'g', t,i,j)]        -> the three (20)(ii) inequality families (duals = α/β1/γ)
+      scale_h[k] = {'sigma':…, 'diag':…} -> the block scaling; the solver dual of the k-block maps back to
+                                            the unnormalized-β dual via Z = diag·Z̃·diag / sigma (elementwise
+                                            Z[a][b] = diag[a]·diag[b]·Z̃[a][b]/sigma) — extract_dual does this.
     Constraint families are enumerated over td.valid_triples(n) in the SAME order as dual_check/collected."""
     import cvxpy as cp
     keys = td.free_keys(n, d)
     xvar = {k: cp.Variable(name=".".join(map(str, k))) for k in keys}
-    psd_h, ii_h = {}, {}
+    psd_h, ii_h, scale_h = {}, {}, {}
     cons = []
     for k in range(n // 2 + 1):
-        idx = td.block_idx(n, k)
-        M = [[0.0] * len(idx) for _ in idx]
-        Mp = [[0.0] * len(idx) for _ in idx]
-        for a, i in enumerate(idx):
-            for b, j in enumerate(idx):
-                mk = mpk = 0.0
-                for t in range(min(i, j) + 1):
-                    s = i + j - 2 * t
-                    if not td.possible(n, i, j, t):
-                        continue
-                    bijk = td.beta(n, i, j, k, t)
-                    if not bijk:
-                        continue
-                    xv = _val(None, xvar, t, i, j, d)
-                    x0 = _val(None, xvar, 0, s, 0, d)
-                    mk = mk + bijk * xv
-                    mpk = mpk + bijk * (x0 - xv)
-                M[a][b] = mk
-                Mp[a][b] = mpk
+        M, Mp, sigma, diag = _block_exprs(n, d, k, xvar, normalize=normalize)
         cM, cMp = cp.bmat(M) >> 0, cp.bmat(Mp) >> 0
         psd_h[(k, "M")], psd_h[(k, "Mp")] = cM, cMp
+        scale_h[k] = {"sigma": sigma, "diag": diag}
         cons += [cM, cMp]
     i_h = xvar[(0, 0, 0)] == 1
     cons.append(i_h)
@@ -137,33 +169,36 @@ def build_labeled(n, d):
         cons += [ca, cb, cg]
     obj = sum(td.obj_coeff(k, n) * xvar[k] for k in keys)
     prob = cp.Problem(cp.Maximize(obj), cons)
-    return {"prob": prob, "xvar": xvar, "psd_h": psd_h, "i_h": i_h, "ii_h": ii_h}
+    return {"prob": prob, "xvar": xvar, "psd_h": psd_h, "i_h": i_h, "ii_h": ii_h, "scale_h": scale_h}
 
 
-def solve_primal(n, d, k_max=None, solver="CLARABEL"):
+def solve_primal(n, d, k_max=None, solver=None, normalize=None, solver_opts=None):
+    """Solve the primal. solver=None auto-picks SDPA-GMP (tight, normalized) when sdpap is installed, else
+    the pre-fix CLARABEL-on-raw-β behavior. Explicit args override (see _solver_defaults for the pairing)."""
     import cvxpy as cp
-    prob, xvar, psd, lin = build_primal(n, d, k_max=k_max)
-    prob.solve(solver=getattr(cp, solver))
+    solver, normalize, solver_opts = _solver_defaults(solver, normalize, solver_opts)
+    prob, xvar, psd, lin = build_primal(n, d, k_max=k_max, normalize=normalize)
+    prob.solve(solver=getattr(cp, solver), **solver_opts)
     return {"status": prob.status, "value": (None if prob.value is None else float(prob.value)),
-            "prob": prob, "xvar": xvar, "psd": psd, "lin": lin}
+            "prob": prob, "xvar": xvar, "psd": psd, "lin": lin, "solver": solver, "normalized": normalize}
 
 
-def _delsarte_lp_value(n, d):
+def _delsarte_lp_value(n, d, solver=None, normalize=None):
     """k=0-only relaxation optimum = the Delsarte LP bound (used as an upper sanity anchor)."""
-    r = solve_primal(n, d, k_max=0)
+    r = solve_primal(n, d, k_max=0, solver=solver, normalize=normalize)
     return r["value"]
 
 
-def run_numerical(n, d):
+def run_numerical(n, d, solver=None, normalize=None):
     """Phase 2a: numerical reproduction of Table I + the k=0=Delsarte relaxation."""
-    full = solve_primal(n, d)
+    full = solve_primal(n, d, solver=solver, normalize=normalize)
     row = {"n": n, "d": d, "status": full["status"],
            "sdp_value": None if full["value"] is None else round(full["value"], 4),
            "sdp_floor": None if full["value"] is None else int(full["value"] + 1e-6)}
     if (n, d) in TABLE_I:
         row["table_I"] = TABLE_I[(n, d)]
         row["reproduces_table_I"] = (row["sdp_floor"] == TABLE_I[(n, d)])
-    lp = _delsarte_lp_value(n, d)
+    lp = _delsarte_lp_value(n, d, solver=solver, normalize=normalize)
     row["delsarte_lp_value"] = None if lp is None else round(lp, 4)
     if full["value"] is not None and lp is not None:
         row["sdp_le_lp"] = full["value"] <= lp + 1e-4        # three-point must not exceed the LP (when both solve accurately)
@@ -203,8 +238,10 @@ def main() -> int:
                        "cell AND never floors below a known lower bound on A(n,d) -> the formulation "
                        "transcription is FAITHFUL (the empirical answer to the panel's formulation-faithfulness "
                        "concern), and the possible()/binom≠0 fix is validated (A(8,4): 13.7->16). sdp_le_lp is "
-                       "a reported diagnostic only: the k=0 solve is ill-conditioned near n=20 (Q-pit-2), to be "
-                       "addressed by normalized blocks in Phase 2b (the exact-rational dual cert via dual_check).")}
+                       "a reported diagnostic only. The Q-pit-2 conditioning wall is FIXED (D6, 2026-07-02): "
+                       "eq.(8)-normalized blocks + SDPA-GMP when sdpap is installed — see "
+                       "terwilliger-solve-leg-2026-07-02.md; floats stay indicative, certification is "
+                       "certify_lp + kernel.")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, indent=2) + "\n")
     print(f"terwilliger SDP (Phase 2a numerical): {verdict}")

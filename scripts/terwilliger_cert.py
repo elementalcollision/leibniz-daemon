@@ -41,13 +41,28 @@ def _dv(c):
     return np.array(c.dual_value, dtype=float)
 
 
-def extract_dual(n, d, solver="CLARABEL"):
+def extract_dual(n, d, solver=None, normalize=None, solver_opts=None):
+    """solver=None auto-picks like ts.solve_primal (SDPA-GMP tight + eq.(8)-normalized blocks when sdpap is
+    installed, else the pre-fix CLARABEL-on-raw behavior). The normalized blocks' duals are mapped back to the
+    unnormalized-β objects below, so everything downstream (rationalize → exact LP → dual_check) is unchanged."""
     import cvxpy as cp
     import numpy as np
-    H = ts.build_labeled(n, d)
-    H["prob"].solve(solver=getattr(cp, solver))
-    Z = {k: np.atleast_2d(_dv(H["psd_h"][(k, "M")])) for k in range(n // 2 + 1)}
-    Zp = {k: np.atleast_2d(_dv(H["psd_h"][(k, "Mp")])) for k in range(n // 2 + 1)}
+    solver, normalize, solver_opts = ts._solver_defaults(solver, normalize, solver_opts)
+    H = ts.build_labeled(n, d, normalize=normalize)
+    H["prob"].solve(solver=getattr(cp, solver), **solver_opts)
+
+    def _unscale(k, Zt):
+        # build_labeled solves the NORMALIZED blocks (D·M·D/σ ⪰ 0, an exact PSD-equivalence for conditioning);
+        # ⟨Z̃, D·M·D/σ⟩ = ⟨D·Z̃·D/σ, M⟩, so the dual of the UNNORMALIZED block — what dual_check/_base_residual
+        # price against integer β — is Z = D·Z̃·D/σ.
+        sc = H.get("scale_h", {}).get(k)
+        if Zt is None or sc is None:
+            return Zt
+        dg = np.array(sc["diag"], dtype=float)
+        return Zt * np.outer(dg, dg) / sc["sigma"]
+
+    Z = {k: np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "M")]))) for k in range(n // 2 + 1)}
+    Zp = {k: np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "Mp")]))) for k in range(n // 2 + 1)}
     nu_c = _dv(H["i_h"])
     nu = -float(nu_c.reshape(-1)[0]) if nu_c is not None else 0.0        # nu = -nu_cvxpy
     lin = {"a": {}, "b1": {}, "g": {}}
