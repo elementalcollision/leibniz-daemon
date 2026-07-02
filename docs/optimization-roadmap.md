@@ -453,6 +453,22 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     certificate** (the reach probe's "d≥10 unvalidated" flag is closed end-to-end: SDPA-GMP float →
     exact-rational LP → dual_check → kernel). `kernel_verify_lp` gained a `precisions`/`time_cap_s`
     passthrough (these cells certify only at P=1e14, above the default ladder; free-CPU test guards it).
+  - **TICKET ② DONE (2026-07-02) — F1: the WHOLE certificate is in the kernel (task #100):**
+    `docs/results/terwilliger-f1-2026-07-02.md`, `scripts/terwilliger_kernel_full.py`. The Lean 4.31 kernel
+    now checks EVERY obligation of the exact dual certificate — β re-verified against eq.(7) via a
+    row-verified Pascal triangle (measured k=0 strategy call: table 8.0 s vs naive 10.8 s), stationarity
+    transcribed from `collected()` with kernel-side key re-enumeration (chunked per k-slice after the
+    whole-fold theorem hit the elaborator recursion wall — the B2 resource-error lesson again), multiplier
+    validity + nonneg, the floored bound (Σγ−ν < (target+1)·D), and ldltOK on the SAME Z·D literals the
+    stationarity fold reads. **A(19,6): all obligations kernel-True in 139 s (219 KiB, 12,155 β entries);
+    the four scope-doc corrupted controls all kernel-False**; small cells regress in ~1.5 s. `dual_check`
+    is now pre-flight only. **Pre-merge adversarial review (11 agents) found + fixed 3 kernel-soundness
+    holes** (producer-trusted Σγ literal → kernel-side MG fold; ldltOK accepted scale ≤ 0 → `0 < s` added
+    here AND in the shared B2 helpers `psd_certificate_microprobe.py`; unpinned β-table shape → slice/row/
+    t-list lengths + P length pinned), each now covered by a control (6 total, all kernel-False at A(19,6)
+    and A(4,2)). Tier unchanged (audit): the formulation bridge is F2 — ticket ③ (F2a weak duality) should
+    align its statement with this file's `keysFor`/fold definitions. Guarded by
+    `tests/test_terwilliger_kernel_full.py` (CI skips clean).
 
 ## The ADRs
 
