@@ -1,0 +1,127 @@
+{
+  "verdict": "GREEN",
+  "anomaly": "RESOLVED \u2014 Table I validated; no discrepancy claim",
+  "certified": {
+    "A(22,10)": "<= 87 exact (Table I 87)",
+    "A(26,10)": "<= 886 exact (Table I 886)"
+  },
+  "kernel_sound": "2/2",
+  "rows": [
+    {
+      "n": 22,
+      "d": 10,
+      "k_max": 2,
+      "float_status": "optimal",
+      "float_value": 87.974163,
+      "target": 87,
+      "P": 100000000000000,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "4398667890090123/50000000000000",
+      "bound_float": 87.9734,
+      "floor": 87,
+      "certified": true,
+      "secs": 4.5,
+      "above_known_lb": true
+    },
+    {
+      "n": 22,
+      "d": 10,
+      "k_max": 3,
+      "float_status": "optimal",
+      "float_value": 87.974283,
+      "target": 87,
+      "P": 100000000000000,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "4398668746849113/50000000000000",
+      "bound_float": 87.9734,
+      "floor": 87,
+      "certified": true,
+      "secs": 4.6,
+      "above_known_lb": true
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "k_max": 3,
+      "float_status": "optimal",
+      "float_value": 886.873452,
+      "target": 886,
+      "P": 100000000000000,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "692858735363321/781250000000",
+      "bound_float": 886.8592,
+      "floor": 886,
+      "certified": true,
+      "secs": 28.2,
+      "above_known_lb": true
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "k_max": 4,
+      "float_status": "optimal",
+      "float_value": 886.87021,
+      "target": 886,
+      "P": 100000000000000,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "88685868134065221/100000000000000",
+      "bound_float": 886.8587,
+      "floor": 886,
+      "certified": true,
+      "secs": 27.6,
+      "above_known_lb": true
+    }
+  ],
+  "kernel_legs": [
+    {
+      "n_blocks": 24,
+      "largest_block": 23,
+      "kernel": {
+        "valid_cert": true,
+        "bogus_cert": false,
+        "sound": true
+      },
+      "n": 22,
+      "d": 10,
+      "target": 87,
+      "exact_bound": "4398667890090123/50000000000000",
+      "floor": 87,
+      "from_k_max": 2,
+      "total_secs": 50.6
+    },
+    {
+      "n_blocks": 28,
+      "largest_block": 27,
+      "kernel": {
+        "valid_cert": true,
+        "bogus_cert": false,
+        "sound": true
+      },
+      "n": 26,
+      "d": 10,
+      "target": 886,
+      "exact_bound": "88685868134065221/100000000000000",
+      "floor": 886,
+      "from_k_max": 4,
+      "total_secs": 99.8
+    }
+  ],
+  "provenance": {
+    "schrijver_2005": "Table I (22,10)=87 [prev best 88, Delsarte 95] and (26,10)=886 [prev 989, Delsarte 1040]. 'Our computations were done by the algorithm SDPT3 version 3.02 ... available through the web on the NEOS Server ... The answers have been confirmed by the algorithm DSDP version 5.5' \u2014 both double-precision, no exact-rational leg. Eq. (25) caps: 'we did not obtain in this way any improvement in the above table' \u2014 Table I is the base program (19)/(20)/(22), i.e. OUR transcription.",
+    "gijswijt_mittelmann_schrijver_2012": "arXiv:1005.4959 Table 1 row (22,10): known ub 87 (= Schrijver 2005), new four-point bound 84 (A4=84.421). Their computational note documents the exact failure mode we measured: 'the semidefinite programs generated appear to have rather thin feasible regions so that SDPA and the other high-quality but double precision codes terminate prematurely with large infeasibilities' \u2014 hence SDPA-GMP (Nakata), same as our D6 fix.",
+    "brouwer_table_2026": "Current best at (22,10): lb 64, ub 84 (GMS 2012). The 87 was the 2004-era three-point value ('Schrijver, personal communication, March 2004'), since superseded. Our result certifies the three-point program's own value exactly; it makes no claim against the current table."
+  },
+  "reading": "D2 (task #103). The (22,10) anomaly was a DUAL-SOURCE artifact, not a formulation gap or a Table I error: certify_lp's blocks came from the stalled FULL-problem float dual (pseudo-optimum 88.63, provably infeasible now that 87.97 is a certified upper bound on the SDP optimum). The k_max-truncated problem is a relaxation; its clean `optimal` dual, zero-padded, is a full-problem dual, and the exact LP through it certifies A(22,10) <= 87 and A(26,10) <= 886 \u2014 both Table I values, now at a HIGHER trust tier than the 2005 computation (double-precision SDPT3/DSDP, no exact leg). GREEN = both cells certified exactly AND kernel-attested with the corrupted-block control rejected. Floats remain targeting data only."
+}

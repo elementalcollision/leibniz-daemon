@@ -491,6 +491,22 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     9.7 s cold load). **Next**: the discovery pivot — `docs/handoff-terwilliger-discovery-2026-07-02.md`
     queues D1 (Johnson-scheme build, task #102, START HERE), D2 ((22,10) anomaly resolution, #103), D3
     (post-2005 hierarchy scoping, #104), with kickoff prompts.
+  - **D2 DONE (2026-07-02) — the (22,10) anomaly is RESOLVED: Table I VALIDATED, our gap found (task #103):**
+    `docs/results/terwilliger-anomaly-2026-07-02.md`, `scripts/terwilliger_anomaly.py`. The ≤88-only record
+    was a **dual-source artifact**, not a formulation gap or a Table I error: certify_lp's blocks came from
+    the stalled FULL-solve dual. The k_max **truncation is a relaxation**, its clean-`optimal` dual
+    (zero-padded on dropped blocks = a valid full-problem dual) certifies through the unchanged exact LP:
+    **A(22,10) ≤ 87 exact** (87.97336 @ P=1e14 — Table I 87 ✓) and, same route, the other stall cell
+    **A(26,10) ≤ 886 exact** (886.8587 — Table I 886 ✓); both **kernel-attested** (all blocks incl.
+    trivial-LDLT zero blocks; corrupted controls rejected). Every attempted Table I cell is now reproduced
+    at the exact tier (1280/274/13766/503/87/886). Corollaries: the 88.63 float pseudo-optimum was
+    **infeasible** (exceeds a certified bound by 0.66) and the 87.97 attractor was honest — the solve-leg
+    "provable under-solve" reading leaned on the infeasible point. Provenance banked (Schrijver 2005:
+    SDPT3 3.02 + DSDP 5.5, double precision, no eq.(25) in Table I; GMS12 lists 87 as prior-best + documents
+    the thin-feasible-region double-precision failure mode; Brouwer's current ub is GMS12's four-point 84 —
+    we claim nothing against the current table). **No discrepancy claim → the operator stop-condition did
+    not fire.** Truncated-dual extraction is a general stall-rescue tool for D1/D3. Guarded by
+    `tests/test_terwilliger_anomaly.py`; invariants byte-identical.
 
 ## The ADRs
 
