@@ -408,6 +408,24 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     five standing traps (check_source-False-on-resource-error; `td.possible()`; macOS timeout; dep gating;
     process constants), and per-ticket kickoff prompts + gates for ① (#99, full probe spec incl. the Brouwer
     snapshot protocol and the GREEN(candidate)/DRY gate) ② (#100) ③ (#101).
+  - **TICKET ① DONE (2026-07-01) — reach probe verdict: DRY, and the wall is the SOLVE LEG:**
+    `docs/results/terwilliger-reach-probe-2026-07-01.md` (task #99). 44 cells (n=20..30, d∈{6,8,10,12})
+    against a twice-cross-checked Brouwer snapshot (`docs/data/brouwer-snapshot-2026-07.json`; context only,
+    never a decider): **0 certified tightenings**; 9 valid floats (d∈{6,8} plus the d=10 survivor
+    A(21,10)→50, n≤27; all at/above published ubs except the two refuted candidates below; A(20,8)=274
+    reproduces Table I through the harness); **35/44 solve-leg failures** — CLARABEL crash onset ≈4600 free
+    vars, SCS under-converges up to ~88× below known lbs; both float "candidates" ((23,6)→13626,
+    (27,8)→12445) were solver artifacts and neither certified: **(27,8) actively refused by the
+    exact-rational decider** (feasible dual, bound 5.9e7 ≫ target), **(23,6) rejected fail-closed** (its
+    CLARABEL dual crashed → no cert; no exact arithmetic ran) — trust chain held; 0 invalid floors enshrined
+    thanks to the floor≥lb acceptance gate + monotonicity lb at n=29,30. Sharper findings: the pre-SDP-ub
+    frontier cells (27,12)≤169 / (28,12)≤288 are unreachable
+    until the **solve leg is fixed (normalized β blocks / SDPA-GMP — D6/Q-pit-2)**, and **d≥10 formulation
+    faithfulness is UNVALIDATED** ((22,10)=87 unreproducible; k_max-bisect scatter says conditioning-first,
+    but a d≥10 transcription hole is not excluded from float evidence — no d≥10 output is trustworthy until
+    that reproduces). Decision input: **F2b is infrastructure, not discovery-motivated, today**; D6 is the
+    prerequisite for ANY beyond-Table-I attempt. Harness: `scripts/terwilliger_reach_probe.py`; test:
+    `tests/test_terwilliger_reach_probe.py`.
 
 ## The ADRs
 
