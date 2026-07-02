@@ -81,8 +81,8 @@ def _T(A):
 
 def verify_int_cert(M_int, L_int, d_int, scale) -> bool:
     """Exact: L·diag(d)·Lᵀ == scale·M and d>=0 (M_int is the exact rational M scaled to integers by mden)."""
-    if any(x < 0 for x in d_int):
-        return False
+    if scale <= 0 or any(x < 0 for x in d_int):
+        return False                                # scale<=0 would make the check vacuous (s=0) or NSD (s<0)
     n = len(d_int)
     Dm = [[d_int[i] if i == j else 0 for j in range(n)] for i in range(n)]
     lhs = _matI(_matI(L_int, Dm), _T(L_int))
@@ -103,7 +103,7 @@ def diag (d : List Int) : List (List Int) :=
   (List.range d.length).map (fun i => (List.range d.length).map (fun j => if i == j then d[i]! else 0))
 def scaleM (s : Int) (M : List (List Int)) : List (List Int) := M.map (fun r => r.map (fun x => s * x))
 def ldltOK (M L : List (List Int)) (d : List Int) (s : Int) : Bool :=
-  d.all (fun x => 0 <= x) && (matmul (matmul L (diag d)) (transpose L) == scaleM s M)"""
+  0 < s && d.all (fun x => 0 <= x) && (matmul (matmul L (diag d)) (transpose L) == scaleM s M)"""
 
 
 def _lit(M):

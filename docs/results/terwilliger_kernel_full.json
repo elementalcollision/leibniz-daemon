@@ -1,0 +1,78 @@
+{
+  "verdict": "GREEN",
+  "rows": [
+    {
+      "n": 4,
+      "d": 2,
+      "target": 8,
+      "exact_bound": "160001/20000",
+      "D_bits": 20,
+      "n_keys": 5,
+      "n_mults": 5,
+      "n_beta_entries": 81,
+      "src_kib": 8,
+      "preflight_feasible": true,
+      "kernel_valid": true,
+      "kernel_valid_secs": 1.0,
+      "total_secs": 1.5
+    },
+    {
+      "n": 6,
+      "d": 4,
+      "target": 4,
+      "exact_bound": "500033/125000",
+      "D_bits": 20,
+      "n_keys": 4,
+      "n_mults": 4,
+      "n_beta_entries": 256,
+      "src_kib": 10,
+      "preflight_feasible": true,
+      "kernel_valid": true,
+      "kernel_valid_secs": 1.3,
+      "total_secs": 1.4
+    },
+    {
+      "n": 19,
+      "d": 6,
+      "target": 1280,
+      "exact_bound": "2560117159355687/2000000000000",
+      "D_bits": 41,
+      "n_keys": 55,
+      "n_mults": 55,
+      "n_beta_entries": 12155,
+      "src_kib": 219,
+      "preflight_feasible": true,
+      "kernel_valid": true,
+      "kernel_valid_secs": 108.6,
+      "controls": {
+        "beta_entry": {
+          "kernel": false,
+          "secs": 106.9
+        },
+        "stationarity": {
+          "kernel": false,
+          "secs": 107.3
+        },
+        "negative_mult": {
+          "kernel": false,
+          "secs": 106.6
+        },
+        "bound_claim": {
+          "kernel": false,
+          "secs": 108.0
+        },
+        "psd_scale": {
+          "kernel": false,
+          "secs": 106.3
+        },
+        "beta_shape": {
+          "kernel": false,
+          "secs": 105.5
+        }
+      },
+      "controls_all_false": true,
+      "total_secs": 760.9
+    }
+  ],
+  "reading": "F1 whole-certificate-in-kernel. For each cell the REAL Lean 4.31 kernel now checks EVERY obligation of the exact dual certificate: the beta table against eq.(7) (recompute-and-compare via a verified Pascal triangle), the per-orbit stationarity identities (transcribed from collected(); keys re-enumerated kernel-side), multiplier validity + nonnegativity, the bound inequality, and the PSD blocks (ldltOK on the SAME integer literals the stationarity fold reads). GREEN = all cells kernel-True AND the four A(19,6) corrupted controls (wrong beta entry / perturbed multiplier / negative multiplier / bound 1279) all kernel-False. Audit tier unchanged: F1 moves the CHECK into the kernel; the formulation bridge (F2) is still informal."
+}
