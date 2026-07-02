@@ -1,0 +1,28 @@
+{
+  "verdict": "GREEN",
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.PosDef",
+    "Mathlib.Tactic"
+  ],
+  "rows": {
+    "theorems": {
+      "ok": true,
+      "errors": []
+    },
+    "controls": {
+      "alpha_sign_flip": {
+        "ok": false,
+        "first_error": [
+          "linarith failed to find a contradiction\nKey T : Type\ninst\u271d\u00b9 : Fintype Key\ninst\u271d : Fintype T\nnb : \u2115\nbs : Fin nb \u2192 \u2115\nc : K"
+        ]
+      },
+      "gram_scale_weakened": {
+        "ok": false,
+        "first_error": [
+          "linarith failed to find a contradiction\nn m : \u2115\nZ M : Matrix (Fin n) (Fin n) \u211d\nL : Matrix (Fin m) (Fin n) \u211d\nd : Fin m \u2192 "
+        ]
+      }
+    }
+  },
+  "reading": "F2a weak duality, kernel-checked via the Mathlib REPL backend. GREEN = both theorems (gram_pairing_nonneg, tw_weak_duality) elaborate with zero errors/sorries AND both corrupted controls (alpha-sign flip in stationarity; Gram scale weakened to s>=0) FAIL. Scope: the abstract primal only \u2014 stationarity is the function-level hypothesis (F1 kernel-checks its coefficient form per certificate); the codes=>feasible bridge is F2b. No trust surface touched."
+}

@@ -469,6 +469,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     and A(4,2)). Tier unchanged (audit): the formulation bridge is F2 — ticket ③ (F2a weak duality) should
     align its statement with this file's `keysFor`/fold definitions. Guarded by
     `tests/test_terwilliger_kernel_full.py` (CI skips clean).
+  - **TICKET ③ DONE (2026-07-02) — F2a: weak duality is MACHINE-CHECKED (task #101):**
+    `docs/results/terwilliger-f2a-2026-07-02.md`, `scripts/terwilliger_f2a.py`. Two Lean theorems verified
+    through the ADR-0011 Mathlib REPL (zero errors/sorries): `gram_pairing_nonneg` (trace(Z·M) ≥ 0 for PSD M
+    and Gram-certified Z — EXACTLY the F1 LDLT witness shape; sqrt-free proof, this Mathlib pin has no PSD
+    sqrt) and `tw_weak_duality` (the scope-doc sketch: stationarity ⇒ obj ≤ Σγ−ν over the abstract primal;
+    no codes mentioned). Both corrupted controls FAIL as required (α-sign flip; Gram scale weakened to s≥0).
+    Scope: stationarity is the function-level hypothesis (F1 kernel-checks its coefficient form
+    per-certificate); codes⇒feasible is F2b. Found+flagged: umbrella `import Mathlib` silently yields a
+    broken REPL env (pipeline default affected; fail-closed, follow-up task). **The two operator decisions
+    are now on the table: (1) send the F2b external brief (drafted in the scope doc — TCB-shrinking value,
+    not discovery); (2) F2c tier — gated Q.E.D. wiring vs Observatory tier (ADR 0038).** Guarded by
+    `tests/test_terwilliger_f2a.py` (REPL-gated; CI skips clean).
 
 ## The ADRs
 
