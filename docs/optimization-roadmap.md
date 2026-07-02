@@ -481,6 +481,16 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     are now on the table: (1) send the F2b external brief (drafted in the scope doc — TCB-shrinking value,
     not discovery); (2) F2c tier — gated Q.E.D. wiring vs Observatory tier (ADR 0038).** Guarded by
     `tests/test_terwilliger_f2a.py` (REPL-gated; CI skips clean).
+  - **F2b SENT / F2C DECIDED / DISCOVERY PIVOT QUEUED (2026-07-02):** operator decisions executed.
+    **F2b**: the external formalization brief is finalized and ready to dispatch —
+    `docs/briefs/terwilliger-f2b-external-brief-2026-07-02.md` (Theorem 1 stated with the validated β
+    convention; admit-then-discharge staging; three concrete asks; transmission = operator channel, no
+    Aristotle key in .env). **F2c**: Observatory tier per **ADR 0046** — no trust edits, Q.E.D. wiring
+    stays gated behind a discharged F2b + its own ADR/hook/witness round. **Housekeeping**: PR #236's
+    image rebuild was already performed+validated by that session (umbrella Mathlib env verified again:
+    9.7 s cold load). **Next**: the discovery pivot — `docs/handoff-terwilliger-discovery-2026-07-02.md`
+    queues D1 (Johnson-scheme build, task #102, START HERE), D2 ((22,10) anomaly resolution, #103), D3
+    (post-2005 hierarchy scoping, #104), with kickoff prompts.
 
 ## The ADRs
 
