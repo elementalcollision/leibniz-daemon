@@ -238,8 +238,10 @@ def main() -> int:
                        "cell AND never floors below a known lower bound on A(n,d) -> the formulation "
                        "transcription is FAITHFUL (the empirical answer to the panel's formulation-faithfulness "
                        "concern), and the possible()/binom≠0 fix is validated (A(8,4): 13.7->16). sdp_le_lp is "
-                       "a reported diagnostic only: the k=0 solve is ill-conditioned near n=20 (Q-pit-2), to be "
-                       "addressed by normalized blocks in Phase 2b (the exact-rational dual cert via dual_check).")}
+                       "a reported diagnostic only. The Q-pit-2 conditioning wall is FIXED (D6, 2026-07-02): "
+                       "eq.(8)-normalized blocks + SDPA-GMP when sdpap is installed — see "
+                       "terwilliger-solve-leg-2026-07-02.md; floats stay indicative, certification is "
+                       "certify_lp + kernel.")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, indent=2) + "\n")
     print(f"terwilliger SDP (Phase 2a numerical): {verdict}")
