@@ -1,0 +1,37 @@
+{
+  "verdict": "GREEN",
+  "sound": "2/2",
+  "rows": [
+    {
+      "n": 23,
+      "d": 6,
+      "target": 13766,
+      "exact_bound": "688309497034285983/50000000000000",
+      "floor": 13766,
+      "n_blocks": 24,
+      "largest_block": 24,
+      "kernel": {
+        "valid_cert": true,
+        "bogus_cert": false,
+        "sound": true
+      },
+      "total_secs": 123.5
+    },
+    {
+      "n": 25,
+      "d": 10,
+      "target": 503,
+      "exact_bound": "50378865077422117/100000000000000",
+      "floor": 503,
+      "n_blocks": 26,
+      "largest_block": 26,
+      "kernel": {
+        "valid_cert": true,
+        "bogus_cert": false,
+        "sound": true
+      },
+      "total_secs": 122.6
+    }
+  ],
+  "reading": "Kernel attestation of the two new D6 exact certificates (PR #231): the real Lean 4.31 kernel verifies every PSD block of each certificate and rejects the corrupted-block control. GREEN = A(23,6) <= 13766 and A(25,10) <= 503 (the FIRST d>=10 certificate) are kernel-attested at the same audit tier as A(19,6) <= 1280. Soundness stays with certify_lp (exact rational) + the kernel; floats were only ever targeting data."
+}

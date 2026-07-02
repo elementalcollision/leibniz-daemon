@@ -72,3 +72,22 @@ def test_kernel_attests_a19_6_certificate_and_rejects_bogus():
     assert r["kernel"]["valid_cert"] is True
     assert r["kernel"]["bogus_cert"] is False
     assert r["kernel"]["sound"] is True
+
+
+def test_kernel_verify_lp_forwards_precisions(monkeypatch):
+    # the D6 cells (23,6)/(25,10) certify only at P=1e14 — above the default certify_lp ladder — so the
+    # kernel leg must forward precisions/time_cap_s or it can never attest them (free-CPU: certify_lp stubbed)
+    seen = {}
+
+    def fake_certify(n, d, target=None, return_duals=False, time_cap_s=900, precisions=None):
+        seen.update(precisions=precisions, time_cap_s=time_cap_s)
+        return {"certified": False}
+
+    monkeypatch.setattr(lp, "certify_lp", fake_certify)
+    r = lp.kernel_verify_lp(23, 6, target=13766, precisions=(10 ** 14,), time_cap_s=2400)
+    assert seen["precisions"] == (10 ** 14,) and seen["time_cap_s"] == 2400
+    assert r["certified"] is False                            # uncertified -> no kernel leg, fail-closed
+    # default stays the certify_lp ladder (no explicit precisions kwarg injected)
+    seen.clear()
+    lp.kernel_verify_lp(19, 6, target=1280)
+    assert seen["precisions"] is None

@@ -445,6 +445,14 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     probe's headroom cells is **bound-blocked, not solver-blocked** (needs D1 / hierarchies, not more
     precision). Guarded by `tests/test_terwilliger_sdp.py` (normalization-equivalence, defaults pairing,
     crash cell, d≥10 cell); invariants byte-identical.
+  - **KERNEL BANK (2026-07-02) — the two D6 certs are KERNEL-ATTESTED (2/2 sound):**
+    `docs/results/terwilliger-kernel-bank-2026-07-02.md`, `scripts/terwilliger_kernel_bank.py`. The real
+    Lean 4.31 kernel verifies all PSD blocks of **A(23,6) ≤ 13766** (24 blocks, ~124 s incl. the P=1e14 LP
+    leg) and **A(25,10) ≤ 503** (26 blocks, ~123 s) and rejects a corrupted-block control on each — both now
+    at the same kernel-attested tier as A(19,6) ≤ 1280, and A(25,10) is the **first d≥10 kernel-attested
+    certificate** (the reach probe's "d≥10 unvalidated" flag is closed end-to-end: SDPA-GMP float →
+    exact-rational LP → dual_check → kernel). `kernel_verify_lp` gained a `precisions`/`time_cap_s`
+    passthrough (these cells certify only at P=1e14, above the default ladder; free-CPU test guards it).
 
 ## The ADRs
 
