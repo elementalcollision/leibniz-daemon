@@ -2,7 +2,7 @@
   "verdict": "GREEN",
   "reproduced_table_I": "2/2",
   "valid_bounds": "7/7",
-  "sdp_le_lp": "7/8",
+  "sdp_le_lp": "8/8",
   "rows": [
     {
       "n": 4,
@@ -18,7 +18,7 @@
     {
       "n": 5,
       "d": 2,
-      "status": "optimal_inaccurate",
+      "status": "optimal",
       "sdp_value": 16.0,
       "sdp_floor": 16,
       "delsarte_lp_value": 16.0,
@@ -29,9 +29,9 @@
     {
       "n": 6,
       "d": 2,
-      "status": "optimal_inaccurate",
+      "status": "optimal",
       "sdp_value": 32.0,
-      "sdp_floor": 31,
+      "sdp_floor": 32,
       "delsarte_lp_value": 32.0,
       "sdp_le_lp": true
     },
@@ -49,7 +49,7 @@
     {
       "n": 7,
       "d": 4,
-      "status": "optimal_inaccurate",
+      "status": "optimal",
       "sdp_value": 8.0,
       "sdp_floor": 8,
       "delsarte_lp_value": 8.0,
@@ -60,7 +60,7 @@
     {
       "n": 8,
       "d": 4,
-      "status": "optimal_inaccurate",
+      "status": "optimal",
       "sdp_value": 16.0,
       "sdp_floor": 16,
       "delsarte_lp_value": 16.0,
@@ -71,12 +71,12 @@
     {
       "n": 19,
       "d": 6,
-      "status": "optimal_inaccurate",
-      "sdp_value": 1280.0824,
+      "status": "optimal",
+      "sdp_value": 1280.0363,
       "sdp_floor": 1280,
       "table_I": 1280,
       "reproduces_table_I": true,
-      "delsarte_lp_value": 1289.4673,
+      "delsarte_lp_value": 1289.4815,
       "sdp_le_lp": true,
       "lower": 1024,
       "valid_bound": true
@@ -84,13 +84,13 @@
     {
       "n": 20,
       "d": 8,
-      "status": "optimal_inaccurate",
-      "sdp_value": 274.563,
+      "status": "optimal",
+      "sdp_value": 274.0859,
       "sdp_floor": 274,
       "table_I": 274,
       "reproduces_table_I": true,
-      "delsarte_lp_value": 217.0234,
-      "sdp_le_lp": false,
+      "delsarte_lp_value": 290.4288,
+      "sdp_le_lp": true,
       "lower": 256,
       "valid_bound": true
     }

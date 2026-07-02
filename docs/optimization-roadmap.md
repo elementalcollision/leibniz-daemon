@@ -426,6 +426,25 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     that reproduces). Decision input: **F2b is infrastructure, not discovery-motivated, today**; D6 is the
     prerequisite for ANY beyond-Table-I attempt. Harness: `scripts/terwilliger_reach_probe.py`; test:
     `tests/test_terwilliger_reach_probe.py`.
+  - **D6/Q-pit-2 DONE (2026-07-02) — solve leg FIXED; d≥10 faithfulness VALIDATED (one measured anomaly);
+    frontier cells closed:** `docs/results/terwilliger-solve-leg-2026-07-02.md`,
+    `scripts/terwilliger_solve_leg.py`. Fix = **Schrijver's eq.(8) block normalization restored float-side
+    only** (exact PSD-equivalence; a per-block max-coeff scalar was tried and REJECTED — measured regression)
+    **+ SDPA-GMP** (`sdpa-multiprecision`, gated) at measured-tight `SDPA_TIGHT`; CLARABEL fallback stays raw
+    (byte-compatible; its equilibration fights the congruence). Gate passed: **A(19,6)→1280.036 and
+    A(20,8)→274.086 now at true `optimal`**, and the probe's crash cell **(23,6)→13766.139 `optimal`**
+    (Table I 13766) in ~10 s. **Two new exact certs banked: A(23,6) ≤ 13766 and the first d≥10 cert
+    A(25,10) ≤ 503** (certify_lp @ P=1e14). d≥10: (25,10) exact at both tiers → the suspected γ-substitution
+    hole is a **non-bug** (proved valid + present in the paper's program); (26,10) still stalls
+    (precision-independent, recorded); **(22,10) anomaly**: our transcription **certifies ≤ 88 exactly and
+    87 does not certify** — floats stall on BOTH sides (87.97 under-solve attractor across two solvers —
+    floors to Table I's "87"! — and a −7e-19-audit pseudo-optimum at 88.63 refuted by the exact cert's
+    1.5e9-scale multipliers: **no float audit is a bound at this conditioning**); eq.(25) caps provably
+    can't bridge 88→87. Open question + resolution paths recorded; not claimed as a Table I error. Frontier:
+    **(27,12)/(28,12) are now measured Delsarte-ties** — three-point adds nothing there, so discovery at the
+    probe's headroom cells is **bound-blocked, not solver-blocked** (needs D1 / hierarchies, not more
+    precision). Guarded by `tests/test_terwilliger_sdp.py` (normalization-equivalence, defaults pairing,
+    crash cell, d≥10 cell); invariants byte-identical.
 
 ## The ADRs
 

@@ -1,0 +1,261 @@
+{
+  "verdict": "GREEN",
+  "fix": "eq.(8) block normalization (exact PSD-equivalence, float leg only) + SDPA-GMP backend (sdpa-multiprecision) at SDPA_TIGHT settings",
+  "regression_ok": true,
+  "crash_cell_23_6_ok": true,
+  "reproduced_table_I": "4/6",
+  "kmax_ladder_22_10": [
+    {
+      "k_max": 0,
+      "status": "optimal",
+      "value": 95.3191
+    },
+    {
+      "k_max": 1,
+      "status": "optimal",
+      "value": 93.0623
+    },
+    {
+      "k_max": 2,
+      "status": "optimal",
+      "value": 87.9742
+    },
+    {
+      "k_max": 3,
+      "status": "optimal",
+      "value": 87.9743
+    },
+    {
+      "k_max": "full",
+      "status": "optimal_inaccurate",
+      "value": 88.6316
+    }
+  ],
+  "kmax_ladder_monotone": false,
+  "exact_certificates": [
+    {
+      "n": 23,
+      "d": 6,
+      "target": 13766,
+      "P": 100000000000000,
+      "n_active": 7800,
+      "lp_opt": 13766.1899,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "688309497034285983/50000000000000",
+      "bound_float": 13766.1899,
+      "floor": 13766,
+      "certified": true,
+      "secs": 56.4
+    },
+    {
+      "n": 25,
+      "d": 10,
+      "target": 503,
+      "P": 100000000000000,
+      "n_active": 9828,
+      "lp_opt": 503.7887,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "50378865077422117/100000000000000",
+      "bound_float": 503.7887,
+      "floor": 503,
+      "certified": true,
+      "secs": 19.1
+    },
+    {
+      "n": 22,
+      "d": 10,
+      "target": 87,
+      "P": 100000000000000,
+      "n_active": 6900,
+      "lp_opt": 88.2463,
+      "feasible": true,
+      "residual_zero": true,
+      "nonneg_ok": true,
+      "psd_ok": true,
+      "exact_bound": "8824633702923563/100000000000000",
+      "bound_float": 88.2463,
+      "floor": 88,
+      "certified": false,
+      "secs": 9.2
+    }
+  ],
+  "exact_certified": "2/3",
+  "rows": [
+    {
+      "n": 19,
+      "d": 6,
+      "table_I": 1280,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 1280.03627,
+      "sdp_floor": 1280,
+      "audit": {
+        "audited_objective": 1280.03627,
+        "worst_lin_violation": 3.529115559567911e-16,
+        "worst_block_eig": -1.401522949671225e-13,
+        "worst_block": "k=3 M",
+        "x000_dev": 4.3853809472693683e-14
+      },
+      "secs": 3.6,
+      "delsarte_lp": 1289.4815,
+      "reproduces_table_I": true
+    },
+    {
+      "n": 20,
+      "d": 8,
+      "table_I": 274,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 274.085887,
+      "sdp_floor": 274,
+      "audit": {
+        "audited_objective": 274.085887,
+        "worst_lin_violation": 5.260588997904036e-13,
+        "worst_block_eig": -9.106726705225106e-14,
+        "worst_block": "k=3 M",
+        "x000_dev": 5.090372567906343e-13
+      },
+      "secs": 5.0,
+      "delsarte_lp": 290.5946,
+      "reproduces_table_I": true
+    },
+    {
+      "n": 23,
+      "d": 6,
+      "table_I": 13766,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 13766.138765,
+      "sdp_floor": 13766,
+      "audit": {
+        "audited_objective": 13766.138765,
+        "worst_lin_violation": 2.5150933704961645e-15,
+        "worst_block_eig": -2.7022570894738044e-13,
+        "worst_block": "k=0 Mp",
+        "x000_dev": 2.4202861936828413e-14
+      },
+      "secs": 9.5,
+      "delsarte_lp": 13775.9347,
+      "reproduces_table_I": true
+    },
+    {
+      "n": 22,
+      "d": 10,
+      "table_I": 87,
+      "status": "optimal_inaccurate",
+      "solver": "SDPA",
+      "sdp_value": 88.63163,
+      "sdp_floor": 88,
+      "audit": {
+        "audited_objective": 88.63163,
+        "worst_lin_violation": 2.6646028322042845e-10,
+        "worst_block_eig": -7.377902631382992e-19,
+        "worst_block": "k=0 M",
+        "x000_dev": 2.57904364531214e-10
+      },
+      "secs": 6.9,
+      "delsarte_lp": 95.3191,
+      "reproduces_table_I": false
+    },
+    {
+      "n": 25,
+      "d": 10,
+      "table_I": 503,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 503.828387,
+      "sdp_floor": 503,
+      "audit": {
+        "audited_objective": 503.828387,
+        "worst_lin_violation": 4.997712007562766e-13,
+        "worst_block_eig": -1.45803641282769e-19,
+        "worst_block": "k=0 M",
+        "x000_dev": 4.978240042419202e-13
+      },
+      "secs": 17.9,
+      "delsarte_lp": 551.3846,
+      "reproduces_table_I": true
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "table_I": 886,
+      "status": "optimal_inaccurate",
+      "solver": "SDPA",
+      "sdp_value": 948.331627,
+      "sdp_floor": 948,
+      "audit": {
+        "audited_objective": 948.331627,
+        "worst_lin_violation": 6.4468191590378374e-09,
+        "worst_block_eig": -6.394512721151409e-09,
+        "worst_block": "k=2 M",
+        "x000_dev": 6.3059144572719106e-09
+      },
+      "secs": 14.3,
+      "delsarte_lp": 1040.2111,
+      "reproduces_table_I": false
+    },
+    {
+      "n": 21,
+      "d": 12,
+      "exact_A": 8,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 8.0,
+      "sdp_floor": 8,
+      "audit": {
+        "audited_objective": 8.0,
+        "worst_lin_violation": 6.303245966897474e-13,
+        "worst_block_eig": -7.864795325579822e-13,
+        "worst_block": "k=2 M",
+        "x000_dev": 7.681633107381458e-13
+      },
+      "secs": 2.8,
+      "delsarte_lp": 8.0,
+      "valid_bound": true
+    },
+    {
+      "n": 27,
+      "d": 12,
+      "published_ub": 169,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 170.666669,
+      "sdp_floor": 170,
+      "audit": {
+        "audited_objective": 170.666669,
+        "worst_lin_violation": 1.5085825907162712e-13,
+        "worst_block_eig": -1.7651829381879295e-13,
+        "worst_block": "k=3 M",
+        "x000_dev": 1.7275070263167436e-13
+      },
+      "secs": 11.6,
+      "delsarte_lp": 170.6667
+    },
+    {
+      "n": 28,
+      "d": 12,
+      "published_ub": 288,
+      "status": "optimal",
+      "solver": "SDPA",
+      "sdp_value": 288.000027,
+      "sdp_floor": 288,
+      "audit": {
+        "audited_objective": 288.000027,
+        "worst_lin_violation": 3.590130968028939e-13,
+        "worst_block_eig": -4.026265910058508e-13,
+        "worst_block": "k=4 M",
+        "x000_dev": 3.9390712913700554e-13
+      },
+      "secs": 19.6,
+      "delsarte_lp": 288.0
+    }
+  ],
+  "reading": "D6/Q-pit-2 solve-leg fix, measured. GREEN = the regression cells still floor to Table I (A(19,6)->1280, A(20,8)->274, now at true 'optimal' status) AND the reach-probe crash cell (23,6) returns a stable optimal near Schrijver's 13766. The audit fields are the returned point's violation profile, NOT bounds (measured at (22,10): a -7e-19/2.7e-10 audit still sat 0.38 above the exact dual certificate; 1.5e9-scale multipliers monetize 1e-10 violations). exact_certificates is the certify_lp escalation through the SDPA dual: A(23,6) <= 13766 and the first d>=10 exact cert A(25,10) <= 503 both CERTIFIED (dual_check-validated, kernel-renderable); (22,10) does NOT certify Table I's 87 - best exact bound ~88.246, floor 88, while floats stall on BOTH sides of it (87.97 under-solves, 88.63 pseudo-feasible) - eq.(25) caps are provably inactive at the relevant points, so whether the transcribed SDP's optimum floors to 87 is OPEN (decidable only exactly; see the results doc). (26,10) still stalls (structural, precision-independent). Floats stay indicative only - certification is certify_lp + kernel."
+}
