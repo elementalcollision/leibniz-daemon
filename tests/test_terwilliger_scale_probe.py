@@ -1,7 +1,8 @@
 """Guard the Path C scale probe (scripts/terwilliger_scale_probe.py). Needs cvxpy/numpy (operator-local), so
 SKIPS in CI. Records the measured A(19,6) finding: the exact certificate is compute-bound, NOT impossible —
-the dual rounds to PSD (at P=1e8), the bound floors to 1280, and the wall is exact nonnegativity (hundreds of
-negative multipliers), which is why a bit-controlled rational LP / SDPA-GMP is the remaining step."""
+the dual rounds to PSD (P=1e8 for CLARABEL-era duals; P=1e12–1e14 for the SDPA-GMP duals that are the solve
+leg's default since D6/Q-pit-2), the bound floors to 1280, and the wall is exact nonnegativity (hundreds of
+negative multipliers), which is why a bit-controlled rational LP was the remaining step."""
 from __future__ import annotations
 
 import importlib.util
