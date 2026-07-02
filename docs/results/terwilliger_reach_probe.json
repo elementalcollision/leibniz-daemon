@@ -1,0 +1,1380 @@
+{
+  "verdict": "DRY",
+  "per_cell_cap_s": 120.0,
+  "snapshot": {
+    "file": "docs/data/brouwer-snapshot-2026-07.json",
+    "meta": {
+      "source_url": "https://aeb.win.tue.nl/codes/binary-1.html (redirect target of www.win.tue.nl/~aeb/codes/binary-1.html)",
+      "fetched": "2026-07-01",
+      "table": "A_2(n,d), unrestricted binary codes; Brouwer's table ends at n=28 (n=29,30 have no entry)",
+      "trust_note": "Targeting context ONLY - never a decider. Soundness of any bound claim stays with the exact-rational LP certificate and the Lean kernel. This snapshot's roles are all reject-only/diagnostic: its ub selects which cells are worth escalating, its lb gates which solver floats are accepted at all (incl. the monotonicity-derived lb for n=29,30) and labels the above_known_lb field, and it is itself unverified web content - a wrong value here can suppress or waste an escalation but can never create a certified bound.",
+      "cells": "n=20..28, d in {6,8,10,12} (even d only; ticket range n=20..30 truncated to table coverage)",
+      "verification": "lb/ub of all 36 cells cross-checked 2026-07-01 by two independent extractions of the same page (manual read + independent parser): zero mismatches. ub_source strings are best-effort attribution from the page's improvements prose."
+    }
+  },
+  "rows": [
+    {
+      "n": 20,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 2373.0591,
+          "floor": 2373,
+          "secs": 1.8
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 2373.0591,
+      "sdp_floor": 2373,
+      "solver": "CLARABEL",
+      "solve_secs": 1.8,
+      "delsarte_lp_value": 2347.5242,
+      "lp_secs": 0.9,
+      "cell_secs": 2.8,
+      "snapshot": {
+        "lb": 2048,
+        "ub": 2279,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "margin_vs_ub": 94,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 20,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 274.563,
+          "floor": 274,
+          "secs": 1.5
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 274.563,
+      "sdp_floor": 274,
+      "solver": "CLARABEL",
+      "solve_secs": 1.5,
+      "delsarte_lp_value": 217.0234,
+      "lp_secs": 0.8,
+      "cell_secs": 2.5,
+      "snapshot": {
+        "lb": 256,
+        "ub": 256,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "margin_vs_ub": 18,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_I": 274,
+      "reproduces_table_I": true
+    },
+    {
+      "n": 20,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 4.3947,
+          "floor": 4,
+          "secs": 1.4
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 39.7618,
+          "floor": 39,
+          "secs": 21.0
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 22.6,
+      "snapshot": {
+        "lb": 40,
+        "ub": 40,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 20,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 6.0,
+          "floor": 5,
+          "secs": 1.5
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 5.6634,
+          "floor": 5,
+          "secs": 19.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 21.5,
+      "snapshot": {
+        "lb": 6,
+        "ub": 6,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 21,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 4096.234,
+          "floor": 4096,
+          "secs": 2.1
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 4096.234,
+      "sdp_floor": 4096,
+      "solver": "CLARABEL",
+      "solve_secs": 2.1,
+      "delsarte_lp_value": 4313.0722,
+      "lp_secs": 1.1,
+      "cell_secs": 3.3,
+      "snapshot": {
+        "lb": 2560,
+        "ub": 4096,
+        "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 21,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 511.9964,
+          "floor": 511,
+          "secs": 1.9
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 308.2928,
+          "floor": 308,
+          "secs": 23.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 25.8,
+      "snapshot": {
+        "lb": 512,
+        "ub": 512,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 21,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 50.1532,
+          "floor": 50,
+          "secs": 1.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 50.1532,
+      "sdp_floor": 50,
+      "solver": "CLARABEL",
+      "solve_secs": 1.7,
+      "delsarte_lp_value": 56.648,
+      "lp_secs": 0.9,
+      "cell_secs": 2.7,
+      "snapshot": {
+        "lb": 42,
+        "ub": 47,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "margin_vs_ub": 3,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 21,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 2.3501,
+          "floor": 2,
+          "secs": 1.5
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 1.05,
+          "floor": 1,
+          "secs": 23.6
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 25.2,
+      "snapshot": {
+        "lb": 8,
+        "ub": 8,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 22,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 6943.6071,
+          "floor": 6943,
+          "secs": 2.6
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 6943.6071,
+      "sdp_floor": 6943,
+      "solver": "CLARABEL",
+      "solve_secs": 2.6,
+      "delsarte_lp_value": "error: SolverError",
+      "cell_secs": 3.7,
+      "snapshot": {
+        "lb": 4096,
+        "ub": 6941,
+        "ub_source": "Agrell-Vardy-Zeger 2001 ('2 mod 4' argument)"
+      },
+      "margin_vs_ub": 2,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 22,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 1023.9674,
+          "floor": 1023,
+          "secs": 2.1
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 377.3963,
+          "floor": 377,
+          "secs": 26.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 29.0,
+      "snapshot": {
+        "lb": 1024,
+        "ub": 1024,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 22,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 3.5199,
+          "floor": 3,
+          "secs": 2.1
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 8.4939,
+          "floor": 8,
+          "secs": 27.0
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 29.2,
+      "snapshot": {
+        "lb": 64,
+        "ub": 84,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 22,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 1.9566,
+          "floor": 1,
+          "secs": 1.9
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2.5935,
+          "floor": 2,
+          "secs": 25.6
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 27.6,
+      "snapshot": {
+        "lb": 12,
+        "ub": 12,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 23,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 3.1
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 13626.1095,
+          "floor": 13626,
+          "secs": 31.2
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 13626.1095,
+      "sdp_floor": 13626,
+      "solver": "SCS",
+      "solve_secs": 31.2,
+      "delsarte_lp_value": 1839466.4671,
+      "lp_secs": 12.4,
+      "cell_secs": 46.9,
+      "snapshot": {
+        "lb": 8192,
+        "ub": 13674,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "margin_vs_ub": -48,
+      "above_known_lb": true,
+      "candidate": true,
+      "table_I": 13766,
+      "reproduces_table_I": false
+    },
+    {
+      "n": 23,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 2047.9438,
+          "floor": 2047,
+          "secs": 2.7
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 341.2384,
+          "floor": 341,
+          "secs": 30.2
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 33.1,
+      "snapshot": {
+        "lb": 2048,
+        "ub": 2048,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 23,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 3.7921,
+          "floor": 3,
+          "secs": 2.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 17.8643,
+          "floor": 17,
+          "secs": 30.4
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 32.8,
+      "snapshot": {
+        "lb": 80,
+        "ub": 150,
+        "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 23,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 1.5469,
+          "floor": 1,
+          "secs": 2.0
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2.943,
+          "floor": 2,
+          "secs": 29.2
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 31.4,
+      "snapshot": {
+        "lb": 24,
+        "ub": 24,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 24,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 3.6
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 25798.5027,
+          "floor": 25798,
+          "secs": 34.7
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 25798.5027,
+      "sdp_floor": 25798,
+      "solver": "SCS",
+      "solve_secs": 34.7,
+      "delsarte_lp_value": 3697872.5621,
+      "lp_secs": 13.4,
+      "cell_secs": 51.8,
+      "snapshot": {
+        "lb": 16384,
+        "ub": 24106,
+        "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+      },
+      "margin_vs_ub": 1692,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 24,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 2.7
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 190.8809,
+          "floor": 190,
+          "secs": 32.9
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 35.7,
+      "snapshot": {
+        "lb": 4096,
+        "ub": 4096,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 24,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 2.5
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 13.2965,
+          "floor": 13,
+          "secs": 32.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 35.5,
+      "snapshot": {
+        "lb": 136,
+        "ub": 268,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 24,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 1.3588,
+          "floor": 1,
+          "secs": 2.4
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2.8205,
+          "floor": 2,
+          "secs": 32.0
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 34.5,
+      "snapshot": {
+        "lb": 48,
+        "ub": 48,
+        "ub_source": "exact (lb=ub in Brouwer's table)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 4.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 6503.3095,
+          "floor": 6503,
+          "secs": 38.5
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 43.0,
+      "snapshot": {
+        "lb": 17920,
+        "ub": 47538,
+        "ub_source": "Mounits-Etzion-Litsyn 2007 (assoc. schemes + LP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 5482.591,
+          "floor": 5482,
+          "secs": 3.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 5482.591,
+      "sdp_floor": 5482,
+      "solver": "CLARABEL",
+      "solve_secs": 3.7,
+      "delsarte_lp_value": "error: SolverError",
+      "cell_secs": 5.6,
+      "snapshot": {
+        "lb": 4096,
+        "ub": 5421,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "margin_vs_ub": 61,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_I": 5477,
+      "reproduces_table_I": false
+    },
+    {
+      "n": 25,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 6.7813,
+          "floor": 6,
+          "secs": 3.2
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 18.9074,
+          "floor": 18,
+          "secs": 38.0
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 41.3,
+      "snapshot": {
+        "lb": 192,
+        "ub": 466,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 3.9133,
+          "floor": 3,
+          "secs": 2.8
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 1.3595,
+          "floor": 1,
+          "secs": 37.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 40.7,
+      "snapshot": {
+        "lb": 52,
+        "ub": 55,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 4.0
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 10796.8464,
+          "floor": 10796,
+          "secs": 43.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 47.9,
+      "snapshot": {
+        "lb": 32768,
+        "ub": 84260,
+        "ub_source": "Mounits-Etzion-Litsyn 2001 preprint"
+      },
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 3.8
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 1566.0414,
+          "floor": 1566,
+          "secs": 41.5
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 45.4,
+      "snapshot": {
+        "lb": 4104,
+        "ub": 9275,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 3.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 113.8535,
+          "floor": 113,
+          "secs": 41.5
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 44.9,
+      "snapshot": {
+        "lb": 384,
+        "ub": 836,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 3.4496,
+          "floor": 3,
+          "secs": 3.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 1.457,
+          "floor": 1,
+          "secs": 41.3
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 44.7,
+      "snapshot": {
+        "lb": 64,
+        "ub": 96,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.6
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 18013.9583,
+          "floor": 18013,
+          "secs": 47.6
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 53.4,
+      "snapshot": {
+        "lb": 65536,
+        "ub": 157285,
+        "ub_source": "Mounits-Etzion-Litsyn 2002"
+      },
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 12445.8976,
+          "floor": 12445,
+          "secs": 5.5
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 12445.8976,
+      "sdp_floor": 12445,
+      "solver": "CLARABEL",
+      "solve_secs": 5.5,
+      "delsarte_lp_value": "error: SolverError",
+      "cell_secs": 7.8,
+      "snapshot": {
+        "lb": 8192,
+        "ub": 17099,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "margin_vs_ub": -4654,
+      "above_known_lb": true,
+      "candidate": true,
+      "table_I": 17768,
+      "reproduces_table_I": false
+    },
+    {
+      "n": 27,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 8.5684,
+          "floor": 8,
+          "secs": 4.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 222.1206,
+          "floor": 222,
+          "secs": 45.5
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 49.8,
+      "snapshot": {
+        "lb": 512,
+        "ub": 1585,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 6.3455,
+          "floor": 6,
+          "secs": 3.8
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 1.4529,
+          "floor": 1,
+          "secs": 44.5
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 48.4,
+      "snapshot": {
+        "lb": 128,
+        "ub": 169,
+        "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.3
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2735.8458,
+          "floor": 2735,
+          "secs": 53.3
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 58.8,
+      "snapshot": {
+        "lb": 131072,
+        "ub": 291269,
+        "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.1
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 4612.046,
+          "floor": 4612,
+          "secs": 50.7
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 55.9,
+      "snapshot": {
+        "lb": 16384,
+        "ub": 32151,
+        "ub_source": "Schrijver 2004/2005 Terwilliger three-point SDP (Table I)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 4.4
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 18.4391,
+          "floor": 18,
+          "secs": 49.7
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 54.2,
+      "snapshot": {
+        "lb": 1024,
+        "ub": 2817,
+        "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 4.1
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2.2947,
+          "floor": 2,
+          "secs": 47.9
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 52.1,
+      "snapshot": {
+        "lb": 178,
+        "ub": 288,
+        "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+      },
+      "candidate": false
+    },
+    {
+      "n": 29,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 6.0
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 5167.8736,
+          "floor": 5167,
+          "secs": 58.4
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 64.5,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 131072,
+        "source": "monotonicity: A(29,6) >= A(28,6) >= 131072"
+      }
+    },
+    {
+      "n": 29,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.6
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 123.6377,
+          "floor": 123,
+          "secs": 55.9
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 61.7,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 16384,
+        "source": "monotonicity: A(29,8) >= A(28,8) >= 16384"
+      }
+    },
+    {
+      "n": 29,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 9.4337,
+          "floor": 9,
+          "secs": 6.2
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 19.6304,
+          "floor": 19,
+          "secs": 54.8
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 61.1,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 1024,
+        "source": "monotonicity: A(29,10) >= A(28,10) >= 1024"
+      }
+    },
+    {
+      "n": 29,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "optimal",
+          "value": 7.1891,
+          "floor": 7,
+          "secs": 5.0
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 2.1262,
+          "floor": 2,
+          "secs": 52.7
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 57.8,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 178,
+        "source": "monotonicity: A(29,12) >= A(28,12) >= 178"
+      }
+    },
+    {
+      "n": 30,
+      "d": 6,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 7.0
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 104499.4959,
+          "floor": 104499,
+          "secs": 64.4
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 71.6,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 131072,
+        "source": "monotonicity: A(30,6) >= A(28,6) >= 131072"
+      }
+    },
+    {
+      "n": 30,
+      "d": 8,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 6.6
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 8957.2594,
+          "floor": 8957,
+          "secs": 61.7
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 68.5,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 16384,
+        "source": "monotonicity: A(30,8) >= A(28,8) >= 16384"
+      }
+    },
+    {
+      "n": 30,
+      "d": 10,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.8
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 101.765,
+          "floor": 101,
+          "secs": 59.6
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 65.6,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 1024,
+        "source": "monotonicity: A(30,10) >= A(28,10) >= 1024"
+      }
+    },
+    {
+      "n": 30,
+      "d": 12,
+      "attempts": [
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 5.4
+        },
+        {
+          "solver": "SCS",
+          "status": "optimal_inaccurate",
+          "value": 10.7791,
+          "floor": 10,
+          "secs": 56.9
+        }
+      ],
+      "status": "no_valid_float (all solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 62.5,
+      "snapshot": null,
+      "candidate": false,
+      "derived_lb": {
+        "lb": 178,
+        "source": "monotonicity: A(30,12) >= A(28,12) >= 178"
+      }
+    }
+  ],
+  "escalations": [
+    {
+      "n": 23,
+      "d": 6,
+      "target": 13626,
+      "certified": false,
+      "error": "SolverError: Solver 'CLARABEL' failed. Try another solver, or solve with verbose=True for more information."
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "target": 12445,
+      "exact_lp": {
+        "n": 27,
+        "d": 8,
+        "target": 12445,
+        "P": 1000000000000,
+        "n_active": 12180,
+        "lp_opt": 59231462.5364,
+        "feasible": true,
+        "residual_zero": true,
+        "nonneg_ok": true,
+        "psd_ok": true,
+        "exact_bound": "11846292507279381017/200000000000",
+        "bound_float": 59231462.5364,
+        "floor": 59231462,
+        "certified": false,
+        "secs": 293.8
+      },
+      "certified": false
+    }
+  ],
+  "reading": "Task #99 discovery reach probe. candidate = float floor strictly below the Brouwer-snapshot ub and >= its lb; counts ONLY once the exact-rational LP certifies it (escalations[]). above_known_lb means 'not refuted by the known lower bound', never a validity claim \u2014 floats are targeting data. GREEN(candidate) = >=1 certified strictly-below-ub bound -> surface to operator (independent snapshot re-verification required before any announcement). DRY = 0 certified tightenings (any float candidates were escalated and not certified) \u2014 the expected outcome: post-2005 quadruple/stronger SDPs already tightened most cells. UNESCALATED = candidates found under --no-escalate. Time-caps/solver failures are the honest n-scaling measurement, not noise. The snapshot is targeting context only, never a decider."
+}

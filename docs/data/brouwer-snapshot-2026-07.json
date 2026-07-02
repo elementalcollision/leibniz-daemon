@@ -1,0 +1,192 @@
+{
+  "_meta": {
+    "source_url": "https://aeb.win.tue.nl/codes/binary-1.html (redirect target of www.win.tue.nl/~aeb/codes/binary-1.html)",
+    "fetched": "2026-07-01",
+    "table": "A_2(n,d), unrestricted binary codes; Brouwer's table ends at n=28 (n=29,30 have no entry)",
+    "trust_note": "Targeting context ONLY - never a decider. Soundness of any bound claim stays with the exact-rational LP certificate and the Lean kernel. This snapshot's roles are all reject-only/diagnostic: its ub selects which cells are worth escalating, its lb gates which solver floats are accepted at all (incl. the monotonicity-derived lb for n=29,30) and labels the above_known_lb field, and it is itself unverified web content - a wrong value here can suppress or waste an escalation but can never create a certified bound.",
+    "cells": "n=20..28, d in {6,8,10,12} (even d only; ticket range n=20..30 truncated to table coverage)",
+    "verification": "lb/ub of all 36 cells cross-checked 2026-07-01 by two independent extractions of the same page (manual read + independent parser): zero mismatches. ub_source strings are best-effort attribution from the page's improvements prose."
+  },
+  "cells": {
+    "20,6": {
+      "lb": 2048,
+      "ub": 2279,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "20,8": {
+      "lb": 256,
+      "ub": 256,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "20,10": {
+      "lb": 40,
+      "ub": 40,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "20,12": {
+      "lb": 6,
+      "ub": 6,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "21,6": {
+      "lb": 2560,
+      "ub": 4096,
+      "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+    },
+    "21,8": {
+      "lb": 512,
+      "ub": 512,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "21,10": {
+      "lb": 42,
+      "ub": 47,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "21,12": {
+      "lb": 8,
+      "ub": 8,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "22,6": {
+      "lb": 4096,
+      "ub": 6941,
+      "ub_source": "Agrell-Vardy-Zeger 2001 ('2 mod 4' argument)"
+    },
+    "22,8": {
+      "lb": 1024,
+      "ub": 1024,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "22,10": {
+      "lb": 64,
+      "ub": 84,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "22,12": {
+      "lb": 12,
+      "ub": 12,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "23,6": {
+      "lb": 8192,
+      "ub": 13674,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "23,8": {
+      "lb": 2048,
+      "ub": 2048,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "23,10": {
+      "lb": 80,
+      "ub": 150,
+      "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+    },
+    "23,12": {
+      "lb": 24,
+      "ub": 24,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "24,6": {
+      "lb": 16384,
+      "ub": 24106,
+      "ub_source": "Best-Brouwer-MacWilliams-Odlyzko-Sloane 1978 table base (no later improvement listed)"
+    },
+    "24,8": {
+      "lb": 4096,
+      "ub": 4096,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "24,10": {
+      "lb": 136,
+      "ub": 268,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "24,12": {
+      "lb": 48,
+      "ub": 48,
+      "ub_source": "exact (lb=ub in Brouwer's table)"
+    },
+    "25,6": {
+      "lb": 17920,
+      "ub": 47538,
+      "ub_source": "Mounits-Etzion-Litsyn 2007 (assoc. schemes + LP)"
+    },
+    "25,8": {
+      "lb": 4096,
+      "ub": 5421,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "25,10": {
+      "lb": 192,
+      "ub": 466,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "25,12": {
+      "lb": 52,
+      "ub": 55,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "26,6": {
+      "lb": 32768,
+      "ub": 84260,
+      "ub_source": "Mounits-Etzion-Litsyn 2001 preprint"
+    },
+    "26,8": {
+      "lb": 4104,
+      "ub": 9275,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "26,10": {
+      "lb": 384,
+      "ub": 836,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "26,12": {
+      "lb": 64,
+      "ub": 96,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "27,6": {
+      "lb": 65536,
+      "ub": 157285,
+      "ub_source": "Mounits-Etzion-Litsyn 2002"
+    },
+    "27,8": {
+      "lb": 8192,
+      "ub": 17099,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "27,10": {
+      "lb": 512,
+      "ub": 1585,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "27,12": {
+      "lb": 128,
+      "ub": 169,
+      "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+    },
+    "28,6": {
+      "lb": 131072,
+      "ub": 291269,
+      "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+    },
+    "28,8": {
+      "lb": 16384,
+      "ub": 32151,
+      "ub_source": "Schrijver 2004/2005 Terwilliger three-point SDP (Table I)"
+    },
+    "28,10": {
+      "lb": 1024,
+      "ub": 2817,
+      "ub_source": "Gijswijt-Mittelmann-Schrijver 2012 (quadruple-distance SDP)"
+    },
+    "28,12": {
+      "lb": 178,
+      "ub": 288,
+      "ub_source": "Agrell-Vardy-Zeger 2001 table (n=25..28 base values)"
+    }
+  }
+}
