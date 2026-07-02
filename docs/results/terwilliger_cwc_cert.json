@@ -7,6 +7,7 @@
     "sound": true
   },
   "kernel_blocks": 46,
+  "kernel_attests_recorded_cert": true,
   "rows": [
     {
       "n": 6,
@@ -96,7 +97,7 @@
       "bound_float": 228.999,
       "floor": 228,
       "certified": true,
-      "secs": 2.1
+      "secs": 2.0
     },
     {
       "n": 18,
@@ -114,7 +115,7 @@
       "bound_float": 199.8874,
       "floor": 199,
       "certified": true,
-      "secs": 2.6
+      "secs": 2.5
     },
     {
       "n": 17,
@@ -132,8 +133,8 @@
       "bound_float": 280.6754,
       "floor": 280,
       "certified": true,
-      "secs": 14.2
+      "secs": 13.7
     }
   ],
-  "reading": "D1 step 3: exact + kernel legs on the constant-weight build. Every cell carries an exact rational dual certificate (stationarity residuals exactly 0, blocks exactly PSD, multipliers >= 0) whose floor hits the target; a17_6_7_kernel = the REAL Lean 4.31 kernel verdict on the A(17,6,7)<=228 certificate's PSD blocks (valid accepted, corrupted rejected). Audit tier throughout - DUAL_CERTIFICATE_CHECKED, not Q.E.D."
+  "reading": "D1 step 3: exact + kernel legs on the constant-weight build. Every cell carries an exact rational dual certificate (stationarity residuals exactly 0, blocks exactly PSD, multipliers >= 0, bound >= known lower bound) whose floor hits the target; a17_6_7_kernel = the REAL Lean 4.31 kernel verdict on the A(17,6,7)<=228 certificate's PSD BLOCKS (valid accepted, corrupted rejected, liveness-confirmed). The kernel attests block PSD-ness only; stationarity + the bound arithmetic are exact Python (dual_check). Audit tier throughout - DUAL_CERTIFICATE_CHECKED, not Q.E.D."
 }

@@ -188,14 +188,17 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001 -- report, don't crash the sweep
             rows.append({"n": n, "d": d, "w": w, "status": f"error: {type(e).__name__}: {e}"})
 
-    repro = [r for r in rows if r.get("reproduces_table_II")]
-    table_cells = [r for r in rows if "reproduces_table_II" in r]
-    valid = [r for r in rows if r.get("valid_bound")]
-    checked = [r for r in rows if "valid_bound" in r]
-    verdict = ("GREEN" if table_cells and len(repro) == len(table_cells)
-               and len(valid) == len(checked) else "AMBER")
-    res = {"verdict": verdict, "reproduced_table_II": f"{len(repro)}/{len(table_cells)}",
-           "valid_bounds": f"{len(valid)}/{len(checked)}", "rows": rows,
+    # Gate on the CONFIGURED cell sets, not the surviving rows: a crashed/None gate cell must fail the gate,
+    # not silently drop out of the denominator and let the survivors carry a GREEN.
+    by = {(r["n"], r["d"], r["w"]): r for r in rows}
+    lower_cells = [c for c in small + gate if c in LOWER]
+    gate_ok = all(by.get(c, {}).get("reproduces_table_II") is True for c in gate)
+    lower_ok = all(by.get(c, {}).get("valid_bound") is True for c in lower_cells)
+    repro = [c for c in gate if by.get(c, {}).get("reproduces_table_II") is True]
+    valid = [c for c in lower_cells if by.get(c, {}).get("valid_bound") is True]
+    verdict = "GREEN" if gate_ok and lower_ok else "AMBER"
+    res = {"verdict": verdict, "reproduced_table_II": f"{len(repro)}/{len(gate)}",
+           "valid_bounds": f"{len(valid)}/{len(lower_cells)}", "rows": rows,
            "reading": ("D1 step 2, the formulation-faithfulness gate. GREEN = the constant-weight SDP optimum "
                        "floors to Schrijver Table II on every gate cell AND never floors below a known lower "
                        "bound on A(n,d,w) -> the Section-III transcription is FAITHFUL (the exact analogue of "

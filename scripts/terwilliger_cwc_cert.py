@@ -160,11 +160,16 @@ def _assemble(n, w, Zq, Zpq, cols, mvals):
     return duals
 
 
-def certify_lp(n, d, w, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 12), time_cap_s=900,
+def certify_lp(n, d, w, target=None, lb=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 12), time_cap_s=900,
                return_duals=False):
     """Exact-rational constant-weight certificate: rationalize the solver dual's PSD blocks, then ONE exact
     two-phase simplex for the linear multipliers (min Σγ − ν s.t. stationarity, α,β1,γ ≥ 0), then the cwc
-    dual_check. certified ⟺ feasible AND ⌊exact bound⌋ ≤ target."""
+    dual_check. certified ⟺ feasible AND lb ≤ ⌊exact bound⌋ ≤ target.
+
+    `lb` (the known lower bound on A(n,d,w)) is the SOUNDNESS tripwire the float legs already carry
+    (terwilliger_cwc_sdp.valid_bound): an exact bound that floors BELOW a known lower bound is mathematically
+    impossible, so it can only come from an over-constraining transcription bug — it is refused (certified
+    False) and flagged `soundness_alarm`, never reported as a tightening."""
     ex = extract_dual(n, d, w)
     target = target if target is not None else int(ex["value"] + 1e-6)
     keys, cols, A, bnd = _mult_structure(n, d, w)
@@ -218,16 +223,24 @@ def certify_lp(n, d, w, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 
         chk = tcd.dual_check(n, d, w, duals)
         b = chk["bound"]
         secs = round(time.time() - t_start, 1)
+        floor_b = int(b) if b >= 0 else 0
+        below_lb = lb is not None and chk["feasible"] and b >= 0 and floor_b < lb
         row = {"n": n, "d": d, "w": w, "target": target, "P": P, "sdp_value": round(ex["value"], 4),
                "lp_opt": round(float(opt), 4), "feasible": chk["feasible"],
                "residual_zero": chk["n_residuals_nonzero"] == 0,
                "nonneg_ok": chk["nonneg_ok"], "psd_ok": chk["psd_ok"],
-               "exact_bound": str(b), "bound_float": round(float(b), 4),
-               "floor": (int(b) if b >= 0 else 0),
-               "certified": bool(chk["feasible"] and b >= 0 and int(b) <= target), "secs": secs}
+               "exact_bound": str(b), "bound_float": round(float(b), 4), "floor": floor_b,
+               "certified": bool(chk["feasible"] and b >= 0 and floor_b <= target and not below_lb),
+               "secs": secs}
+        if below_lb:
+            row["soundness_alarm"] = (f"exact bound {floor_b} < known lower bound {lb}: an impossible bound "
+                                      "from an over-constraining transcription — NOT a discovery")
         if row["certified"]:
             if return_duals:
                 row["duals"] = duals
+            return row
+        # a below-lb feasible dual is a soundness alarm, not a candidate — return it immediately, loudly
+        if below_lb:
             return row
         if chk["feasible"] and (best is None or (b >= 0 and b < Fr(best["exact_bound"]))):
             best = row
@@ -235,18 +248,34 @@ def certify_lp(n, d, w, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 
                     "status": "no exact LP cert at tried precisions"}
 
 
-def kernel_verify_lp(n, d, w, target=None, timeout_s=900, precisions=None, time_cap_s=900):
-    """The kernel leg: certify via the exact LP, render the cert's PSD blocks as per-block Lean theorems
-    (cert.render_cert_lean — one `ldltOK ... = true := by decide` per block, maxHeartbeats 0), and verify on
-    the REAL Lean 4.31 kernel: valid accepted AND a corrupted block rejected."""
-    kw = {} if precisions is None else {"precisions": precisions}
-    row = certify_lp(n, d, w, target=target, return_duals=True, time_cap_s=time_cap_s, **kw)
-    if not row.get("certified"):
-        return {"n": n, "d": d, "w": w, "certified": False, "note": "no exact LP cert to render"}
-    blocks = cert.cert_psd_blocks(row["duals"])
-    out = {"n": n, "d": d, "w": w, "target": row["target"], "exact_bound": row["exact_bound"],
-           "floor": row["floor"], "n_blocks": len(blocks),
-           "largest_block": max(len(b["M"]) for b in blocks)}
+def kernel_verify_lp(n, d, w, target=None, lb=None, timeout_s=900, precisions=None, time_cap_s=900,
+                     cert_row=None):
+    """The kernel leg: render the EXACT-certified certificate's PSD blocks as per-block Lean theorems
+    (cert.render_cert_lean — one `ldltOK ... = true := by decide` per block, maxHeartbeats 0) and verify on
+    the REAL Lean 4.31 kernel: valid accepted AND a corrupted block rejected.
+
+    `cert_row` (a certified certify_lp row WITH 'duals') pins the attestation to the SAME certificate the
+    caller certified; only when it is None do we re-derive one here. Soundness caveats made honest:
+      • the kernel attests block PSD-ness ONLY — the stationarity system and the bound arithmetic Σγ−ν ≤ target
+        are checked in exact Python (dual_check), NOT by the kernel (F2b bridge theorem is the only path past
+        that; this stays audit-tier DUAL_CERTIFICATE_CHECKED);
+      • EVERY certificate block must reach the kernel — a block cert.cert_psd_blocks silently drops (singular
+        after scaling) makes the rendered census short, and a short census is a render failure, not `sound`;
+      • the corrupted-block control must yield a GENUINE kernel rejection — an infra/daemon failure that also
+        returns False is distinguished by a trivially-true liveness probe (else `sound` is left None)."""
+    if cert_row is None:
+        kw = {} if precisions is None else {"precisions": precisions}
+        cert_row = certify_lp(n, d, w, target=target, lb=lb, return_duals=True, time_cap_s=time_cap_s, **kw)
+    if not cert_row.get("certified") or "duals" not in cert_row:
+        return {"n": n, "d": d, "w": w, "certified": False, "note": "no exact LP cert (with duals) to render"}
+    blocks = cert.cert_psd_blocks(cert_row["duals"])
+    expected = 2 * len(tc.block_pairs(w, n - w))          # both families over every nonempty (k,l) block pair
+    out = {"n": n, "d": d, "w": w, "target": cert_row["target"], "exact_bound": cert_row["exact_bound"],
+           "floor": cert_row["floor"], "n_blocks": len(blocks), "expected_blocks": expected,
+           "largest_block": max((len(b["M"]) for b in blocks), default=0)}
+    if len(blocks) != expected:                          # a dropped block => the kernel never saw the whole cert
+        out["kernel"] = f"render_incomplete ({len(blocks)}/{expected} blocks; a singular block was dropped)"
+        return out
     try:
         from leibniz.backends.lean_cli import LeanCliBackend, available
         if not available():
@@ -254,34 +283,72 @@ def kernel_verify_lp(n, d, w, target=None, timeout_s=900, precisions=None, time_
             return out
         bk = LeanCliBackend(timeout_s=timeout_s)
         good = bk.check_source(cert.render_cert_lean(blocks))
+        if good is None:
+            out["kernel"] = "unavailable (backend returned None on the valid cert)"
+            return out
         bogus_blocks = [dict(blocks[0], d=[x - 10 ** 6 for x in blocks[0]["d"]])] + blocks[1:]
         bogus = bk.check_source(cert.render_cert_lean(bogus_blocks))
-        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": good is True and bogus is False}
+        sound = good is True and bogus is False
+        if bogus is False:
+            # a False here must be a real kernel rejection, not docker/daemon breakage between runs (which
+            # also returns False). A trivially-true source MUST still elaborate; if it doesn't, the control
+            # is void and `sound` is inconclusive, never True.
+            alive = bk.check_source("theorem cwc_kernel_liveness : True := trivial")
+            if alive is not True:
+                sound = None
+        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": sound}
+        if sound is None:
+            out["kernel"]["note"] = ("control inconclusive: backend liveness probe failed after bogus=False "
+                                     "(infrastructure error, not a kernel rejection)")
     except Exception as e:  # pragma: no cover
         out["kernel"] = f"unavailable ({type(e).__name__})"
     return out
 
 
 def main() -> int:
-    # small exact cells (certified bound must equal the known optimum) + the Table II gate cells.
-    # (17,6,7) needs P=1e14 (measured): the SDP optimum 228.999 leaves ~1e-3 of rounding headroom below
-    # 229 — the same precision-matters-for-the-BOUND behavior as the unrestricted D6 cells.
+    # small exact cells (certified bound must equal the known optimum) + the Table II gate cells. Each carries
+    # its known lower bound (tcs.LOWER) so a certificate that floors BELOW it trips the soundness alarm rather
+    # than certifying an impossible bound. (17,6,7) needs P=1e14 (measured): the SDP optimum 228.999 leaves
+    # ~1e-3 of rounding headroom below 229 — the same precision-matters-for-the-BOUND behavior as D6.
     cells = [(6, 4, 3, 4, None), (7, 4, 3, 7, None), (8, 4, 4, 14, None), (9, 4, 3, 12, None),
              (17, 6, 7, 228, (10 ** 14,)), (18, 6, 6, 199, None), (17, 6, 8, 280, None)]
-    rows = [certify_lp(n, d, w, target=t, **({} if p is None else {"precisions": p}))
-            for (n, d, w, t, p) in cells]
+    rows, flagship = [], None       # flagship = the (17,6,7) certified row WITH duals, for the kernel leg (#7)
+    for (n, d, w, t, p) in cells:
+        lb = tcs.LOWER.get((n, d, w))
+        kw = {} if p is None else {"precisions": p}
+        want_duals = (n, d, w) == (17, 6, 7)
+        r = certify_lp(n, d, w, target=t, lb=lb, return_duals=want_duals, **kw)
+        if want_duals and r.get("certified"):
+            flagship = dict(r)                           # keep duals here to attest THIS exact certificate
+            r = {k: v for k, v in r.items() if k != "duals"}   # ... but never write duals into the artifact
+        rows.append(r)
     certified = [r for r in rows if r.get("certified")]
-    # kernel-attest the flagship record cell A(17,6,7) ≤ 228 (+ bogus control)
-    kern = kernel_verify_lp(17, 6, 7, target=228, precisions=(10 ** 14,))
-    verdict = "GREEN" if len(certified) == len(rows) and kern.get("kernel", {}) and \
-        (isinstance(kern.get("kernel"), dict) and kern["kernel"].get("sound")) else "AMBER"
+    # kernel-attest the flagship record cell A(17,6,7) ≤ 228 on THE certified certificate (+ bogus control).
+    # Wrapped: a kernel-leg crash (docker/solver) must never erase the exact certificates already computed.
+    if flagship is not None:
+        try:
+            kern = kernel_verify_lp(17, 6, 7, target=228, lb=tcs.LOWER.get((17, 6, 7)),
+                                    precisions=(10 ** 14,), cert_row=flagship)
+        except Exception as e:  # noqa: BLE001 -- record; keep the exact results
+            kern = {"kernel": f"error: {type(e).__name__}: {e}"}
+    else:
+        kern = {"kernel": "skipped (A(17,6,7) did not certify — no cert to attest)"}
+    kd = kern.get("kernel")
+    # the attested certificate must be the SAME one recorded (bound-consistency), else the attestation is void
+    kernel_matches = (isinstance(kd, dict) and flagship is not None
+                      and kern.get("exact_bound") == flagship.get("exact_bound"))
+    verdict = "GREEN" if len(certified) == len(rows) and isinstance(kd, dict) and kd.get("sound") \
+        and kernel_matches else "AMBER"
     res = {"verdict": verdict, "certified": f"{len(certified)}/{len(rows)}",
-           "a17_6_7_kernel": kern.get("kernel"), "kernel_blocks": kern.get("n_blocks"), "rows": rows,
+           "a17_6_7_kernel": kd, "kernel_blocks": kern.get("n_blocks"),
+           "kernel_attests_recorded_cert": kernel_matches, "rows": rows,
            "reading": ("D1 step 3: exact + kernel legs on the constant-weight build. Every cell carries an "
                        "exact rational dual certificate (stationarity residuals exactly 0, blocks exactly "
-                       "PSD, multipliers >= 0) whose floor hits the target; a17_6_7_kernel = the REAL Lean "
-                       "4.31 kernel verdict on the A(17,6,7)<=228 certificate's PSD blocks (valid accepted, "
-                       "corrupted rejected). Audit tier throughout - DUAL_CERTIFICATE_CHECKED, not Q.E.D.")}
+                       "PSD, multipliers >= 0, bound >= known lower bound) whose floor hits the target; "
+                       "a17_6_7_kernel = the REAL Lean 4.31 kernel verdict on the A(17,6,7)<=228 "
+                       "certificate's PSD BLOCKS (valid accepted, corrupted rejected, liveness-confirmed). "
+                       "The kernel attests block PSD-ness only; stationarity + the bound arithmetic are exact "
+                       "Python (dual_check). Audit tier throughout - DUAL_CERTIFICATE_CHECKED, not Q.E.D.")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, indent=2) + "\n")
     print(f"terwilliger cwc cert (exact + kernel): {verdict} ({res['certified']})")
