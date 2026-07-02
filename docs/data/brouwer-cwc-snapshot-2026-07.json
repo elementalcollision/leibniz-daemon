@@ -1,0 +1,5760 @@
+{
+ "_meta": {
+  "source_name": "Andries Brouwer \u2014 Bounds for binary constant weight codes A(n,d,w)",
+  "source_url": "https://aeb.win.tue.nl/codes/Andw.html",
+  "fetched_at": "2026-07-02",
+  "sha256_page": "a147d4c2b631b4c7e61e5a038bfc8292f1e8a9e2d98bd8062b6886a2688f2d23",
+  "parser": "scripts/terwilliger_cwc_probe.py --build-snapshot",
+  "cells": 820,
+  "unparsed_cells": [],
+  "cross_check": {
+   "against": "docs/results/brouwer_cwc_lower_bounds.json",
+   "fetched_at_old": "2026-06-27",
+   "shared_cells": 816,
+   "lb_diffs": []
+  },
+  "trust_note": "Targeting context ONLY \u2014 never a decider. Soundness of any bound claim stays with the exact-rational LP certificate and the Lean kernel."
+ },
+ "cells": {
+  "6,4,3": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "7,4,3": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "8,4,3": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "8,4,4": {
+   "lb": 14,
+   "ub": 14,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "8,6,4": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "9,4,3": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "9,4,4": {
+   "lb": 18,
+   "ub": 18,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "9,6,4": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "10,4,3": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "10,4,4": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "10,4,5": {
+   "lb": 36,
+   "ub": 36,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "10,6,4": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "10,6,5": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "10,8,5": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "11,4,3": {
+   "lb": 17,
+   "ub": 17,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "11,4,4": {
+   "lb": 35,
+   "ub": 35,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "11,4,5": {
+   "lb": 66,
+   "ub": 66,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "11,6,4": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "11,6,5": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "11,8,5": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "12,4,3": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "12,4,4": {
+   "lb": 51,
+   "ub": 51,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "12,4,5": {
+   "lb": 80,
+   "ub": 80,
+   "exact": true,
+   "lb_source": "\u00d6",
+   "ub_source": ""
+  },
+  "12,4,6": {
+   "lb": 132,
+   "ub": 132,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "12,6,4": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "12,6,5": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "12,6,6": {
+   "lb": 22,
+   "ub": 22,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "12,8,5": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "12,8,6": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "12,10,6": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,4,3": {
+   "lb": 26,
+   "ub": 26,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,4,4": {
+   "lb": 65,
+   "ub": 65,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,4,5": {
+   "lb": 123,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,4,6": {
+   "lb": 166,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,6,4": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,6,5": {
+   "lb": 18,
+   "ub": 18,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "13,6,6": {
+   "lb": 26,
+   "ub": 26,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "13,8,5": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,8,6": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "13,10,6": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,4,3": {
+   "lb": 28,
+   "ub": 28,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,4,4": {
+   "lb": 91,
+   "ub": 91,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,4,5": {
+   "lb": 169,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "14,4,6": {
+   "lb": 278,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,4,7": {
+   "lb": 325,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,6,4": {
+   "lb": 14,
+   "ub": 14,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,6,5": {
+   "lb": 28,
+   "ub": 28,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "14,6,6": {
+   "lb": 42,
+   "ub": 42,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "14,6,7": {
+   "lb": 42,
+   "ub": 42,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,8,5": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,8,6": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "14,8,7": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "14,10,6": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,10,7": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "14,12,7": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,4,3": {
+   "lb": 35,
+   "ub": 35,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,4,4": {
+   "lb": 105,
+   "ub": 105,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,4,5": {
+   "lb": 242,
+   "ub": null,
+   "exact": false,
+   "lb_source": "Ex",
+   "ub_source": ""
+  },
+  "15,4,6": {
+   "lb": 399,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "15,4,7": {
+   "lb": 585,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "15,6,4": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,6,5": {
+   "lb": 42,
+   "ub": 42,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "15,6,6": {
+   "lb": 70,
+   "ub": 70,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "15,6,7": {
+   "lb": 69,
+   "ub": 69,
+   "exact": true,
+   "lb_source": "G\u00d6",
+   "ub_source": ""
+  },
+  "15,8,5": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,8,6": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "15,8,7": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "15,10,6": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,10,7": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "15,12,7": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,4,3": {
+   "lb": 37,
+   "ub": 37,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,4,4": {
+   "lb": 140,
+   "ub": 140,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,4,5": {
+   "lb": 322,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "16,4,6": {
+   "lb": 624,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "16,4,7": {
+   "lb": 836,
+   "ub": null,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": ""
+  },
+  "16,4,8": {
+   "lb": 1170,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,6,4": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "16,6,5": {
+   "lb": 48,
+   "ub": 48,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "16,6,6": {
+   "lb": 112,
+   "ub": 112,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "16,6,7": {
+   "lb": 109,
+   "ub": 122,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": ""
+  },
+  "16,6,8": {
+   "lb": 120,
+   "ub": 138,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "16,8,5": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,8,6": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "16,8,7": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "16,8,8": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "16,10,6": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,10,7": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,10,8": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,12,7": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,12,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "16,14,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,4,3": {
+   "lb": 44,
+   "ub": 44,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,4,4": {
+   "lb": 157,
+   "ub": 157,
+   "exact": true,
+   "lb_source": "Ji",
+   "ub_source": ""
+  },
+  "17,4,5": {
+   "lb": 444,
+   "ub": null,
+   "exact": false,
+   "lb_source": "Mi",
+   "ub_source": ""
+  },
+  "17,4,6": {
+   "lb": 854,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "17,4,7": {
+   "lb": 1416,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "17,4,8": {
+   "lb": 1770,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "17,6,4": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,6,5": {
+   "lb": 68,
+   "ub": 68,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "17,6,6": {
+   "lb": 113,
+   "ub": 124,
+   "exact": false,
+   "lb_source": "Ch",
+   "ub_source": "\u00d6"
+  },
+  "17,6,7": {
+   "lb": 166,
+   "ub": 206,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": "Po"
+  },
+  "17,6,8": {
+   "lb": 184,
+   "ub": 259,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "17,8,5": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,8,6": {
+   "lb": 17,
+   "ub": 17,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "17,8,7": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "17,8,8": {
+   "lb": 34,
+   "ub": 34,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "17,10,6": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,10,7": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,10,8": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,12,7": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,12,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "17,14,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,4,3": {
+   "lb": 48,
+   "ub": 48,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,4,4": {
+   "lb": 198,
+   "ub": 198,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,4,5": {
+   "lb": 544,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "18,4,6": {
+   "lb": 1260,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "18,4,7": {
+   "lb": 2042,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "18,4,8": {
+   "lb": 3186,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "18,4,9": {
+   "lb": 3540,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "18,6,4": {
+   "lb": 22,
+   "ub": 22,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,6,5": {
+   "lb": 69,
+   "ub": 72,
+   "exact": false,
+   "lb_source": "ACL",
+   "ub_source": ""
+  },
+  "18,6,6": {
+   "lb": 133,
+   "ub": 186,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "18,6,7": {
+   "lb": 243,
+   "ub": 312,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": "Po"
+  },
+  "18,6,8": {
+   "lb": 260,
+   "ub": 427,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KKT"
+  },
+  "18,6,9": {
+   "lb": 320,
+   "ub": 424,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KKT"
+  },
+  "18,8,5": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,8,6": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "18,8,7": {
+   "lb": 33,
+   "ub": 33,
+   "exact": true,
+   "lb_source": "s \u00d6",
+   "ub_source": ""
+  },
+  "18,8,8": {
+   "lb": 46,
+   "ub": 49,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "\u00d6"
+  },
+  "18,8,9": {
+   "lb": 48,
+   "ub": 58,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": "\u00d6"
+  },
+  "18,10,6": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,10,7": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,10,8": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "18,10,9": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "18,12,7": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,12,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "18,12,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "18,14,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,14,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "18,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,4,3": {
+   "lb": 57,
+   "ub": 57,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,4,4": {
+   "lb": 228,
+   "ub": 228,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,4,5": {
+   "lb": 692,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,4,6": {
+   "lb": 1620,
+   "ub": null,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": ""
+  },
+  "19,4,7": {
+   "lb": 3172,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "19,4,8": {
+   "lb": 4698,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,4,9": {
+   "lb": 6726,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,6,4": {
+   "lb": 25,
+   "ub": 25,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,6,5": {
+   "lb": 76,
+   "ub": 83,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "19,6,6": {
+   "lb": 172,
+   "ub": 228,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "19,6,7": {
+   "lb": 338,
+   "ub": 463,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": "Po"
+  },
+  "19,6,8": {
+   "lb": 408,
+   "ub": 693,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "19,6,9": {
+   "lb": 504,
+   "ub": 789,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "19,8,5": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,8,6": {
+   "lb": 28,
+   "ub": 28,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,8,7": {
+   "lb": 52,
+   "ub": 52,
+   "exact": true,
+   "lb_source": "s \u00d6",
+   "ub_source": ""
+  },
+  "19,8,8": {
+   "lb": 78,
+   "ub": 78,
+   "exact": true,
+   "lb_source": "s \u00d6",
+   "ub_source": ""
+  },
+  "19,8,9": {
+   "lb": 88,
+   "ub": 103,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,10,6": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,10,7": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,10,8": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,10,9": {
+   "lb": 19,
+   "ub": 19,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "19,12,7": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,12,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,12,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,14,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,14,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "19,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,4,3": {
+   "lb": 60,
+   "ub": 60,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,4,4": {
+   "lb": 285,
+   "ub": 285,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,4,5": {
+   "lb": 874,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,4,6": {
+   "lb": 2304,
+   "ub": null,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "20,4,7": {
+   "lb": 4213,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "20,4,8": {
+   "lb": 7830,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "20,4,9": {
+   "lb": 10048,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "20,4,10": {
+   "lb": 13452,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "20,6,4": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,6,5": {
+   "lb": 90,
+   "ub": 100,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "20,6,6": {
+   "lb": 232,
+   "ub": 276,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": ""
+  },
+  "20,6,7": {
+   "lb": 462,
+   "ub": 651,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": ""
+  },
+  "20,6,8": {
+   "lb": 588,
+   "ub": 1084,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": "Po"
+  },
+  "20,6,9": {
+   "lb": 832,
+   "ub": 1363,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": ""
+  },
+  "20,6,10": {
+   "lb": 944,
+   "ub": 1420,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": "KKT"
+  },
+  "20,8,5": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "20,8,6": {
+   "lb": 40,
+   "ub": 40,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "20,8,7": {
+   "lb": 80,
+   "ub": 80,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "20,8,8": {
+   "lb": 130,
+   "ub": 130,
+   "exact": true,
+   "lb_source": "s \u00d6",
+   "ub_source": ""
+  },
+  "20,8,9": {
+   "lb": 160,
+   "ub": 173,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "20,8,10": {
+   "lb": 176,
+   "ub": 206,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "20,10,6": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,10,7": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "20,10,8": {
+   "lb": 17,
+   "ub": 17,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,10,9": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "20,10,10": {
+   "lb": 38,
+   "ub": 38,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "20,12,7": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,12,8": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "20,12,9": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "20,12,10": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "20,14,8": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,14,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,14,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,16,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "20,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,4,3": {
+   "lb": 70,
+   "ub": 70,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,4,4": {
+   "lb": 315,
+   "ub": 315,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,4,5": {
+   "lb": 1113,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "21,4,6": {
+   "lb": 2880,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "21,4,7": {
+   "lb": 6161,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "21,4,8": {
+   "lb": 10767,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "21,4,9": {
+   "lb": 17177,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "21,4,10": {
+   "lb": 20654,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "21,6,4": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,6,5": {
+   "lb": 108,
+   "ub": 126,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "21,6,6": {
+   "lb": 273,
+   "ub": 350,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "21,6,7": {
+   "lb": 570,
+   "ub": 828,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": ""
+  },
+  "21,6,8": {
+   "lb": 775,
+   "ub": 1665,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "21,6,9": {
+   "lb": 1186,
+   "ub": 2328,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "21,6,10": {
+   "lb": 1474,
+   "ub": 2685,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "21,8,5": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "21,8,6": {
+   "lb": 56,
+   "ub": 56,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "21,8,7": {
+   "lb": 120,
+   "ub": 120,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "21,8,8": {
+   "lb": 210,
+   "ub": 210,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "21,8,9": {
+   "lb": 280,
+   "ub": 294,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "Po"
+  },
+  "21,8,10": {
+   "lb": 336,
+   "ub": 363,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "21,10,6": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,10,7": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,10,8": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "21,10,9": {
+   "lb": 27,
+   "ub": 35,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,10,10": {
+   "lb": 38,
+   "ub": 42,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,12,7": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,12,8": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,12,9": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "21,12,10": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "21,14,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,14,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,14,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,16,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "21,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,4,3": {
+   "lb": 73,
+   "ub": 73,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,4,4": {
+   "lb": 385,
+   "ub": 385,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,4,5": {
+   "lb": 1386,
+   "ub": 1386,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,4,6": {
+   "lb": 3927,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,4,7": {
+   "lb": 8338,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "22,4,8": {
+   "lb": 16527,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "22,4,9": {
+   "lb": 25902,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "22,4,10": {
+   "lb": 37127,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "22,4,11": {
+   "lb": 40624,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "22,6,4": {
+   "lb": 37,
+   "ub": 37,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,6,5": {
+   "lb": 132,
+   "ub": 136,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "22,6,6": {
+   "lb": 343,
+   "ub": 462,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "22,6,7": {
+   "lb": 759,
+   "ub": 1100,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": ""
+  },
+  "22,6,8": {
+   "lb": 1144,
+   "ub": 2277,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,6,9": {
+   "lb": 1818,
+   "ub": 3736,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "22,6,10": {
+   "lb": 2183,
+   "ub": 4415,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "22,6,11": {
+   "lb": 2636,
+   "ub": 5033,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": "Mo"
+  },
+  "22,8,5": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,8,6": {
+   "lb": 77,
+   "ub": 77,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,8,7": {
+   "lb": 176,
+   "ub": 176,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,8,8": {
+   "lb": 330,
+   "ub": 330,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,8,9": {
+   "lb": 292,
+   "ub": 440,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "Po"
+  },
+  "22,8,10": {
+   "lb": 616,
+   "ub": 616,
+   "exact": true,
+   "lb_source": "sPo",
+   "ub_source": ""
+  },
+  "22,8,11": {
+   "lb": 672,
+   "ub": 672,
+   "exact": true,
+   "lb_source": "sPo",
+   "ub_source": ""
+  },
+  "22,10,6": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,10,7": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "22,10,8": {
+   "lb": 25,
+   "ub": 33,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "22,10,9": {
+   "lb": 35,
+   "ub": 51,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "22,10,10": {
+   "lb": 46,
+   "ub": 71,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "Po"
+  },
+  "22,10,11": {
+   "lb": 46,
+   "ub": 79,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "22,12,7": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,12,8": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "22,12,9": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "22,12,10": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "22,12,11": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "22,14,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,14,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,14,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,14,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,16,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,16,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "22,18,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,4,3": {
+   "lb": 83,
+   "ub": 83,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,4,4": {
+   "lb": 419,
+   "ub": 419,
+   "exact": true,
+   "lb_source": "BJi",
+   "ub_source": ""
+  },
+  "23,4,5": {
+   "lb": 1771,
+   "ub": 1771,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,4,6": {
+   "lb": 5313,
+   "ub": 5313,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,4,7": {
+   "lb": 11696,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "23,4,8": {
+   "lb": 23467,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "23,4,9": {
+   "lb": 41413,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "23,4,10": {
+   "lb": 58659,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "23,4,11": {
+   "lb": 76233,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "23,6,4": {
+   "lb": 40,
+   "ub": 40,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,6,5": {
+   "lb": 147,
+   "ub": 170,
+   "exact": false,
+   "lb_source": "t",
+   "ub_source": ""
+  },
+  "23,6,6": {
+   "lb": 399,
+   "ub": 521,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,6,7": {
+   "lb": 969,
+   "ub": 1518,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,6,8": {
+   "lb": 1439,
+   "ub": 3162,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,6,9": {
+   "lb": 2278,
+   "ub": 5819,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,6,10": {
+   "lb": 2970,
+   "ub": 7521,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,6,11": {
+   "lb": 3585,
+   "ub": 7953,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,8,5": {
+   "lb": 23,
+   "ub": 23,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,8,6": {
+   "lb": 77,
+   "ub": 80,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,8,7": {
+   "lb": 253,
+   "ub": 253,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,8,8": {
+   "lb": 506,
+   "ub": 506,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,8,9": {
+   "lb": 412,
+   "ub": 662,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "Po"
+  },
+  "23,8,10": {
+   "lb": 648,
+   "ub": 1012,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "23,8,11": {
+   "lb": 1288,
+   "ub": 1288,
+   "exact": true,
+   "lb_source": "sS",
+   "ub_source": ""
+  },
+  "23,10,6": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,10,7": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "Ko",
+   "ub_source": ""
+  },
+  "23,10,8": {
+   "lb": 33,
+   "ub": 46,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "23,10,9": {
+   "lb": 45,
+   "ub": 78,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "MEL"
+  },
+  "23,10,10": {
+   "lb": 54,
+   "ub": 116,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "23,10,11": {
+   "lb": 65,
+   "ub": 135,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "23,12,7": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,12,8": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,12,9": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,12,10": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,12,11": {
+   "lb": 23,
+   "ub": 23,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "23,14,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,14,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,14,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,14,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,16,9": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,16,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,16,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "23,18,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,4,3": {
+   "lb": 88,
+   "ub": 88,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,4,4": {
+   "lb": 498,
+   "ub": 498,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,4,5": {
+   "lb": 1920,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "24,4,6": {
+   "lb": 7084,
+   "ub": 7084,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "24,4,7": {
+   "lb": 15656,
+   "ub": null,
+   "exact": false,
+   "lb_source": "EB",
+   "ub_source": ""
+  },
+  "24,4,8": {
+   "lb": 34914,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "24,4,9": {
+   "lb": 59904,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "24,4,10": {
+   "lb": 98852,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "24,4,11": {
+   "lb": 118422,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "24,4,12": {
+   "lb": 151484,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "24,6,4": {
+   "lb": 42,
+   "ub": 42,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,6,5": {
+   "lb": 168,
+   "ub": 192,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,6,6": {
+   "lb": 532,
+   "ub": 680,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,6,7": {
+   "lb": 1368,
+   "ub": 1786,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,6,8": {
+   "lb": 1882,
+   "ub": 4554,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,6,9": {
+   "lb": 3080,
+   "ub": 8432,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "24,6,10": {
+   "lb": 4200,
+   "ub": 12186,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,6,11": {
+   "lb": 5376,
+   "ub": 14682,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "24,6,12": {
+   "lb": 5616,
+   "ub": 15906,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,8,5": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,8,6": {
+   "lb": 78,
+   "ub": 92,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,8,7": {
+   "lb": 253,
+   "ub": 274,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,8,8": {
+   "lb": 759,
+   "ub": 759,
+   "exact": true,
+   "lb_source": "G",
+   "ub_source": ""
+  },
+  "24,8,9": {
+   "lb": 656,
+   "ub": 968,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "Po"
+  },
+  "24,8,10": {
+   "lb": 960,
+   "ub": 1551,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": "S"
+  },
+  "24,8,11": {
+   "lb": 1378,
+   "ub": 2142,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "S"
+  },
+  "24,8,12": {
+   "lb": 2576,
+   "ub": 2576,
+   "exact": true,
+   "lb_source": "G",
+   "ub_source": ""
+  },
+  "24,10,6": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,10,7": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "24,10,8": {
+   "lb": 38,
+   "ub": 60,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,10,9": {
+   "lb": 56,
+   "ub": 116,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "MEL"
+  },
+  "24,10,10": {
+   "lb": 72,
+   "ub": 170,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "KKT"
+  },
+  "24,10,11": {
+   "lb": 95,
+   "ub": 222,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "KKT"
+  },
+  "24,10,12": {
+   "lb": 123,
+   "ub": 246,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KKT"
+  },
+  "24,12,7": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,12,8": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "24,12,9": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,12,10": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "24,12,11": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "24,12,12": {
+   "lb": 46,
+   "ub": 46,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "24,14,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,14,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,14,10": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,14,11": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,14,12": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,16,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,16,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,16,12": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,18,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "24,18,12": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,4,3": {
+   "lb": 100,
+   "ub": 100,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,4,4": {
+   "lb": 550,
+   "ub": 550,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,4,5": {
+   "lb": 2380,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "25,4,6": {
+   "lb": 7787,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,7": {
+   "lb": 21220,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,8": {
+   "lb": 47265,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,9": {
+   "lb": 89742,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,10": {
+   "lb": 142373,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,11": {
+   "lb": 198387,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,4,12": {
+   "lb": 231530,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "25,6,4": {
+   "lb": 50,
+   "ub": 50,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "25,6,5": {
+   "lb": 210,
+   "ub": 210,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "25,6,6": {
+   "lb": 700,
+   "ub": 800,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "25,6,7": {
+   "lb": 1900,
+   "ub": 2428,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "25,6,8": {
+   "lb": 2590,
+   "ub": 5581,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,6,9": {
+   "lb": 4260,
+   "ub": 12620,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": ""
+  },
+  "25,6,10": {
+   "lb": 6600,
+   "ub": 19037,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "25,6,11": {
+   "lb": 8697,
+   "ub": 24630,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,6,12": {
+   "lb": 9880,
+   "ub": 30587,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,8,5": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,8,6": {
+   "lb": 100,
+   "ub": 100,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "25,8,7": {
+   "lb": 255,
+   "ub": 328,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "25,8,8": {
+   "lb": 759,
+   "ub": 850,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "25,8,9": {
+   "lb": 837,
+   "ub": 1366,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "Po"
+  },
+  "25,8,10": {
+   "lb": 1248,
+   "ub": 2333,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "25,8,11": {
+   "lb": 1702,
+   "ub": 3422,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "S"
+  },
+  "25,8,12": {
+   "lb": 2610,
+   "ub": 4087,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": "S"
+  },
+  "25,10,6": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,10,7": {
+   "lb": 28,
+   "ub": 32,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "25,10,8": {
+   "lb": 51,
+   "ub": 75,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,10,9": {
+   "lb": 72,
+   "ub": 157,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "MEL"
+  },
+  "25,10,10": {
+   "lb": 100,
+   "ub": 262,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "25,10,11": {
+   "lb": 125,
+   "ub": 379,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "KT"
+  },
+  "25,10,12": {
+   "lb": 137,
+   "ub": 433,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "25,12,7": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,12,8": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "25,12,9": {
+   "lb": 25,
+   "ub": 25,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "25,12,10": {
+   "lb": 28,
+   "ub": 36,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "KT"
+  },
+  "25,12,11": {
+   "lb": 36,
+   "ub": 42,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "25,12,12": {
+   "lb": 50,
+   "ub": 50,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "25,14,8": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,14,9": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,14,10": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,14,11": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,14,12": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,16,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,16,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,16,12": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,18,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "25,18,12": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,4,3": {
+   "lb": 104,
+   "ub": 104,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,4,4": {
+   "lb": 650,
+   "ub": 650,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,4,5": {
+   "lb": 2816,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,4,6": {
+   "lb": 10010,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,7": {
+   "lb": 27050,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,8": {
+   "lb": 66352,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,9": {
+   "lb": 129708,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,10": {
+   "lb": 222775,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,11": {
+   "lb": 320584,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,12": {
+   "lb": 401937,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,4,13": {
+   "lb": 431724,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "26,6,4": {
+   "lb": 52,
+   "ub": 52,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,6,5": {
+   "lb": 260,
+   "ub": 260,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,6,6": {
+   "lb": 910,
+   "ub": 910,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,6,7": {
+   "lb": 2600,
+   "ub": 2971,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,6,8": {
+   "lb": 3532,
+   "ub": 7891,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,6,9": {
+   "lb": 5760,
+   "ub": 16122,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,6,10": {
+   "lb": 8810,
+   "ub": 28893,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "26,6,11": {
+   "lb": 12206,
+   "ub": 42017,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Mo"
+  },
+  "26,6,12": {
+   "lb": 14854,
+   "ub": 50169,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": "S"
+  },
+  "26,6,13": {
+   "lb": 16117,
+   "ub": 61174,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,8,5": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,8,6": {
+   "lb": 130,
+   "ub": 130,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "26,8,7": {
+   "lb": 259,
+   "ub": 371,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "26,8,8": {
+   "lb": 763,
+   "ub": 1066,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "26,8,9": {
+   "lb": 887,
+   "ub": 1901,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "26,8,10": {
+   "lb": 1519,
+   "ub": 3496,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": "S"
+  },
+  "26,8,11": {
+   "lb": 2037,
+   "ub": 5208,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "26,8,12": {
+   "lb": 3070,
+   "ub": 6741,
+   "exact": false,
+   "lb_source": "G",
+   "ub_source": "S"
+  },
+  "26,8,13": {
+   "lb": 3588,
+   "ub": 7080,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": "S"
+  },
+  "26,10,6": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,10,7": {
+   "lb": 30,
+   "ub": 36,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "26,10,8": {
+   "lb": 55,
+   "ub": 104,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "26,10,9": {
+   "lb": 91,
+   "ub": 213,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "KKT"
+  },
+  "26,10,10": {
+   "lb": 130,
+   "ub": 397,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "26,10,11": {
+   "lb": 168,
+   "ub": 565,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "KT"
+  },
+  "26,10,12": {
+   "lb": 208,
+   "ub": 691,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KT"
+  },
+  "26,10,13": {
+   "lb": 225,
+   "ub": 754,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "26,12,7": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,12,8": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "d",
+   "ub_source": ""
+  },
+  "26,12,9": {
+   "lb": 26,
+   "ub": 26,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "26,12,10": {
+   "lb": 33,
+   "ub": 37,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "26,12,11": {
+   "lb": 41,
+   "ub": 66,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "S"
+  },
+  "26,12,12": {
+   "lb": 54,
+   "ub": 83,
+   "exact": false,
+   "lb_source": "Ho",
+   "ub_source": ""
+  },
+  "26,12,13": {
+   "lb": 58,
+   "ub": 91,
+   "exact": false,
+   "lb_source": "Ho",
+   "ub_source": "S"
+  },
+  "26,14,8": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,14,9": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,14,10": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,14,11": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,14,12": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,14,13": {
+   "lb": 14,
+   "ub": 14,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "26,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,16,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,16,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,16,12": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,16,13": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,18,10": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,18,11": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,18,12": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "26,18,13": {
+   "lb": 2,
+   "ub": 2,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,4,3": {
+   "lb": 117,
+   "ub": 117,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,4,4": {
+   "lb": 702,
+   "ub": 702,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,4,5": {
+   "lb": 3456,
+   "ub": null,
+   "exact": false,
+   "lb_source": "BJL\u00d6",
+   "ub_source": ""
+  },
+  "27,4,6": {
+   "lb": 12012,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "27,4,7": {
+   "lb": 35874,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,8": {
+   "lb": 88604,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,9": {
+   "lb": 188561,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,10": {
+   "lb": 334859,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,11": {
+   "lb": 518014,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,12": {
+   "lb": 686164,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,4,13": {
+   "lb": 791461,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "27,6,4": {
+   "lb": 54,
+   "ub": 54,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,6,5": {
+   "lb": 260,
+   "ub": 280,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,6,6": {
+   "lb": 1170,
+   "ub": 1170,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "27,6,7": {
+   "lb": 3510,
+   "ub": 3510,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "27,6,8": {
+   "lb": 4786,
+   "ub": 10027,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,6,9": {
+   "lb": 8112,
+   "ub": 23673,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "27,6,10": {
+   "lb": 12987,
+   "ub": 43529,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "27,6,11": {
+   "lb": 18260,
+   "ub": 66078,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KKT"
+  },
+  "27,6,12": {
+   "lb": 23901,
+   "ub": 84573,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": "KKT"
+  },
+  "27,6,13": {
+   "lb": 27600,
+   "ub": 91079,
+   "exact": false,
+   "lb_source": "JX",
+   "ub_source": "KKT"
+  },
+  "27,8,5": {
+   "lb": 31,
+   "ub": 32,
+   "exact": false,
+   "lb_source": "ACL",
+   "ub_source": ""
+  },
+  "27,8,6": {
+   "lb": 130,
+   "ub": 135,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,8,7": {
+   "lb": 303,
+   "ub": 500,
+   "exact": false,
+   "lb_source": "sd",
+   "ub_source": ""
+  },
+  "27,8,8": {
+   "lb": 769,
+   "ub": 1252,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,8,9": {
+   "lb": 1025,
+   "ub": 2616,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "27,8,10": {
+   "lb": 1721,
+   "ub": 4986,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,8,11": {
+   "lb": 2404,
+   "ub": 7754,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "27,8,12": {
+   "lb": 3335,
+   "ub": 10460,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "27,8,13": {
+   "lb": 4094,
+   "ub": 11897,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "KKT"
+  },
+  "27,10,6": {
+   "lb": 14,
+   "ub": 14,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,10,7": {
+   "lb": 36,
+   "ub": 48,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,10,8": {
+   "lb": 66,
+   "ub": 121,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,10,9": {
+   "lb": 118,
+   "ub": 291,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "Po"
+  },
+  "27,10,10": {
+   "lb": 162,
+   "ub": 555,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "Po"
+  },
+  "27,10,11": {
+   "lb": 243,
+   "ub": 871,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KT"
+  },
+  "27,10,12": {
+   "lb": 351,
+   "ub": 1190,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "KT"
+  },
+  "27,10,13": {
+   "lb": 420,
+   "ub": 1406,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "27,12,7": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,12,8": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,12,9": {
+   "lb": 39,
+   "ub": 39,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,12,10": {
+   "lb": 39,
+   "ub": 58,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,12,11": {
+   "lb": 54,
+   "ub": 90,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,12,12": {
+   "lb": 82,
+   "ub": 139,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KKT"
+  },
+  "27,12,13": {
+   "lb": 86,
+   "ub": 155,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "KKT"
+  },
+  "27,14,8": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,14,9": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,14,10": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,14,11": {
+   "lb": 13,
+   "ub": 13,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,14,12": {
+   "lb": 19,
+   "ub": 20,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "27,14,13": {
+   "lb": 27,
+   "ub": 27,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "27,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,16,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,16,11": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,16,12": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,16,13": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,18,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,18,12": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "27,18,13": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,4,3": {
+   "lb": 121,
+   "ub": 121,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,4,4": {
+   "lb": 819,
+   "ub": 819,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,4,5": {
+   "lb": 3718,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,6": {
+   "lb": 15288,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,4,7": {
+   "lb": 44915,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,8": {
+   "lb": 122685,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,9": {
+   "lb": 263008,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,10": {
+   "lb": 508952,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,11": {
+   "lb": 819041,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,12": {
+   "lb": 1167909,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,13": {
+   "lb": 1420920,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,4,14": {
+   "lb": 1535756,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "28,6,4": {
+   "lb": 63,
+   "ub": 63,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,6,5": {
+   "lb": 280,
+   "ub": 302,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "28,6,6": {
+   "lb": 1170,
+   "ub": 1306,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,6,7": {
+   "lb": 4680,
+   "ub": 4680,
+   "exact": true,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,6,8": {
+   "lb": 6315,
+   "ub": 12285,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,6,9": {
+   "lb": 10920,
+   "ub": 31195,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,6,10": {
+   "lb": 18345,
+   "ub": 63756,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,6,11": {
+   "lb": 29484,
+   "ub": 104230,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "KKT"
+  },
+  "28,6,12": {
+   "lb": 40237,
+   "ub": 142117,
+   "exact": false,
+   "lb_source": "JX",
+   "ub_source": ""
+  },
+  "28,6,13": {
+   "lb": 49510,
+   "ub": 164219,
+   "exact": false,
+   "lb_source": "JX",
+   "ub_source": "KKT"
+  },
+  "28,6,14": {
+   "lb": 53046,
+   "ub": 169739,
+   "exact": false,
+   "lb_source": "JX",
+   "ub_source": "KKT"
+  },
+  "28,8,5": {
+   "lb": 33,
+   "ub": 33,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,8,6": {
+   "lb": 131,
+   "ub": 149,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "28,8,7": {
+   "lb": 318,
+   "ub": 540,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,8,8": {
+   "lb": 1057,
+   "ub": 1750,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,8,9": {
+   "lb": 1333,
+   "ub": 3855,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,8,10": {
+   "lb": 2067,
+   "ub": 7016,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "28,8,11": {
+   "lb": 3773,
+   "ub": 11896,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "28,8,12": {
+   "lb": 4927,
+   "ub": 17008,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KT"
+  },
+  "28,8,13": {
+   "lb": 6848,
+   "ub": 21148,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KT"
+  },
+  "28,8,14": {
+   "lb": 6218,
+   "ub": 22710,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "S"
+  },
+  "28,10,6": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,10,7": {
+   "lb": 38,
+   "ub": 56,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "28,10,8": {
+   "lb": 81,
+   "ub": 168,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,10,9": {
+   "lb": 140,
+   "ub": 376,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,10,10": {
+   "lb": 219,
+   "ub": 785,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "MEL"
+  },
+  "28,10,11": {
+   "lb": 308,
+   "ub": 1351,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KT"
+  },
+  "28,10,12": {
+   "lb": 390,
+   "ub": 1977,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "S"
+  },
+  "28,10,13": {
+   "lb": 756,
+   "ub": 2438,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "28,10,14": {
+   "lb": 812,
+   "ub": 2628,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "KKT"
+  },
+  "28,12,7": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,12,8": {
+   "lb": 19,
+   "ub": 19,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,12,9": {
+   "lb": 39,
+   "ub": 45,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,12,10": {
+   "lb": 56,
+   "ub": 87,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "28,12,11": {
+   "lb": 65,
+   "ub": 147,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": ""
+  },
+  "28,12,12": {
+   "lb": 119,
+   "ub": 198,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KKT"
+  },
+  "28,12,13": {
+   "lb": 112,
+   "ub": 244,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "KKT"
+  },
+  "28,12,14": {
+   "lb": 172,
+   "ub": 264,
+   "exact": false,
+   "lb_source": "Nu",
+   "ub_source": "KKT"
+  },
+  "28,14,8": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,14,9": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,14,10": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "28,14,11": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "28,14,12": {
+   "lb": 28,
+   "ub": 28,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "28,14,13": {
+   "lb": 28,
+   "ub": 28,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "28,14,14": {
+   "lb": 54,
+   "ub": 54,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "28,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,16,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,16,11": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,16,12": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,16,13": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,16,14": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,18,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,18,12": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,18,13": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "28,18,14": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,4,3": {
+   "lb": 134,
+   "ub": 134,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,4,4": {
+   "lb": 877,
+   "ub": 877,
+   "exact": true,
+   "lb_source": "Ji",
+   "ub_source": ""
+  },
+  "29,4,5": {
+   "lb": 4423,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,6": {
+   "lb": 17710,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,7": {
+   "lb": 57943,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,8": {
+   "lb": 157734,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,9": {
+   "lb": 365699,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,10": {
+   "lb": 728330,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,11": {
+   "lb": 1266026,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,12": {
+   "lb": 1895939,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,13": {
+   "lb": 2499311,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,4,14": {
+   "lb": 2870880,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "29,6,4": {
+   "lb": 65,
+   "ub": 65,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,6,5": {
+   "lb": 315,
+   "ub": 364,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "29,6,6": {
+   "lb": 1170,
+   "ub": 1459,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,6,7": {
+   "lb": 4680,
+   "ub": 5410,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,6,8": {
+   "lb": 7137,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "29,6,9": {
+   "lb": 13026,
+   "ub": null,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "29,6,10": {
+   "lb": 24254,
+   "ub": null,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,6,11": {
+   "lb": 41216,
+   "ub": null,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": ""
+  },
+  "29,6,12": {
+   "lb": 61820,
+   "ub": null,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": ""
+  },
+  "29,6,13": {
+   "lb": 80837,
+   "ub": null,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": ""
+  },
+  "29,6,14": {
+   "lb": 92366,
+   "ub": null,
+   "exact": false,
+   "lb_source": "gs",
+   "ub_source": ""
+  },
+  "29,10,6": {
+   "lb": 20,
+   "ub": 20,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,10,7": {
+   "lb": 42,
+   "ub": 66,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,10,8": {
+   "lb": 91,
+   "ub": 203,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,10,9": {
+   "lb": 168,
+   "ub": 523,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,10,10": {
+   "lb": 266,
+   "ub": 1090,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "29,10,11": {
+   "lb": 406,
+   "ub": 2036,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,10,12": {
+   "lb": 543,
+   "ub": 3091,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "29,10,13": {
+   "lb": 756,
+   "ub": 4282,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "29,10,14": {
+   "lb": 1458,
+   "ub": 4927,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,12,7": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,12,8": {
+   "lb": 22,
+   "ub": 26,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "29,12,9": {
+   "lb": 42,
+   "ub": 59,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,12,10": {
+   "lb": 66,
+   "ub": 126,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,12,11": {
+   "lb": 87,
+   "ub": 197,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "L"
+  },
+  "29,12,12": {
+   "lb": 119,
+   "ub": 298,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "L"
+  },
+  "29,12,13": {
+   "lb": 146,
+   "ub": 441,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,12,14": {
+   "lb": 173,
+   "ub": 492,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "29,14,8": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,14,9": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,14,10": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,14,11": {
+   "lb": 28,
+   "ub": 29,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,14,12": {
+   "lb": 29,
+   "ub": 47,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "29,14,13": {
+   "lb": 35,
+   "ub": 50,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,14,14": {
+   "lb": 58,
+   "ub": 58,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "29,16,9": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,16,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,16,11": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "29,16,12": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,16,13": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "29,16,14": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "29,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,18,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,18,12": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,18,13": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "29,18,14": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,4,3": {
+   "lb": 140,
+   "ub": 140,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,4,4": {
+   "lb": 1005,
+   "ub": 1005,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,4,5": {
+   "lb": 5148,
+   "ub": null,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "30,4,6": {
+   "lb": 21931,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,7": {
+   "lb": 73853,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,8": {
+   "lb": 214545,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,9": {
+   "lb": 514015,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,10": {
+   "lb": 1085000,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,11": {
+   "lb": 1977548,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,12": {
+   "lb": 3143989,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,13": {
+   "lb": 4325235,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,14": {
+   "lb": 5313399,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,4,15": {
+   "lb": 5697080,
+   "ub": null,
+   "exact": false,
+   "lb_source": "p",
+   "ub_source": ""
+  },
+  "30,10,6": {
+   "lb": 25,
+   "ub": 25,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,10,7": {
+   "lb": 48,
+   "ub": 85,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "30,10,8": {
+   "lb": 108,
+   "ub": 247,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "30,10,9": {
+   "lb": 203,
+   "ub": 657,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,10,10": {
+   "lb": 322,
+   "ub": 1569,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "30,10,11": {
+   "lb": 504,
+   "ub": 2924,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "30,10,12": {
+   "lb": 768,
+   "ub": 5008,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,10,13": {
+   "lb": 935,
+   "ub": 6724,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,10,14": {
+   "lb": 1458,
+   "ub": 8146,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,10,15": {
+   "lb": 1458,
+   "ub": 8948,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,12,7": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,12,8": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "30,12,9": {
+   "lb": 44,
+   "ub": 74,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,12,10": {
+   "lb": 98,
+   "ub": 159,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "L"
+  },
+  "30,12,11": {
+   "lb": 120,
+   "ub": 268,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "L"
+  },
+  "30,12,12": {
+   "lb": 190,
+   "ub": 492,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "Po"
+  },
+  "30,12,13": {
+   "lb": 236,
+   "ub": 642,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,12,14": {
+   "lb": 289,
+   "ub": 801,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,12,15": {
+   "lb": 302,
+   "ub": 894,
+   "exact": false,
+   "lb_source": "sb",
+   "ub_source": "Po"
+  },
+  "30,14,8": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,14,9": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "30,14,10": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "30,14,11": {
+   "lb": 30,
+   "ub": 30,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "30,14,12": {
+   "lb": 36,
+   "ub": 62,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "30,14,13": {
+   "lb": 45,
+   "ub": 78,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "30,14,14": {
+   "lb": 58,
+   "ub": 95,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "30,14,15": {
+   "lb": 62,
+   "ub": 104,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "30,16,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,16,10": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "30,16,11": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,16,12": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,16,13": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,16,14": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "30,16,15": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "30,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,18,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,18,12": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,18,13": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,18,14": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "30,18,15": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,4,3": {
+   "lb": 155,
+   "ub": 155,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,4,4": {
+   "lb": 1085,
+   "ub": 1085,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,10,6": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,10,7": {
+   "lb": 62,
+   "ub": 109,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "31,10,8": {
+   "lb": 124,
+   "ub": 322,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "31,10,9": {
+   "lb": 232,
+   "ub": 822,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "31,10,10": {
+   "lb": 465,
+   "ub": 2036,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": ""
+  },
+  "31,10,11": {
+   "lb": 651,
+   "ub": 4141,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "Po"
+  },
+  "31,10,12": {
+   "lb": 930,
+   "ub": 7259,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "31,10,13": {
+   "lb": 1395,
+   "ub": 10530,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "31,10,14": {
+   "lb": 1538,
+   "ub": 13519,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "31,10,15": {
+   "lb": 1922,
+   "ub": 15031,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "31,12,7": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,12,8": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "31,12,9": {
+   "lb": 50,
+   "ub": 94,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "31,12,10": {
+   "lb": 103,
+   "ub": 229,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,12,11": {
+   "lb": 186,
+   "ub": 415,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "31,12,12": {
+   "lb": 310,
+   "ub": 679,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "Po"
+  },
+  "31,12,13": {
+   "lb": 400,
+   "ub": 958,
+   "exact": false,
+   "lb_source": "CXY",
+   "ub_source": "Po"
+  },
+  "31,12,14": {
+   "lb": 510,
+   "ub": 1238,
+   "exact": false,
+   "lb_source": "CXY",
+   "ub_source": "Po"
+  },
+  "31,12,15": {
+   "lb": 572,
+   "ub": 1435,
+   "exact": false,
+   "lb_source": "s",
+   "ub_source": "Po"
+  },
+  "31,14,8": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,14,9": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,14,10": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "bibd",
+   "ub_source": ""
+  },
+  "31,14,11": {
+   "lb": 35,
+   "ub": 46,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "31,14,12": {
+   "lb": 45,
+   "ub": 77,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "31,14,13": {
+   "lb": 60,
+   "ub": 129,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "31,14,14": {
+   "lb": 66,
+   "ub": 167,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "L"
+  },
+  "31,14,15": {
+   "lb": 72,
+   "ub": 183,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "L"
+  },
+  "31,16,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,16,10": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,16,11": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "31,16,12": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,16,13": {
+   "lb": 17,
+   "ub": 17,
+   "exact": true,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "31,16,14": {
+   "lb": 24,
+   "ub": 24,
+   "exact": true,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "31,16,15": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "31,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,18,11": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,18,12": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,18,13": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,18,14": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "31,18,15": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,4,3": {
+   "lb": 160,
+   "ub": 160,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,4,4": {
+   "lb": 1240,
+   "ub": 1240,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,10,6": {
+   "lb": 31,
+   "ub": 31,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,10,7": {
+   "lb": 64,
+   "ub": 139,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,10,8": {
+   "lb": 145,
+   "ub": 402,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "32,10,9": {
+   "lb": 304,
+   "ub": 1143,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,10,10": {
+   "lb": 500,
+   "ub": 2630,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,10,11": {
+   "lb": 992,
+   "ub": 5696,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "32,10,12": {
+   "lb": 1395,
+   "ub": 10446,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "32,10,13": {
+   "lb": 1984,
+   "ub": 16755,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "32,10,14": {
+   "lb": 2325,
+   "ub": 22213,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "32,10,15": {
+   "lb": 2635,
+   "ub": 26361,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "Po"
+  },
+  "32,10,16": {
+   "lb": 3038,
+   "ub": 27429,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "32,12,7": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,12,8": {
+   "lb": 36,
+   "ub": 36,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,12,9": {
+   "lb": 60,
+   "ub": 110,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,12,10": {
+   "lb": 122,
+   "ub": 300,
+   "exact": false,
+   "lb_source": "CXY",
+   "ub_source": ""
+  },
+  "32,12,11": {
+   "lb": 186,
+   "ub": 573,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "32,12,12": {
+   "lb": 496,
+   "ub": 952,
+   "exact": false,
+   "lb_source": "BCH",
+   "ub_source": "Po"
+  },
+  "32,12,13": {
+   "lb": 434,
+   "ub": 1497,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "32,12,14": {
+   "lb": 900,
+   "ub": 2140,
+   "exact": false,
+   "lb_source": "CXY",
+   "ub_source": "Po"
+  },
+  "32,12,15": {
+   "lb": 629,
+   "ub": 2641,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,12,16": {
+   "lb": 1144,
+   "ub": 2870,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,14,8": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,14,9": {
+   "lb": 12,
+   "ub": 12,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,14,10": {
+   "lb": 32,
+   "ub": 32,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,14,11": {
+   "lb": 40,
+   "ub": 68,
+   "exact": false,
+   "lb_source": "",
+   "ub_source": "Po"
+  },
+  "32,14,12": {
+   "lb": 55,
+   "ub": 118,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "Po"
+  },
+  "32,14,13": {
+   "lb": 70,
+   "ub": 183,
+   "exact": false,
+   "lb_source": "c",
+   "ub_source": "L"
+  },
+  "32,14,14": {
+   "lb": 96,
+   "ub": 233,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "L"
+  },
+  "32,14,15": {
+   "lb": 96,
+   "ub": 277,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "L"
+  },
+  "32,14,16": {
+   "lb": 122,
+   "ub": 295,
+   "exact": false,
+   "lb_source": "g",
+   "ub_source": "L"
+  },
+  "32,16,9": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,16,10": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,16,11": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "32,16,12": {
+   "lb": 16,
+   "ub": 16,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,16,13": {
+   "lb": 25,
+   "ub": 27,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "32,16,14": {
+   "lb": 32,
+   "ub": 32,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "32,16,15": {
+   "lb": 32,
+   "ub": 32,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,16,16": {
+   "lb": 62,
+   "ub": 62,
+   "exact": true,
+   "lb_source": "H",
+   "ub_source": ""
+  },
+  "32,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,12": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,13": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,14": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,15": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "32,18,16": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  }
+ }
+}

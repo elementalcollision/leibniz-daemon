@@ -1,0 +1,98 @@
+{
+  "verdict": "GREEN",
+  "cells": [
+    {
+      "n": 6,
+      "d": 2,
+      "w": 3,
+      "n_free_vars": 11,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "n_blocks": 4,
+      "largest_block": 4,
+      "objective_weights": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "objective_ok": true
+    },
+    {
+      "n": 6,
+      "d": 4,
+      "w": 3,
+      "n_free_vars": 4,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "n_blocks": 4,
+      "largest_block": 4,
+      "objective_weights": [
+        0,
+        2,
+        3
+      ],
+      "objective_ok": true
+    },
+    {
+      "n": 7,
+      "d": 4,
+      "w": 3,
+      "n_free_vars": 6,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "n_blocks": 6,
+      "largest_block": 4,
+      "objective_weights": [
+        0,
+        2,
+        3
+      ],
+      "objective_ok": true
+    },
+    {
+      "n": 8,
+      "d": 4,
+      "w": 4,
+      "n_free_vars": 11,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "n_blocks": 9,
+      "largest_block": 5,
+      "objective_weights": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "objective_ok": true
+    },
+    {
+      "n": 9,
+      "d": 4,
+      "w": 3,
+      "n_free_vars": 8,
+      "identity_holds": true,
+      "corruption_breaks_identity": true,
+      "weak_duality_holds": true,
+      "corruption_breaks_weak_duality": true,
+      "n_blocks": 7,
+      "largest_block": 4,
+      "objective_weights": [
+        0,
+        2,
+        3
+      ],
+      "objective_ok": true
+    }
+  ],
+  "reading": "GREEN = the mechanically-collected constant-weight dual equals the Lagrangian for all random exact-rational (y, duals), a one-sign corruption breaks it, weak duality holds with real Steiner/Johnson codes (and its targeted corruption breaks), and the objective variables are exactly the Johnson inner-distribution weights. collected() here is the authoritative stationarity spec the cert leg prices against. RED = a sign/index bug in the dual derivation."
+}
