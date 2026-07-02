@@ -41,14 +41,19 @@ def _dv(c):
     return np.array(c.dual_value, dtype=float)
 
 
-def extract_dual(n, d, solver=None, normalize=None, solver_opts=None):
+def extract_dual(n, d, solver=None, normalize=None, solver_opts=None, k_max=None):
     """solver=None auto-picks like ts.solve_primal (SDPA-GMP tight + eq.(8)-normalized blocks when sdpap is
     installed, else the pre-fix CLARABEL-on-raw behavior). The normalized blocks' duals are mapped back to the
-    unnormalized-β objects below, so everything downstream (rationalize → exact LP → dual_check) is unchanged."""
+    unnormalized-β objects below, so everything downstream (rationalize → exact LP → dual_check) is unchanged.
+
+    k_max solves the k_max-TRUNCATED problem (ts.build_labeled relaxation) and ZERO-PADS the dropped blocks'
+    duals: a zero matrix is exactly PSD and contributes nothing, so the padded dual is a feasible FULL-problem
+    dual with the truncated bound — the D2 stall rescue (the truncated solve reaches clean `optimal` where the
+    full solve stalls). k_max=None is the unchanged full extraction."""
     import cvxpy as cp
     import numpy as np
     solver, normalize, solver_opts = ts._solver_defaults(solver, normalize, solver_opts)
-    H = ts.build_labeled(n, d, normalize=normalize)
+    H = ts.build_labeled(n, d, normalize=normalize, k_max=k_max)
     H["prob"].solve(solver=getattr(cp, solver), **solver_opts)
 
     def _unscale(k, Zt):
@@ -61,8 +66,16 @@ def extract_dual(n, d, solver=None, normalize=None, solver_opts=None):
         dg = np.array(sc["diag"], dtype=float)
         return Zt * np.outer(dg, dg) / sc["sigma"]
 
-    Z = {k: np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "M")]))) for k in range(n // 2 + 1)}
-    Zp = {k: np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "Mp")]))) for k in range(n // 2 + 1)}
+    kmax = n // 2 if k_max is None else min(k_max, n // 2)
+    Z, Zp = {}, {}
+    for k in range(n // 2 + 1):
+        if k <= kmax:
+            Z[k] = np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "M")])))
+            Zp[k] = np.atleast_2d(_unscale(k, _dv(H["psd_h"][(k, "Mp")])))
+        else:
+            m = len(td.block_idx(n, k))
+            Z[k] = np.zeros((m, m))
+            Zp[k] = np.zeros((m, m))
     nu_c = _dv(H["i_h"])
     nu = -float(nu_c.reshape(-1)[0]) if nu_c is not None else 0.0        # nu = -nu_cvxpy
     lin = {"a": {}, "b1": {}, "g": {}}
@@ -70,7 +83,7 @@ def extract_dual(n, d, solver=None, normalize=None, solver_opts=None):
         v = _dv(c)
         lin[fam][(t, i, j)] = 0.0 if v is None else float(v.reshape(-1)[0])
     return {"status": H["prob"].status, "value": float(H["prob"].value), "Z": Z, "Zp": Zp,
-            "nu": nu, "a": lin["a"], "b1": lin["b1"], "g": lin["g"]}
+            "nu": nu, "a": lin["a"], "b1": lin["b1"], "g": lin["g"], "k_max": k_max}
 
 
 # ---- multiplier -> per-orbit-var contribution structure (from collected()) -------------------------------
@@ -272,15 +285,26 @@ def _gcd(a, b):
 
 def cert_psd_blocks(duals):
     """For each dual PSD block Z_k / Z'_k (rational, strict-PD via the εI margin), produce an integer LDLᵀ
-    certificate (M_int, L, d, scale) that the Lean `ldltOK` checker verifies. The block IS PSD iff ldltOK true."""
+    certificate (M_int, L, d, scale) that the Lean `ldltOK` checker verifies. The block IS PSD iff ldltOK true.
+
+    A truncated dual's EXACT-ZERO padding blocks get the trivial LDLT certificate (L=I, d=0, scale=1 —
+    I·diag(0)·Iᵀ = 0 = 1·M), which ldltOK verifies like any other block: every block of the dual is attested,
+    nothing is silently skipped. A NON-zero block that is still singular returns None (the εI margin should
+    make this impossible) so callers fail loudly instead of attesting an incomplete block set."""
     blocks = []
     for fam, key in (("Z", "M"), ("Zp", "Mp")):
         for k in sorted(duals[fam]):
             Zq = [[Fr(x) for x in row] for row in duals[fam][k]]
+            m = len(Zq)
+            if all(x == 0 for row in Zq for x in row):
+                eye = [[1 if i == j else 0 for j in range(m)] for i in range(m)]
+                blocks.append({"label": f"{key}_{k}", "M": [[0] * m for _ in range(m)],
+                               "L": eye, "d": [0] * m, "scale": 1})
+                continue
             M_int, _den = _int_scale(Zq)
             res = pm.ldlt([[Fr(v) for v in row] for row in M_int])
             if res is None:
-                continue                      # singular after scaling (shouldn't happen with the εI margin)
+                return None                   # non-zero yet singular: the εI margin should prevent this
             L, dd = res
             Li, di, sc = pm.clear_denoms(L, dd)
             blocks.append({"label": f"{key}_{k}", "M": M_int, "L": Li, "d": di, "scale": sc})
@@ -301,6 +325,31 @@ def render_cert_lean(blocks) -> str:
     return "set_option maxHeartbeats 0\n" + pm._LEAN_HELPERS + "\n\n" + "\n\n".join(thms) + "\n"
 
 
+def kernel_check_blocks(blocks, timeout_s=900):
+    """Run the real Lean 4.31 kernel on a block set (per-block ldltOK theorems): the valid cert must be
+    ACCEPTED and a corrupted-block control REJECTED (break d>=0 on the first block). When the set contains an
+    exact-zero block (truncated, zero-padded duals), a SECOND control corrupts a zero block's d — attesting
+    that the kernel checks the trivial certificates too, not just the strict-PD ones. Returns the kernel
+    verdict dict, or a string reason when docker/the image is unavailable."""
+    try:
+        from leibniz.backends.lean_cli import LeanCliBackend, available
+        if not available():
+            return "unavailable (no docker/image)"
+        bk = LeanCliBackend(timeout_s=timeout_s)
+        good = bk.check_source(render_cert_lean(blocks))
+        bogus_blocks = [dict(blocks[0], d=[x - 10 ** 6 for x in blocks[0]["d"]])] + blocks[1:]
+        out = {"valid_cert": good, "bogus_cert": bk.check_source(render_cert_lean(bogus_blocks))}
+        zi = next((i for i, b in enumerate(blocks) if all(x == 0 for r in b["M"] for x in r)), None)
+        if zi is not None:
+            zb = blocks[:zi] + [dict(blocks[zi], d=[x - 1 for x in blocks[zi]["d"]])] + blocks[zi + 1:]
+            out["bogus_zero_cert"] = bk.check_source(render_cert_lean(zb))
+        out["sound"] = (out["valid_cert"] is True and out["bogus_cert"] is False
+                        and out.get("bogus_zero_cert", False) is False)
+        return out
+    except Exception as e:  # pragma: no cover
+        return f"unavailable ({type(e).__name__})"
+
+
 def kernel_verify(n, d, target=None, timeout_s=180):
     """Path B: certify a cell exactly, render its PSD blocks to Lean, and kernel-verify (valid accepted; a
     corrupted block rejected). Returns a status dict; needs cvxpy (solve) + docker (Lean)."""
@@ -308,21 +357,11 @@ def kernel_verify(n, d, target=None, timeout_s=180):
     if not row.get("certified"):
         return {"n": n, "d": d, "certified": False, "note": "no exact cert to render"}
     blocks = cert_psd_blocks(row["duals"])
+    if blocks is None:
+        return {"n": n, "d": d, "certified": True, "note": "LDLT failed on a nonzero block"}
     out = {"n": n, "d": d, "target": row["target"], "exact_bound": row["exact_bound"],
            "floor": row["floor"], "n_blocks": len(blocks)}
-    try:
-        from leibniz.backends.lean_cli import LeanCliBackend, available
-        if not available():
-            out["kernel"] = "unavailable (no docker/image)"
-            return out
-        bk = LeanCliBackend(timeout_s=timeout_s)
-        good = bk.check_source(render_cert_lean(blocks))
-        bogus_blocks = [dict(b) for b in blocks]
-        bogus_blocks[0] = dict(bogus_blocks[0], d=[x - 10 ** 6 for x in bogus_blocks[0]["d"]])  # break d>=0
-        bogus = bk.check_source(render_cert_lean(bogus_blocks))
-        out["kernel"] = {"valid_cert": good, "bogus_cert": bogus, "sound": good is True and bogus is False}
-    except Exception as e:  # pragma: no cover
-        out["kernel"] = f"unavailable ({type(e).__name__})"
+    out["kernel"] = kernel_check_blocks(blocks, timeout_s=timeout_s)
     return out
 
 

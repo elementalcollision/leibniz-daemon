@@ -138,7 +138,7 @@ def build_primal(n, d, k_max=None, normalize=True):
     return prob, xvar, psd, lin
 
 
-def build_labeled(n, d, normalize=False):
+def build_labeled(n, d, normalize=False, k_max=None):
     """Same primal, but returns LABELED constraint handles so Phase 2b can read each dual:
       psd_h[(k,'M')] / psd_h[(k,'Mp')]  -> the two block-family PSD constraints (dual = Z_k / Z'_k)
       i_h                                -> the x^0_{0,0}=1 equality (dual = ν)
@@ -146,13 +146,18 @@ def build_labeled(n, d, normalize=False):
       scale_h[k] = {'sigma':…, 'diag':…} -> the block scaling; the solver dual of the k-block maps back to
                                             the unnormalized-β dual via Z = diag·Z̃·diag / sigma (elementwise
                                             Z[a][b] = diag[a]·diag[b]·Z̃[a][b]/sigma) — extract_dual does this.
+    k_max restricts the PSD block families to k <= k_max — a RELAXATION of the full primal (dropping PSD
+    constraints can only raise the optimum), so any certificate through its dual, zero-padded on the dropped
+    blocks, is valid for the FULL problem (the D2 stall rescue; extract_dual does the padding). k_max=None
+    keeps the full build unchanged.
     Constraint families are enumerated over td.valid_triples(n) in the SAME order as dual_check/collected."""
     import cvxpy as cp
     keys = td.free_keys(n, d)
     xvar = {k: cp.Variable(name=".".join(map(str, k))) for k in keys}
     psd_h, ii_h, scale_h = {}, {}, {}
     cons = []
-    for k in range(n // 2 + 1):
+    kmax = n // 2 if k_max is None else min(k_max, n // 2)
+    for k in range(kmax + 1):
         M, Mp, sigma, diag = _block_exprs(n, d, k, xvar, normalize=normalize)
         cM, cMp = cp.bmat(M) >> 0, cp.bmat(Mp) >> 0
         psd_h[(k, "M")], psd_h[(k, "Mp")] = cM, cMp
