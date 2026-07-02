@@ -507,6 +507,27 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     we claim nothing against the current table). **No discrepancy claim → the operator stop-condition did
     not fire.** Truncated-dual extraction is a general stall-rescue tool for D1/D3. Guarded by
     `tests/test_terwilliger_anomaly.py`; invariants byte-identical.
+  - **TICKET D1 DONE (2026-07-02) — constant-weight (Johnson-scheme) build GREEN on all three rungs; reach
+    probe DRY (task #102):** `docs/results/terwilliger-cwc-build-2026-07-02.md`,
+    `scripts/terwilliger_cwc_{beta,dual,sdp,cert,probe}.py`. A *separate* Schrijver-§III structure
+    (quadruple orbit variables keyed (sorted{i,j,i+j−t−s}, t−s); blocks = **products of two eq.(7) β's** at
+    ground sets w and v=n−w, (k,l)-indexed) with the banked heavy legs reused unchanged (`exact_simplex`,
+    `_round_psd`, `cert_psd_blocks`/`render_cert_lean`, SDPA-GMP pairing). Rung 1 structure oracle GREEN
+    (real Steiner/Johnson codes exactly PSD both families all (k,l); eq.(66) identity + orbit-constancy
+    exact; corrupt-β control breaks). Rung 2 faithfulness GREEN: **Table II gate 3/3** (A(17,6,7)→228,
+    A(18,6,6)→199, A(17,6,8)→280) and, through the probe harness, **47/51 swept Table II cells reproduce
+    exactly** (4 misses are `optimal_inaccurate` floats stalling ABOVE the table — never below). Rung 3
+    exact+kernel GREEN: **7/7 exact certs; A(17,6,7) ≤ 228 kernel-attested** (46 blocks, corrupted control
+    rejected; needs P=1e14 — ~1e-3 headroom below 229). Rung 4 probe: 820-cell lb/ub snapshot from
+    Brouwer's Andw.html, validated + cross-checked (**0 diffs** vs the June oracle on 816 shared cells;
+    `docs/data/brouwer-cwc-snapshot-2026-07.json`); **185 open cells swept (d∈{6,8,10,12}, n≤28): DRY — 0
+    candidates, 0 invalid floors**; scaling benign vs the unrestricted family (max 537 free vars; only 5
+    time-caps at n≥27 w≥13 + one SolverError (28,8,12)); the `S`-record re-mine channel is **measured
+    closed** (2685/3736 reproduce exactly — Schrijver's 2005 floors weren't loose). Decision input: the
+    three-point cwc bound is reproduction-complete and **bound-blocked** like the unrestricted family —
+    discovery needs **D3 hierarchies** or eq.(25) sharpenings (which now have a live validated A*(n,d,i)
+    oracle); D2 was resolved in parallel (bullet above) and its truncated-dual rescue is available to both.
+    Guarded by `tests/test_terwilliger_cwc.py` (18 tests, CI-clean); invariants byte-identical.
 
 ## The ADRs
 

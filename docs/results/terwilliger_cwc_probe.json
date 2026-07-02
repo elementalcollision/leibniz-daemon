@@ -1,5 +1,5 @@
 {
-  "verdict": "RUNNING",
+  "verdict": "DRY",
   "per_cell_cap_s": 120.0,
   "budget_s": 5400.0,
   "snapshot": {
@@ -4243,6 +4243,1189 @@
       },
       "margin_vs_ub": 1,
       "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 702.0918,
+          "floor": 702,
+          "secs": 62.4
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 702.0918,
+      "sdp_floor": 702,
+      "solver": "SDPA",
+      "solve_secs": 62.4,
+      "cell_secs": 62.6,
+      "n_vars": 212,
+      "snapshot": {
+        "lb": 208,
+        "ub": 691,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 11,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 702,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 24,
+      "d": 8,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 2142.2228,
+          "floor": 2142,
+          "secs": 41.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 2142.2228,
+      "sdp_floor": 2142,
+      "solver": "SDPA",
+      "solve_secs": 41.7,
+      "cell_secs": 41.9,
+      "n_vars": 213,
+      "snapshot": {
+        "lb": 1378,
+        "ub": 2142,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 2142,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 22,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 5064.64,
+          "floor": 5064,
+          "secs": 20.4
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 5064.64,
+      "sdp_floor": 5064,
+      "solver": "SDPA",
+      "solve_secs": 20.4,
+      "cell_secs": 20.5,
+      "n_vars": 220,
+      "snapshot": {
+        "lb": 2636,
+        "ub": 5033,
+        "ub_source": "Mo"
+      },
+      "margin_vs_ub": 31,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 23,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 7587.5196,
+          "floor": 7587,
+          "secs": 17.6
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 7587.5196,
+      "sdp_floor": 7587,
+      "solver": "SDPA",
+      "solve_secs": 17.6,
+      "cell_secs": 17.7,
+      "n_vars": 221,
+      "snapshot": {
+        "lb": 2970,
+        "ub": 7521,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 66,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal_inaccurate",
+          "value": 756.5903,
+          "floor": 756,
+          "secs": 54.7
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 756.5903,
+      "sdp_floor": 756,
+      "solver": "SDPA",
+      "solve_secs": 54.7,
+      "cell_secs": 54.9,
+      "n_vars": 226,
+      "snapshot": {
+        "lb": 225,
+        "ub": 754,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 2,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 754,
+      "reproduces_table_II": false
+    },
+    {
+      "n": 24,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 12374.4119,
+          "floor": 12374,
+          "secs": 20.8
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 12374.4119,
+      "sdp_floor": 12374,
+      "solver": "SDPA",
+      "solve_secs": 20.8,
+      "cell_secs": 21.0,
+      "n_vars": 235,
+      "snapshot": {
+        "lb": 4200,
+        "ub": 12186,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 188,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 8,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 3422.7531,
+          "floor": 3422,
+          "secs": 47.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 3422.7531,
+      "sdp_floor": 3422,
+      "solver": "SDPA",
+      "solve_secs": 47.0,
+      "cell_secs": 47.1,
+      "n_vars": 236,
+      "snapshot": {
+        "lb": 1702,
+        "ub": 3422,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 3422,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 27,
+      "d": 10,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 1201.2501,
+          "floor": 1201,
+          "secs": 80.2
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 1201.2501,
+      "sdp_floor": 1201,
+      "solver": "SDPA",
+      "solve_secs": 80.2,
+      "cell_secs": 80.4,
+      "n_vars": 238,
+      "snapshot": {
+        "lb": 351,
+        "ub": 1190,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 11,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 1201,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 25,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 19508.7652,
+          "floor": 19508,
+          "secs": 25.4
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 19508.7652,
+      "sdp_floor": 19508,
+      "solver": "SDPA",
+      "solve_secs": 25.4,
+      "cell_secs": 25.6,
+      "n_vars": 244,
+      "snapshot": {
+        "lb": 6600,
+        "ub": 19037,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 471,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 30877.0373,
+          "floor": 30877,
+          "secs": 28.9
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 30877.0373,
+      "sdp_floor": 30877,
+      "solver": "SDPA",
+      "solve_secs": 28.9,
+      "cell_secs": 29.0,
+      "n_vars": 251,
+      "snapshot": {
+        "lb": 8810,
+        "ub": 28893,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 1984,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 8,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 5225.5519,
+          "floor": 5225,
+          "secs": 60.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 5225.5519,
+      "sdp_floor": 5225,
+      "solver": "SDPA",
+      "solve_secs": 60.0,
+      "cell_secs": 60.2,
+      "n_vars": 253,
+      "snapshot": {
+        "lb": 2037,
+        "ub": 5208,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 17,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 5225,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 23,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 7953.4,
+          "floor": 7953,
+          "secs": 27.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 7953.4,
+      "sdp_floor": 7953,
+      "solver": "SDPA",
+      "solve_secs": 27.0,
+      "cell_secs": 27.2,
+      "n_vars": 255,
+      "snapshot": {
+        "lb": 3585,
+        "ub": 7953,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 48036.446,
+          "floor": 48036,
+          "secs": 34.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 48036.446,
+      "sdp_floor": 48036,
+      "solver": "SDPA",
+      "solve_secs": 34.0,
+      "cell_secs": 34.1,
+      "n_vars": 255,
+      "snapshot": {
+        "lb": 12987,
+        "ub": 43529,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 4507,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "w": 10,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 68956.1497,
+          "floor": 68956,
+          "secs": 31.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 68956.1497,
+      "sdp_floor": 68956,
+      "solver": "SDPA",
+      "solve_secs": 31.7,
+      "cell_secs": 31.8,
+      "n_vars": 258,
+      "snapshot": {
+        "lb": 18345,
+        "ub": 63756,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 5200,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 10,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 1977.6452,
+          "floor": 1977,
+          "secs": 94.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 1977.6452,
+      "sdp_floor": 1977,
+      "solver": "SDPA",
+      "solve_secs": 94.0,
+      "cell_secs": 94.2,
+      "n_vars": 261,
+      "snapshot": {
+        "lb": 390,
+        "ub": 1977,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 1977,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 7833.8402,
+          "floor": 7833,
+          "secs": 59.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 7833.8402,
+      "sdp_floor": 7833,
+      "solver": "SDPA",
+      "solve_secs": 59.7,
+      "cell_secs": 59.9,
+      "n_vars": 267,
+      "snapshot": {
+        "lb": 2404,
+        "ub": 7754,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 79,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 7833,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 25,
+      "d": 8,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 4087.9689,
+          "floor": 4087,
+          "secs": 72.0
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 4087.9689,
+      "sdp_floor": 4087,
+      "solver": "SDPA",
+      "solve_secs": 72.0,
+      "cell_secs": 72.2,
+      "n_vars": 270,
+      "snapshot": {
+        "lb": 2610,
+        "ub": 4087,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 4087,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 27,
+      "d": 10,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 1419.043,
+          "floor": 1419,
+          "secs": 104.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 1419.043,
+      "sdp_floor": 1419,
+      "solver": "SDPA",
+      "solve_secs": 104.7,
+      "cell_secs": 104.9,
+      "n_vars": 270,
+      "snapshot": {
+        "lb": 420,
+        "ub": 1406,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 13,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 1419,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 12025.6935,
+          "floor": 12025,
+          "secs": 72.5
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 12025.6935,
+      "sdp_floor": 12025,
+      "solver": "SDPA",
+      "solve_secs": 72.5,
+      "cell_secs": 72.7,
+      "n_vars": 276,
+      "snapshot": {
+        "lb": 3773,
+        "ub": 11896,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 129,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 24,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 14683.2,
+          "floor": 14683,
+          "secs": 33.5
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 14683.2,
+      "sdp_floor": 14683,
+      "solver": "SDPA",
+      "solve_secs": 33.5,
+      "cell_secs": 33.7,
+      "n_vars": 283,
+      "snapshot": {
+        "lb": 5376,
+        "ub": 14682,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 1,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 8,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 6741.135,
+          "floor": 6741,
+          "secs": 89.5
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 6741.135,
+      "sdp_floor": 6741,
+      "solver": "SDPA",
+      "solve_secs": 89.5,
+      "cell_secs": 89.7,
+      "n_vars": 305,
+      "snapshot": {
+        "lb": 3070,
+        "ub": 6741,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 6741,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 24,
+      "d": 6,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 15906.8,
+          "floor": 15906,
+          "secs": 41.1
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 15906.8,
+      "sdp_floor": 15906,
+      "solver": "SDPA",
+      "solve_secs": 41.1,
+      "cell_secs": 41.4,
+      "n_vars": 306,
+      "snapshot": {
+        "lb": 5616,
+        "ub": 15906,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 24630.9091,
+          "floor": 24630,
+          "secs": 44.1
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 24630.9091,
+      "sdp_floor": 24630,
+      "solver": "SDPA",
+      "solve_secs": 44.1,
+      "cell_secs": 44.2,
+      "n_vars": 307,
+      "snapshot": {
+        "lb": 8697,
+        "ub": 24630,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 10,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 2438.7097,
+          "floor": 2438,
+          "secs": 79.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 2438.7097,
+      "sdp_floor": 2438,
+      "solver": "SDPA",
+      "solve_secs": 79.7,
+      "cell_secs": 80.0,
+      "n_vars": 308,
+      "snapshot": {
+        "lb": 756,
+        "ub": 2438,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 42075.6424,
+          "floor": 42075,
+          "secs": 52.8
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 42075.6424,
+      "sdp_floor": 42075,
+      "solver": "SDPA",
+      "solve_secs": 52.8,
+      "cell_secs": 53.0,
+      "n_vars": 324,
+      "snapshot": {
+        "lb": 12206,
+        "ub": 42017,
+        "ub_source": "Mo"
+      },
+      "margin_vs_ub": 58,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 42075,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 26,
+      "d": 8,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 7080.0801,
+          "floor": 7080,
+          "secs": 90.6
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 7080.0801,
+      "sdp_floor": 7080,
+      "solver": "SDPA",
+      "solve_secs": 90.6,
+      "cell_secs": 90.9,
+      "n_vars": 324,
+      "snapshot": {
+        "lb": 3588,
+        "ub": 7080,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 7080,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 28,
+      "d": 10,
+      "w": 14,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 2629.8701,
+          "floor": 2629,
+          "secs": 89.9
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 2629.8701,
+      "sdp_floor": 2629,
+      "solver": "SDPA",
+      "solve_secs": 89.9,
+      "cell_secs": 90.2,
+      "n_vars": 330,
+      "snapshot": {
+        "lb": 812,
+        "ub": 2628,
+        "ub_source": "KKT"
+      },
+      "margin_vs_ub": 1,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "infeasible (non-finite value)",
+          "value": null,
+          "floor": null,
+          "secs": 48.5
+        },
+        {
+          "solver": "CLARABEL",
+          "status": "optimal_inaccurate",
+          "value": 10701.3732,
+          "floor": 10701,
+          "secs": 17.7
+        }
+      ],
+      "status": "optimal_inaccurate",
+      "sdp_value": 10701.3732,
+      "sdp_floor": 10701,
+      "solver": "CLARABEL",
+      "solve_secs": 17.7,
+      "cell_secs": 66.4,
+      "n_vars": 333,
+      "snapshot": {
+        "lb": 3335,
+        "ub": 10460,
+        "ub_source": "KT"
+      },
+      "margin_vs_ub": 241,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 66079.0,
+          "floor": 66079,
+          "secs": 49.1
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 66079.0,
+      "sdp_floor": 66079,
+      "solver": "SDPA",
+      "solve_secs": 49.1,
+      "cell_secs": 49.3,
+      "n_vars": 338,
+      "snapshot": {
+        "lb": 18260,
+        "ub": 66078,
+        "ub_source": "KKT"
+      },
+      "margin_vs_ub": 1,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "w": 11,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 104231.4,
+          "floor": 104231,
+          "secs": 54.8
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 104231.4,
+      "sdp_floor": 104231,
+      "solver": "SDPA",
+      "solve_secs": 54.8,
+      "cell_secs": 55.0,
+      "n_vars": 347,
+      "snapshot": {
+        "lb": 29484,
+        "ub": 104230,
+        "ub_source": "KKT"
+      },
+      "margin_vs_ub": 1,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 25,
+      "d": 6,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 30590.0,
+          "floor": 30590,
+          "secs": 52.1
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 30590.0,
+      "sdp_floor": 30590,
+      "solver": "SDPA",
+      "solve_secs": 52.1,
+      "cell_secs": 52.3,
+      "n_vars": 348,
+      "snapshot": {
+        "lb": 9880,
+        "ub": 30587,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 3,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "infeasible (non-finite value)",
+          "value": null,
+          "floor": null,
+          "secs": 50.2
+        },
+        {
+          "solver": "CLARABEL",
+          "status": "solver_error: SolverError",
+          "value": null,
+          "floor": null,
+          "secs": 15.6
+        }
+      ],
+      "status": "no_valid_float (solvers crashed or floored below the known lb)",
+      "sdp_value": null,
+      "sdp_floor": null,
+      "cell_secs": 66.0,
+      "n_vars": 357,
+      "snapshot": {
+        "lb": 4927,
+        "ub": 17008,
+        "ub_source": "KT"
+      },
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 11981.3571,
+          "floor": 11981,
+          "secs": 83.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 11981.3571,
+      "sdp_floor": 11981,
+      "solver": "SDPA",
+      "solve_secs": 83.7,
+      "cell_secs": 84.1,
+      "n_vars": 374,
+      "snapshot": {
+        "lb": 4094,
+        "ub": 11897,
+        "ub_source": "KKT"
+      },
+      "margin_vs_ub": 84,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 11981,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 50169.5339,
+          "floor": 50169,
+          "secs": 90.5
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 50169.5339,
+      "sdp_floor": 50169,
+      "solver": "SDPA",
+      "solve_secs": 90.5,
+      "cell_secs": 90.8,
+      "n_vars": 385,
+      "snapshot": {
+        "lb": 14854,
+        "ub": 50169,
+        "ub_source": "S"
+      },
+      "margin_vs_ub": 0,
+      "above_known_lb": true,
+      "candidate": false,
+      "table_II": 50169,
+      "reproduces_table_II": true
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "w": 13,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 61180.0,
+          "floor": 61180,
+          "secs": 82.2
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 61180.0,
+      "sdp_floor": 61180,
+      "solver": "SDPA",
+      "solve_secs": 82.2,
+      "cell_secs": 82.4,
+      "n_vars": 408,
+      "snapshot": {
+        "lb": 16117,
+        "ub": 61174,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 6,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 84574.2857,
+          "floor": 84574,
+          "secs": 97.7
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 84574.2857,
+      "sdp_floor": 84574,
+      "solver": "SDPA",
+      "solve_secs": 97.7,
+      "cell_secs": 98.0,
+      "n_vars": 414,
+      "snapshot": {
+        "lb": 23901,
+        "ub": 84573,
+        "ub_source": "KKT"
+      },
+      "margin_vs_ub": 1,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "w": 13,
+      "status": "time_cap",
+      "cell_secs": 120.0,
+      "n_vars": 416,
+      "snapshot": {
+        "lb": 6848,
+        "ub": 21148,
+        "ub_source": "KT"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "w": 12,
+      "attempts": [
+        {
+          "solver": "SDPA",
+          "status": "optimal",
+          "value": 145493.8108,
+          "floor": 145493,
+          "secs": 118.4
+        }
+      ],
+      "status": "optimal",
+      "sdp_value": 145493.8108,
+      "sdp_floor": 145493,
+      "solver": "SDPA",
+      "solve_secs": 118.4,
+      "cell_secs": 118.7,
+      "n_vars": 438,
+      "snapshot": {
+        "lb": 40237,
+        "ub": 142117,
+        "ub_source": ""
+      },
+      "margin_vs_ub": 3376,
+      "above_known_lb": true,
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "w": 14,
+      "status": "time_cap",
+      "cell_secs": 120.0,
+      "n_vars": 443,
+      "snapshot": {
+        "lb": 6218,
+        "ub": 22710,
+        "ub_source": "S"
+      },
+      "candidate": false
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "w": 13,
+      "status": "time_cap",
+      "cell_secs": 120.0,
+      "n_vars": 462,
+      "snapshot": {
+        "lb": 27600,
+        "ub": 91079,
+        "ub_source": "KKT"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "w": 13,
+      "status": "time_cap",
+      "cell_secs": 120.0,
+      "n_vars": 506,
+      "snapshot": {
+        "lb": 49510,
+        "ub": 164219,
+        "ub_source": "KKT"
+      },
+      "candidate": false
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "w": 14,
+      "status": "time_cap",
+      "cell_secs": 120.0,
+      "n_vars": 537,
+      "snapshot": {
+        "lb": 53046,
+        "ub": 169739,
+        "ub_source": "KKT"
+      },
       "candidate": false
     }
   ],
