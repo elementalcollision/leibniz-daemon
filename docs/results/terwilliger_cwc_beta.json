@@ -1,0 +1,80 @@
+{
+  "codes": {
+    "n=4,w=2": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=5,w=2": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=6,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=7,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true,
+      "fano-STS(7)": true
+    },
+    "n=8,w=4": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=9,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true,
+      "AG(2,3)-STS(9)": true
+    }
+  },
+  "identities": {
+    "n=4,w=2": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=5,w=2": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=6,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=7,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true,
+      "fano-STS(7)": true
+    },
+    "n=8,w=4": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true
+    },
+    "n=9,w=3": {
+      "singleton": true,
+      "johnson-space": true,
+      "pair": true,
+      "AG(2,3)-STS(9)": true
+    }
+  },
+  "control": {
+    "corrupt_beta_breaks_psd": true
+  },
+  "structure": {
+    "n17_w7_free_vars_d6": 62,
+    "n17_w7_blocks": 23,
+    "n17_w7_largest_block": 8
+  },
+  "verdict": "GREEN",
+  "reading": "GREEN = every real constant-weight code's Johnson-Terwilliger blocks (both families, all (k,l)) are exactly PSD, the eq.(66) counting identity and the (65)(iii) orbit merge hold exactly, AND the transposed-binomial corruption breaks PSD -> the Section-III structure (product-of-two-eq.(7)-\u03b2 blocks, quadruple variables, multinomial normalization) is transcribed correctly and the test has teeth. This is D1 step 1; the SDP producer (terwilliger_cwc_sdp.py) builds on these functions. RED = a sign/index/normalization bug."
+}
