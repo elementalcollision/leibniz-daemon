@@ -277,7 +277,14 @@ def dual_check(n, d, w, duals):
     faithfulness is empirical (Table II gate) — hence DUAL_CERTIFICATE_CHECKED, not Q.E.D."""
     const, coeff = collected(n, d, w, duals)
     residuals = {key: val for key, val in coeff.items() if val != 0}
-    psd = all(is_psd_exact(duals["Z"][kl]) and is_psd_exact(duals["Zp"][kl]) for kl in duals["Z"])
+    # is_psd_exact is a PSD test only for SYMMETRIC input; require symmetry explicitly so a transposed or
+    # hand-assembled block whose symmetric part is indefinite can't be pronounced feasible (the GUARANTEE
+    # below is a weak-duality claim, which needs genuine ⟨Z, M⟩ ≥ 0, i.e. Z = Zᵀ ⪰ 0).
+    def _sym(M):
+        m = len(M)
+        return all(M[a][b] == M[b][a] for a in range(m) for b in range(a + 1, m))
+    psd = all(_sym(duals["Z"][kl]) and _sym(duals["Zp"][kl])
+              and is_psd_exact(duals["Z"][kl]) and is_psd_exact(duals["Zp"][kl]) for kl in duals["Z"])
     nonneg = (all(val >= 0 for val in duals["a"].values()) and all(val >= 0 for val in duals["b1"].values())
               and all(val >= 0 for val in duals["g"].values()))
     bound = sum(duals["g"].values()) - duals["nu"]

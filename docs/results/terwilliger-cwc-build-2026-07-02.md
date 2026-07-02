@@ -1,8 +1,11 @@
 # Terwilliger constant-weight (Johnson-scheme) build — D1, task #102 (2026-07-02)
 
 **Verdict: GREEN through all three build rungs** (structure oracle / Table II faithfulness / exact+kernel
-legs); reach-probe verdict recorded in the probe section below. Audit tier throughout
-(`DUAL_CERTIFICATE_CHECKED`); no trust surface touched; `tests/test_invariants.py` byte-identical.
+legs); **reach probe DRY** (full 185-cell sweep, 0 certified tightenings — the honest-expected outcome for
+this less-mined family). Audit tier throughout (`DUAL_CERTIFICATE_CHECKED`); no trust surface touched;
+`tests/test_invariants.py` byte-identical. Hardened by the D1 8-angle adversarial review (see the
+"Adversarial review" section) — soundness tripwires, verdict honesty, kernel-attestation integrity, and
+parser/snapshot completeness gates now match the sibling unrestricted build's discipline.
 
 ## What this is
 
@@ -28,7 +31,7 @@ unrestricted pipeline is reused wholesale; only the structure is new:
 - `scripts/terwilliger_cwc_beta.py` — structure + the free-CPU differential oracle.
 - `scripts/terwilliger_cwc_dual.py` — mechanical dual; **`collected()` here is the authoritative
   stationarity spec for this family**; `dual_check` is the exact checker.
-- `scripts/terwilliger_cwc_sdp.py` — cvxpy primal; `TABLE_II` (all 55 published cells) + `LOWER`;
+- `scripts/terwilliger_cwc_sdp.py` — cvxpy primal; `TABLE_II` (all 57 published cells) + `LOWER`;
   reuses `terwilliger_sdp._solver_defaults` (SDPA-GMP tight + eq.(58) normalization when `sdpap` present).
 - `scripts/terwilliger_cwc_cert.py` — exact leg (reuses `terwilliger_exact_lp.exact_simplex` +
   `terwilliger_cert._round_psd`) and kernel leg (reuses `cert_psd_blocks`/`render_cert_lean`).
@@ -56,52 +59,117 @@ A(6,4,3)=4, A(7,4,3)=7, A(8,4,4)=14, A(9,4,3)=12 — the SDP is tight there). No
 lower bound. This is the constant-weight analogue of the unrestricted build's (19,6)/(20,8) gate.
 
 **Step 3 — exact + kernel legs: GREEN 7/7 + kernel sound** (`terwilliger_cwc_cert.json`). Exact rational
-dual certificates (stationarity residuals exactly 0, blocks exactly PSD, multipliers ≥ 0) at all seven
-cells; **A(17,6,7) ≤ 228 kernel-attested**: the real Lean 4.31 kernel accepts all 46 PSD blocks (largest
-8×8) and rejects a corrupted-block control. Note **(17,6,7) certifies only at P=1e14** — the SDP optimum
-228.999 leaves ~10⁻³ of rounding headroom below 229 (same precision-matters-for-the-bound behavior as the
-unrestricted D6 cells); (17,6,8) needs P=1e10 (~14 s); small cells certify at P=1e6 in <0.1 s.
+dual certificates (stationarity residuals exactly 0, blocks exactly PSD, multipliers ≥ 0, and — the soundness
+tripwire the float legs already carry — bound ≥ the known lower bound) at all seven cells. **A(17,6,7) ≤ 228:
+exact-rational certified; its 46 PSD blocks are kernel-attested** — the real Lean 4.31 kernel accepts all 46
+(largest 8×8), rejects a corrupted-block control, and a trivially-true liveness probe confirms the rejection
+was the *kernel's* verdict (not a docker hiccup). **Scope of the kernel leg (honest):** it attests block
+PSD-ness only; the stationarity system and the bound arithmetic Σγ−ν ≤ target are checked in exact Python
+(`dual_check`), NOT by the kernel — the F2b bridge theorem remains the only path past that, which is why this
+family stays audit-tier `DUAL_CERTIFICATE_CHECKED`, not Q.E.D. The artifact records
+`kernel_attests_recorded_cert` so the attested blocks are provably those of the certificate whose bound it
+reports. Note **(17,6,7) certifies only at P=1e14** — the SDP optimum 228.999 leaves ~10⁻³ of rounding
+headroom below 229 (same precision-matters-for-the-bound behavior as the unrestricted D6 cells);
+(17,6,8) needs P=1e10 (~14 s); small cells certify at P=1e6 in <0.1 s.
 
 ## Reach probe (step 4) — `terwilliger_cwc_probe.py`, `terwilliger_cwc_probe.json`
 
-**Snapshot**: `docs/data/brouwer-cwc-snapshot-2026-07.json` — 820 cells parsed from Brouwer's
-https://aeb.win.tue.nl/codes/Andw.html (fetched 2026-07-02, sha256 recorded), **validated before writing**
-(Probe-α safeguard): ground-truth anchors, ub ≥ lb, lb monotone in n, **0 unparsed cells**, and a
-cross-check against the independently-fetched 2026-06-27 validated lower-bound oracle
-(`cwc_table_oracle.py`): **816 shared cells, 0 disagreements**. Page conventions encoded: unmarked ubs
-(n ≤ 28) are AVZ 2000; sharper sources marked (`S` = Schrijver 2005, `Po` = Polak, …); single value =
+**Snapshot**: `docs/data/brouwer-cwc-snapshot-2026-07.json` — 843 cells parsed from Brouwer's
+https://aeb.win.tue.nl/codes/Andw.html (fetched 2026-07-02; **sha256 computed from the page bytes**, not a
+flag, and cross-checked against the recorded hash), **validated before writing** (Probe-α safeguard):
+ground-truth anchors, ub ≥ lb, lb monotone in n, **an omission gate** (every old-oracle cell in a parsed
+d-section must survive the new parse — closes the earlier silent drop of 23 `<td>`-labeled rows), **a ub
+cross-check** (every published-cell ub ≤ its Schrijver Table II value — the only validator that touches the
+ub side, which drives all targeting), **0 unparsed cells**, and a cross-check against the
+independently-fetched 2026-06-27 validated lower-bound oracle (`cwc_table_oracle.py`): **839 shared cells, 0
+disagreements**. Page conventions encoded: superscripts mark the ub/lb source (`S` = Schrijver 2005, `Po` =
+Polak, `KKT`/`KT`/`Mo`/… later work); an *unmarked* ub has no uniform provenance (it can be a post-2005
+improvement, e.g. A(18,6,6) ub 186 < Schrijver's 199 — so unmarked is NOT "AVZ 2000"); single value =
 settled; d=4 section is lower-bounds-only (dot = optimum); `-...` = no explicit ub. The snapshot is
 **targeting context only, never a decider**.
 
 **Sweep scope**: all 185 open cells (lb < ub) with d ∈ {6,8,10,12}, n ≤ 28, cheap-first by free-variable
 count (max 537 vars — this family is far smaller per cell than the unrestricted one at equal n; no
-Q-pit-2-class wall was hit). Acceptance gate: floor ≥ snapshot lb. Escalation (exact LP at P ≤ 1e14 →
-kernel) fires only on floors strictly below the snapshot ub.
+Q-pit-2-class wall was hit). Acceptance gate: floor ≥ snapshot lb; a valid solver *optimum* that floors
+*below* the snapshot lb is a soundness alarm (a wrong transcription can under-bound), surfaced — not folded
+into a generic solver-failure status. Candidacy is optimistic at the ub boundary (a true optimum a hair below
+an integer ub floors up under the +1e-6 acceptance bump, so the raw-value floor is also tested; escalation is
+cheap, a missed record is not). Escalation certifies against the **discovery threshold** (snapshot ub − 1,
+the smallest strict tightening — never the loose float floor, which would report a certifiable record as DRY)
+via exact LP at P ≤ 1e14 → kernel, and carries the same known-lb tripwire.
 
-**RESULT — verdict `DRY` (sweep completed in-session after an interim partial flush):** 185/185 cells
-attempted, **179 solved, 0 candidates, 0 invalid floors, 0 escalations**. Unsolved (honest scaling record):
-5 per-cell time-caps (120 s) at the largest cells — (27,6,13), (28,6,13), (28,6,14), (28,8,13), (28,8,14) —
-plus one SolverError at (28,8,12); all n ≥ 27, w ≥ 12. **Faithfulness bonus: 47/51 swept Table II cells
-reproduce Schrijver's published value exactly through the harness** (including the still-standing `S`-record
-cells (21,6,10)→2685 and (22,6,9)→3736 — so no loose-2005-float re-mining opportunity exists at these
-cells). The 4 non-reproductions — (23,8,10)→1061 vs 1025, (26,10,13)→756 vs 754, (26,12,11)→78 vs 66,
-(28,12,10)→88 vs 87 — are all `optimal_inaccurate` floats stalling ABOVE the table value (never below; the
-floor ≥ lb gate held everywhere). Reading: the three-point constant-weight bound is
-**reproduction-complete** in this range, and every open cell's current record (AVZ 2000 or later) already
-sits at or below what the three-point SDP can give — discovery here is bound-blocked exactly like the
-unrestricted family, pointing at D3 (post-2005 hierarchies) / eq.(25)-style sharpenings, not more solver.
+**RESULT — DRY (full sweep, 2026-07-02).** All 185 in-scope cells attempted; **179 solved** (170 clean
+`optimal`, 9 `optimal_inaccurate`), 6 unsolved on the largest n=28 cells (5 time-cap at 120 s, 1
+`no_valid_float`, ~440–537 vars). **0 candidates, 0 certified tightenings, 0 below-lb soundness alarms.** No
+solved floor lands below its snapshot ub — the closest cells *reproduce* the published record exactly
+(A(21,6,10) floor 2685 = ub 2685^S; A(22,6,9) floor 3736 = ub 3736^S), never beat it. This is the
+honest-expected outcome: constant-weight is a less-mined family, and the post-2005 `S`/`Po`/`KKT` sources on
+these cells already reflect SDP-class bounds our exact leg reproduces rather than improves. The new
+faithfulness tripwire (`table_II_regressions`) flags **4 cells whose float floor exceeds the published Table
+II bound — but all 4 are `optimal_inaccurate` (float non-convergence on d ∈ {8,10,12}), 0 at clean `optimal`
+status**, so none is a formulation regression (a clean-optimal floor above the published bound would be; there
+are none). The exact leg remains the decider; these floats are targeting data only. **No GREEN(candidate) —
+nothing to surface to the operator.**
+
+## Adversarial review (D1 8-angle, 2026-07-02)
+
+The D1 build got the same 8-angle adversarial review PR #238 got (57-agent workflow: 8 angle-specific finders
+→ dedup → per-finding refute/reproduce/tiebreak verification). **The central result survives**: no finding
+refutes the three build rungs, the A(17,6,7) ≤ 228 certificate, or the DRY probe verdict. 24 findings were
+confirmed; all confirmed code findings are fixed here (regression-gated: full local suite green; A(17,6,7)
+kernel-attests; `tests/test_invariants.py` byte-identical; no trust surface touched). Highlights:
+
+- **Decider soundness tripwire (the load-bearing fix).** The exact-LP decider certified on the one-sided
+  `⌊bound⌋ ≤ target` with no *lower*-bound guard, while every float layer already refused sub-lb floors
+  (`valid_bound`). A too-low (even mathematically impossible) exact bound would have certified GREEN. Now
+  `certify_lp(…, lb=…)` refuses `⌊bound⌋ < lb` and raises a `soundness_alarm`; the probe's `escalate`/main and
+  `cert.main` thread `tcs.LOWER` through. This is the exact class the #238 review found on the anomaly build.
+- **Discovery-threshold escalation.** `escalate` certified against the *float floor*, so an exact certificate
+  landing between the float floor and the snapshot ub — a genuine record — reported DRY. It now certifies
+  against the discovery threshold (ub − 1); optimistic ub-boundary candidacy stops a hair-below-integer
+  optimum from being floored away.
+- **Verdict honesty.** New verdicts distinguish a decider that *ran and refused* (DRY) from one that
+  time-capped/errored on a live candidate (`UNDECIDED`) and from a solved optimum below a known lower bound
+  (`SOUNDNESS-ALARM`). `reproduces_table_II`, previously computed-but-unread, now aggregates `table_II`
+  faithfulness regressions across the un-gated Table II range.
+- **Kernel-attestation integrity.** The kernel leg re-derived a *second* certificate; it now attests the
+  exact certified certificate's blocks (`kernel_attests_recorded_cert`), refuses a short block census
+  (a dropped singular block ≠ `sound`), distinguishes a docker/daemon failure from a genuine kernel rejection
+  via a liveness probe, and is crash-wrapped so a kernel-leg failure never erases the exact certificates.
+  The doc/artifact claim is de-overstated: **the kernel attests block PSD-ness only** (stationarity + bound
+  are exact-Python), F2b remains the bridge.
+- **Faithfulness gate.** The step-2 gate went GREEN if a gate cell *crashed* (errored rows dropped from the
+  denominator); it now gates on the configured cell sets.
+- **Snapshot/parser completeness.** `<td>`-labeled rows were silently dropped (23 cells, all out of scope but
+  invisible to every validator); the parser now accepts th-or-td labels, and `build_snapshot` adds an
+  omission gate, an independent ub ≤ Table II cross-check, and real byte-computed sha256 provenance. Snapshot
+  is now complete at **843 cells** with the in-scope 366 byte-identical (probe result unaffected).
+- **Test teeth.** Added negative coverage for `dual_check`'s PSD/nonneg conjuncts (incl. an asymmetric-Z
+  guard), a flagship artifact-consistency test pinning A(17,6,7)@P=1e14, and a stubbed kernel block-census
+  test; fixed a vacuous `valid_bound` assertion.
+
+**Deferred — dedup (coordinates with the pending #238-fixes chip "lift k_max rescue into shared modules").**
+The five cwc scripts are ~700 lines of near-verbatim forks of the banked unrestricted pipeline, and the
+`_load`-by-path pattern re-executes modules. This should fold into the *same* shared-module lift, parameterized
+over a small structure object (`free_keys/canon/classify/obj_coeff/possible/valid_quads/block_pairs/block_idx`
++ a β-coefficient callback). **Load-bearing coordination note for that chip:** findings *decider-lb-tripwire*,
+*escalate-float-floor*, *below-lb-evidence*, *verdict-undecided*, and *subprocess-crash* have **identical
+analogues in the parent** `scripts/terwilliger_reach_probe.py` + `scripts/terwilliger_exact_lp.py` — the lift
+must apply the same fixes there so the unrestricted probe stops emitting the same wrong verdicts/status.
 
 ## Facts a fresh session should not re-measure
 
 - Structure sizes at the gate cells: (17,6,7) = 62 free vars, 23 block pairs, largest block 8; (17,6,8) =
   79 vars; (18,6,6) = 40 vars. Full-cert kernel leg: 46 blocks ≈ 30 s round trip including both controls.
-- Solve times (SDPA-GMP tight): gate cells ≈ 2 s; probe cells 2–60 s up to ~460 vars; the 120 s cap fires
-  only at the five largest cells (n ≥ 27, w ≥ 13, ~460–537 vars). `optimal_inaccurate` shows up on some
-  d ∈ {10,12} cells — floats there are targeting data only (the exact leg decides, as always).
+- Solve times (SDPA-GMP tight): gate cells ≈ 2 s; the probe's largest cells (n=28, w=13..14, ~500 vars)
+  tens of seconds. `optimal_inaccurate` shows up on some d ∈ {10,12} cells — floats there are targeting
+  data only (the exact leg decides, as always).
 - The d=4 constant-weight family is excluded from the sweep by design (no ubs on the page; Table II has no
   d=4 cells; design-theory bounds dominate there).
-- Brouwer page layout traps for the parser: `<td class=...>` variants (a bare `<td>` regex silently shifts
-  columns — caught by the monotonicity+cross-check validators), transposed continuation tables for n ≥ 29
+- Brouwer page layout traps for the parser: `<td class=...>` data-cell variants (handled by `<td[^>]*>`);
+  **`<td>`-labeled rows** — the n-label as `<td>` not `<th>`, used for n=33–35 in the d=18 section — which a
+  `<th>`-only label match dropped whole (now: first-cell th-or-td label + an omission gate that fails the
+  build if any old-oracle cell in a parsed d-section vanishes); transposed continuation tables for n ≥ 29
   (skipped; out of scope), double superscripts, dot-after-superscript optima.
 
 ## Trust posture
@@ -115,10 +183,8 @@ bridge theorem (F2b) remains the only path past that, hence audit tier.
 ## Next steps
 
 - **D2 (task #103)**: the (22,10) anomaly — unchanged, parallelizable.
-- **D1 is DRY** → the discovery weight shifts to **D3** (post-2005 hierarchy scoping, task #104) and to
-  eq.(25)-style sharpenings of the *unrestricted* build, which now have a live, validated A*(n,d,i) oracle
-  (this snapshot) to draw caps from.
-- The `S`-marked re-mine channel is now MEASURED CLOSED: the standing Schrijver-2005 record cells
-  ((21,6,10) ub=2685, (22,6,9) ub=3736, …) reproduce exactly at float — his 2005 floors were not loose.
-  Optional tidy-up, not discovery: exact+kernel-certify the 4 `optimal_inaccurate` cells at their Table II
-  targets (same recipe as the gate cells, P ≤ 1e14).
+- **D1 follow-ups if the probe is DRY**: eq.(25)-style sharpenings now have a live A*(n,d,i) oracle (this
+  snapshot); post-2005 hierarchy scoping is D3 (task #104).
+- The `S`-marked cells (Schrijver-2005 records still standing: e.g. (21,6,10) ub=2685, (22,6,9) ub=3736)
+  are the natural re-mine targets: a 2005 float floor can be loose; our exact leg certifies the true
+  optimum's floor. The probe covers them in-scope.

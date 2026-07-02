@@ -10,11 +10,11 @@
       "fetched_at": "2026-07-02",
       "sha256_page": "a147d4c2b631b4c7e61e5a038bfc8292f1e8a9e2d98bd8062b6886a2688f2d23",
       "parser": "scripts/terwilliger_cwc_probe.py --build-snapshot",
-      "cells": 820,
+      "cells": 843,
       "cross_check": {
         "against": "docs/results/brouwer_cwc_lower_bounds.json",
         "fetched_at_old": "2026-06-27",
-        "shared_cells": 816,
+        "shared_cells": 839,
         "lb_diffs": []
       },
       "trust_note": "Targeting context ONLY \u2014 never a decider. Soundness of any bound claim stays with the exact-rational LP certificate and the Lean kernel."
@@ -25,6 +25,45 @@
     "n_cells": 185,
     "not_attempted": []
   },
+  "soundness_alarms": [],
+  "table_II_regressions": [
+    {
+      "n": 28,
+      "d": 12,
+      "w": 10,
+      "floor": 88,
+      "table_II": 87,
+      "status": "optimal_inaccurate",
+      "clean_optimal": false
+    },
+    {
+      "n": 26,
+      "d": 12,
+      "w": 11,
+      "floor": 78,
+      "table_II": 66,
+      "status": "optimal_inaccurate",
+      "clean_optimal": false
+    },
+    {
+      "n": 23,
+      "d": 8,
+      "w": 10,
+      "floor": 1061,
+      "table_II": 1025,
+      "status": "optimal_inaccurate",
+      "clean_optimal": false
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "w": 13,
+      "floor": 756,
+      "table_II": 754,
+      "status": "optimal_inaccurate",
+      "clean_optimal": false
+    }
+  ],
   "rows": [
     {
       "n": 27,
@@ -36,15 +75,17 @@
           "status": "optimal",
           "value": 35.1,
           "floor": 35,
-          "secs": 0.8
+          "secs": 0.9
         }
       ],
       "status": "optimal",
       "sdp_value": 35.1,
+      "sdp_value_raw": 35.10000000001098,
       "sdp_floor": 35,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 0.8,
-      "cell_secs": 0.9,
+      "solve_secs": 0.9,
+      "cell_secs": 1.0,
       "n_vars": 8,
       "snapshot": {
         "lb": 31,
@@ -70,7 +111,9 @@
       ],
       "status": "optimal",
       "sdp_value": 81.6,
+      "sdp_value_raw": 81.60000000004086,
       "sdp_floor": 81,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -99,7 +142,9 @@
       ],
       "status": "optimal",
       "sdp_value": 96.9,
+      "sdp_value_raw": 96.90000000007058,
       "sdp_floor": 96,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -128,7 +173,9 @@
       ],
       "status": "optimal",
       "sdp_value": 114.0,
+      "sdp_value_raw": 114.00000000007283,
       "sdp_floor": 114,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -157,7 +204,9 @@
       ],
       "status": "optimal",
       "sdp_value": 133.0,
+      "sdp_value_raw": 133.00000000008822,
       "sdp_floor": 133,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -186,7 +235,9 @@
       ],
       "status": "optimal",
       "sdp_value": 154.0,
+      "sdp_value_raw": 154.0000000002127,
       "sdp_floor": 154,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -215,7 +266,9 @@
       ],
       "status": "optimal",
       "sdp_value": 177.1,
+      "sdp_value_raw": 177.10000000010646,
       "sdp_floor": 177,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
       "cell_secs": 0.8,
@@ -244,10 +297,12 @@
       ],
       "status": "optimal",
       "sdp_value": 87.3956,
+      "sdp_value_raw": 87.3955566864295,
       "sdp_floor": 87,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.0,
-      "cell_secs": 1.1,
+      "cell_secs": 1.0,
       "n_vars": 19,
       "snapshot": {
         "lb": 77,
@@ -268,15 +323,17 @@
           "status": "optimal",
           "value": 202.4,
           "floor": 202,
-          "secs": 0.7
+          "secs": 0.6
         }
       ],
       "status": "optimal",
       "sdp_value": 202.4,
+      "sdp_value_raw": 202.4000000001389,
       "sdp_floor": 202,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 0.7,
-      "cell_secs": 0.8,
+      "solve_secs": 0.6,
+      "cell_secs": 0.7,
       "n_vars": 19,
       "snapshot": {
         "lb": 168,
@@ -302,10 +359,12 @@
       ],
       "status": "optimal",
       "sdp_value": 99.8942,
+      "sdp_value_raw": 99.89420764504992,
       "sdp_floor": 99,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.9,
-      "cell_secs": 1.0,
+      "cell_secs": 0.9,
       "n_vars": 19,
       "snapshot": {
         "lb": 78,
@@ -326,15 +385,17 @@
           "status": "optimal",
           "value": 35.7143,
           "floor": 35,
-          "secs": 1.2
+          "secs": 1.1
         }
       ],
       "status": "optimal",
       "sdp_value": 35.7143,
+      "sdp_value_raw": 35.7142857426976,
       "sdp_floor": 35,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.2,
-      "cell_secs": 1.3,
+      "solve_secs": 1.1,
+      "cell_secs": 1.2,
       "n_vars": 19,
       "snapshot": {
         "lb": 28,
@@ -360,7 +421,9 @@
       ],
       "status": "optimal",
       "sdp_value": 42.2078,
+      "sdp_value_raw": 42.207792270910936,
       "sdp_floor": 42,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.2,
       "cell_secs": 1.3,
@@ -389,10 +452,12 @@
       ],
       "status": "optimal",
       "sdp_value": 292.5,
+      "sdp_value_raw": 292.5000000002481,
       "sdp_floor": 292,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.7,
-      "cell_secs": 0.7,
+      "cell_secs": 0.8,
       "n_vars": 19,
       "snapshot": {
         "lb": 260,
@@ -418,7 +483,9 @@
       ],
       "status": "optimal",
       "sdp_value": 146.25,
+      "sdp_value_raw": 146.25000000015126,
       "sdp_floor": 146,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 0.8,
       "cell_secs": 0.9,
@@ -442,15 +509,17 @@
           "status": "optimal",
           "value": 50.1429,
           "floor": 50,
-          "secs": 1.1
+          "secs": 1.2
         }
       ],
       "status": "optimal",
       "sdp_value": 50.1429,
+      "sdp_value_raw": 50.142857270486466,
       "sdp_floor": 50,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.1,
-      "cell_secs": 1.2,
+      "solve_secs": 1.2,
+      "cell_secs": 1.3,
       "n_vars": 19,
       "snapshot": {
         "lb": 36,
@@ -471,14 +540,16 @@
           "status": "optimal",
           "value": 327.6,
           "floor": 327,
-          "secs": 0.6
+          "secs": 0.7
         }
       ],
       "status": "optimal",
       "sdp_value": 327.6,
+      "sdp_value_raw": 327.6000000002891,
       "sdp_floor": 327,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 0.6,
+      "solve_secs": 0.7,
       "cell_secs": 0.7,
       "n_vars": 19,
       "snapshot": {
@@ -500,15 +571,17 @@
           "status": "optimal",
           "value": 163.8,
           "floor": 163,
-          "secs": 0.8
+          "secs": 0.9
         }
       ],
       "status": "optimal",
       "sdp_value": 163.8,
+      "sdp_value_raw": 163.8000000001846,
       "sdp_floor": 163,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 0.8,
-      "cell_secs": 0.9,
+      "solve_secs": 0.9,
+      "cell_secs": 1.0,
       "n_vars": 19,
       "snapshot": {
         "lb": 131,
@@ -529,15 +602,17 @@
           "status": "optimal",
           "value": 60.0,
           "floor": 60,
-          "secs": 1.1
+          "secs": 1.2
         }
       ],
       "status": "optimal",
       "sdp_value": 60.0,
+      "sdp_value_raw": 60.00000008971918,
       "sdp_floor": 60,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.1,
-      "cell_secs": 1.2,
+      "solve_secs": 1.2,
+      "cell_secs": 1.4,
       "n_vars": 19,
       "snapshot": {
         "lb": 38,
@@ -558,15 +633,17 @@
           "status": "optimal",
           "value": 41.1158,
           "floor": 41,
-          "secs": 2.2
+          "secs": 2.4
         }
       ],
       "status": "optimal",
       "sdp_value": 41.1158,
+      "sdp_value_raw": 41.11578538447511,
       "sdp_floor": 41,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.2,
-      "cell_secs": 2.3,
+      "solve_secs": 2.4,
+      "cell_secs": 2.5,
       "n_vars": 38,
       "snapshot": {
         "lb": 25,
@@ -587,15 +664,17 @@
           "status": "optimal",
           "value": 150.3118,
           "floor": 150,
-          "secs": 1.1
+          "secs": 1.2
         }
       ],
       "status": "optimal",
       "sdp_value": 150.3118,
+      "sdp_value_raw": 150.3118000590336,
       "sdp_floor": 150,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.1,
-      "cell_secs": 1.2,
+      "solve_secs": 1.2,
+      "cell_secs": 1.3,
       "n_vars": 39,
       "snapshot": {
         "lb": 113,
@@ -616,15 +695,17 @@
           "status": "optimal",
           "value": 49.9242,
           "floor": 49,
-          "secs": 3.3
+          "secs": 3.5
         }
       ],
       "status": "optimal",
       "sdp_value": 49.9242,
+      "sdp_value_raw": 49.92418274578826,
       "sdp_floor": 49,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.3,
-      "cell_secs": 3.5,
+      "solve_secs": 3.5,
+      "cell_secs": 3.6,
       "n_vars": 39,
       "snapshot": {
         "lb": 33,
@@ -645,15 +726,17 @@
           "status": "optimal",
           "value": 199.8826,
           "floor": 199,
-          "secs": 1.1
+          "secs": 1.2
         }
       ],
       "status": "optimal",
       "sdp_value": 199.8826,
+      "sdp_value_raw": 199.88262273345387,
       "sdp_floor": 199,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.1,
-      "cell_secs": 1.2,
+      "solve_secs": 1.2,
+      "cell_secs": 1.3,
       "n_vars": 40,
       "snapshot": {
         "lb": 133,
@@ -676,14 +759,16 @@
           "status": "optimal",
           "value": 258.4,
           "floor": 258,
-          "secs": 1.1
+          "secs": 1.2
         }
       ],
       "status": "optimal",
       "sdp_value": 258.4,
+      "sdp_value_raw": 258.4000000003611,
       "sdp_floor": 258,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.1,
+      "solve_secs": 1.2,
       "cell_secs": 1.2,
       "n_vars": 40,
       "snapshot": {
@@ -710,7 +795,9 @@
       ],
       "status": "optimal",
       "sdp_value": 323.0,
+      "sdp_value_raw": 323.00000000022544,
       "sdp_floor": 323,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -739,7 +826,9 @@
       ],
       "status": "optimal",
       "sdp_value": 399.0,
+      "sdp_value_raw": 399.0000000004218,
       "sdp_floor": 399,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -768,7 +857,9 @@
       ],
       "status": "optimal",
       "sdp_value": 487.6667,
+      "sdp_value_raw": 487.66666666707323,
       "sdp_floor": 487,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -797,7 +888,9 @@
       ],
       "status": "optimal",
       "sdp_value": 590.3333,
+      "sdp_value_raw": 590.3333333336988,
       "sdp_floor": 590,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -826,7 +919,9 @@
       ],
       "status": "optimal",
       "sdp_value": 708.4,
+      "sdp_value_raw": 708.4000000003497,
       "sdp_floor": 708,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -850,15 +945,17 @@
           "status": "optimal",
           "value": 298.3815,
           "floor": 298,
-          "secs": 1.9
+          "secs": 1.8
         }
       ],
       "status": "optimal",
       "sdp_value": 298.3815,
+      "sdp_value_raw": 298.38147063039133,
       "sdp_floor": 298,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.9,
-      "cell_secs": 2.0,
+      "solve_secs": 1.8,
+      "cell_secs": 1.9,
       "n_vars": 40,
       "snapshot": {
         "lb": 253,
@@ -884,7 +981,9 @@
       ],
       "status": "optimal",
       "sdp_value": 64.5035,
+      "sdp_value_raw": 64.50348057212398,
       "sdp_floor": 64,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 3.0,
       "cell_secs": 3.1,
@@ -913,7 +1012,9 @@
       ],
       "status": "optimal",
       "sdp_value": 843.3333,
+      "sdp_value_raw": 843.3333333337806,
       "sdp_floor": 843,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -942,7 +1043,9 @@
       ],
       "status": "optimal",
       "sdp_value": 355.7505,
+      "sdp_value_raw": 355.7504882401892,
       "sdp_floor": 355,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.6,
       "cell_secs": 1.7,
@@ -971,7 +1074,9 @@
       ],
       "status": "optimal",
       "sdp_value": 88.0852,
+      "sdp_value_raw": 88.08522555106934,
       "sdp_floor": 88,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 3.0,
       "cell_secs": 3.1,
@@ -1000,7 +1105,9 @@
       ],
       "status": "optimal",
       "sdp_value": 422.6139,
+      "sdp_value_raw": 422.6138774622144,
       "sdp_floor": 422,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.6,
       "cell_secs": 1.7,
@@ -1029,7 +1136,9 @@
       ],
       "status": "optimal",
       "sdp_value": 115.7167,
+      "sdp_value_raw": 115.71674050769333,
       "sdp_floor": 115,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.8,
       "cell_secs": 2.9,
@@ -1058,7 +1167,9 @@
       ],
       "status": "optimal",
       "sdp_value": 501.4286,
+      "sdp_value_raw": 501.42857142890955,
       "sdp_floor": 501,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.4,
       "cell_secs": 1.5,
@@ -1087,7 +1198,9 @@
       ],
       "status": "optimal",
       "sdp_value": 142.4513,
+      "sdp_value_raw": 142.4512988784263,
       "sdp_floor": 142,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.1,
       "cell_secs": 2.2,
@@ -1116,7 +1229,9 @@
       ],
       "status": "optimal",
       "sdp_value": 1365.0,
+      "sdp_value_raw": 1365.0000000007567,
       "sdp_floor": 1365,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.1,
       "cell_secs": 1.2,
@@ -1145,7 +1260,9 @@
       ],
       "status": "optimal",
       "sdp_value": 585.0,
+      "sdp_value_raw": 585.0000000004263,
       "sdp_floor": 585,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.4,
       "cell_secs": 1.5,
@@ -1174,7 +1291,9 @@
       ],
       "status": "optimal",
       "sdp_value": 175.5,
+      "sdp_value_raw": 175.50000056559182,
       "sdp_floor": 175,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.1,
       "cell_secs": 2.2,
@@ -1198,15 +1317,17 @@
           "status": "optimal",
           "value": 50.4,
           "floor": 50,
-          "secs": 3.2
+          "secs": 3.1
         }
       ],
       "status": "optimal",
       "sdp_value": 50.4,
+      "sdp_value_raw": 50.40000038857492,
       "sdp_floor": 50,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.2,
-      "cell_secs": 3.3,
+      "solve_secs": 3.1,
+      "cell_secs": 3.2,
       "n_vars": 40,
       "snapshot": {
         "lb": 39,
@@ -1227,15 +1348,17 @@
           "status": "optimal",
           "value": 62.0202,
           "floor": 62,
-          "secs": 2.6
+          "secs": 2.5
         }
       ],
       "status": "optimal",
       "sdp_value": 62.0202,
+      "sdp_value_raw": 62.020200662785214,
       "sdp_floor": 62,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.6,
-      "cell_secs": 2.7,
+      "solve_secs": 2.5,
+      "cell_secs": 2.6,
       "n_vars": 52,
       "snapshot": {
         "lb": 46,
@@ -1261,7 +1384,9 @@
       ],
       "status": "optimal",
       "sdp_value": 40.5316,
+      "sdp_value_raw": 40.53163165697288,
       "sdp_floor": 40,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 4.2,
       "cell_secs": 4.3,
@@ -1285,15 +1410,17 @@
           "status": "optimal",
           "value": 147.3923,
           "floor": 147,
-          "secs": 1.8
+          "secs": 1.6
         }
       ],
       "status": "optimal",
       "sdp_value": 147.3923,
+      "sdp_value_raw": 147.39234354591352,
       "sdp_floor": 147,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 1.8,
-      "cell_secs": 1.9,
+      "solve_secs": 1.6,
+      "cell_secs": 1.7,
       "n_vars": 55,
       "snapshot": {
         "lb": 109,
@@ -1314,15 +1441,17 @@
           "status": "optimal",
           "value": 70.2506,
           "floor": 70,
-          "secs": 3.0
+          "secs": 2.9
         }
       ],
       "status": "optimal",
       "sdp_value": 70.2506,
+      "sdp_value_raw": 70.25058330567987,
       "sdp_floor": 70,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.0,
-      "cell_secs": 3.1,
+      "solve_secs": 2.9,
+      "cell_secs": 3.0,
       "n_vars": 58,
       "snapshot": {
         "lb": 48,
@@ -1343,15 +1472,17 @@
           "status": "optimal",
           "value": 55.1168,
           "floor": 55,
-          "secs": 5.8
+          "secs": 5.6
         }
       ],
       "status": "optimal",
       "sdp_value": 55.1168,
+      "sdp_value_raw": 55.11678533322937,
       "sdp_floor": 55,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.8,
-      "cell_secs": 5.9,
+      "solve_secs": 5.6,
+      "cell_secs": 5.7,
       "n_vars": 60,
       "snapshot": {
         "lb": 35,
@@ -1372,15 +1503,17 @@
           "status": "optimal",
           "value": 37.7027,
           "floor": 37,
-          "secs": 8.9
+          "secs": 8.7
         }
       ],
       "status": "optimal",
       "sdp_value": 37.7027,
+      "sdp_value_raw": 37.70269848611857,
       "sdp_floor": 37,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 8.9,
-      "cell_secs": 9.0,
+      "solve_secs": 8.7,
+      "cell_secs": 8.8,
       "n_vars": 60,
       "snapshot": {
         "lb": 28,
@@ -1408,7 +1541,9 @@
       ],
       "status": "optimal",
       "sdp_value": 228.999,
+      "sdp_value_raw": 228.9989772022703,
       "sdp_floor": 228,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 1.8,
       "cell_secs": 1.9,
@@ -1439,7 +1574,9 @@
       ],
       "status": "optimal",
       "sdp_value": 46.2098,
+      "sdp_value_raw": 46.20983227427437,
       "sdp_floor": 46,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 6.1,
       "cell_secs": 6.2,
@@ -1468,7 +1605,9 @@
       ],
       "status": "optimal",
       "sdp_value": 150.0,
+      "sdp_value_raw": 150.0000000007684,
       "sdp_floor": 150,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.1,
       "cell_secs": 2.2,
@@ -1497,7 +1636,9 @@
       ],
       "status": "optimal",
       "sdp_value": 353.8012,
+      "sdp_value_raw": 353.80118738882885,
       "sdp_floor": 353,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.0,
       "cell_secs": 2.1,
@@ -1526,7 +1667,9 @@
       ],
       "status": "optimal",
       "sdp_value": 82.8576,
+      "sdp_value_raw": 82.85757814793513,
       "sdp_floor": 82,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 6.0,
       "cell_secs": 6.1,
@@ -1550,15 +1693,17 @@
           "status": "optimal_inaccurate",
           "value": 52.7718,
           "floor": 52,
-          "secs": 12.0
+          "secs": 11.8
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 52.7718,
+      "sdp_value_raw": 52.77184323776324,
       "sdp_floor": 52,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.0,
-      "cell_secs": 12.2,
+      "solve_secs": 11.8,
+      "cell_secs": 11.9,
       "n_vars": 67,
       "snapshot": {
         "lb": 33,
@@ -1579,15 +1724,17 @@
           "status": "optimal",
           "value": 526.3802,
           "floor": 526,
-          "secs": 2.1
+          "secs": 2.0
         }
       ],
       "status": "optimal",
       "sdp_value": 526.3802,
+      "sdp_value_raw": 526.3802495177043,
       "sdp_floor": 526,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.1,
-      "cell_secs": 2.2,
+      "solve_secs": 2.0,
+      "cell_secs": 2.1,
       "n_vars": 69,
       "snapshot": {
         "lb": 338,
@@ -1608,15 +1755,17 @@
           "status": "optimal",
           "value": 728.0796,
           "floor": 728,
-          "secs": 2.2
+          "secs": 2.0
         }
       ],
       "status": "optimal",
       "sdp_value": 728.0796,
+      "sdp_value_raw": 728.0795994137993,
       "sdp_floor": 728,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.2,
-      "cell_secs": 2.3,
+      "solve_secs": 2.0,
+      "cell_secs": 2.1,
       "n_vars": 70,
       "snapshot": {
         "lb": 462,
@@ -1637,15 +1786,17 @@
           "status": "optimal",
           "value": 969.0,
           "floor": 969,
-          "secs": 2.2
+          "secs": 2.1
         }
       ],
       "status": "optimal",
       "sdp_value": 969.0,
+      "sdp_value_raw": 969.000000001586,
       "sdp_floor": 969,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.2,
-      "cell_secs": 2.3,
+      "solve_secs": 2.1,
+      "cell_secs": 2.2,
       "n_vars": 71,
       "snapshot": {
         "lb": 570,
@@ -1671,7 +1822,9 @@
       ],
       "status": "optimal",
       "sdp_value": 1254.0,
+      "sdp_value_raw": 1254.0000000014152,
       "sdp_floor": 1254,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.2,
       "cell_secs": 2.3,
@@ -1700,7 +1853,9 @@
       ],
       "status": "optimal",
       "sdp_value": 1602.3333,
+      "sdp_value_raw": 1602.3333333346552,
       "sdp_floor": 1602,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.2,
       "cell_secs": 2.3,
@@ -1729,7 +1884,9 @@
       ],
       "status": "optimal",
       "sdp_value": 2024.0,
+      "sdp_value_raw": 2024.0000000007165,
       "sdp_floor": 2024,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.1,
       "cell_secs": 2.2,
@@ -1753,15 +1910,17 @@
           "status": "optimal",
           "value": 118.2961,
           "floor": 118,
-          "secs": 5.4
+          "secs": 5.5
         }
       ],
       "status": "optimal",
       "sdp_value": 118.2961,
+      "sdp_value_raw": 118.29610735876281,
       "sdp_floor": 118,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.4,
-      "cell_secs": 5.5,
+      "solve_secs": 5.5,
+      "cell_secs": 5.6,
       "n_vars": 71,
       "snapshot": {
         "lb": 56,
@@ -1789,10 +1948,12 @@
       ],
       "status": "optimal",
       "sdp_value": 2530.0,
+      "sdp_value_raw": 2530.000000000364,
       "sdp_floor": 2530,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 2.1,
-      "cell_secs": 2.1,
+      "cell_secs": 2.2,
       "n_vars": 71,
       "snapshot": {
         "lb": 1900,
@@ -1813,15 +1974,17 @@
           "status": "optimal",
           "value": 3132.381,
           "floor": 3132,
-          "secs": 2.0
+          "secs": 2.1
         }
       ],
       "status": "optimal",
       "sdp_value": 3132.381,
+      "sdp_value_raw": 3132.3809523821324,
       "sdp_floor": 3132,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 2.0,
-      "cell_secs": 2.1,
+      "solve_secs": 2.1,
+      "cell_secs": 2.2,
       "n_vars": 71,
       "snapshot": {
         "lb": 2600,
@@ -1842,15 +2005,17 @@
           "status": "optimal",
           "value": 64.9083,
           "floor": 64,
-          "secs": 12.5
+          "secs": 12.8
         }
       ],
       "status": "optimal",
       "sdp_value": 64.9083,
+      "sdp_value_raw": 64.90834982041963,
       "sdp_floor": 64,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.5,
-      "cell_secs": 12.7,
+      "solve_secs": 12.8,
+      "cell_secs": 13.0,
       "n_vars": 71,
       "snapshot": {
         "lb": 39,
@@ -1873,15 +2038,17 @@
           "status": "optimal",
           "value": 158.4646,
           "floor": 158,
-          "secs": 4.7
+          "secs": 4.6
         }
       ],
       "status": "optimal",
       "sdp_value": 158.4646,
+      "sdp_value_raw": 158.46456714765336,
       "sdp_floor": 158,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.7,
-      "cell_secs": 4.8,
+      "solve_secs": 4.6,
+      "cell_secs": 4.7,
       "n_vars": 74,
       "snapshot": {
         "lb": 72,
@@ -1902,15 +2069,17 @@
           "status": "optimal_inaccurate",
           "value": 88.9345,
           "floor": 88,
-          "secs": 11.1
+          "secs": 11.6
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 88.9345,
+      "sdp_value_raw": 88.93452951354163,
       "sdp_floor": 88,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 11.1,
-      "cell_secs": 11.2,
+      "solve_secs": 11.6,
+      "cell_secs": 11.7,
       "n_vars": 74,
       "snapshot": {
         "lb": 56,
@@ -1933,15 +2102,17 @@
           "status": "optimal",
           "value": 119.0245,
           "floor": 119,
-          "secs": 4.6
+          "secs": 4.9
         }
       ],
       "status": "optimal",
       "sdp_value": 119.0245,
+      "sdp_value_raw": 119.02445741809755,
       "sdp_floor": 119,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.6,
-      "cell_secs": 4.7,
+      "solve_secs": 4.9,
+      "cell_secs": 5.1,
       "n_vars": 75,
       "snapshot": {
         "lb": 88,
@@ -1962,15 +2133,17 @@
           "status": "optimal",
           "value": 214.6226,
           "floor": 214,
-          "secs": 4.3
+          "secs": 5.5
         }
       ],
       "status": "optimal",
       "sdp_value": 214.6226,
+      "sdp_value_raw": 214.62264218155664,
       "sdp_floor": 214,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.3,
-      "cell_secs": 4.5,
+      "solve_secs": 5.5,
+      "cell_secs": 5.6,
       "n_vars": 75,
       "snapshot": {
         "lb": 91,
@@ -1991,15 +2164,17 @@
           "status": "optimal",
           "value": 926.2206,
           "floor": 926,
-          "secs": 5.0
+          "secs": 5.6
         }
       ],
       "status": "optimal",
       "sdp_value": 926.2206,
+      "sdp_value_raw": 926.2205872009627,
       "sdp_floor": 926,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.0,
-      "cell_secs": 5.1,
+      "solve_secs": 5.6,
+      "cell_secs": 5.7,
       "n_vars": 76,
       "snapshot": {
         "lb": 759,
@@ -2020,15 +2195,17 @@
           "status": "optimal",
           "value": 1154.1097,
           "floor": 1154,
-          "secs": 3.7
+          "secs": 4.1
         }
       ],
       "status": "optimal",
       "sdp_value": 1154.1097,
+      "sdp_value_raw": 1154.10973541536,
       "sdp_floor": 1154,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.7,
-      "cell_secs": 3.8,
+      "solve_secs": 4.1,
+      "cell_secs": 4.2,
       "n_vars": 76,
       "snapshot": {
         "lb": 763,
@@ -2049,15 +2226,17 @@
           "status": "optimal",
           "value": 1425.0981,
           "floor": 1425,
-          "secs": 3.5
+          "secs": 3.7
         }
       ],
       "status": "optimal",
       "sdp_value": 1425.0981,
+      "sdp_value_raw": 1425.0980932070981,
       "sdp_floor": 1425,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.5,
-      "cell_secs": 3.6,
+      "solve_secs": 3.7,
+      "cell_secs": 3.8,
       "n_vars": 76,
       "snapshot": {
         "lb": 769,
@@ -2078,15 +2257,17 @@
           "status": "optimal",
           "value": 299.3421,
           "floor": 299,
-          "secs": 4.7
+          "secs": 4.9
         }
       ],
       "status": "optimal",
       "sdp_value": 299.3421,
+      "sdp_value_raw": 299.3421069809403,
       "sdp_floor": 299,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.7,
-      "cell_secs": 4.8,
+      "solve_secs": 4.9,
+      "cell_secs": 5.0,
       "n_vars": 76,
       "snapshot": {
         "lb": 118,
@@ -2107,15 +2288,17 @@
           "status": "optimal",
           "value": 1755.0,
           "floor": 1755,
-          "secs": 3.0
+          "secs": 3.2
         }
       ],
       "status": "optimal",
       "sdp_value": 1755.0,
+      "sdp_value_raw": 1755.0000000004006,
       "sdp_floor": 1755,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.0,
-      "cell_secs": 3.1,
+      "solve_secs": 3.2,
+      "cell_secs": 3.3,
       "n_vars": 76,
       "snapshot": {
         "lb": 1057,
@@ -2136,15 +2319,17 @@
           "status": "optimal_inaccurate",
           "value": 438.7591,
           "floor": 438,
-          "secs": 7.3
+          "secs": 7.5
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 438.7591,
+      "sdp_value_raw": 438.75908897347574,
       "sdp_floor": 438,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 7.3,
-      "cell_secs": 7.4,
+      "solve_secs": 7.5,
+      "cell_secs": 7.6,
       "n_vars": 76,
       "snapshot": {
         "lb": 140,
@@ -2165,15 +2350,17 @@
           "status": "optimal",
           "value": 280.6662,
           "floor": 280,
-          "secs": 3.1
+          "secs": 3.3
         }
       ],
       "status": "optimal",
       "sdp_value": 280.6662,
+      "sdp_value_raw": 280.6661627446188,
       "sdp_floor": 280,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.1,
-      "cell_secs": 3.2,
+      "solve_secs": 3.3,
+      "cell_secs": 3.5,
       "n_vars": 79,
       "snapshot": {
         "lb": 184,
@@ -2196,15 +2383,17 @@
           "status": "optimal",
           "value": 72.2683,
           "floor": 72,
-          "secs": 7.7
+          "secs": 8.2
         }
       ],
       "status": "optimal",
       "sdp_value": 72.2683,
+      "sdp_value_raw": 72.26825091157335,
       "sdp_floor": 72,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 7.7,
-      "cell_secs": 7.8,
+      "solve_secs": 8.2,
+      "cell_secs": 8.4,
       "n_vars": 81,
       "snapshot": {
         "lb": 46,
@@ -2227,15 +2416,17 @@
           "status": "optimal",
           "value": 49.1603,
           "floor": 49,
-          "secs": 16.2
+          "secs": 16.8
         }
       ],
       "status": "optimal",
       "sdp_value": 49.1603,
+      "sdp_value_raw": 49.16034746031392,
       "sdp_floor": 49,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 16.2,
-      "cell_secs": 16.4,
+      "solve_secs": 16.8,
+      "cell_secs": 16.9,
       "n_vars": 81,
       "snapshot": {
         "lb": 36,
@@ -2256,15 +2447,17 @@
           "status": "optimal",
           "value": 80.3142,
           "floor": 80,
-          "secs": 9.1
+          "secs": 9.5
         }
       ],
       "status": "optimal",
       "sdp_value": 80.3142,
+      "sdp_value_raw": 80.31424012354789,
       "sdp_floor": 80,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 9.1,
-      "cell_secs": 9.2,
+      "solve_secs": 9.5,
+      "cell_secs": 9.7,
       "n_vars": 88,
       "snapshot": {
         "lb": 46,
@@ -2287,15 +2480,17 @@
           "status": "optimal",
           "value": 210.8695,
           "floor": 210,
-          "secs": 6.0
+          "secs": 6.4
         }
       ],
       "status": "optimal",
       "sdp_value": 210.8695,
+      "sdp_value_raw": 210.86953985642447,
       "sdp_floor": 210,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 6.0,
-      "cell_secs": 6.1,
+      "solve_secs": 6.4,
+      "cell_secs": 6.5,
       "n_vars": 89,
       "snapshot": {
         "lb": 160,
@@ -2316,15 +2511,17 @@
           "status": "optimal",
           "value": 444.9896,
           "floor": 444,
-          "secs": 3.3
+          "secs": 3.6
         }
       ],
       "status": "optimal",
       "sdp_value": 444.9896,
+      "sdp_value_raw": 444.98959882266195,
       "sdp_floor": 444,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.3,
-      "cell_secs": 3.4,
+      "solve_secs": 3.6,
+      "cell_secs": 3.7,
       "n_vars": 92,
       "snapshot": {
         "lb": 260,
@@ -2345,15 +2542,17 @@
           "status": "optimal",
           "value": 117.4806,
           "floor": 117,
-          "secs": 7.4
+          "secs": 8.0
         }
       ],
       "status": "optimal",
       "sdp_value": 117.4806,
+      "sdp_value_raw": 117.48057258639848,
       "sdp_floor": 117,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 7.4,
-      "cell_secs": 7.5,
+      "solve_secs": 8.0,
+      "cell_secs": 8.1,
       "n_vars": 95,
       "snapshot": {
         "lb": 54,
@@ -2374,15 +2573,17 @@
           "status": "optimal_inaccurate",
           "value": 78.4401,
           "floor": 78,
-          "secs": 11.3
+          "secs": 11.9
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 78.4401,
+      "sdp_value_raw": 78.44006621306376,
       "sdp_floor": 78,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 11.3,
-      "cell_secs": 11.4,
+      "solve_secs": 11.9,
+      "cell_secs": 12.0,
       "n_vars": 95,
       "snapshot": {
         "lb": 41,
@@ -2405,15 +2606,17 @@
           "status": "optimal",
           "value": 718.9804,
           "floor": 718,
-          "secs": 3.6
+          "secs": 4.0
         }
       ],
       "status": "optimal",
       "sdp_value": 718.9804,
+      "sdp_value_raw": 718.9803578001392,
       "sdp_floor": 718,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 3.6,
-      "cell_secs": 3.7,
+      "solve_secs": 4.0,
+      "cell_secs": 4.1,
       "n_vars": 101,
       "snapshot": {
         "lb": 408,
@@ -2436,15 +2639,17 @@
           "status": "optimal",
           "value": 230.3595,
           "floor": 230,
-          "secs": 7.2
+          "secs": 7.4
         }
       ],
       "status": "optimal",
       "sdp_value": 230.3595,
+      "sdp_value_raw": 230.35954356049686,
       "sdp_floor": 230,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 7.2,
-      "cell_secs": 7.3,
+      "solve_secs": 7.4,
+      "cell_secs": 7.6,
       "n_vars": 101,
       "snapshot": {
         "lb": 176,
@@ -2465,15 +2670,17 @@
           "status": "optimal",
           "value": 425.0,
           "floor": 425,
-          "secs": 4.0
+          "secs": 4.1
         }
       ],
       "status": "optimal",
       "sdp_value": 425.0,
+      "sdp_value_raw": 425.0000000024689,
       "sdp_floor": 425,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.0,
-      "cell_secs": 4.1,
+      "solve_secs": 4.1,
+      "cell_secs": 4.2,
       "n_vars": 102,
       "snapshot": {
         "lb": 320,
@@ -2494,15 +2701,17 @@
           "status": "optimal",
           "value": 314.5009,
           "floor": 314,
-          "secs": 7.5
+          "secs": 7.8
         }
       ],
       "status": "optimal",
       "sdp_value": 314.5009,
+      "sdp_value_raw": 314.50092849112895,
       "sdp_floor": 314,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 7.5,
-      "cell_secs": 7.6,
+      "solve_secs": 7.8,
+      "cell_secs": 7.9,
       "n_vars": 102,
       "snapshot": {
         "lb": 280,
@@ -2530,7 +2739,9 @@
       ],
       "status": "optimal",
       "sdp_value": 1136.8929,
+      "sdp_value_raw": 1136.892874443359,
       "sdp_floor": 1136,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 4.1,
       "cell_secs": 4.2,
@@ -2554,15 +2765,17 @@
           "status": "optimal",
           "value": 171.0423,
           "floor": 171,
-          "secs": 8.5
+          "secs": 8.6
         }
       ],
       "status": "optimal",
       "sdp_value": 171.0423,
+      "sdp_value_raw": 171.04225369785462,
       "sdp_floor": 171,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 8.5,
-      "cell_secs": 8.6,
+      "solve_secs": 8.6,
+      "cell_secs": 8.7,
       "n_vars": 108,
       "snapshot": {
         "lb": 72,
@@ -2583,15 +2796,17 @@
           "status": "optimal",
           "value": 103.4035,
           "floor": 103,
-          "secs": 21.2
+          "secs": 21.0
         }
       ],
       "status": "optimal",
       "sdp_value": 103.4035,
+      "sdp_value_raw": 103.40346723915262,
       "sdp_floor": 103,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 21.2,
-      "cell_secs": 21.4,
+      "solve_secs": 21.0,
+      "cell_secs": 21.1,
       "n_vars": 108,
       "snapshot": {
         "lb": 54,
@@ -2612,15 +2827,17 @@
           "status": "optimal",
           "value": 473.2768,
           "floor": 473,
-          "secs": 9.1
+          "secs": 9.0
         }
       ],
       "status": "optimal",
       "sdp_value": 473.2768,
+      "sdp_value_raw": 473.2768152919424,
       "sdp_floor": 473,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 9.1,
-      "cell_secs": 9.3,
+      "solve_secs": 9.0,
+      "cell_secs": 9.2,
       "n_vars": 111,
       "snapshot": {
         "lb": 292,
@@ -2648,7 +2865,9 @@
       ],
       "status": "optimal",
       "sdp_value": 1772.9344,
+      "sdp_value_raw": 1772.9343944272482,
       "sdp_floor": 1772,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 4.5,
       "cell_secs": 4.6,
@@ -2672,15 +2891,17 @@
           "status": "optimal",
           "value": 135.7831,
           "floor": 135,
-          "secs": 10.3
+          "secs": 10.4
         }
       ],
       "status": "optimal",
       "sdp_value": 135.7831,
+      "sdp_value_raw": 135.78313257625624,
       "sdp_floor": 135,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 10.3,
-      "cell_secs": 10.4,
+      "solve_secs": 10.4,
+      "cell_secs": 10.6,
       "n_vars": 113,
       "snapshot": {
         "lb": 65,
@@ -2701,15 +2922,17 @@
           "status": "optimal",
           "value": 2534.3771,
           "floor": 2534,
-          "secs": 5.2
+          "secs": 5.3
         }
       ],
       "status": "optimal",
       "sdp_value": 2534.3771,
+      "sdp_value_raw": 2534.377130760706,
       "sdp_floor": 2534,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.2,
-      "cell_secs": 5.3,
+      "solve_secs": 5.3,
+      "cell_secs": 5.4,
       "n_vars": 115,
       "snapshot": {
         "lb": 1144,
@@ -2735,7 +2958,9 @@
       ],
       "status": "optimal",
       "sdp_value": 3512.2783,
+      "sdp_value_raw": 3512.2782910162014,
       "sdp_floor": 3512,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 5.3,
       "cell_secs": 5.4,
@@ -2759,15 +2984,17 @@
           "status": "optimal",
           "value": 4807.0,
           "floor": 4807,
-          "secs": 5.1
+          "secs": 4.9
         }
       ],
       "status": "optimal",
       "sdp_value": 4807.0,
+      "sdp_value_raw": 4807.00000000083,
       "sdp_floor": 4807,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.1,
-      "cell_secs": 5.2,
+      "solve_secs": 4.9,
+      "cell_secs": 5.0,
       "n_vars": 117,
       "snapshot": {
         "lb": 1882,
@@ -2788,15 +3015,17 @@
           "status": "optimal",
           "value": 6325.0,
           "floor": 6325,
-          "secs": 4.9
+          "secs": 4.7
         }
       ],
       "status": "optimal",
       "sdp_value": 6325.0,
+      "sdp_value_raw": 6325.000000010458,
       "sdp_floor": 6325,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.9,
-      "cell_secs": 5.0,
+      "solve_secs": 4.7,
+      "cell_secs": 4.8,
       "n_vars": 117,
       "snapshot": {
         "lb": 2590,
@@ -2817,15 +3046,17 @@
           "status": "optimal",
           "value": 262.8571,
           "floor": 262,
-          "secs": 9.7
+          "secs": 9.5
         }
       ],
       "status": "optimal",
       "sdp_value": 262.8571,
+      "sdp_value_raw": 262.8571432261595,
       "sdp_floor": 262,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 9.7,
-      "cell_secs": 9.9,
+      "solve_secs": 9.5,
+      "cell_secs": 9.6,
       "n_vars": 117,
       "snapshot": {
         "lb": 100,
@@ -2851,7 +3082,9 @@
       ],
       "status": "optimal",
       "sdp_value": 8222.5,
+      "sdp_value_raw": 8222.500000001282,
       "sdp_floor": 8222,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 4.7,
       "cell_secs": 4.8,
@@ -2875,14 +3108,16 @@
           "status": "optimal",
           "value": 10571.7857,
           "floor": 10571,
-          "secs": 4.9
+          "secs": 4.8
         }
       ],
       "status": "optimal",
       "sdp_value": 10571.7857,
+      "sdp_value_raw": 10571.785714303438,
       "sdp_floor": 10571,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 4.9,
+      "solve_secs": 4.8,
       "cell_secs": 5.0,
       "n_vars": 117,
       "snapshot": {
@@ -2904,15 +3139,17 @@
           "status": "optimal",
           "value": 13455.0,
           "floor": 13455,
-          "secs": 5.0
+          "secs": 4.9
         }
       ],
       "status": "optimal",
       "sdp_value": 13455.0,
+      "sdp_value_raw": 13455.000000008236,
       "sdp_floor": 13455,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.0,
-      "cell_secs": 5.2,
+      "solve_secs": 4.9,
+      "cell_secs": 5.0,
       "n_vars": 117,
       "snapshot": {
         "lb": 6315,
@@ -2933,15 +3170,17 @@
           "status": "optimal",
           "value": 149.1183,
           "floor": 149,
-          "secs": 12.2
+          "secs": 12.1
         }
       ],
       "status": "optimal",
       "sdp_value": 149.1183,
+      "sdp_value_raw": 149.1182941633177,
       "sdp_floor": 149,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.2,
-      "cell_secs": 12.4,
+      "solve_secs": 12.1,
+      "cell_secs": 12.3,
       "n_vars": 117,
       "snapshot": {
         "lb": 65,
@@ -2962,15 +3201,17 @@
           "status": "optimal",
           "value": 707.4683,
           "floor": 707,
-          "secs": 11.7
+          "secs": 11.3
         }
       ],
       "status": "optimal",
       "sdp_value": 707.4683,
+      "sdp_value_raw": 707.4683295072355,
       "sdp_floor": 707,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 11.7,
-      "cell_secs": 11.8,
+      "solve_secs": 11.3,
+      "cell_secs": 11.4,
       "n_vars": 118,
       "snapshot": {
         "lb": 412,
@@ -2993,15 +3234,17 @@
           "status": "optimal",
           "value": 83.5354,
           "floor": 83,
-          "secs": 27.7
+          "secs": 26.9
         }
       ],
       "status": "optimal",
       "sdp_value": 83.5354,
+      "sdp_value_raw": 83.53543711168926,
       "sdp_floor": 83,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 27.7,
-      "cell_secs": 27.8,
+      "solve_secs": 26.9,
+      "cell_secs": 27.1,
       "n_vars": 120,
       "snapshot": {
         "lb": 54,
@@ -3022,15 +3265,17 @@
           "status": "optimal",
           "value": 1041.6595,
           "floor": 1041,
-          "secs": 12.2
+          "secs": 12.1
         }
       ],
       "status": "optimal",
       "sdp_value": 1041.6595,
+      "sdp_value_raw": 1041.6595489246931,
       "sdp_floor": 1041,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.2,
-      "cell_secs": 12.3,
+      "solve_secs": 12.1,
+      "cell_secs": 12.2,
       "n_vars": 122,
       "snapshot": {
         "lb": 656,
@@ -3053,15 +3298,17 @@
           "status": "optimal",
           "value": 789.5556,
           "floor": 789,
-          "secs": 5.8
+          "secs": 5.7
         }
       ],
       "status": "optimal",
       "sdp_value": 789.5556,
+      "sdp_value_raw": 789.5555555576818,
       "sdp_floor": 789,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 5.8,
-      "cell_secs": 5.9,
+      "solve_secs": 5.7,
+      "cell_secs": 5.8,
       "n_vars": 123,
       "snapshot": {
         "lb": 504,
@@ -3082,15 +3329,17 @@
           "status": "optimal",
           "value": 383.8622,
           "floor": 383,
-          "secs": 11.3
+          "secs": 11.7
         }
       ],
       "status": "optimal",
       "sdp_value": 383.8622,
+      "sdp_value_raw": 383.8621667551353,
       "sdp_floor": 383,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 11.3,
-      "cell_secs": 11.5,
+      "solve_secs": 11.7,
+      "cell_secs": 11.8,
       "n_vars": 123,
       "snapshot": {
         "lb": 336,
@@ -3113,15 +3362,17 @@
           "status": "optimal",
           "value": 406.3127,
           "floor": 406,
-          "secs": 20.1
+          "secs": 19.9
         }
       ],
       "status": "optimal",
       "sdp_value": 406.3127,
+      "sdp_value_raw": 406.31274997963504,
       "sdp_floor": 406,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 20.1,
-      "cell_secs": 20.2,
+      "solve_secs": 19.9,
+      "cell_secs": 20.0,
       "n_vars": 124,
       "snapshot": {
         "lb": 130,
@@ -3144,15 +3395,17 @@
           "status": "optimal",
           "value": 1486.5789,
           "floor": 1486,
-          "secs": 12.5
+          "secs": 12.4
         }
       ],
       "status": "optimal",
       "sdp_value": 1486.5789,
+      "sdp_value_raw": 1486.5789101230826,
       "sdp_floor": 1486,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.5,
-      "cell_secs": 12.6,
+      "solve_secs": 12.4,
+      "cell_secs": 12.5,
       "n_vars": 125,
       "snapshot": {
         "lb": 837,
@@ -3175,15 +3428,17 @@
           "status": "optimal",
           "value": 2108.9954,
           "floor": 2108,
-          "secs": 13.2
+          "secs": 14.0
         }
       ],
       "status": "optimal",
       "sdp_value": 2108.9954,
+      "sdp_value_raw": 2108.9954319665526,
       "sdp_floor": 2108,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 13.2,
-      "cell_secs": 13.3,
+      "solve_secs": 14.0,
+      "cell_secs": 14.2,
       "n_vars": 126,
       "snapshot": {
         "lb": 887,
@@ -3206,15 +3461,17 @@
           "status": "optimal",
           "value": 2918.8006,
           "floor": 2918,
-          "secs": 13.6
+          "secs": 14.0
         }
       ],
       "status": "optimal",
       "sdp_value": 2918.8006,
+      "sdp_value_raw": 2918.800626524013,
       "sdp_floor": 2918,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 13.6,
-      "cell_secs": 13.7,
+      "solve_secs": 14.0,
+      "cell_secs": 14.2,
       "n_vars": 127,
       "snapshot": {
         "lb": 1025,
@@ -3235,15 +3492,17 @@
           "status": "optimal",
           "value": 3947.7021,
           "floor": 3947,
-          "secs": 13.1
+          "secs": 13.3
         }
       ],
       "status": "optimal",
       "sdp_value": 3947.7021,
+      "sdp_value_raw": 3947.702051662763,
       "sdp_floor": 3947,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 13.1,
-      "cell_secs": 13.2,
+      "solve_secs": 13.3,
+      "cell_secs": 13.4,
       "n_vars": 127,
       "snapshot": {
         "lb": 1333,
@@ -3264,15 +3523,17 @@
           "status": "optimal",
           "value": 91.6015,
           "floor": 91,
-          "secs": 30.8
+          "secs": 30.6
         }
       ],
       "status": "optimal",
       "sdp_value": 91.6015,
+      "sdp_value_raw": 91.60151180236733,
       "sdp_floor": 91,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 30.8,
-      "cell_secs": 31.0,
+      "solve_secs": 30.6,
+      "cell_secs": 30.7,
       "n_vars": 128,
       "snapshot": {
         "lb": 58,
@@ -3300,7 +3561,9 @@
       ],
       "status": "optimal",
       "sdp_value": 571.3151,
+      "sdp_value_raw": 571.3151165986089,
       "sdp_floor": 571,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 20.0,
       "cell_secs": 20.2,
@@ -3326,15 +3589,17 @@
           "status": "optimal",
           "value": 821.6317,
           "floor": 821,
-          "secs": 14.9
+          "secs": 15.1
         }
       ],
       "status": "optimal",
       "sdp_value": 821.6317,
+      "sdp_value_raw": 821.6316993496058,
       "sdp_floor": 821,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 14.9,
-      "cell_secs": 15.0,
+      "solve_secs": 15.1,
+      "cell_secs": 15.2,
       "n_vars": 131,
       "snapshot": {
         "lb": 219,
@@ -3355,15 +3620,17 @@
           "status": "optimal",
           "value": 223.3526,
           "floor": 223,
-          "secs": 13.1
+          "secs": 13.2
         }
       ],
       "status": "optimal",
       "sdp_value": 223.3526,
+      "sdp_value_raw": 223.352601347747,
       "sdp_floor": 223,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 13.1,
-      "cell_secs": 13.3,
+      "solve_secs": 13.2,
+      "cell_secs": 13.4,
       "n_vars": 135,
       "snapshot": {
         "lb": 95,
@@ -3389,10 +3656,12 @@
       ],
       "status": "optimal",
       "sdp_value": 1363.7778,
+      "sdp_value_raw": 1363.777777778701,
       "sdp_floor": 1363,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 7.3,
-      "cell_secs": 7.5,
+      "cell_secs": 7.4,
       "n_vars": 139,
       "snapshot": {
         "lb": 832,
@@ -3413,15 +3682,17 @@
           "status": "optimal",
           "value": 140.4,
           "floor": 140,
-          "secs": 19.4
+          "secs": 19.9
         }
       ],
       "status": "optimal",
       "sdp_value": 140.4,
+      "sdp_value_raw": 140.40000207707772,
       "sdp_floor": 140,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 19.4,
-      "cell_secs": 19.6,
+      "solve_secs": 19.9,
+      "cell_secs": 20.0,
       "n_vars": 142,
       "snapshot": {
         "lb": 82,
@@ -3442,15 +3713,17 @@
           "status": "optimal",
           "value": 247.6923,
           "floor": 247,
-          "secs": 15.7
+          "secs": 15.8
         }
       ],
       "status": "optimal",
       "sdp_value": 247.6923,
+      "sdp_value_raw": 247.69230818932166,
       "sdp_floor": 247,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 15.7,
-      "cell_secs": 15.8,
+      "solve_secs": 15.8,
+      "cell_secs": 15.9,
       "n_vars": 149,
       "snapshot": {
         "lb": 123,
@@ -3471,15 +3744,17 @@
           "status": "optimal",
           "value": 2359.0358,
           "floor": 2359,
-          "secs": 8.1
+          "secs": 8.4
         }
       ],
       "status": "optimal",
       "sdp_value": 2359.0358,
+      "sdp_value_raw": 2359.035831170936,
       "sdp_floor": 2359,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 8.1,
-      "cell_secs": 8.2,
+      "solve_secs": 8.4,
+      "cell_secs": 8.5,
       "n_vars": 153,
       "snapshot": {
         "lb": 1186,
@@ -3502,15 +3777,17 @@
           "status": "optimal",
           "value": 1421.2,
           "floor": 1421,
-          "secs": 8.3
+          "secs": 8.4
         }
       ],
       "status": "optimal",
       "sdp_value": 1421.2,
+      "sdp_value_raw": 1421.200000001503,
       "sdp_floor": 1421,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 8.3,
-      "cell_secs": 8.4,
+      "solve_secs": 8.4,
+      "cell_secs": 8.5,
       "n_vars": 155,
       "snapshot": {
         "lb": 944,
@@ -3531,15 +3808,17 @@
           "status": "optimal_inaccurate",
           "value": 380.5646,
           "floor": 380,
-          "secs": 30.3
+          "secs": 30.9
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 380.5646,
+      "sdp_value_raw": 380.5645892697602,
       "sdp_floor": 380,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 30.3,
-      "cell_secs": 30.5,
+      "solve_secs": 30.9,
+      "cell_secs": 31.1,
       "n_vars": 156,
       "snapshot": {
         "lb": 125,
@@ -3562,15 +3841,17 @@
           "status": "optimal_inaccurate",
           "value": 1061.2614,
           "floor": 1061,
-          "secs": 10.2
+          "secs": 10.6
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 1061.2614,
+      "sdp_value_raw": 1061.2614446484117,
       "sdp_floor": 1061,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 10.2,
-      "cell_secs": 10.3,
+      "solve_secs": 10.6,
+      "cell_secs": 10.7,
       "n_vars": 160,
       "snapshot": {
         "lb": 648,
@@ -3598,10 +3879,12 @@
       ],
       "status": "optimal",
       "sdp_value": 3736.7291,
+      "sdp_value_raw": 3736.7291157994787,
       "sdp_floor": 3736,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 9.0,
-      "cell_secs": 9.2,
+      "cell_secs": 9.1,
       "n_vars": 162,
       "snapshot": {
         "lb": 1818,
@@ -3624,15 +3907,17 @@
           "status": "optimal",
           "value": 157.1121,
           "floor": 157,
-          "secs": 26.4
+          "secs": 26.5
         }
       ],
       "status": "optimal",
       "sdp_value": 157.1121,
+      "sdp_value_raw": 157.11207065200566,
       "sdp_floor": 157,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 26.4,
-      "cell_secs": 26.6,
+      "solve_secs": 26.5,
+      "cell_secs": 26.7,
       "n_vars": 163,
       "snapshot": {
         "lb": 86,
@@ -3653,15 +3938,17 @@
           "status": "optimal",
           "value": 199.2162,
           "floor": 199,
-          "secs": 24.6
+          "secs": 25.2
         }
       ],
       "status": "optimal",
       "sdp_value": 199.2162,
+      "sdp_value_raw": 199.21622182231775,
       "sdp_floor": 199,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 24.6,
-      "cell_secs": 24.7,
+      "solve_secs": 25.2,
+      "cell_secs": 25.4,
       "n_vars": 163,
       "snapshot": {
         "lb": 119,
@@ -3682,15 +3969,17 @@
           "status": "optimal",
           "value": 5852.8149,
           "floor": 5852,
-          "secs": 10.8
+          "secs": 11.4
         }
       ],
       "status": "optimal",
       "sdp_value": 5852.8149,
+      "sdp_value_raw": 5852.81493433666,
       "sdp_floor": 5852,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 10.8,
-      "cell_secs": 10.9,
+      "solve_secs": 11.4,
+      "cell_secs": 11.6,
       "n_vars": 169,
       "snapshot": {
         "lb": 2278,
@@ -3711,15 +4000,17 @@
           "status": "optimal",
           "value": 566.123,
           "floor": 566,
-          "secs": 43.6
+          "secs": 45.2
         }
       ],
       "status": "optimal",
       "sdp_value": 566.123,
+      "sdp_value_raw": 566.1230049905755,
       "sdp_floor": 566,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 43.6,
-      "cell_secs": 43.8,
+      "solve_secs": 45.2,
+      "cell_secs": 45.3,
       "n_vars": 172,
       "snapshot": {
         "lb": 168,
@@ -3742,15 +4033,17 @@
           "status": "optimal",
           "value": 9043.0339,
           "floor": 9043,
-          "secs": 13.0
+          "secs": 13.3
         }
       ],
       "status": "optimal",
       "sdp_value": 9043.0339,
+      "sdp_value_raw": 9043.03386188051,
       "sdp_floor": 9043,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 13.0,
-      "cell_secs": 13.2,
+      "solve_secs": 13.3,
+      "cell_secs": 13.5,
       "n_vars": 173,
       "snapshot": {
         "lb": 3080,
@@ -3771,15 +4064,17 @@
           "status": "optimal",
           "value": 1551.8582,
           "floor": 1551,
-          "secs": 24.1
+          "secs": 24.7
         }
       ],
       "status": "optimal",
       "sdp_value": 1551.8582,
+      "sdp_value_raw": 1551.8582323021153,
       "sdp_floor": 1551,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 24.1,
-      "cell_secs": 24.3,
+      "solve_secs": 24.7,
+      "cell_secs": 24.9,
       "n_vars": 174,
       "snapshot": {
         "lb": 960,
@@ -3802,15 +4097,17 @@
           "status": "optimal",
           "value": 13144.7011,
           "floor": 13144,
-          "secs": 12.9
+          "secs": 13.1
         }
       ],
       "status": "optimal",
       "sdp_value": 13144.7011,
+      "sdp_value_raw": 13144.701088696553,
       "sdp_floor": 13144,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 12.9,
-      "cell_secs": 13.0,
+      "solve_secs": 13.1,
+      "cell_secs": 13.2,
       "n_vars": 176,
       "snapshot": {
         "lb": 4260,
@@ -3831,15 +4128,17 @@
           "status": "optimal",
           "value": 18272.2222,
           "floor": 18272,
-          "secs": 10.8
+          "secs": 10.9
         }
       ],
       "status": "optimal",
       "sdp_value": 18272.2222,
+      "sdp_value_raw": 18272.222222249955,
       "sdp_floor": 18272,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 10.8,
-      "cell_secs": 10.9,
+      "solve_secs": 10.9,
+      "cell_secs": 11.0,
       "n_vars": 177,
       "snapshot": {
         "lb": 5760,
@@ -3860,15 +4159,17 @@
           "status": "optimal",
           "value": 24667.5,
           "floor": 24667,
-          "secs": 10.8
+          "secs": 10.9
         }
       ],
       "status": "optimal",
       "sdp_value": 24667.5,
+      "sdp_value_raw": 24667.50000004082,
       "sdp_floor": 24667,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 10.8,
-      "cell_secs": 10.9,
+      "solve_secs": 10.9,
+      "cell_secs": 11.1,
       "n_vars": 178,
       "snapshot": {
         "lb": 8112,
@@ -3894,10 +4195,12 @@
       ],
       "status": "optimal",
       "sdp_value": 32890.0,
+      "sdp_value_raw": 32889.999999998494,
       "sdp_floor": 32890,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 10.7,
-      "cell_secs": 10.8,
+      "cell_secs": 10.9,
       "n_vars": 178,
       "snapshot": {
         "lb": 10920,
@@ -3918,15 +4221,17 @@
           "status": "optimal",
           "value": 2685.2007,
           "floor": 2685,
-          "secs": 14.0
+          "secs": 13.8
         }
       ],
       "status": "optimal",
       "sdp_value": 2685.2007,
+      "sdp_value_raw": 2685.200734750766,
       "sdp_floor": 2685,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 14.0,
-      "cell_secs": 14.1,
+      "solve_secs": 13.8,
+      "cell_secs": 13.9,
       "n_vars": 181,
       "snapshot": {
         "lb": 1474,
@@ -3949,15 +4254,17 @@
           "status": "optimal",
           "value": 434.5836,
           "floor": 434,
-          "secs": 45.2
+          "secs": 44.9
         }
       ],
       "status": "optimal",
       "sdp_value": 434.5836,
+      "sdp_value_raw": 434.5836322718803,
       "sdp_floor": 434,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 45.2,
-      "cell_secs": 45.4,
+      "solve_secs": 44.9,
+      "cell_secs": 45.1,
       "n_vars": 181,
       "snapshot": {
         "lb": 137,
@@ -3980,15 +4287,17 @@
           "status": "optimal",
           "value": 2333.518,
           "floor": 2333,
-          "secs": 25.5
+          "secs": 25.3
         }
       ],
       "status": "optimal",
       "sdp_value": 2333.518,
+      "sdp_value_raw": 2333.5179511229617,
       "sdp_floor": 2333,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 25.5,
-      "cell_secs": 25.6,
+      "solve_secs": 25.3,
+      "cell_secs": 25.4,
       "n_vars": 183,
       "snapshot": {
         "lb": 1248,
@@ -4011,15 +4320,17 @@
           "status": "optimal",
           "value": 882.0807,
           "floor": 882,
-          "secs": 47.5
+          "secs": 46.7
         }
       ],
       "status": "optimal",
       "sdp_value": 882.0807,
+      "sdp_value_raw": 882.0806544725484,
       "sdp_floor": 882,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 47.5,
-      "cell_secs": 47.6,
+      "solve_secs": 46.7,
+      "cell_secs": 46.8,
       "n_vars": 186,
       "snapshot": {
         "lb": 243,
@@ -4047,10 +4358,12 @@
       ],
       "status": "optimal",
       "sdp_value": 3496.5282,
+      "sdp_value_raw": 3496.528220120375,
       "sdp_floor": 3496,
+      "below_lb_floor": null,
       "solver": "SDPA",
       "solve_secs": 29.4,
-      "cell_secs": 29.6,
+      "cell_secs": 29.5,
       "n_vars": 190,
       "snapshot": {
         "lb": 1519,
@@ -4073,15 +4386,17 @@
           "status": "optimal",
           "value": 4986.969,
           "floor": 4986,
-          "secs": 26.2
+          "secs": 25.2
         }
       ],
       "status": "optimal",
       "sdp_value": 4986.969,
+      "sdp_value_raw": 4986.969003857946,
       "sdp_floor": 4986,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 26.2,
-      "cell_secs": 26.3,
+      "solve_secs": 25.2,
+      "cell_secs": 25.3,
       "n_vars": 194,
       "snapshot": {
         "lb": 1721,
@@ -4104,15 +4419,17 @@
           "status": "optimal",
           "value": 1356.7009,
           "floor": 1356,
-          "secs": 61.7
+          "secs": 59.4
         }
       ],
       "status": "optimal",
       "sdp_value": 1356.7009,
+      "sdp_value_raw": 1356.700895231972,
       "sdp_floor": 1356,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 61.7,
-      "cell_secs": 61.9,
+      "solve_secs": 59.4,
+      "cell_secs": 59.6,
       "n_vars": 195,
       "snapshot": {
         "lb": 308,
@@ -4135,15 +4452,17 @@
           "status": "optimal_inaccurate",
           "value": 351.818,
           "floor": 351,
-          "secs": 28.4
+          "secs": 26.9
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 351.818,
+      "sdp_value_raw": 351.817979286086,
       "sdp_floor": 351,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 28.4,
-      "cell_secs": 28.6,
+      "solve_secs": 26.9,
+      "cell_secs": 27.0,
       "n_vars": 195,
       "snapshot": {
         "lb": 112,
@@ -4164,15 +4483,17 @@
           "status": "optimal",
           "value": 7016.8727,
           "floor": 7016,
-          "secs": 26.1
+          "secs": 24.6
         }
       ],
       "status": "optimal",
       "sdp_value": 7016.8727,
+      "sdp_value_raw": 7016.872708648468,
       "sdp_floor": 7016,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 26.1,
-      "cell_secs": 26.3,
+      "solve_secs": 24.6,
+      "cell_secs": 24.7,
       "n_vars": 197,
       "snapshot": {
         "lb": 2067,
@@ -4195,15 +4516,17 @@
           "status": "optimal",
           "value": 4415.1286,
           "floor": 4415,
-          "secs": 15.6
+          "secs": 15.2
         }
       ],
       "status": "optimal",
       "sdp_value": 4415.1286,
+      "sdp_value_raw": 4415.128566901707,
       "sdp_floor": 4415,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 15.6,
-      "cell_secs": 15.8,
+      "solve_secs": 15.2,
+      "cell_secs": 15.4,
       "n_vars": 204,
       "snapshot": {
         "lb": 2183,
@@ -4226,15 +4549,17 @@
           "status": "optimal",
           "value": 265.0909,
           "floor": 265,
-          "secs": 44.1
+          "secs": 42.2
         }
       ],
       "status": "optimal",
       "sdp_value": 265.0909,
+      "sdp_value_raw": 265.09091419623917,
       "sdp_floor": 265,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 44.1,
-      "cell_secs": 44.3,
+      "solve_secs": 42.2,
+      "cell_secs": 42.4,
       "n_vars": 211,
       "snapshot": {
         "lb": 172,
@@ -4255,15 +4580,17 @@
           "status": "optimal",
           "value": 702.0918,
           "floor": 702,
-          "secs": 62.4
+          "secs": 61.3
         }
       ],
       "status": "optimal",
       "sdp_value": 702.0918,
+      "sdp_value_raw": 702.091827031528,
       "sdp_floor": 702,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 62.4,
-      "cell_secs": 62.6,
+      "solve_secs": 61.3,
+      "cell_secs": 61.5,
       "n_vars": 212,
       "snapshot": {
         "lb": 208,
@@ -4286,15 +4613,17 @@
           "status": "optimal",
           "value": 2142.2228,
           "floor": 2142,
-          "secs": 41.7
+          "secs": 41.2
         }
       ],
       "status": "optimal",
       "sdp_value": 2142.2228,
+      "sdp_value_raw": 2142.2228017865655,
       "sdp_floor": 2142,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 41.7,
-      "cell_secs": 41.9,
+      "solve_secs": 41.2,
+      "cell_secs": 41.4,
       "n_vars": 213,
       "snapshot": {
         "lb": 1378,
@@ -4317,15 +4646,17 @@
           "status": "optimal",
           "value": 5064.64,
           "floor": 5064,
-          "secs": 20.4
+          "secs": 20.1
         }
       ],
       "status": "optimal",
       "sdp_value": 5064.64,
+      "sdp_value_raw": 5064.640000004788,
       "sdp_floor": 5064,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 20.4,
-      "cell_secs": 20.5,
+      "solve_secs": 20.1,
+      "cell_secs": 20.2,
       "n_vars": 220,
       "snapshot": {
         "lb": 2636,
@@ -4346,15 +4677,17 @@
           "status": "optimal",
           "value": 7587.5196,
           "floor": 7587,
-          "secs": 17.6
+          "secs": 18.2
         }
       ],
       "status": "optimal",
       "sdp_value": 7587.5196,
+      "sdp_value_raw": 7587.519607853851,
       "sdp_floor": 7587,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 17.6,
-      "cell_secs": 17.7,
+      "solve_secs": 18.2,
+      "cell_secs": 18.4,
       "n_vars": 221,
       "snapshot": {
         "lb": 2970,
@@ -4375,15 +4708,17 @@
           "status": "optimal_inaccurate",
           "value": 756.5903,
           "floor": 756,
-          "secs": 54.7
+          "secs": 54.5
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 756.5903,
+      "sdp_value_raw": 756.5902655981314,
       "sdp_floor": 756,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 54.7,
-      "cell_secs": 54.9,
+      "solve_secs": 54.5,
+      "cell_secs": 54.7,
       "n_vars": 226,
       "snapshot": {
         "lb": 225,
@@ -4406,15 +4741,17 @@
           "status": "optimal",
           "value": 12374.4119,
           "floor": 12374,
-          "secs": 20.8
+          "secs": 20.3
         }
       ],
       "status": "optimal",
       "sdp_value": 12374.4119,
+      "sdp_value_raw": 12374.411884699253,
       "sdp_floor": 12374,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 20.8,
-      "cell_secs": 21.0,
+      "solve_secs": 20.3,
+      "cell_secs": 20.4,
       "n_vars": 235,
       "snapshot": {
         "lb": 4200,
@@ -4435,15 +4772,17 @@
           "status": "optimal",
           "value": 3422.7531,
           "floor": 3422,
-          "secs": 47.0
+          "secs": 45.8
         }
       ],
       "status": "optimal",
       "sdp_value": 3422.7531,
+      "sdp_value_raw": 3422.753095097797,
       "sdp_floor": 3422,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 47.0,
-      "cell_secs": 47.1,
+      "solve_secs": 45.8,
+      "cell_secs": 46.0,
       "n_vars": 236,
       "snapshot": {
         "lb": 1702,
@@ -4466,15 +4805,17 @@
           "status": "optimal",
           "value": 1201.2501,
           "floor": 1201,
-          "secs": 80.2
+          "secs": 78.3
         }
       ],
       "status": "optimal",
       "sdp_value": 1201.2501,
+      "sdp_value_raw": 1201.2501353625055,
       "sdp_floor": 1201,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 80.2,
-      "cell_secs": 80.4,
+      "solve_secs": 78.3,
+      "cell_secs": 78.5,
       "n_vars": 238,
       "snapshot": {
         "lb": 351,
@@ -4497,15 +4838,17 @@
           "status": "optimal",
           "value": 19508.7652,
           "floor": 19508,
-          "secs": 25.4
+          "secs": 24.7
         }
       ],
       "status": "optimal",
       "sdp_value": 19508.7652,
+      "sdp_value_raw": 19508.765211692764,
       "sdp_floor": 19508,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 25.4,
-      "cell_secs": 25.6,
+      "solve_secs": 24.7,
+      "cell_secs": 24.9,
       "n_vars": 244,
       "snapshot": {
         "lb": 6600,
@@ -4526,15 +4869,17 @@
           "status": "optimal",
           "value": 30877.0373,
           "floor": 30877,
-          "secs": 28.9
+          "secs": 28.2
         }
       ],
       "status": "optimal",
       "sdp_value": 30877.0373,
+      "sdp_value_raw": 30877.03733257377,
       "sdp_floor": 30877,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 28.9,
-      "cell_secs": 29.0,
+      "solve_secs": 28.2,
+      "cell_secs": 28.3,
       "n_vars": 251,
       "snapshot": {
         "lb": 8810,
@@ -4555,15 +4900,17 @@
           "status": "optimal",
           "value": 5225.5519,
           "floor": 5225,
-          "secs": 60.0
+          "secs": 58.7
         }
       ],
       "status": "optimal",
       "sdp_value": 5225.5519,
+      "sdp_value_raw": 5225.551892683036,
       "sdp_floor": 5225,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 60.0,
-      "cell_secs": 60.2,
+      "solve_secs": 58.7,
+      "cell_secs": 58.8,
       "n_vars": 253,
       "snapshot": {
         "lb": 2037,
@@ -4586,15 +4933,17 @@
           "status": "optimal",
           "value": 7953.4,
           "floor": 7953,
-          "secs": 27.0
+          "secs": 26.0
         }
       ],
       "status": "optimal",
       "sdp_value": 7953.4,
+      "sdp_value_raw": 7953.400000148088,
       "sdp_floor": 7953,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 27.0,
-      "cell_secs": 27.2,
+      "solve_secs": 26.0,
+      "cell_secs": 26.1,
       "n_vars": 255,
       "snapshot": {
         "lb": 3585,
@@ -4615,15 +4964,17 @@
           "status": "optimal",
           "value": 48036.446,
           "floor": 48036,
-          "secs": 34.0
+          "secs": 33.1
         }
       ],
       "status": "optimal",
       "sdp_value": 48036.446,
+      "sdp_value_raw": 48036.44599885586,
       "sdp_floor": 48036,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 34.0,
-      "cell_secs": 34.1,
+      "solve_secs": 33.1,
+      "cell_secs": 33.2,
       "n_vars": 255,
       "snapshot": {
         "lb": 12987,
@@ -4644,15 +4995,17 @@
           "status": "optimal",
           "value": 68956.1497,
           "floor": 68956,
-          "secs": 31.7
+          "secs": 30.6
         }
       ],
       "status": "optimal",
       "sdp_value": 68956.1497,
+      "sdp_value_raw": 68956.14965514147,
       "sdp_floor": 68956,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 31.7,
-      "cell_secs": 31.8,
+      "solve_secs": 30.6,
+      "cell_secs": 30.7,
       "n_vars": 258,
       "snapshot": {
         "lb": 18345,
@@ -4673,15 +5026,17 @@
           "status": "optimal",
           "value": 1977.6452,
           "floor": 1977,
-          "secs": 94.0
+          "secs": 89.6
         }
       ],
       "status": "optimal",
       "sdp_value": 1977.6452,
+      "sdp_value_raw": 1977.6452095602854,
       "sdp_floor": 1977,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 94.0,
-      "cell_secs": 94.2,
+      "solve_secs": 89.6,
+      "cell_secs": 89.8,
       "n_vars": 261,
       "snapshot": {
         "lb": 390,
@@ -4704,15 +5059,17 @@
           "status": "optimal",
           "value": 7833.8402,
           "floor": 7833,
-          "secs": 59.7
+          "secs": 56.6
         }
       ],
       "status": "optimal",
       "sdp_value": 7833.8402,
+      "sdp_value_raw": 7833.8402495432165,
       "sdp_floor": 7833,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 59.7,
-      "cell_secs": 59.9,
+      "solve_secs": 56.6,
+      "cell_secs": 56.7,
       "n_vars": 267,
       "snapshot": {
         "lb": 2404,
@@ -4735,15 +5092,17 @@
           "status": "optimal",
           "value": 4087.9689,
           "floor": 4087,
-          "secs": 72.0
+          "secs": 68.3
         }
       ],
       "status": "optimal",
       "sdp_value": 4087.9689,
+      "sdp_value_raw": 4087.968915629563,
       "sdp_floor": 4087,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 72.0,
-      "cell_secs": 72.2,
+      "solve_secs": 68.3,
+      "cell_secs": 68.4,
       "n_vars": 270,
       "snapshot": {
         "lb": 2610,
@@ -4766,15 +5125,17 @@
           "status": "optimal",
           "value": 1419.043,
           "floor": 1419,
-          "secs": 104.7
+          "secs": 96.3
         }
       ],
       "status": "optimal",
       "sdp_value": 1419.043,
+      "sdp_value_raw": 1419.0429966606016,
       "sdp_floor": 1419,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 104.7,
-      "cell_secs": 104.9,
+      "solve_secs": 96.3,
+      "cell_secs": 96.5,
       "n_vars": 270,
       "snapshot": {
         "lb": 420,
@@ -4797,15 +5158,17 @@
           "status": "optimal",
           "value": 12025.6935,
           "floor": 12025,
-          "secs": 72.5
+          "secs": 69.9
         }
       ],
       "status": "optimal",
       "sdp_value": 12025.6935,
+      "sdp_value_raw": 12025.693518801907,
       "sdp_floor": 12025,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 72.5,
-      "cell_secs": 72.7,
+      "solve_secs": 69.9,
+      "cell_secs": 70.0,
       "n_vars": 276,
       "snapshot": {
         "lb": 3773,
@@ -4826,15 +5189,17 @@
           "status": "optimal",
           "value": 14683.2,
           "floor": 14683,
-          "secs": 33.5
+          "secs": 33.0
         }
       ],
       "status": "optimal",
       "sdp_value": 14683.2,
+      "sdp_value_raw": 14683.200000008697,
       "sdp_floor": 14683,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 33.5,
-      "cell_secs": 33.7,
+      "solve_secs": 33.0,
+      "cell_secs": 33.2,
       "n_vars": 283,
       "snapshot": {
         "lb": 5376,
@@ -4855,15 +5220,17 @@
           "status": "optimal",
           "value": 6741.135,
           "floor": 6741,
-          "secs": 89.5
+          "secs": 83.8
         }
       ],
       "status": "optimal",
       "sdp_value": 6741.135,
+      "sdp_value_raw": 6741.134963714046,
       "sdp_floor": 6741,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 89.5,
-      "cell_secs": 89.7,
+      "solve_secs": 83.8,
+      "cell_secs": 84.0,
       "n_vars": 305,
       "snapshot": {
         "lb": 3070,
@@ -4886,15 +5253,17 @@
           "status": "optimal",
           "value": 15906.8,
           "floor": 15906,
-          "secs": 41.1
+          "secs": 36.7
         }
       ],
       "status": "optimal",
       "sdp_value": 15906.8,
+      "sdp_value_raw": 15906.800000010737,
       "sdp_floor": 15906,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 41.1,
-      "cell_secs": 41.4,
+      "solve_secs": 36.7,
+      "cell_secs": 36.9,
       "n_vars": 306,
       "snapshot": {
         "lb": 5616,
@@ -4915,15 +5284,17 @@
           "status": "optimal",
           "value": 24630.9091,
           "floor": 24630,
-          "secs": 44.1
+          "secs": 40.6
         }
       ],
       "status": "optimal",
       "sdp_value": 24630.9091,
+      "sdp_value_raw": 24630.909090946905,
       "sdp_floor": 24630,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 44.1,
-      "cell_secs": 44.2,
+      "solve_secs": 40.6,
+      "cell_secs": 40.7,
       "n_vars": 307,
       "snapshot": {
         "lb": 8697,
@@ -4944,15 +5315,17 @@
           "status": "optimal",
           "value": 2438.7097,
           "floor": 2438,
-          "secs": 79.7
+          "secs": 75.1
         }
       ],
       "status": "optimal",
       "sdp_value": 2438.7097,
+      "sdp_value_raw": 2438.7096830546498,
       "sdp_floor": 2438,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 79.7,
-      "cell_secs": 80.0,
+      "solve_secs": 75.1,
+      "cell_secs": 75.3,
       "n_vars": 308,
       "snapshot": {
         "lb": 756,
@@ -4973,15 +5346,17 @@
           "status": "optimal",
           "value": 42075.6424,
           "floor": 42075,
-          "secs": 52.8
+          "secs": 48.4
         }
       ],
       "status": "optimal",
       "sdp_value": 42075.6424,
+      "sdp_value_raw": 42075.642366213484,
       "sdp_floor": 42075,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 52.8,
-      "cell_secs": 53.0,
+      "solve_secs": 48.4,
+      "cell_secs": 48.5,
       "n_vars": 324,
       "snapshot": {
         "lb": 12206,
@@ -5004,15 +5379,17 @@
           "status": "optimal",
           "value": 7080.0801,
           "floor": 7080,
-          "secs": 90.6
+          "secs": 81.9
         }
       ],
       "status": "optimal",
       "sdp_value": 7080.0801,
+      "sdp_value_raw": 7080.080108039942,
       "sdp_floor": 7080,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 90.6,
-      "cell_secs": 90.9,
+      "solve_secs": 81.9,
+      "cell_secs": 82.0,
       "n_vars": 324,
       "snapshot": {
         "lb": 3588,
@@ -5035,15 +5412,17 @@
           "status": "optimal",
           "value": 2629.8701,
           "floor": 2629,
-          "secs": 89.9
+          "secs": 85.4
         }
       ],
       "status": "optimal",
       "sdp_value": 2629.8701,
+      "sdp_value_raw": 2629.8701423860216,
       "sdp_floor": 2629,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 89.9,
-      "cell_secs": 90.2,
+      "solve_secs": 85.4,
+      "cell_secs": 85.6,
       "n_vars": 330,
       "snapshot": {
         "lb": 812,
@@ -5064,22 +5443,24 @@
           "status": "infeasible (non-finite value)",
           "value": null,
           "floor": null,
-          "secs": 48.5
+          "secs": 47.1
         },
         {
           "solver": "CLARABEL",
           "status": "optimal_inaccurate",
           "value": 10701.3732,
           "floor": 10701,
-          "secs": 17.7
+          "secs": 16.8
         }
       ],
       "status": "optimal_inaccurate",
       "sdp_value": 10701.3732,
+      "sdp_value_raw": 10701.373208779154,
       "sdp_floor": 10701,
+      "below_lb_floor": null,
       "solver": "CLARABEL",
-      "solve_secs": 17.7,
-      "cell_secs": 66.4,
+      "solve_secs": 16.8,
+      "cell_secs": 64.0,
       "n_vars": 333,
       "snapshot": {
         "lb": 3335,
@@ -5100,15 +5481,17 @@
           "status": "optimal",
           "value": 66079.0,
           "floor": 66079,
-          "secs": 49.1
+          "secs": 47.1
         }
       ],
       "status": "optimal",
       "sdp_value": 66079.0,
+      "sdp_value_raw": 66079.0000000684,
       "sdp_floor": 66079,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 49.1,
-      "cell_secs": 49.3,
+      "solve_secs": 47.1,
+      "cell_secs": 47.3,
       "n_vars": 338,
       "snapshot": {
         "lb": 18260,
@@ -5129,15 +5512,17 @@
           "status": "optimal",
           "value": 104231.4,
           "floor": 104231,
-          "secs": 54.8
+          "secs": 52.6
         }
       ],
       "status": "optimal",
       "sdp_value": 104231.4,
+      "sdp_value_raw": 104231.39999998883,
       "sdp_floor": 104231,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 54.8,
-      "cell_secs": 55.0,
+      "solve_secs": 52.6,
+      "cell_secs": 52.8,
       "n_vars": 347,
       "snapshot": {
         "lb": 29484,
@@ -5158,15 +5543,17 @@
           "status": "optimal",
           "value": 30590.0,
           "floor": 30590,
-          "secs": 52.1
+          "secs": 49.1
         }
       ],
       "status": "optimal",
       "sdp_value": 30590.0,
+      "sdp_value_raw": 30590.000000005977,
       "sdp_floor": 30590,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 52.1,
-      "cell_secs": 52.3,
+      "solve_secs": 49.1,
+      "cell_secs": 49.2,
       "n_vars": 348,
       "snapshot": {
         "lb": 9880,
@@ -5187,20 +5574,22 @@
           "status": "infeasible (non-finite value)",
           "value": null,
           "floor": null,
-          "secs": 50.2
+          "secs": 48.3
         },
         {
           "solver": "CLARABEL",
           "status": "solver_error: SolverError",
           "value": null,
           "floor": null,
-          "secs": 15.6
+          "secs": 14.9
         }
       ],
       "status": "no_valid_float (solvers crashed or floored below the known lb)",
       "sdp_value": null,
+      "sdp_value_raw": null,
       "sdp_floor": null,
-      "cell_secs": 66.0,
+      "below_lb_floor": null,
+      "cell_secs": 63.3,
       "n_vars": 357,
       "snapshot": {
         "lb": 4927,
@@ -5219,15 +5608,17 @@
           "status": "optimal",
           "value": 11981.3571,
           "floor": 11981,
-          "secs": 83.7
+          "secs": 79.7
         }
       ],
       "status": "optimal",
       "sdp_value": 11981.3571,
+      "sdp_value_raw": 11981.35714313946,
       "sdp_floor": 11981,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 83.7,
-      "cell_secs": 84.1,
+      "solve_secs": 79.7,
+      "cell_secs": 79.9,
       "n_vars": 374,
       "snapshot": {
         "lb": 4094,
@@ -5250,15 +5641,17 @@
           "status": "optimal",
           "value": 50169.5339,
           "floor": 50169,
-          "secs": 90.5
+          "secs": 85.9
         }
       ],
       "status": "optimal",
       "sdp_value": 50169.5339,
+      "sdp_value_raw": 50169.533931443235,
       "sdp_floor": 50169,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 90.5,
-      "cell_secs": 90.8,
+      "solve_secs": 85.9,
+      "cell_secs": 86.0,
       "n_vars": 385,
       "snapshot": {
         "lb": 14854,
@@ -5281,15 +5674,17 @@
           "status": "optimal",
           "value": 61180.0,
           "floor": 61180,
-          "secs": 82.2
+          "secs": 77.1
         }
       ],
       "status": "optimal",
       "sdp_value": 61180.0,
+      "sdp_value_raw": 61180.00000003324,
       "sdp_floor": 61180,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 82.2,
-      "cell_secs": 82.4,
+      "solve_secs": 77.1,
+      "cell_secs": 77.3,
       "n_vars": 408,
       "snapshot": {
         "lb": 16117,
@@ -5310,15 +5705,17 @@
           "status": "optimal",
           "value": 84574.2857,
           "floor": 84574,
-          "secs": 97.7
+          "secs": 89.5
         }
       ],
       "status": "optimal",
       "sdp_value": 84574.2857,
+      "sdp_value_raw": 84574.28571443011,
       "sdp_floor": 84574,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 97.7,
-      "cell_secs": 98.0,
+      "solve_secs": 89.5,
+      "cell_secs": 89.7,
       "n_vars": 414,
       "snapshot": {
         "lb": 23901,
@@ -5353,15 +5750,17 @@
           "status": "optimal",
           "value": 145493.8108,
           "floor": 145493,
-          "secs": 118.4
+          "secs": 115.3
         }
       ],
       "status": "optimal",
       "sdp_value": 145493.8108,
+      "sdp_value_raw": 145493.81081787666,
       "sdp_floor": 145493,
+      "below_lb_floor": null,
       "solver": "SDPA",
-      "solve_secs": 118.4,
-      "cell_secs": 118.7,
+      "solve_secs": 115.3,
+      "cell_secs": 115.4,
       "n_vars": 438,
       "snapshot": {
         "lb": 40237,
@@ -5430,5 +5829,5 @@
     }
   ],
   "escalations": [],
-  "reading": "D1 step 4 constant-weight reach probe. candidate = accepted float floor strictly below the Brouwer-snapshot ub and >= its lb; counts ONLY once the exact-rational LP certifies it (escalations[]). GREEN(candidate) -> surface to operator (independent snapshot re-verification before any announcement). DRY = 0 certified tightenings. Time-caps/solver failures are the honest scaling measurement. The snapshot is targeting context only, never a decider."
+  "reading": "D1 step 4 constant-weight reach probe. candidate = float floor (optimistically, at the ub boundary) strictly below the Brouwer-snapshot ub and >= its lb; counts as a discovery ONLY once the exact-rational LP certifies a bound < ub (escalations[]). GREEN(candidate) -> surface to operator (independent snapshot re-verification before any announcement). DRY = 0 certified tightenings. SOUNDNESS-ALARM = a solved optimum floored below a known lower bound (transcription suspect). UNDECIDED = a candidate whose exact-LP decider time-capped/errored. Time-caps/solver failures are the honest scaling measurement. The snapshot is targeting context only, never a decider."
 }

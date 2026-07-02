@@ -5,12 +5,12 @@
   "fetched_at": "2026-07-02",
   "sha256_page": "a147d4c2b631b4c7e61e5a038bfc8292f1e8a9e2d98bd8062b6886a2688f2d23",
   "parser": "scripts/terwilliger_cwc_probe.py --build-snapshot",
-  "cells": 820,
+  "cells": 843,
   "unparsed_cells": [],
   "cross_check": {
    "against": "docs/results/brouwer_cwc_lower_bounds.json",
    "fetched_at_old": "2026-06-27",
-   "shared_cells": 816,
+   "shared_cells": 839,
    "lb_diffs": []
   },
   "trust_note": "Targeting context ONLY \u2014 never a decider. Soundness of any bound claim stays with the exact-rational LP certificate and the Lean kernel."
@@ -5754,6 +5754,167 @@
    "ub": 8,
    "exact": true,
    "lb_source": "",
+   "ub_source": ""
+  },
+  "33,18,10": {
+   "lb": 3,
+   "ub": 3,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "33,18,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "33,18,12": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "33,18,13": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "33,18,14": {
+   "lb": 9,
+   "ub": 9,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "33,18,15": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "33,18,16": {
+   "lb": 11,
+   "ub": 11,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "34,18,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "34,18,11": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "34,18,12": {
+   "lb": 6,
+   "ub": 6,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "34,18,13": {
+   "lb": 8,
+   "ub": 8,
+   "exact": true,
+   "lb_source": "j",
+   "ub_source": ""
+  },
+  "34,18,14": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "x",
+   "ub_source": ""
+  },
+  "34,18,15": {
+   "lb": 14,
+   "ub": 14,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "34,18,16": {
+   "lb": 17,
+   "ub": 17,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "34,18,17": {
+   "lb": 18,
+   "ub": 18,
+   "exact": true,
+   "lb_source": "c",
+   "ub_source": ""
+  },
+  "35,18,10": {
+   "lb": 4,
+   "ub": 4,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "35,18,11": {
+   "lb": 5,
+   "ub": 5,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "35,18,12": {
+   "lb": 7,
+   "ub": 7,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "35,18,13": {
+   "lb": 10,
+   "ub": 10,
+   "exact": true,
+   "lb_source": "",
+   "ub_source": ""
+  },
+  "35,18,14": {
+   "lb": 15,
+   "ub": 15,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "35,18,15": {
+   "lb": 21,
+   "ub": 21,
+   "exact": true,
+   "lb_source": "s",
+   "ub_source": ""
+  },
+  "35,18,16": {
+   "lb": 22,
+   "ub": 28,
+   "exact": false,
+   "lb_source": "R",
+   "ub_source": ""
+  },
+  "35,18,17": {
+   "lb": 35,
+   "ub": 35,
+   "exact": true,
+   "lb_source": "c",
    "ub_source": ""
   }
  }
