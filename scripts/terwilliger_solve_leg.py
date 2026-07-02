@@ -30,7 +30,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parent.parent
 OUT = _ROOT / "docs" / "results" / "terwilliger_solve_leg.json"
 
-HAVE = all(importlib.util.find_spec(m) is not None for m in ("cvxpy", "numpy", "sdpap"))
+HAVE = all(importlib.util.find_spec(m) is not None for m in ("cvxpy", "numpy", "sdpap", "scipy"))
 
 
 def _load(mod, rel):
