@@ -78,15 +78,26 @@ count (max 537 vars — this family is far smaller per cell than the unrestricte
 Q-pit-2-class wall was hit). Acceptance gate: floor ≥ snapshot lb. Escalation (exact LP at P ≤ 1e14 →
 kernel) fires only on floors strictly below the snapshot ub.
 
-**RESULT — PARTIAL SWEEP (landed honestly):** the session ended mid-probe; the artifact records **141 cells, 0 candidates, 0 escalations** with verdict `RUNNING` (its generated state — not a DRY claim). The three BUILD rungs above are complete and GREEN; finishing the sweep is queued as a follow-up (re-run `python3 scripts/terwilliger_cwc_probe.py`).
+**RESULT — verdict `DRY` (sweep completed in-session after an interim partial flush):** 185/185 cells
+attempted, **179 solved, 0 candidates, 0 invalid floors, 0 escalations**. Unsolved (honest scaling record):
+5 per-cell time-caps (120 s) at the largest cells — (27,6,13), (28,6,13), (28,6,14), (28,8,13), (28,8,14) —
+plus one SolverError at (28,8,12); all n ≥ 27, w ≥ 12. **Faithfulness bonus: 47/51 swept Table II cells
+reproduce Schrijver's published value exactly through the harness** (including the still-standing `S`-record
+cells (21,6,10)→2685 and (22,6,9)→3736 — so no loose-2005-float re-mining opportunity exists at these
+cells). The 4 non-reproductions — (23,8,10)→1061 vs 1025, (26,10,13)→756 vs 754, (26,12,11)→78 vs 66,
+(28,12,10)→88 vs 87 — are all `optimal_inaccurate` floats stalling ABOVE the table value (never below; the
+floor ≥ lb gate held everywhere). Reading: the three-point constant-weight bound is
+**reproduction-complete** in this range, and every open cell's current record (AVZ 2000 or later) already
+sits at or below what the three-point SDP can give — discovery here is bound-blocked exactly like the
+unrestricted family, pointing at D3 (post-2005 hierarchies) / eq.(25)-style sharpenings, not more solver.
 
 ## Facts a fresh session should not re-measure
 
 - Structure sizes at the gate cells: (17,6,7) = 62 free vars, 23 block pairs, largest block 8; (17,6,8) =
   79 vars; (18,6,6) = 40 vars. Full-cert kernel leg: 46 blocks ≈ 30 s round trip including both controls.
-- Solve times (SDPA-GMP tight): gate cells ≈ 2 s; the probe's largest cells (n=28, w=13..14, ~500 vars)
-  tens of seconds. `optimal_inaccurate` shows up on some d ∈ {10,12} cells — floats there are targeting
-  data only (the exact leg decides, as always).
+- Solve times (SDPA-GMP tight): gate cells ≈ 2 s; probe cells 2–60 s up to ~460 vars; the 120 s cap fires
+  only at the five largest cells (n ≥ 27, w ≥ 13, ~460–537 vars). `optimal_inaccurate` shows up on some
+  d ∈ {10,12} cells — floats there are targeting data only (the exact leg decides, as always).
 - The d=4 constant-weight family is excluded from the sweep by design (no ubs on the page; Table II has no
   d=4 cells; design-theory bounds dominate there).
 - Brouwer page layout traps for the parser: `<td class=...>` variants (a bare `<td>` regex silently shifts
@@ -104,8 +115,10 @@ bridge theorem (F2b) remains the only path past that, hence audit tier.
 ## Next steps
 
 - **D2 (task #103)**: the (22,10) anomaly — unchanged, parallelizable.
-- **D1 follow-ups if the probe is DRY**: eq.(25)-style sharpenings now have a live A*(n,d,i) oracle (this
-  snapshot); post-2005 hierarchy scoping is D3 (task #104).
-- The `S`-marked cells (Schrijver-2005 records still standing: e.g. (21,6,10) ub=2685, (22,6,9) ub=3736)
-  are the natural re-mine targets: a 2005 float floor can be loose; our exact leg certifies the true
-  optimum's floor. The probe covers them in-scope.
+- **D1 is DRY** → the discovery weight shifts to **D3** (post-2005 hierarchy scoping, task #104) and to
+  eq.(25)-style sharpenings of the *unrestricted* build, which now have a live, validated A*(n,d,i) oracle
+  (this snapshot) to draw caps from.
+- The `S`-marked re-mine channel is now MEASURED CLOSED: the standing Schrijver-2005 record cells
+  ((21,6,10) ub=2685, (22,6,9) ub=3736, …) reproduce exactly at float — his 2005 floors were not loose.
+  Optional tidy-up, not discovery: exact+kernel-certify the 4 `optimal_inaccurate` cells at their Table II
+  targets (same recipe as the gate cells, P ≤ 1e14).
