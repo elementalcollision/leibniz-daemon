@@ -188,11 +188,13 @@ def certify_lp(n, d, target=None, precisions=(10 ** 6, 10 ** 8, 10 ** 10, 10 ** 
     return best or {"n": n, "d": d, "target": target, "status": "no exact LP cert at tried precisions"}
 
 
-def kernel_verify_lp(n, d, target=None, timeout_s=900):
+def kernel_verify_lp(n, d, target=None, timeout_s=900, precisions=None, time_cap_s=900):
     """Path B2: certify a cell via the exact LP, render its PSD blocks as per-block Lean theorems, and
     kernel-verify (valid accepted; a corrupted block rejected). This is how the A(19,6) ≤ 1280 certificate
-    becomes kernel-attested. Needs cvxpy (solve) + docker (Lean)."""
-    row = certify_lp(n, d, target=target, return_duals=True)
+    becomes kernel-attested. Needs cvxpy (solve) + docker (Lean). precisions/time_cap_s forward to
+    certify_lp — the D6 cells (23,6) and (25,10) certify only at P=1e14, above the default ladder."""
+    kw = {} if precisions is None else {"precisions": precisions}
+    row = certify_lp(n, d, target=target, return_duals=True, time_cap_s=time_cap_s, **kw)
     if not row.get("certified"):
         return {"n": n, "d": d, "certified": False, "note": "no exact LP cert to render"}
     blocks = cert.cert_psd_blocks(row["duals"])
