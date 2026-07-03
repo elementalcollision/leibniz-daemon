@@ -1,0 +1,59 @@
+{
+  "gate": "GREEN",
+  "target": "MCR whitepaper",
+  "z3": true,
+  "lean": true,
+  "report": {
+    "P1": {
+      "verdict": "VACUOUS",
+      "kind": "numeric",
+      "artifact_ok": true
+    },
+    "P2": {
+      "verdict": "REFUTED",
+      "kind": "z3",
+      "artifact_ok": true
+    },
+    "P3": {
+      "verdict": "REFUTED",
+      "kind": "z3",
+      "artifact_ok": true
+    },
+    "P4": {
+      "verdict": "REFUTED",
+      "kind": "lean",
+      "artifact_ok": true
+    },
+    "P5": {
+      "verdict": "ILL-POSED",
+      "kind": "numeric",
+      "artifact_ok": true
+    },
+    "P6": {
+      "verdict": "TRUE-BUT-WEAKER",
+      "kind": "z3",
+      "artifact_ok": true
+    },
+    "P7": {
+      "verdict": "NOT-PROVEN",
+      "kind": "reasoning",
+      "artifact_ok": null
+    },
+    "P8": {
+      "verdict": "PROVEN",
+      "kind": "reasoning",
+      "artifact_ok": null
+    }
+  },
+  "verdicts": {
+    "P1": "VACUOUS",
+    "P2": "REFUTED",
+    "P3": "REFUTED",
+    "P4": "REFUTED",
+    "P5": "ILL-POSED",
+    "P6": "TRUE-BUT-WEAKER",
+    "P7": "NOT-PROVEN",
+    "P8": "PROVEN"
+  },
+  "reading": "The MCR audit as a re-runnable instrument: 8 findings, each a (verdict, artifact). GREEN = every artifact that ran (numeric always; Z3 if installed; Lean if docker) passed. A second external target is a second spec. This makes the daemon's one measured-positive lane (formal-verification-as-a-service) a repeatable, CI-guarded instrument rather than a one-off."
+}
