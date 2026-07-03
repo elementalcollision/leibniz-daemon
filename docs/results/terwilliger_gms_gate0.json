@@ -1,0 +1,594 @@
+{
+  "verdict": "RED",
+  "kernel_ceiling": 30,
+  "rows": [
+    {
+      "n": 19,
+      "d": 6,
+      "largest_block": 189,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 95,
+      "n_blocks": 55,
+      "total_psd_dim": 3550,
+      "three_point_largest": 20
+    },
+    {
+      "n": 20,
+      "d": 6,
+      "largest_block": 210,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 105,
+      "n_blocks": 66,
+      "total_psd_dim": 4276,
+      "three_point_largest": 21
+    },
+    {
+      "n": 21,
+      "d": 6,
+      "largest_block": 232,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 116,
+      "n_blocks": 66,
+      "total_psd_dim": 5068,
+      "three_point_largest": 22
+    },
+    {
+      "n": 22,
+      "d": 6,
+      "largest_block": 255,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 128,
+      "n_blocks": 78,
+      "total_psd_dim": 6004,
+      "three_point_largest": 23
+    },
+    {
+      "n": 23,
+      "d": 6,
+      "largest_block": 279,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 140,
+      "n_blocks": 78,
+      "total_psd_dim": 7018,
+      "three_point_largest": 24
+    },
+    {
+      "n": 24,
+      "d": 6,
+      "largest_block": 304,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 152,
+      "n_blocks": 91,
+      "total_psd_dim": 8201,
+      "three_point_largest": 25
+    },
+    {
+      "n": 25,
+      "d": 6,
+      "largest_block": 330,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 165,
+      "n_blocks": 91,
+      "total_psd_dim": 9475,
+      "three_point_largest": 26
+    },
+    {
+      "n": 26,
+      "d": 6,
+      "largest_block": 357,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 179,
+      "n_blocks": 105,
+      "total_psd_dim": 10945,
+      "three_point_largest": 27
+    },
+    {
+      "n": 27,
+      "d": 6,
+      "largest_block": 385,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 193,
+      "n_blocks": 105,
+      "total_psd_dim": 12520,
+      "three_point_largest": 28
+    },
+    {
+      "n": 28,
+      "d": 6,
+      "largest_block": 414,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 207,
+      "n_blocks": 120,
+      "total_psd_dim": 14320,
+      "three_point_largest": 29
+    },
+    {
+      "n": 19,
+      "d": 8,
+      "largest_block": 174,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 87,
+      "n_blocks": 55,
+      "total_psd_dim": 3430,
+      "three_point_largest": 20
+    },
+    {
+      "n": 20,
+      "d": 8,
+      "largest_block": 195,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 98,
+      "n_blocks": 66,
+      "total_psd_dim": 4156,
+      "three_point_largest": 21
+    },
+    {
+      "n": 21,
+      "d": 8,
+      "largest_block": 217,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 109,
+      "n_blocks": 66,
+      "total_psd_dim": 4948,
+      "three_point_largest": 22
+    },
+    {
+      "n": 22,
+      "d": 8,
+      "largest_block": 240,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 120,
+      "n_blocks": 78,
+      "total_psd_dim": 5884,
+      "three_point_largest": 23
+    },
+    {
+      "n": 23,
+      "d": 8,
+      "largest_block": 264,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 132,
+      "n_blocks": 78,
+      "total_psd_dim": 6898,
+      "three_point_largest": 24
+    },
+    {
+      "n": 24,
+      "d": 8,
+      "largest_block": 289,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 145,
+      "n_blocks": 91,
+      "total_psd_dim": 8081,
+      "three_point_largest": 25
+    },
+    {
+      "n": 25,
+      "d": 8,
+      "largest_block": 315,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 158,
+      "n_blocks": 91,
+      "total_psd_dim": 9355,
+      "three_point_largest": 26
+    },
+    {
+      "n": 26,
+      "d": 8,
+      "largest_block": 342,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 171,
+      "n_blocks": 105,
+      "total_psd_dim": 10825,
+      "three_point_largest": 27
+    },
+    {
+      "n": 27,
+      "d": 8,
+      "largest_block": 370,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 185,
+      "n_blocks": 105,
+      "total_psd_dim": 12400,
+      "three_point_largest": 28
+    },
+    {
+      "n": 28,
+      "d": 8,
+      "largest_block": 399,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 200,
+      "n_blocks": 120,
+      "total_psd_dim": 14200,
+      "three_point_largest": 29
+    },
+    {
+      "n": 19,
+      "d": 10,
+      "largest_block": 155,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 78,
+      "n_blocks": 55,
+      "total_psd_dim": 3210,
+      "three_point_largest": 20
+    },
+    {
+      "n": 20,
+      "d": 10,
+      "largest_block": 176,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 88,
+      "n_blocks": 66,
+      "total_psd_dim": 3936,
+      "three_point_largest": 21
+    },
+    {
+      "n": 21,
+      "d": 10,
+      "largest_block": 198,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 99,
+      "n_blocks": 66,
+      "total_psd_dim": 4728,
+      "three_point_largest": 22
+    },
+    {
+      "n": 22,
+      "d": 10,
+      "largest_block": 221,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 111,
+      "n_blocks": 78,
+      "total_psd_dim": 5664,
+      "three_point_largest": 23
+    },
+    {
+      "n": 23,
+      "d": 10,
+      "largest_block": 245,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 123,
+      "n_blocks": 78,
+      "total_psd_dim": 6678,
+      "three_point_largest": 24
+    },
+    {
+      "n": 24,
+      "d": 10,
+      "largest_block": 270,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 135,
+      "n_blocks": 91,
+      "total_psd_dim": 7861,
+      "three_point_largest": 25
+    },
+    {
+      "n": 25,
+      "d": 10,
+      "largest_block": 296,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 148,
+      "n_blocks": 91,
+      "total_psd_dim": 9135,
+      "three_point_largest": 26
+    },
+    {
+      "n": 26,
+      "d": 10,
+      "largest_block": 323,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 162,
+      "n_blocks": 105,
+      "total_psd_dim": 10605,
+      "three_point_largest": 27
+    },
+    {
+      "n": 27,
+      "d": 10,
+      "largest_block": 351,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 176,
+      "n_blocks": 105,
+      "total_psd_dim": 12180,
+      "three_point_largest": 28
+    },
+    {
+      "n": 28,
+      "d": 10,
+      "largest_block": 380,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 190,
+      "n_blocks": 120,
+      "total_psd_dim": 13980,
+      "three_point_largest": 29
+    },
+    {
+      "n": 19,
+      "d": 12,
+      "largest_block": 132,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 66,
+      "n_blocks": 55,
+      "total_psd_dim": 2852,
+      "three_point_largest": 20
+    },
+    {
+      "n": 20,
+      "d": 12,
+      "largest_block": 153,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 77,
+      "n_blocks": 66,
+      "total_psd_dim": 3574,
+      "three_point_largest": 21
+    },
+    {
+      "n": 21,
+      "d": 12,
+      "largest_block": 175,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 88,
+      "n_blocks": 66,
+      "total_psd_dim": 4365,
+      "three_point_largest": 22
+    },
+    {
+      "n": 22,
+      "d": 12,
+      "largest_block": 198,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 99,
+      "n_blocks": 78,
+      "total_psd_dim": 5300,
+      "three_point_largest": 23
+    },
+    {
+      "n": 23,
+      "d": 12,
+      "largest_block": 222,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 111,
+      "n_blocks": 78,
+      "total_psd_dim": 6314,
+      "three_point_largest": 24
+    },
+    {
+      "n": 24,
+      "d": 12,
+      "largest_block": 247,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 124,
+      "n_blocks": 91,
+      "total_psd_dim": 7497,
+      "three_point_largest": 25
+    },
+    {
+      "n": 25,
+      "d": 12,
+      "largest_block": 273,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 137,
+      "n_blocks": 91,
+      "total_psd_dim": 8771,
+      "three_point_largest": 26
+    },
+    {
+      "n": 26,
+      "d": 12,
+      "largest_block": 300,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 150,
+      "n_blocks": 105,
+      "total_psd_dim": 10241,
+      "three_point_largest": 27
+    },
+    {
+      "n": 27,
+      "d": 12,
+      "largest_block": 328,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 164,
+      "n_blocks": 105,
+      "total_psd_dim": 11816,
+      "three_point_largest": 28
+    },
+    {
+      "n": 28,
+      "d": 12,
+      "largest_block": 357,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 179,
+      "n_blocks": 120,
+      "total_psd_dim": 13616,
+      "three_point_largest": 29
+    }
+  ],
+  "small_cells": [
+    {
+      "n": 9,
+      "d": 6,
+      "largest_block": 34,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 17,
+      "n_blocks": 15,
+      "total_psd_dim": 236,
+      "three_point_largest": 10
+    },
+    {
+      "n": 10,
+      "d": 6,
+      "largest_block": 45,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 23,
+      "n_blocks": 21,
+      "total_psd_dim": 361,
+      "three_point_largest": 11
+    },
+    {
+      "n": 12,
+      "d": 6,
+      "largest_block": 70,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 35,
+      "n_blocks": 28,
+      "total_psd_dim": 704,
+      "three_point_largest": 13
+    },
+    {
+      "n": 12,
+      "d": 8,
+      "largest_block": 55,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 28,
+      "n_blocks": 28,
+      "total_psd_dim": 586,
+      "three_point_largest": 13
+    },
+    {
+      "n": 14,
+      "d": 8,
+      "largest_block": 84,
+      "largest_at_kl": [
+        0,
+        0
+      ],
+      "largest_block_s2_halved": 42,
+      "n_blocks": 36,
+      "total_psd_dim": 1096,
+      "three_point_largest": 15
+    }
+  ],
+  "reading": "GATE 0 (GMS Hamming quadruple reduced-block-size probe). Blocks are indexed by PAIRS (i,i') with i+i' in [d,n] (arXiv:1005.4959 \u00a74) => O(n\u00b2): the S\u2082-halved largest block is 95..207 across n=19..28, vs the ~30 native-kernel integer-LDLT ceiling. RED = every in-range target cell exceeds it (the plan's per-block kernel-certification path is unreachable). Independently corroborated by GMS's own reported solve cost (13 days for A(23,6), high-precision SDPA required). This REFUTES the O(n) reading (correct only for the constant-weight/Johnson D1 case, where fixed weight collapses the second index) and CONFIRMS the O(n\u00b2) reviewers for the unrestricted Hamming case."
+}

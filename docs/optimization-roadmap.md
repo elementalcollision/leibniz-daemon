@@ -566,6 +566,20 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     F2a pattern (don't block on Aristotle); amplification framed explicitly at audit/Observatory tier (aligns
     ADR 0046); Kimi's horizontal-infra fork recorded. Panel unanimous: this is verification-amplification, not
     discovery. Docs only; invariants byte-identical.
+  - **GATE 0 DONE (2026-07-02) — RED: GMS quadruple build is NO-GO at the kernel wall (task GATE 0):**
+    `docs/results/terwilliger-gms-gate0-2026-07-02.md`, `scripts/terwilliger_gms_gate0.py`. Read from the
+    ACTUAL paper (arXiv:1005.4959 §4), not reviewer memory: the GMS *Hamming* quadruple reduced blocks are
+    indexed by PAIRS (i,i') with i+i'∈[d,n] → **O(n²)** (largest block, S₂-halved, **66–207 for n=19..28**) vs
+    our ~30 native-kernel integer-LDLT ceiling — past it on EVERY in-range target cell. Independently
+    corroborated by GMS's own compute cost (**13 days for A(23,6)**, high-precision SDPA required). This
+    settles the witness-panel split authoritatively: O(n²) is correct for Hamming (Fugu/Kimi/Qwen); the O(n)
+    reading — and my own pre-gate examination — held only for the constant-weight/Johnson D1 case, where fixed
+    weight collapses the second index. The SDP is float-solvable (GMS did it); the **kernel certification** of
+    order-hundreds PSD blocks is not, and that path is the whole point. **NO-GO on the GMS build as written.**
+    Routes (operator's court, none a quick win): LPS-2017 split-Terwilliger (needs 2–7× block shrink,
+    unproven); a **new large-block kernel-PSD-certification primitive** (generalizable trust-primitive
+    research, not a producer build); or abandon quadruple. Measure-before-build vindicated — the cheapest gate
+    returned the decision. Guarded by `tests/test_terwilliger_gms_gate0.py`; invariants byte-identical.
 
 ## The ADRs
 
