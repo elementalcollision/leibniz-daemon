@@ -30,10 +30,13 @@ All statements verified by the vetter with exact rationals; each reuses or light
 - **VLMC leaf-count / causal-state lower bound** via one nonsingular r×r context-tree/Gram minor.
 - **Matched PSD-Gram realizability** certificate (integer-LDLᵀ, `ldltOK` form) for the r-dim future-conditional Gram.
 
-**B. The bigram-invisible gap (the sharpest "MCR can't see it").**
-- **BM-2** an explicit dim-3 OOM whose bigram matrix `B` has **rank 1** (`det B=0`, consecutive symbols
-  independent — the exact regime a first-order counter inhabits) yet `rank(H)≥3` (nonsingular 3×3 Hankel minor).
-  Two `decide` facts on one process; provably invisible to any pairwise statistic, provably not first-order.
+**B. The bigram-invisible gap.** ⚠️ **BM-2 RETRACTED (external panel, 2026-07-03) — impossible as stated.**
+- **BM-2** claimed a dim process with **rank-1 bigram ∧ rank-≥3 Hankel**. MiniMax M3 proved this is impossible on
+  a *stationary binary* process: `det B = p(1−p) − q`, so `rank(B)=1 ⟺ q=p(1−p) ⟺ iid ⟺ rank(H)=1`. The v1
+  witness `B=outer(p,p)` *is* iid. **Fix:** coarse-grain to a larger alphabet iid on a *coarsening* (e.g.
+  parity), so the coarse bigram is rank 1 but the fine-alphabet Hankel is rank r. Until written, lead with BM-4 /
+  BM-1. Full panel synthesis + the capability match/divergence map:
+  `docs/results/beyond-markov-witness-review-2026-07-03.md`.
 
 **C. Error-floor / excess-loss (quantified impossibility).**
 - **BM-3** rank-r minor ∧ **Z3-UNSAT** error floor `∀g: E[err(g)]≥1/3` over the order-1 simplex. Half is already
@@ -56,9 +59,13 @@ All statements verified by the vetter with exact rationals; each reuses or light
 The **mathematics is textbook** — nearest prior art: Blackwell–Koopmans (1957), Carlyle–Paz (1971), Fliess
 (1974), Jaeger OOMs (2000), Littman–Sutton–Singh PSRs (2001), Crutchfield–Shalizi ε-machines, Hsu–Kakade–Zhang
 spectral, Rissanen context-trees. The even process is *their* canonical infinite-order/finite-complexity example.
-**The potential novelty is the certificate object / first kernel-attestation, not the theorem.** Two honest
-ceilings the vetter pinned: (1) K finite minors prove *order>K*, not infinite order — infinite order needs a
-symbolic induction (Observatory-tier, not `decide`); (2) a finite window certifies a rank *lower* bound and an
-on-window *upper* bound, but true minimality over the infinite Hankel is Observatory-tier. Whether any
-beyond-Markov separation is *genuinely open* (discovery, not amplification) is the open EV question put to the
-external round.
+**The potential novelty is the certificate object / first kernel-attestation, not the theorem** — sharpened by
+the external panel to: the **end-to-end Lean-kernel trust chain** (Bareiss dets and Z3-UNSAT are in every CAS;
+the contribution is one replayable proof object). Two "ceilings" the vetter pinned were **revised by the panel**:
+(1) infinite order is **Q.E.D.-reachable** via a recurrence + induction bridge lemma (the kernel checks proof
+terms; induction is as sound as `decide`) — *not* Observatory; the kernel attests "order>K" only until that
+bridge is discharged; (2) global rank *upper* bounds need a **linear-representation bridge lemma** (window minors
+are regression tests only). **EV:** Hankel-rank separations are amplification (unanimous); the one
+discovery-shaped lever is the **Minimal Positive Realization Problem** (HMM/nonnegative-rank lower bounds via
+Farkas/LP-infeasibility — genuinely open, checker exists in `exact_simplex`). Full synthesis + capability map:
+`docs/results/beyond-markov-witness-review-2026-07-03.md`.

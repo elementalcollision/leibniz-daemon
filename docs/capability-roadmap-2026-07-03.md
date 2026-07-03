@@ -173,20 +173,36 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   --check` to a hard CI regression when Lean is present. (c) Surface cycle rich fields in the renderer.
 - **Do not relitigate.** Auto-publishing (settled NON-GOAL, ADR 0008); re-deciding at render time; Python-generated site.
 
-## T8 — Beyond-Markov process-complexity certificates *(proposed; pending external round)*
+## T8 — Beyond-Markov process-complexity certificates *(proposed; external round returned 2026-07-03)*
 
 - **The bet.** Markov *order* is the wrong invariant; the **Hankel-matrix rank** (prediction-state dimension) is
-  the right one. Order-k Markov ⊊ finite-Hankel-rank (= HMM/OOM/PSR/WFA). The MCR P3 process has infinite order
-  yet is a 2-state HMM — so P8's Σ^k escape is the *weak* (exponential) one and a rank-r PSR is the *strong*
-  (constant-size) one. This is the first genuinely new *domain* for the certificate architecture since covering
-  designs, and its impossibility band may not be human-saturated.
-- **Certificate shapes (all exact-rational, kernel/z3-checkable — same machinery as T1):** (1) Hankel-rank lower
-  bounds via a nonsingular rational minor (kernel `det ≠ 0`); (2) separation certificates (rational process +
-  z3-UNSAT order-k floor + exact rank-r PSR) — a generalized P3; (3) model-class error-floor bounds.
-- **Status.** An adversarial novelty/checkability vetting round is running; an external-agent brief will
-  circulate for feedback. **Honesty caveat:** the base reframe is textbook (Fliess; Carlyle–Paz;
-  Crutchfield–Shalizi; Hsu–Kakade–Zhang; Rissanen) — novelty lives only in specific separation certificates or
-  first-kernel-attestation. This track is filled in once the external round returns.
+  the right one. Order-k Markov ⊊ finite-Hankel-rank (finite linear representation / OOM / WFA; **finite-state
+  HMMs are the positive subclass** — the panel's correction: finite rank ≠ HMM in general). The MCR-P3 process
+  has infinite order yet is a 2-state HMM. First genuinely new *domain* for the certificate architecture since
+  covering designs.
+- **Certificate shapes (grounded in the capability map, `beyond-markov-witness-review-2026-07-03.md`):**
+  (1) Hankel-rank **lower** bounds via a nonsingular rational minor (`bareiss_minors`/`detSignOK`) — MATCH;
+  (2) Markov order > K via cross-mult `det≠0` + denominator>0 — MATCH; (3) error floors: **linear** loss via
+  Z3-LRA/exact-LP-dual, **quadratic** loss via a PSD/SOS cert (`ldltOK`) — never Z3-NRA; (4) rank **upper** bound
+  needs a linear-representation **bridge lemma** (`linear_rep ⇒ hankel_rank_le`, an F2b-style slice) — DIVERGE;
+  (5) process validity via a rational **HMM** (general-OOM validity is undecidable — DIVERGE, prefer HMMs).
+- **Panel outcome (7 reviewers, GLM empty).** Two v1 errors corrected: **BM-2 is impossible on a stationary
+  process (retracted)**; and **infinite-order is Q.E.D.-reachable via a recurrence + induction bridge lemma, NOT
+  Observatory** (F2a already proves non-`decide` Mathlib theorems sorry-free through the REPL — the "Observatory
+  ceiling" was our own pessimism). **Novelty = the end-to-end Lean-kernel trust chain**, not the math (textbook:
+  Blackwell–Koopmans, Carlyle–Paz, Fliess, Jaeger, Crutchfield–Shalizi, Hsu–Kakade–Zhang, Rissanen).
+- **EV split.** Hankel-rank separations are **verification-amplification** (unanimous). The **one discovery-shaped
+  lever** (convergent — Qwen, Fugu Ultra, Kimi): the **Minimal Positive Realization Problem** — HMM/nonnegative
+  rank is often > Hankel rank (NP-hard); a Farkas/LP-infeasibility cert that "no r-state positive HMM realizes
+  this process" is genuinely open *and* certificate-shaped, and its checker already exists (`exact_simplex`
+  infeasibility). Encoding is the unbuilt work.
+- **Auditable increments.** (a) **T8-a** the minimal HMM certificate suite (validity + Hankel lower minor +
+  order>K), gate = a rational-HMM witness where `bareiss_minors`/`detSignOK` accept the true minors and reject a
+  corrupted control; audit tier. (b) **T8-b** the recurrence bridge lemma for infinite order, gate = `#print
+  axioms` closure on a `∀k` theorem (empty project axioms), Q.E.D.-reachable (F2b pattern). (c) **T8-c
+  (discovery probe)** MPRP: reproduce a known HMM-rank > Hankel-rank gap via an `exact_simplex` infeasibility
+  certificate; GREEN = the LP is certified infeasible for r-state and feasible for (r+1)-state; RED = no
+  reachable gap — a cheap pre-registered kill, like the covering probes.
 
 ---
 
