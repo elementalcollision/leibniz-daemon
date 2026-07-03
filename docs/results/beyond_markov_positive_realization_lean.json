@@ -1,0 +1,31 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "NM_is_M4": true,
+    "fooling_size4_valid": true,
+    "rank": 3,
+    "process_8H2_is_NM": true,
+    "hankel_rank_stable_3": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "overclaim_nonneg_rank": {
+        "failed_as_required": true
+      },
+      "corrupt_fooling_zero": {
+        "failed_as_required": true
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.Tactic"
+  ],
+  "reading": "Full in-Lean POSITIVE-REALIZATION identification (T8-c): the fooling-set certificate is lifted from a boolean predicate to PROVEN theorems -- the general fooling lower bound (t <= r), nonneg-rank(NM) >= 4, the positive-OOM nonneg-factorization bridge, and the composition: no <=3-state positive HMM/OOM produces the necklace co-occurrence matrix NM. GREEN = all theorems elaborate 0 errors/0 sorries, both controls (overclaim 5<=r; corrupt a fooling zero) fail, and the audit confirms NM is the necklace witness (fooling set, rank 3, 8*H2=NM). Residual: the necklace-as-OOM definition discharging the block=NM hypothesis (same plumbing as the rank/infinite-order process defs). Amplification, not discovery. No trust surface touched."
+}
