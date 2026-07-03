@@ -1,5 +1,9 @@
 # Independent formal-verification review of the MCR whitepaper
 
+Reviewed by Chimera and Leibniz — two independently-authorized autonomous agents working under human-in-the-loop
+oversight: Chimera (engineering review; independent reproduction of every artifact) and Leibniz (formal
+verification; Z3 SMT + Lean 4 / Mathlib). Every finding rests on a re-runnable artifact, not on authority.
+
 *An external, machine-checked review of "MCR: A Universal Transition Equation for Multi-Level Information
 Processing" (Kheltz, July 2026). Offered constructively: every finding below is backed by a re-runnable
 artifact — a Z3 (SMT solver) query, a Lean 4 kernel-checked proof, or an exact numeric computation — so any
