@@ -12,10 +12,24 @@ carries **no `kernel_verified`, mints no edge, and promulgates nothing**; the AD
 - `leibniz/calculemus_site.py :: cycle_payload(...)` — the typed producer for a `/cycles` entry (mirrors
   `law_payload`). Fills the ADR 0017 gap ("the ledger currently carries … an illustrative cycle"): cycles now
   have a real, tested producer.
-- `scripts/export_mcr_cycle.py` — builds the MCR cycle and emits the ready-to-merge `cycles` fragment.
-- `docs/audits/mcr_cycle_entry.json` — the emitted fragment (regenerate with
-  `python scripts/export_mcr_cycle.py -o docs/audits/mcr_cycle_entry.json`).
-- Test: `tests/test_calculemus_site_r0017.py` locks the cycle shape and the eight verdicts (CI-safe).
+- `scripts/export_mcr_cycle.py` — builds the MCR cycle and emits the ready-to-pipeline fragment.
+- **`docs/audits/mcr_cycle_entry.json`** — the emitted fragment (the path to hand the publication agent).
+  Regenerate with `python scripts/export_mcr_cycle.py -o docs/audits/mcr_cycle_entry.json`
+  (add `--generated-at <ISO>` for a reproducible provenance stamp).
+- Test: `tests/test_calculemus_site_r0017.py` locks the cycle shape, the eight verdicts, and the fragment
+  contract (CI-safe).
+
+## Fragment shape (self-describing, for the publication agent)
+
+```
+{ "meta":  { "generated_at", "producer", "target", "merge" },   // provenance — NOT ledger content
+  "cycles": [ { …the one work-log entry… } ] }                  // the payload to merge
+```
+
+`meta.target` names the destination (`elementalcollision/codex-calculemus : ledger/calculemus.json -> cycles[]`)
+and `meta.merge` states the rule: **append each object in `cycles` to the site ledger's top-level `cycles`
+array; do not overwrite the ledger's own `generated_at` / `laws` / `held_back`.** A pipeline consumes `cycles`
+and may read `meta` for provenance/ordering; it must not write the `meta` block into the ledger.
 
 ## Deploy (operator steps, in the site repo `elementalcollision/codex-calculemus`)
 

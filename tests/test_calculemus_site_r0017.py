@@ -98,3 +98,11 @@ def test_mcr_audit_cycle_carries_all_eight_verdicts():
     assert verdicts["P8"] == "PROVEN"                                  # the steelman is carried
     assert {a["name"] for a in c["artifacts"]} == {"mcr_p4_not_derivable.lean", "mcr_audit_artifacts.py"}
     assert "no-op stub" in c["summary"]                               # the flagship VACUOUS framing survives
+    p3 = {f["id"]: f for f in c["findings"]}["P3"]
+    assert "ambiguous state" in p3["note"] and "per-symbol" in p3["note"]  # the state-a correction is carried
+
+    # The pipeline contract: a self-describing fragment the publication agent consumes.
+    frag = m.build_fragment(generated_at="2026-07-03T00:00:00Z")
+    assert frag["meta"]["generated_at"] == "2026-07-03T00:00:00Z"
+    assert "codex-calculemus" in frag["meta"]["target"] and "cycles[]" in frag["meta"]["target"]
+    assert frag["cycles"] == [c]                                      # meta is provenance; cycles is the payload
