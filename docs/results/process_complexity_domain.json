@@ -1,0 +1,66 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "processes": [
+    {
+      "name": "BM-1 symmetric 2-mode HMM",
+      "dim": 2,
+      "alphabet": 2,
+      "validity": {
+        "valid_hmm": true
+      },
+      "hankel": {
+        "rank": 2,
+        "rank_ge_minor_det": -192,
+        "rank_lower_ok": true
+      },
+      "markov_order": {
+        "order_gt": 8,
+        "all_hold": true
+      },
+      "kernel_lemmas": [
+        "hankel_block_rank_le",
+        "two_step_recurrence_nonzero (geometric-decay gap)"
+      ],
+      "certified": true
+    },
+    {
+      "name": "even process (epsilon-machine)",
+      "dim": 2,
+      "alphabet": 2,
+      "validity": {
+        "valid_hmm": true
+      },
+      "hankel": {
+        "rank": 2,
+        "rank_ge_minor_det": -2,
+        "rank_lower_ok": true
+      },
+      "markov_order": {
+        "order_gt": 8,
+        "all_hold": true
+      },
+      "kernel_lemmas": [
+        "hankel_block_rank_le \u2192 eB_rank_eq_two",
+        "even_infinite_order"
+      ],
+      "certified": true
+    }
+  ],
+  "positive_realization": {
+    "name": "necklace 4-cycle chain",
+    "hankel_rank": 3,
+    "minimal_positive_realization": 4,
+    "gap": "4 > 3 = rank",
+    "fooling_size4_valid": true,
+    "hankel_rank_stable_3": true,
+    "kernel_lemmas": [
+      "fooling_le_of_nonneg_factor",
+      "hankel_nonneg_factor",
+      "necklace_positive_realization_needs_4"
+    ],
+    "certified": true
+  },
+  "reading": "Process-complexity certificate domain: a reusable interface certifying a process's beyond-Markov complexity (validity, Hankel rank + a rank-lower minor, Markov order, positive-realization gap), each part naming the kernel-verified Lean lemma that attests it. A sibling of the code-bound and covering domains, but VERIFICATION-AMPLIFICATION (textbook math; the discovery case is out of reach of the exact-rational machinery). GREEN = every registered process certifies exact-rationally and maps to its kernel lemma."
+}
