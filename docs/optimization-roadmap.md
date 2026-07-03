@@ -604,6 +604,16 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     external verified checker as a NEW TRUST TIER, with its own ADR + witness round — the F2c-style gate), not
     more solver cleverness. GMS-quadruple stays RED. Guarded by `tests/test_terwilliger_decide_probe.py`;
     invariants byte-identical.
+  - **ADR 0047 (2026-07-02) — large-block PSD is a TRUST-BOUNDARY decision: HOLD the line:**
+    `docs/adr/0047-large-block-psd-trust-boundary.md`. Records the decision this investigation reached: the
+    kernel-reducing `decide`-based PSD primitive (ldltOK/lowRankOK) is the sole in-kernel PSD path and its
+    ~N≈60 ceiling is an **accepted, deliberate trust boundary**, not a defect to engineer around (GATE 0 +
+    proof-term probe proved it fundamental to the model). `native_decide` stays forbidden; large-block results
+    stay Observatory/audit tier (ADR 0046) or are not produced. Any expansion is a **new trust tier**,
+    DEFERRED + gated behind its own ADR + operator sign-off + witness round (0044/0045 precedent); if ever
+    revisited, an **external verified PSD checker is recommended over native_decide** (keeps per-cert trust
+    mechanical). Trigger to revisit: a live large-block cell not already in the tables AND reachable by the
+    solve leg — none exists today. No code, no trust.py change; invariants byte-identical.
 
 ## The ADRs
 
