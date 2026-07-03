@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN kernel-verified (rank=r exact · ∀k infinite order · positive-realization gap)** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN; rank story now FULLY in-Lean (process defined from OOM ⇒ Hankel rank=2 derived in-kernel)** |
 
 ---
 
@@ -216,6 +216,15 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   only *verification* of a supplied separation; and the gap is minimal (+1, fully-observed), **not** the deep
   finite-OOM-no-finite-HMM phenomenon (Jaeger's probability clock — irrational, **DEFERRED**). Verdict: the one
   discovery-shaped lever is amplification; **T8 is a verification-amplification domain**.
+- **Full in-Lean process identification (rank story) ✅ GREEN, kernel-verified (2026-07-03)** — the F2b-scale
+  follow-on, delivered for rank: the even process is **defined in Lean from its OOM operators** and its Hankel
+  rank is **derived = 2 in the kernel** (`hankel_block_rank_le`: any r-dim OOM ⇒ every finite Hankel block has
+  rank ≤ r, via `Tprod` being a monoid hom; `eB_det = 1/18` computed in-kernel ⇒ rank exactly 2). Lifts
+  rank-upper/rank-exact from **audit to Q.E.D. about the actual process** (`scripts/beyond_markov_process_lean.py`,
+  `docs/results/beyond-markov-process-lean-2026-07-03.md`). Remaining audit-linked follow-ons: the **infinite-order**
+  (T8-b) identification needs the operator-power closed form (`eOp 1 ^ k`, parity induction), and the
+  **positive-realization** (T8-c) needs the fooling-set embedding proved in Lean — both build on the same
+  `Tprod`/`Pval` scaffold.
 
 ---
 
