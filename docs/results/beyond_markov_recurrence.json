@@ -1,0 +1,46 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "even_gap_matches_process": true,
+    "even_recurrence_q1": true,
+    "even_bases": [
+      "-1/4",
+      "1/3"
+    ],
+    "g_recurrence_qhalf": true,
+    "g_bases_ok": true,
+    "N": 14,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "even_base_zero": {
+        "failed_as_required": true,
+        "first_error": [
+          "unsolved goals\n\u22a2 False"
+        ]
+      },
+      "g_base_zero": {
+        "failed_as_required": true,
+        "first_error": [
+          "unsolved goals\n\u22a2 False"
+        ]
+      },
+      "q_is_zero": {
+        "failed_as_required": true,
+        "first_error": [
+          "unsolved goals\n\u22a2 False"
+        ]
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "reading": "T8-b: infinite Markov order via a recurrence + induction bridge lemma, kernel-verified in Lean/Mathlib (the F2a pattern; the kernel checks proof terms, so induction is as sound as decide). GREEN = the general lemma + the even-process (q=1) and excess-loss (q=1/2) instantiations elaborate with 0 errors/0 sorries AND all controls (zeroed base / zero ratio) FAIL, AND the audit confirms the abstract sequences match the processes' exact-rational sequences. The \u2200k nonzero-ness is Q.E.D.; the process-identification is audit (full in-Lean identification is the F2b-scale follow-on). No trust surface touched."
+}
