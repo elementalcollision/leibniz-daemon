@@ -1,0 +1,32 @@
+{
+  "gate": "GREEN",
+  "matrix_cert": {
+    "rank_le3_dependency": true,
+    "minor3_det": -1,
+    "rank_ge3": true,
+    "fooling_valid": true,
+    "rank": 3,
+    "nonneg_rank_ge": 4,
+    "separation": true
+  },
+  "process_audit": {
+    "stationary": true,
+    "h2_scaled_is_M": true,
+    "consistency": true,
+    "hankel_ranks": {
+      "len<=1": 3,
+      "len<=2": 3
+    },
+    "hankel_rank_stable_3": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "separation_valid": true,
+    "control_fill_rejected": true,
+    "control_allones_rejected": true,
+    "sound": true
+  },
+  "verdict": "AMPLIFICATION",
+  "reading": "T8-c: a kernel-certified minimal-positive-realization > linear-dimension separation for the 4-state necklace chain (nonneg-rank(H)=4 > 3=rank via a fooling set; no 3-state positive HMM). GREEN = the matrix separation kernel-verifies (rank 3 + fooling set \u2192 nonneg-rank \u2265 4), both corrupted controls (fill a zero; all-ones) are rejected, AND the process audit holds (valid stationary rational chain, Hankel rank 3 stable, 8\u00b7H2=M). HONEST: AMPLIFICATION (textbook smallest rank/nonneg-rank gap; +1 state; fully-observed chain). The deep finite-OOM-no-finite-HMM separation (Jaeger, irrational) stays DEFERRED \u2014 unreachable by the fooling machinery; deciding nonneg-rank is ExR-complete (SOS territory). The sound tool is the combinatorial fooling `decide`, NOT exact_simplex/LP."
+}
