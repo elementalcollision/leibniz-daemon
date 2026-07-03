@@ -52,8 +52,8 @@ to Corollary 1 or the §13 AGI claim, which need MCR to actually *learn*, not me
 the code *runs* over any tokenized `S`), `C = (Universal → εLearnable)`. z3
 (`mcr_audit_artifacts.py::p2_syllogism_invalid`): `P1 ∧ P2_honest ∧ ¬C` is **SAT** (the entailment is invalid);
 `P1 ∧ (Representable → εLearnable) ∧ ¬C` is **UNSAT** (only the *equivocated* P2 rescues it). Numeric witness:
-on a task that is trivially Representable, MCR's asymptotic task error is 0.5010 — **not** ε-Learnable at
-ε=0.05.
+on a task that is trivially Representable, MCR's asymptotic error **at the ambiguous state** is 0.5010 (the
+unconditional per-symbol error is ≈ half that) — **not** ε-Learnable at ε=0.05 either way.
 
 **Plain language.** Corollary 1 equivocates on the word "learn": the premise the paper *proves* only says the
 counting code will *run* over any state space (genericity), while the conclusion needs it to *converge to low
@@ -65,8 +65,9 @@ conclusion fails, so the syllogism is deductively invalid. Named fallacy: equivo
 **Artifact.** Construction: `Σ={a,b,c}`; blocks of length L are Mode-X (`a,b,a,b,…`) w.p. `q∈(0,1)` else Mode-Y
 (`a,c,a,c,…`). Order-1 MCR over the raw symbol sees only state `a` and cannot tell the mode. Exact stationary
 analysis (`mcr_audit_artifacts.py::p3_error_floor`): `T(a,·) ∝ (q, 1−q)`, so `argmax_b P(b|a)` is a **fixed**
-symbol (`b` if `q>½`, else `c`) for all sample sizes; the asymptotic per-symbol error on `a`-steps equals the
-mass of the *other* mode, i.e. **`min(q, 1−q) > 0` for every `q∈(0,1)`** (tight for even L). z3: the negation of
+symbol (`b` if `q>½`, else `c`) for all sample sizes; the asymptotic error at state `a` (on `a`-steps) equals the
+mass of the *other* mode, i.e. **`min(q, 1−q) > 0` for every `q∈(0,1)`** (tight for even L; the unconditional
+per-symbol floor is about half that, still > 0). z3: the negation of
 "error floor > 0 on the realizable domain" is **UNSAT** (proven). Crucially, Theorem 4 does *not* contradict
 this — it bounds *estimation* error around the true order-1 conditional, and says nothing about the gap between
 that conditional and the *task-correct* answer when the process is not order-1 Markov over `S`.

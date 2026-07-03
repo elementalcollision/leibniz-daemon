@@ -74,8 +74,10 @@ determined by the hidden block-mode — information **not present** in the order
 
 - The stationary counts give `T(a,·) ∝ (q, 1−q)`, so `arg max_b P(b|a)` is a **fixed** symbol (`b` if q > ½,
   else `c`) forever, regardless of how much data is seen.
-- The asymptotic per-symbol error therefore has a **lower bound `min(q, 1−q) > 0` for every q ∈ (0,1)** — an
-  error floor that does **not** shrink with data.
+- **From state `a`**, the model's prediction error therefore has a **lower bound `min(q, 1−q) > 0` for every
+  q ∈ (0,1)** — an error floor at that ambiguous state that does **not** shrink with data. (Averaged over the
+  whole stream, where `a` recurs on about half the steps, the unconditional per-symbol floor is about
+  `½·min(q, 1−q)` — still bounded away from 0.)
 
 *Artifact.* Exact stationary computation gives the floor `min(q,1−q)`; Z3 proves the negation ("floor ≤ 0 on
 the realizable domain") is **UNSAT**. Importantly this does **not** contradict Theorem 4: Theorem 4 bounds the
