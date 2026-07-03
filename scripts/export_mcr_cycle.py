@@ -37,8 +37,9 @@ _FINDINGS = [
      "note": "Under the honest reading (Theorem 1 gives Representable ⇒ Runnable, not ε-Learnable), "
              "P1 & P2 ⊬ C; Z3 finds a countermodel (SAT). Only an equivocated P2 rescues the entailment."},
     {"id": "P3", "claim": "Order-1 error floor (flagship)", "verdict": "REFUTED",
-     "note": "Counterexample proved: on the mode-X/Y stream the asymptotic per-symbol error floor is "
-             "min(q, 1−q) > 0; Z3 returns UNSAT on the negation, so the floor holds for every q ∈ (0,1)."},
+     "note": "Counterexample proved: on the mode-X/Y stream the error floor at the ambiguous state a is "
+             "min(q, 1−q) > 0 (unconditional per-symbol ≈ half that, still > 0); Z3 returns UNSAT on the "
+             "negation, so the floor holds for every q ∈ (0,1)."},
     {"id": "P4", "claim": "Derivability claim", "verdict": "REFUTED (Lean)",
      "note": "A map that is at once strictly increasing (count) and constant (assign) on a LinearOrder is a "
              "subsingleton; on ℤ it forces 0 = 1. Kernel-checked in Lean 4.31 + Mathlib, 0 errors, 0 sorry."},
