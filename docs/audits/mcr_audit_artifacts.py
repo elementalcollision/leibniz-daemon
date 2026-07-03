@@ -75,8 +75,9 @@ def p2_syllogism_invalid() -> dict:
 
 
 def p3_error_floor(q: Fr) -> dict:
-    """P3 flagship: order-1 MCR on the mode-X/Y stream. argmax(a) is pinned by q; asymptotic per-symbol error
-    floor = min(q,1-q) > 0. Exact stationary analysis (even block length L, the tight case)."""
+    """P3 flagship: order-1 MCR on the mode-X/Y stream. argmax(a) is pinned by q; asymptotic a-step (state-a)
+    error floor = min(q,1-q) > 0 (unconditional per-symbol = half that in the even-L tight case, still > 0).
+    Exact stationary analysis (even block length L, the tight case)."""
     # a-steps are half the stream; from 'a', true successor is b in mode X (mass q), c in mode Y (mass 1-q).
     # stationary T(a,b) ∝ q, T(a,c) ∝ (1-q); argmax = b iff q>1/2. Error on a-steps = mass of the OTHER mode.
     argmax = "b" if q > Fr(1, 2) else ("c" if q < Fr(1, 2) else "tie")
@@ -85,7 +86,7 @@ def p3_error_floor(q: Fr) -> dict:
 
 
 def p3_z3_floor_proven() -> bool:
-    """z3: negation of (task error >= min(q,1-q)) over the realizable domain is UNSAT => floor proven."""
+    """z3: negation of (state-a error >= min(q,1-q)) over the realizable domain is UNSAT => floor proven."""
     from z3 import Real, And, Or, Solver, sat
     q = Real("q")
     err = Real("err")                                            # err := min(q,1-q) at the arg-max optimum

@@ -24,7 +24,7 @@
           "id": "P3",
           "claim": "Order-1 error floor (flagship)",
           "verdict": "REFUTED",
-          "note": "Counterexample proved: on the mode-X/Y stream the asymptotic per-symbol error floor is min(q, 1−q) > 0; Z3 returns UNSAT on the negation, so the floor holds for every q ∈ (0,1)."
+          "note": "Counterexample proved: on the mode-X/Y stream the error floor at the ambiguous state a is min(q, 1−q) > 0 (unconditional per-symbol ≈ half that, still > 0); Z3 returns UNSAT on the negation, so the floor holds for every q ∈ (0,1)."
         },
         {
           "id": "P4",
