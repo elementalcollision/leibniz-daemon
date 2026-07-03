@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN; even process rank=2 AND infinite order both FULLY kernel-derived from its OOM** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE: T8-a/b/c + rank-upper GREEN; all 3 follow-ons (rank / ∀k infinite order / positive realization) fully kernel-proven** |
 
 ---
 
@@ -228,8 +228,18 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   closed by the T8-b recurrence bridge (`even_infinite_order : ∀k, D_k ≠ 0`). Closes T8-b's audit link
   (`scripts/beyond_markov_infinite_order_lean.py`, `docs/results/beyond-markov-infinite-order-lean-2026-07-03.md`).
   **Both** the even process's rank=2 and its infinite order are now kernel-derived from its 2-dim OOM — the
-  canonical infinite-order-but-finite-dimension separation, end-to-end. The **T8-c positive-realization**
-  identification (the necklace fooling-set embedding in Lean) is the last remaining audit-linked follow-on.
+  canonical infinite-order-but-finite-dimension separation, end-to-end.
+- **Full in-Lean POSITIVE REALIZATION ✅ GREEN, kernel-verified (2026-07-03)** — the last audit-linked
+  follow-on, closed. T8-c's fooling-set certificate is lifted from a **boolean** predicate to **proven
+  theorems**: `fooling_le_of_nonneg_factor` (fooling set of size t ⇒ every nonneg factorization has inner dim
+  ≥ t, via the injectivity argument), `necklace_no_rank3_nonneg_factor` (nonneg-rank(NM) ≥ 4),
+  `hankel_nonneg_factor` (positive OOM ⇒ nonneg Hankel factorization), and the composition
+  `positive_realization_of_NM_needs_4_states` (**no ≤3-state positive HMM/OOM produces the necklace
+  co-occurrence matrix NM**). (`scripts/beyond_markov_positive_realization_lean.py`,
+  `docs/results/beyond-markov-positive-realization-lean-2026-07-03.md`.) **All three audit-linked follow-ons
+  (rank / infinite order / positive realization) are now kernel-verified.** The one residual is defining the
+  necklace as an OOM in Lean to discharge the `block=NM` hypothesis — the same thin plumbing as the other
+  process defs.
 
 ---
 
