@@ -554,6 +554,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     `docs/briefs/terwilliger-gms2012-external-review-brief-2026-07-02.md`. Fact-checked against the repo
     anchors + D3 (all 12 code anchors + all numbers verified). No build yet — Phase 0 is the next action.
     Docs only; invariants byte-identical.
+  - **GMS PLAN REVISED via external witness panel (2026-07-02, review response):** 6 reviewers (Fugu,
+    Deepseek v4 Pro, Kimi, GLM 5.2, Gemini 3.5, Qwen 3.7 Max) critiqued the plan+brief; findings folded in +
+    the review archived at `docs/results/terwilliger-gms-witness-review-2026-07-02.md`. Durable changes:
+    **GATE 0 (algebra + reduced-block-size probe) added as the front kill gate** (block size O(n) vs O(n²) was
+    the panel's decisive contested fact — our D1 Johnson code says O(n), rebutting the "841×841 dead-on-arrival"
+    alarm which reasons about the *unreduced* matrix, BUT Johnson≠Hamming so GATE 0 must measure it);
+    **Johnson≠Hamming caveat** added (the plan's biggest real overclaim); machine-scrape provenance reinforced
+    (reviewers' remembered cells were wrong — A(19,6) ub is GMS 1237 not Schrijver 1280; A(20,8)/A(23,8) are
+    closed); iterative active-set noted with the εI-margin tension; M0 `fromBlocks` is hand-closeable via the
+    F2a pattern (don't block on Aristotle); amplification framed explicitly at audit/Observatory tier (aligns
+    ADR 0046); Kimi's horizontal-infra fork recorded. Panel unanimous: this is verification-amplification, not
+    discovery. Docs only; invariants byte-identical.
 
 ## The ADRs
 
