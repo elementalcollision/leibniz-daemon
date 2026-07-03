@@ -1,0 +1,30 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "P00": "1/6",
+    "P00_is_1_6": true,
+    "block_det": "1/18",
+    "block_det_is_1_18": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "wrong_determinant": {
+        "failed_as_required": true
+      },
+      "understated_dimension": {
+        "failed_as_required": true
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.Tactic"
+  ],
+  "reading": "Full in-Lean process identification for the RANK story: the even process is defined in Lean from its OOM operators and its Hankel rank is DERIVED = 2 (every block \u2264 2 via the general OOM dimension bound; a concrete block's det = 1/18 computed in-kernel \u21d2 rank 2). GREEN = all theorems elaborate 0 errors/0 sorries, both controls fail, and the Python cross-check confirms the Lean definition IS the even process. Lifts rank-upper/rank-exact from audit to Q.E.D.; infinite-order (T8-b) and positive-realization (T8-c) identifications remain the audit-linked follow-ons. No trust surface touched."
+}
