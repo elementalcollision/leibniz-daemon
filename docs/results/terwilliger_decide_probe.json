@@ -1,0 +1,43 @@
+{
+  "rows": [
+    {
+      "K": 200,
+      "kind": "Int",
+      "ok": false,
+      "secs": 130.0
+    },
+    {
+      "K": 200,
+      "kind": "Nat",
+      "ok": false,
+      "secs": 130.0
+    },
+    {
+      "K": 1000,
+      "kind": "Int",
+      "ok": false,
+      "secs": 130.0
+    },
+    {
+      "K": 1000,
+      "kind": "Nat",
+      "ok": false,
+      "secs": 130.0
+    },
+    {
+      "K": 4000,
+      "kind": "Int",
+      "ok": false,
+      "secs": 130.0
+    },
+    {
+      "K": 4000,
+      "kind": "Nat",
+      "ok": false,
+      "secs": 130.0
+    }
+  ],
+  "int_time_ratio_1000_over_200": 1.0,
+  "superlinear": false,
+  "reading": "decide-scaling probe. decide on a flat sum of K products is ~O(K^2) (Int time ratio 1000/200 = 1.0x, vs 5x if linear); Nat vs Int is marginal; term size is the killer. => the flat/'proof-term' PSD encoding is WORSE than the compact List-def form, and the ~N=60 kernel-PSD ceiling is fundamental to the trust model (kernel must reduce; native_decide forbidden). Breaking N>>60 is a charter decision (a new trust tier), not an engineering probe."
+}
