@@ -1,0 +1,15 @@
+{
+  "lowrank_py_ok": true,
+  "fullrank_recovery_ok": true,
+  "kernel": {
+    "valid_cert": true,
+    "bogus_cert": false,
+    "sound": true
+  },
+  "measured_ceiling": {
+    "full_rank_ldltOK": "~N=40 (48s, 819KiB at N=36; heartbeats 0)",
+    "lowrank_gram_r8": "N=60 in 86s (16KiB); ~2x the N ceiling, ~50x smaller source",
+    "wall": "the decide reduction cost itself (heartbeat-independent); N>>60 needs generated proof terms, not arithmetic. Does NOT reach GMS 130-414."
+  },
+  "reading": "Low-rank Gram PSD primitive (lowRankOK): strict sound generalization of ldltOK with column-scale fusion. Kernel recomputes the integer identity; never trusts the rank (fail-closed). Optimizes the three-point / low-rank regime + certificate bit-length; GMS-quadruple stays RED (GATE 0). sound=True means the real Lean kernel accepted the valid low-rank cert and rejected a corrupted one."
+}
