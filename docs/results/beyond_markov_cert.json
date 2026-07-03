@@ -1,0 +1,709 @@
+{
+  "gate": "GREEN",
+  "results": [
+    {
+      "name": "BM-1 symmetric 2-mode HMM",
+      "params": {
+        "q": "3/4",
+        "e": "1/8"
+      },
+      "validity": {
+        "valid": true,
+        "pi_ok": true,
+        "Ta_nonneg": true,
+        "row_stochastic": true
+      },
+      "rank_cert": {
+        "U": [
+          [],
+          [
+            0
+          ]
+        ],
+        "V": [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        "H_int": [
+          [
+            32,
+            32
+          ],
+          [
+            19,
+            13
+          ]
+        ],
+        "denom": 64,
+        "det_int": -192,
+        "rank_ge": 2,
+        "ok": true
+      },
+      "order_certs": [
+        {
+          "k": 0,
+          "h1": [
+            0
+          ],
+          "h2": [
+            1
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              19,
+              32
+            ],
+            [
+              13,
+              32
+            ]
+          ],
+          "denom": 64,
+          "det_int": 192,
+          "num_h1": 32,
+          "num_h2": 32,
+          "ok": true
+        },
+        {
+          "k": 1,
+          "h1": [
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              97,
+              152
+            ],
+            [
+              55,
+              104
+            ]
+          ],
+          "denom": 512,
+          "det_int": 1728,
+          "num_h1": 152,
+          "num_h2": 104,
+          "ok": true
+        },
+        {
+          "k": 2,
+          "h1": [
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              127,
+              194
+            ],
+            [
+              67,
+              110
+            ]
+          ],
+          "denom": 1024,
+          "det_int": 972,
+          "num_h1": 194,
+          "num_h2": 110,
+          "ok": true
+        },
+        {
+          "k": 3,
+          "h1": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              2683,
+              4064
+            ],
+            [
+              1381,
+              2144
+            ]
+          ],
+          "denom": 32768,
+          "det_int": 139968,
+          "num_h1": 4064,
+          "num_h2": 2144,
+          "ok": true
+        },
+        {
+          "k": 4,
+          "h1": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              14209,
+              21464
+            ],
+            [
+              7255,
+              11048
+            ]
+          ],
+          "denom": 262144,
+          "det_int": 1259712,
+          "num_h1": 21464,
+          "num_h2": 11048,
+          "ok": true
+        },
+        {
+          "k": 5,
+          "h1": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              18829,
+              28418
+            ],
+            [
+              9589,
+              14510
+            ]
+          ],
+          "denom": 524288,
+          "det_int": 708588,
+          "num_h1": 28418,
+          "num_h2": 14510,
+          "ok": true
+        },
+        {
+          "k": 6,
+          "h1": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              399331,
+              602528
+            ],
+            [
+              203197,
+              306848
+            ]
+          ],
+          "denom": 16777216,
+          "det_int": 102036672,
+          "num_h1": 602528,
+          "num_h2": 306848,
+          "ok": true
+        },
+        {
+          "k": 7,
+          "h1": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              2117473,
+              3194648
+            ],
+            [
+              1077175,
+              1625576
+            ]
+          ],
+          "denom": 134217728,
+          "det_int": 918330048,
+          "num_h1": 3194648,
+          "num_h2": 1625576,
+          "ok": true
+        },
+        {
+          "k": 8,
+          "h1": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "h2": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "sym": 0,
+          "M_int": [
+            [
+              2807083,
+              4234946
+            ],
+            [
+              1427863,
+              2154350
+            ]
+          ],
+          "denom": 268435456,
+          "det_int": 516560652,
+          "num_h1": 4234946,
+          "num_h2": 2154350,
+          "ok": true
+        }
+      ],
+      "K": 8,
+      "certified": true,
+      "reading": "BM-1 symmetric 2-mode HMM: valid HMM=True; rank(H)>=2 (det=-192!=0); Markov order>8 (9/9 conditional-separation certs)."
+    },
+    {
+      "name": "even process (epsilon-machine)",
+      "params": {},
+      "validity": {
+        "valid": true,
+        "pi_ok": true,
+        "Ta_nonneg": true,
+        "row_stochastic": true
+      },
+      "rank_cert": {
+        "U": [
+          [],
+          [
+            0
+          ]
+        ],
+        "V": [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        "H_int": [
+          [
+            2,
+            4
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "denom": 6,
+        "det_int": -2,
+        "rank_ge": 2,
+        "ok": true
+      },
+      "order_certs": [
+        {
+          "k": 0,
+          "h1": [
+            0
+          ],
+          "h2": [
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "denom": 6,
+          "det_int": -2,
+          "num_h1": 2,
+          "num_h2": 4,
+          "ok": true
+        },
+        {
+          "k": 1,
+          "h1": [
+            0,
+            1
+          ],
+          "h2": [
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "denom": 6,
+          "det_int": 1,
+          "num_h1": 1,
+          "num_h2": 3,
+          "ok": true
+        },
+        {
+          "k": 2,
+          "h1": [
+            0,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "denom": 12,
+          "det_int": -2,
+          "num_h1": 2,
+          "num_h2": 4,
+          "ok": true
+        },
+        {
+          "k": 3,
+          "h1": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "denom": 12,
+          "det_int": 1,
+          "num_h1": 1,
+          "num_h2": 3,
+          "ok": true
+        },
+        {
+          "k": 4,
+          "h1": [
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "denom": 24,
+          "det_int": -2,
+          "num_h1": 2,
+          "num_h2": 4,
+          "ok": true
+        },
+        {
+          "k": 5,
+          "h1": [
+            0,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "denom": 24,
+          "det_int": 1,
+          "num_h1": 1,
+          "num_h2": 3,
+          "ok": true
+        },
+        {
+          "k": 6,
+          "h1": [
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "denom": 48,
+          "det_int": -2,
+          "num_h1": 2,
+          "num_h2": 4,
+          "ok": true
+        },
+        {
+          "k": 7,
+          "h1": [
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "denom": 48,
+          "det_int": 1,
+          "num_h1": 1,
+          "num_h2": 3,
+          "ok": true
+        },
+        {
+          "k": 8,
+          "h1": [
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "h2": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "sym": 1,
+          "M_int": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "denom": 96,
+          "det_int": -2,
+          "num_h1": 2,
+          "num_h2": 4,
+          "ok": true
+        }
+      ],
+      "K": 8,
+      "certified": true,
+      "reading": "even process (epsilon-machine): valid HMM=True; rank(H)>=2 (det=-2!=0); Markov order>8 (9/9 conditional-separation certs)."
+    }
+  ],
+  "kernel": {
+    "status": "checked",
+    "rows": [
+      {
+        "name": "BM-1 symmetric 2-mode HMM",
+        "valid": true,
+        "bogus_rejected": true
+      },
+      {
+        "name": "even process (epsilon-machine)",
+        "valid": true,
+        "bogus_rejected": true
+      }
+    ],
+    "sound": true
+  },
+  "reading": "T8-a beyond-Markov certificate suite: each witness is a valid rational HMM with a kernel-checkable Hankel rank lower bound and Markov-order>K separation. GREEN = Python certs hold AND the real Lean kernel accepts the valid cert and rejects the corrupted control. Honest scope: 'order>K', not 'infinite order' (that is T8-b, an induction bridge lemma). Amplification, not discovery (textbook processes)."
+}

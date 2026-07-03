@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit (proposed) | *discovery-shaped, unmeasured* | **pending external round** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | amplification (T8-c = discovery probe) | **T8-a GREEN kernel-attested; panel processed** |
 
 ---
 
@@ -196,9 +196,12 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   rank is often > Hankel rank (NP-hard); a Farkas/LP-infeasibility cert that "no r-state positive HMM realizes
   this process" is genuinely open *and* certificate-shaped, and its checker already exists (`exact_simplex`
   infeasibility). Encoding is the unbuilt work.
-- **Auditable increments.** (a) **T8-a** the minimal HMM certificate suite (validity + Hankel lower minor +
-  order>K), gate = a rational-HMM witness where `bareiss_minors`/`detSignOK` accept the true minors and reject a
-  corrupted control; audit tier. (b) **T8-b** the recurrence bridge lemma for infinite order, gate = `#print
+- **Auditable increments.** (a) **T8-a ✅ GREEN, kernel-attested (2026-07-03)** — the minimal HMM certificate
+  suite (validity + Hankel rank-lower minor + order>K) is built and the real Lean 4.31 kernel accepts the valid
+  cert and rejects the corrupted control for BM-1 and the even process (`scripts/beyond_markov_cert.py`,
+  `tests/test_beyond_markov_cert.py`, `docs/results/beyond-markov-t8a-2026-07-03.md`); audit tier, no trust
+  surface touched. (b) **T8-b** the recurrence bridge lemma for infinite order (the even-process separation dets
+  alternate `−2,1,−2,1` — a clean two-step geometric recurrence, the ideal first target), gate = `#print
   axioms` closure on a `∀k` theorem (empty project axioms), Q.E.D.-reachable (F2b pattern). (c) **T8-c
   (discovery probe)** MPRP: reproduce a known HMM-rank > Hankel-rank gap via an `exact_simplex` infeasibility
   certificate; GREEN = the LP is certified infeasible for r-state and feasible for (r+1)-state; RED = no
