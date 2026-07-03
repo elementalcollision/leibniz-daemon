@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE: T8-a/b/c + rank-upper GREEN; all 3 follow-ons (rank / ∀k infinite order / positive realization) fully kernel-proven** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE & ZERO-AUDIT: every property (rank / ∀k infinite order / positive realization) kernel-derived from Lean process definitions** |
 
 ---
 
@@ -237,9 +237,15 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   `positive_realization_of_NM_needs_4_states` (**no ≤3-state positive HMM/OOM produces the necklace
   co-occurrence matrix NM**). (`scripts/beyond_markov_positive_realization_lean.py`,
   `docs/results/beyond-markov-positive-realization-lean-2026-07-03.md`.) **All three audit-linked follow-ons
-  (rank / infinite order / positive realization) are now kernel-verified.** The one residual is defining the
-  necklace as an OOM in Lean to discharge the `block=NM` hypothesis — the same thin plumbing as the other
-  process defs.
+  (rank / infinite order / positive realization) are now kernel-verified.**
+- **Necklace tie-off ✅ GREEN, kernel-verified (2026-07-03) — the whole track is now ZERO-AUDIT** — the
+  necklace chain is defined as an OOM in Lean (`nInit`/`nOp`/`nFin`) and its positive-realization gap is derived
+  from that definition: `necklace_block_no_rank3_nonneg_factor` (its own block's size-4 fooling set, evaluated
+  in-kernel), `necklace_positive_realization_needs_4` (no ≤3-state positive HMM/OOM realizes it), and
+  `necklace_is_positive_realization` (it IS a 4-state one) ⇒ minimal positive realization = 4 > 3 = rank
+  (`scripts/beyond_markov_necklace_lean.py`, `docs/results/beyond-markov-necklace-lean-2026-07-03.md`). **Every
+  beyond-Markov property of both witness processes (even process: rank=2, infinite order; necklace: positive
+  realization gap) is now kernel-derived from a Lean process definition — no Python audit in the trust chain.**
 
 ---
 
