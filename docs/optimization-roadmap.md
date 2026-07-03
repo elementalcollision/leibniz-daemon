@@ -630,6 +630,22 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     ~3-6 months full discharge. Strategic standing unchanged: F2b is **verification-amplification** of 3 known
     bounds (ADR 0046), not discovery — send/no-send stays the operator's; the brief is now sound to send.
     Docs only; invariants byte-identical.
+  - **MCR WHITEPAPER AUDIT (2026-07-03) — first external formal-verification target; daemon-as-audit-instrument
+    validated:** `docs/audits/mcr-whitepaper-audit-2026-07-03.md` (+ `mcr_audit_artifacts.py` GREEN under z3,
+    `mcr_p4_not_derivable.lean` Lean-kernel 0-sorry, `tests/test_mcr_audit.py`). Chimera (the operator's code
+    agent) handed Leibniz a third-party whitepaper claiming a bigram Markov counter is a "universal information
+    processor / path to AGI"; 8 problems, each a machine-checked verdict, adversarially verified. Results:
+    P1 Thm-1 = the free theorem (VACUOUS — holds for a no-op stub); P2 universality syllogism REFUTED
+    (equivocation on "learn", z3 SAT countermodel); **P3 flagship** — a trivially-representable task with a
+    z3-PROVEN error floor min(q,1-q)>0 at any sample size (context-conflation, the bigram failure mode) →
+    REFUTES unconditional learnability; P4 Q-learning embedding REFUTED as ill-typed (Lean kernel: value-assign
+    ≠ count-update specialization); P5 bridge-normalization ILL-POSED (E>log2 N by 13.3 bits, no renorm map);
+    P6 sample bound TRUE-BUT-WEAKER (per-pair Hoeffding correct; union bound omitted but O(N ln N) survives);
+    P7 the AGI chain NOT-PROVEN (unstated-premise + non-sequitur, not shown false); P8 steelman PROVEN — the
+    true weaker claim (order-reduction via Σ^k augmentation) holds but is exponential in context depth by the
+    paper's own Thm 4. **Nothing supports the §13 AGI conclusion.** This is exactly the daemon's vindicated
+    role (sound verification / non-Q.E.D. decision instrument) applied to a real external question; trust
+    surfaces untouched; invariants byte-identical.
 
 ## The ADRs
 
