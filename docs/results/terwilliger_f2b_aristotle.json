@@ -1,0 +1,11 @@
+{
+  "rows": [
+    {
+      "milestone": "M0_fromBlocks_zero_psd_iff",
+      "statement": "theorem psd_fromBlocks_zero_iff {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [DecidableEq n] (A : Matrix m m \u211d) (D : Matrix n n \u211d) : (Matrix.fromBlocks A 0 0 D).PosSemidef \u2194 A.PosSemidef \u2227 D.PosSemidef",
+      "secs": 643.6,
+      "result": "no_proof_returned"
+    }
+  ],
+  "reading": "F2b automated-prover leg (Aristotle proposes, our kernel decides). QED = Aristotle closed the milestone AND our Lean 4.31 kernel re-verified it \u2014 a real F2b sub-lemma banked. Anything else is honest negative signal on Aristotle's reach for this shape. Trust boundary intact: no bound or theorem is trusted without our kernel."
+}

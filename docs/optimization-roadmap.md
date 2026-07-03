@@ -528,6 +528,24 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     discovery needs **D3 hierarchies** or eq.(25) sharpenings (which now have a live validated A*(n,d,i)
     oracle); D2 was resolved in parallel (bullet above) and its truncated-dual rescue is available to both.
     Guarded by `tests/test_terwilliger_cwc.py` (18 tests, CI-clean); invariants byte-identical.
+  - **F2b ROUND LAUNCHED + D3 SCOPED (2026-07-02) — operator directives actioned:**
+    **F2b automated leg**: `scripts/terwilliger_f2b_aristotle.py` submitted milestone M0 (block-diagonal
+    PSD-iff — the self-contained engine of Schrijver Theorem 1 that Mathlib lacks) to Harmonic Aristotle;
+    **Aristotle returned no proof in ~644 s → 0/1 kernel-verified** (honest negative; trust boundary intact,
+    no false positive). Signal: even the engine lemma isn't a one-shot for the hosted prover, matching the
+    brief's weeks-to-months estimate. The human Mathlib/panel channel (brief unchanged) is the primary path;
+    F2b stays audit/Observatory (ADR 0046) until a bridge is *discharged*. Doc:
+    `docs/results/terwilliger-f2b-aristotle-2026-07-02.md`. **D3 (task #104) DONE — verdict SCOPE-MORE:**
+    `docs/results/terwilliger-d3-hierarchy-scoping-2026-07-02.md`. GMS 2012 quadruple-distance is the right
+    stronger formulation (product-β blocks already in the D1 build; all downstream legs reused, no trust
+    edit; ~4-6 wks) but **near-zero discovery EV**: its wins are already in Brouwer 2026, and the only
+    unmined cells (pre-SDP A(27,12)≤169 / A(28,12)≤288) sit behind the exact-solver conditioning wall that
+    already binds three-point, at 160× scale. Recommendation: a **1-2 day two-gate spike** (provenance ≥3
+    Schrijver-2005-sourced improvable cells; solvability of A(27,12)/A(28,12) at three-point) decides
+    GO/NO-GO — not a blind build. If the goal is verification-amplification (kernel-tier re-derivation of
+    current records) rather than discovery, GMS is a GO on that basis alone — the real framing choice D3
+    surfaces. Laurent-level-2 (O(n⁷)) is NO-GO; LPS-nonbinary needs an unbuilt q-ary oracle;
+    split-Terwilliger's payoff is a single d=4 point. Docs only; invariants byte-identical.
 
 ## The ADRs
 
