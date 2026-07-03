@@ -646,6 +646,12 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     paper's own Thm 4. **Nothing supports the §13 AGI conclusion.** This is exactly the daemon's vindicated
     role (sound verification / non-Q.E.D. decision instrument) applied to a real external question; trust
     surfaces untouched; invariants byte-identical.
+  - **MCR AUDIT — SOURCE-REPO DELIVERABLE (2026-07-03):** `docs/audits/mcr-external-review-for-source-repo.md`
+    (self-contained, jargon-free, respectful, reproducible external review Chimera can file as an issue/
+    discussion on Player-Kheltz/MCR) + `docs/audits/mcr-audit-handoff-to-chimera.md` (cover note: what each
+    artifact is, how/where to file, tone guidance, keep the formal/empirical lanes separate). The internal
+    Part-4 report, the GREEN z3 script, and the Lean-kernel proof (from #251) are the backing artifacts. Docs
+    only; invariants byte-identical.
 
 ## The ADRs
 
