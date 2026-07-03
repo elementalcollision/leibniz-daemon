@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "generated_at": "2026-07-03T19:30:00Z",
+    "producer": "scripts/export_beyond_markov_cycle.py",
+    "target": "elementalcollision/codex-calculemus : ledger/calculemus.json -> cycles[]",
+    "merge": "append each object in `cycles` to the site ledger's top-level `cycles` array; do not overwrite the ledger's own `generated_at`/`laws`/`held_back`."
+  },
+  "cycles": [
+    {
+      "cycle": 3,
+      "date": "2026-07-03",
+      "domain": "Process complexity",
+      "kind": "verification",
+      "title": "Beyond Markov: kernel-verified process-complexity certificates (Hankel rank, order, positive realization)",
+      "summary": "A verification cycle over process complexity, motivated by the MCR audit (a bigram Markov counter). The daemon reframed 'beyond Markov' around the Hankel-matrix rank — the true prediction-state dimension, of which Markov order is a strict, exponentially-wasteful special case — and then machine-certified three properties of textbook processes from first principles, every one derived in the Lean kernel from a process defined in Lean (zero audit): the even process has finite Hankel rank 2 yet infinite Markov order (a determinant computed in-kernel; a recurrence bridge for the ∀k statement), and the 4-state necklace chain needs strictly more positive (HMM) states than its linear dimension (a fooling-set lower bound on nonnegative rank, proven by an injectivity argument, plus the positive-OOM factorization bridge). Five reusable kernel-verified lemmas ship as a small process-complexity certificate library. Honest verdict: verification-amplification — the mathematics is textbook and the genuine-discovery case is provably out of reach of the exact-rational machinery; the contribution is the first kernel-attested certificates, behind an unbroken trust boundary.",
+      "findings": [
+        {
+          "id": "REFRAME",
+          "claim": "Markov *order* is the wrong invariant",
+          "verdict": "REFRAMED",
+          "note": "The prediction-state dimension is the rank of the Hankel matrix H[u,v]=P(uv). Order-k Markov is a strict subclass of finite-Hankel-rank processes (HMM/OOM/PSR/WFA); a process can have infinite order yet finite rank. Textbook (Blackwell–Koopmans, Carlyle–Paz, Fliess, Crutchfield–Shalizi); the contribution is the kernel-attested certificate, not the theorem."
+        },
+        {
+          "id": "RANK",
+          "claim": "Finite Hankel rank, derived in-kernel from an OOM",
+          "verdict": "PROVEN",
+          "note": "hankel_block_rank_le: any r-dim OOM ⇒ every finite Hankel block has rank ≤ r (the word-operator product is a monoid hom, so the Hankel factors through the r-dim state space). Instantiated for the even process defined in Lean: Hankel rank = 2 exactly (a concrete block's determinant computed in-kernel = 1/18). Zero audit."
+        },
+        {
+          "id": "ORDER",
+          "claim": "Infinite Markov order, derived in-kernel from the operators",
+          "verdict": "PROVEN",
+          "note": "even_infinite_order: ∀k the order-k conditional gap D_k ≠ 0. eOp 1 · eOp 1 = ½I ⇒ appending '11' halves every word probability ⇒ D_{k+2} = ¼ D_k (base cases −1/18, 1/36 evaluated in-kernel), closed by two_step_recurrence_nonzero. So no finite Markov order captures the even process."
+        },
+        {
+          "id": "POSREAL",
+          "claim": "Minimal positive realization > linear dimension",
+          "verdict": "PROVEN",
+          "note": "The necklace 4-state chain (defined as an OOM in Lean) has Hankel rank 3 but minimal positive (HMM) realization 4: fooling_le_of_nonneg_factor (a size-4 fooling set ⇒ every nonneg factorization has inner dim ≥ 4, by an injectivity argument) + hankel_nonneg_factor (positive OOM ⇒ nonneg factorization) ⇒ no ≤3-state positive HMM realizes it, while it IS a 4-state one. Zero audit."
+        },
+        {
+          "id": "LIBRARY",
+          "claim": "A reusable kernel-verified process-complexity library",
+          "verdict": "SHIPPED",
+          "note": "hankel_block_rank_le, two_step_recurrence_nonzero, fooling_le_of_nonneg_factor, hankel_nonneg_factor, and the Tprod/Pval OOM scaffold — all kernel-verified through the ADR-0011 Mathlib REPL, 0 sorries, behind the unchanged trust boundary."
+        },
+        {
+          "id": "EV",
+          "claim": "Honest expected value",
+          "verdict": "AMPLIFICATION",
+          "note": "Verification-amplification, not discovery. The mathematics is textbook and the finite-state theory is fully mined; the one discovery-shaped lever (the deep finite-OOM-but-no-finite-HMM phenomenon, Jaeger's probability clock) is irrational / dense-Hankel and provably out of reach of the exact-rational fooling machinery. External 8-reviewer panel corrections all incorporated."
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "beyond_markov_process_lean.py",
+          "kind": "lean-proof",
+          "checker": "Lean 4.31 kernel + Mathlib REPL",
+          "result": "rank = 2 derived from the OOM; 0 sorries"
+        },
+        {
+          "name": "beyond_markov_infinite_order_lean.py",
+          "kind": "lean-proof",
+          "checker": "Lean 4.31 kernel + Mathlib REPL",
+          "result": "∀k infinite order; 0 sorries"
+        },
+        {
+          "name": "beyond_markov_necklace_lean.py",
+          "kind": "lean-proof",
+          "checker": "Lean 4.31 kernel + Mathlib REPL",
+          "result": "positive realization 4 > 3 = rank; 0 sorries"
+        }
+      ],
+      "links": [],
+      "laws": []
+    }
+  ]
+}
