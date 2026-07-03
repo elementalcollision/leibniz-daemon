@@ -546,6 +546,14 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     current records) rather than discovery, GMS is a GO on that basis alone — the real framing choice D3
     surfaces. Laurent-level-2 (O(n⁷)) is NO-GO; LPS-nonbinary needs an unbuilt q-ary oracle;
     split-Terwilliger's payoff is a single d=4 point. Docs only; invariants byte-identical.
+  - **GMS 2012 BUILD COMMITTED (2026-07-02) — plan + external brief drafted:** operator decision to build
+    toward the GMS quadruple-distance producer, front-gated by the D3 spike. Phased plan (Phase 0 two-gate
+    spike → Phases 1-6 build via the proven D1 ladder; DISCOVERY vs VERIFICATION-AMPLIFICATION objectives
+    share Phases 1-5): `docs/plans/terwilliger-gms2012-build-plan-2026-07-02.md`. External-agent review/tackle
+    brief (Phase-0 design, the four measured walls incl. the M0 engine lemma, go/no-go economics):
+    `docs/briefs/terwilliger-gms2012-external-review-brief-2026-07-02.md`. Fact-checked against the repo
+    anchors + D3 (all 12 code anchors + all numbers verified). No build yet — Phase 0 is the next action.
+    Docs only; invariants byte-identical.
 
 ## The ADRs
 
