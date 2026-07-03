@@ -1,0 +1,29 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "block_8x_is_M4": true,
+    "fooling_on_block": true,
+    "hankel_rank_stable_3": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "corrupt_operator_zero": {
+        "failed_as_required": true
+      },
+      "overclaim_states": {
+        "failed_as_required": true
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.Tactic"
+  ],
+  "reading": "Tie-off: the necklace process is defined as an OOM in Lean (nInit, nOp, nFin) and its positive-realization gap is derived from that definition -- no <=3-state positive HMM/OOM realizes it (its own length-2 Hankel block has a size-4 fooling set, evaluated in-kernel), while the necklace itself is a valid 4-state positive realization (nonneg init/op/fin). So minimal positive realization = 4 > 3 = ordinary rank, ZERO AUDIT. GREEN = all theorems elaborate 0 errors/0 sorries, both controls (corrupt an operator zero; overclaim 5<=r) fail, and the Python cross-check confirms the Lean OOM is the necklace chain. The whole beyond-Markov track is now kernel-derived from process definitions. Amplification, not discovery. No trust surface touched."
+}
