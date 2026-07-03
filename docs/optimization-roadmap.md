@@ -592,6 +592,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     (GATE 0 RED stands); the `decide` reduction is the fundamental wall, and breaking N≫60 needs **generated
     proof terms / finer chunking, not arithmetic** — recorded as the next frontier probe. Guarded by
     `tests/test_terwilliger_psd_lowrank.py`; invariants byte-identical.
+  - **PROOF-TERM PROBE (2026-07-02) — the kernel-PSD ceiling is a TRUST-MODEL boundary, not an engineering
+    gap:** `docs/results/terwilliger-proofterm-probe-2026-07-02.md`, `scripts/terwilliger_decide_probe.py`.
+    Tested whether a non-`decide` encoding (flat Int/Nat arithmetic hitting the kernel's fast bignum path)
+    breaks the ~N=60 wall. It does NOT — it is worse: `decide` cost is **~O(term²)** (one flat sum of K
+    products: K=200→1.4s, K=1000→30s [10.9× for 5× more terms], K=4000→timeout), Nat vs Int is marginal, and
+    term size is the killer (1600 trivial conjuncts alone time out) — so the unrolled "proof-term" PSD check
+    times out at N=40 where the compact `List`-def `lowRankOK` reaches N=60. **The frontier is now fully
+    mapped:** the low-rank Gram primitive (PR #247) is the best sound, kernel-reducing, no-new-trust PSD
+    certificate; beyond ~N=60, kernel-PSD certification is a **charter decision** (admit `native_decide` or an
+    external verified checker as a NEW TRUST TIER, with its own ADR + witness round — the F2c-style gate), not
+    more solver cleverness. GMS-quadruple stays RED. Guarded by `tests/test_terwilliger_decide_probe.py`;
+    invariants byte-identical.
 
 ## The ADRs
 
