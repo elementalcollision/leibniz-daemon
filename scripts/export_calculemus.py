@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -38,6 +39,40 @@ _DEFAULT_LEDGER = Path(
     os.environ.get("LEIBNIZ_LEDGER")
     or (_REPO.parent / "codex-calculemus" / "ledger" / "calculemus.json")
 )
+
+# H0 axiom-closure gate: a discharged/Q.E.D. law may depend only on the standard Lean/Mathlib axioms — never on
+# `sorryAx` and never on a project-admitted axiom (an F2b-style scaffold), which would mean the "proof" is not a
+# proof. `#print axioms <name>` reports the footprint; we assert it is a subset of the standard set.
+_STD_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
+_NAME_RE = re.compile(r"(?:theorem|lemma)\s+([^\s({\[:]+)")
+_AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
+
+
+def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=_STD_AXIOMS) -> dict:
+    """Elaborate `<theorem_src> := <proof_src>` and run `#print axioms`. ok = it elaborates with no error AND
+    its axiom footprint contains no `sorryAx` and no axiom outside `allowed` (the standard Lean/Mathlib set).
+    A discharged law that secretly rests on `sorry` or an admitted lemma fails here even if the kernel elaborates
+    the (open) term. Read-only: mints nothing, edits no core file."""
+    m = _NAME_RE.search(theorem_src)
+    if not m:
+        return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": []}
+    name = m.group(1)
+    body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
+    src = f"{theorem_src} {body}\n#print axioms {name}"
+    r = backend._run(src, tuple(imports))
+    if r is None:
+        return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name}
+    msgs = r.get("messages", []) or []
+    errors = [(mm.get("data") or "") for mm in msgs if mm.get("severity") == "error"]
+    axioms: list = []
+    for mm in msgs:
+        am = _AXIOMS_RE.search(mm.get("data") or "")
+        if am:
+            axioms = [a.strip() for a in am.group(1).split(",") if a.strip()]
+    has_sorry = "sorryAx" in axioms or any("sorry" in e.lower() for e in errors)
+    extra = [a for a in axioms if a not in allowed]
+    return {"ok": bool(not errors and not has_sorry and not extra), "axioms": axioms,
+            "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name}
 
 
 def check_ledger(path: Path) -> int:
@@ -65,16 +100,26 @@ def check_ledger(path: Path) -> int:
         for law in claimed:
             expr = Expressio(theorem_src=law["theorem_src"], imports=tuple(law.get("imports", [])))
             ok = backend.check_proof(expr, law.get("proof_src", ""))
-            print(f"  {'VERIFIED' if ok else 'FAILED  '}  {law.get('id', law['statement'])}: {law.get('proof_src','')}")
-            if not ok:
+            # H0: a claimed Q.E.D. must also have a clean axiom footprint (no sorryAx / admitted axiom).
+            ax = axiom_closure(backend, law["theorem_src"], law.get("proof_src", ""), law.get("imports", []))
+            clean = ok and ax["ok"]
+            note = f"axioms={ax['axioms']}"
+            if ax.get("has_sorry"):
+                note += " ⚠SORRY"
+            if ax.get("extra_axioms"):
+                note += f" ⚠ADMITTED={ax['extra_axioms']}"
+            print(f"  {'VERIFIED' if clean else 'FAILED  '}  {law.get('id', law['statement'])}: "
+                  f"proof_ok={ok} {note}")
+            if not clean:
                 failures += 1
     finally:
         backend.close()
 
     if failures:
-        print(f"✗ {failures} law(s) claim a Q.E.D. the kernel rejects.", file=sys.stderr)
+        print(f"✗ {failures} law(s) claim a Q.E.D. the kernel rejects or that rests on sorry/an admitted axiom.",
+              file=sys.stderr)
         return 1
-    print("✓ every claimed Q.E.D. is confirmed by the kernel.")
+    print("✓ every claimed Q.E.D. is kernel-confirmed with a clean axiom footprint.")
     return 0
 
 
