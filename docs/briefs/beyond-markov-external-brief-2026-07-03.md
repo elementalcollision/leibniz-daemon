@@ -14,10 +14,52 @@ mathematical lenses, **11 kept** after a novelty/checkability filter). We want y
 Leibniz is unusual: **LLMs only propose; the decision is made solely by the Lean 4 kernel, Z3, or an
 exact-rational decision procedure.** A conjecture is only actionable for us if its certificate is **finite and
 exact-rational** — an integer/rational matrix identity the kernel can settle by `decide`, or a Z3-UNSAT of a
-rational-arithmetic negation. Anything requiring reals, limits, or an undecidable step is not kernel-attestable
-(it can at most be an "Observatory-tier" record, never a Q.E.D.). Please judge every conjecture against *that*
-bar, not against general mathematical interest. Our existing machinery you can assume: fraction-free (Bareiss)
-integer minors and `det ≠ 0` / `det = 0` checks; integer-LDLᵀ PSD certificates; Z3-UNSAT over exact rationals.
+rational-arithmetic negation. Anything outside finite rational algebra is not cheaply `decide`-attestable — but
+it **may still be kernel-attestable** via a Lean proof term (induction, a recurrence lemma, Mathlib), which the
+kernel checks as soundly as `decide` (the LLM proposes the proof; the kernel decides it). What is genuinely
+excluded is reals, true limits, and undecidable steps. Please judge every conjecture against *that* bar, not
+against general mathematical interest. Our existing machinery you can assume: fraction-free (Bareiss) integer
+minors and `det ≠ 0` / `det = 0` checks; integer-LDLᵀ PSD certificates (= our SOS/PSD path); an exact-rational
+two-phase simplex (LP-dual / Farkas / infeasibility certificates); Z3-UNSAT over exact **linear** rationals; and
+Mathlib tactic proofs through the Lean REPL (demonstrated sorry-free in prior work).
+
+> ## v2 — corrections from the external witness panel (2026-07-03)
+>
+> Seven reviewers (Fugu, Fugu Ultra, Deepseek v4 Pro, Kimi, Gemini 3.1 Pro, Qwen 3.7 Max, MiniMax M3) returned a
+> convergent, load-bearing review. These corrections **supersede** the v1 text below; the v1 conjectures are kept
+> for the record. Full synthesis + the capability match/divergence map: `docs/results/beyond-markov-witness-review-2026-07-03.md`.
+>
+> 1. **BM-2 is mathematically impossible as stated (RETRACTED).** On a *stationary binary* process
+>    `det B = p(1−p) − q`, so `rank(B)=1 ⟺ q=p(1−p) ⟺ iid ⟺ rank(H)=1`. "rank-1 bigram ∧ rank-3 Hankel" cannot
+>    exist — the v1 witness `B=outer(p,p)` *is* iid. **Fix:** coarse-grain — a larger alphabet iid on a
+>    *coarsening* (e.g. parity), so the coarse bigram is rank 1 but the fine-alphabet Hankel is rank r. Until
+>    that construction is written, **lead with BM-4 (even process) and BM-1**, not BM-2.
+> 2. **Rank-UPPER bounds are not finite-window facts.** All 3×3 minors `=0` on a 4×4 block does **not** prove
+>    global `rank ≤ 2`. Use a rational linear representation `P(w)=α T_w ω` + a bridge theorem
+>    (`linear_representation ⇒ hankel_rank_le`); window minors are regression tests only. State "rank ≥ r by
+>    minor ∧ rank ≤ r by representation."
+> 3. **Loss functions: linear only for Z3/LP; quadratic ⇒ PSD, never Z3-NRA.** Z3's nonlinear real arithmetic is
+>    *not a complete decision procedure* — using it as an arbiter would violate "the mechanical checker decides."
+>    For linear 0-1 loss emit an exact LP-dual/Farkas certificate; for Gini/quadratic loss emit a **PSD/SOS
+>    certificate** (our `ldltOK`). This also fixes BM-3/BM-4's loss claims.
+> 4. **Infinite order is Q.E.D.-reachable, not Observatory.** A restricted recurrence certificate
+>    (`Δ_{k+2}=qΔ_k, Δ_0,Δ_1≠0, q≠0 ⇒ ∀k Δ_k≠0`) proved by *induction* is a full kernel Q.E.D.; the `decide`
+>    restriction was a pipeline convenience, not the trust boundary. Honest labeling: the kernel attests "order
+>    > K" until the recurrence bridge lemma is *discharged*, then "infinite order."
+> 5. **Process-validity is mandatory.** A Hankel minor certifies a formal *series*; a valid stochastic process
+>    needs `P(w)≥0 ∀w`, `∑_a P(wa)=P(w)`, `P(ε)=1` — trivial for HMMs (nonneg matrices), *undecidable* for
+>    general OOMs (the Negative Probability Problem). **Give every flagship as a rational HMM.**
+> 6. **Recheck the numbers.** The even-process order-1 error is 1/4, not 1/3 (the 1/3 is the causal-state
+>    optimum); and "best order-k predictor" needs an *optimality* proof (a lower bound over predictors), not just
+>    an exhibited predictor.
+> 7. **The novelty is the trust chain, not the math.** Bareiss dets and Z3-UNSAT live in every CAS; the
+>    contribution is end-to-end Lean-kernel attestation (process → matrix → determinant → inequality, one
+>    replayable proof object). Not "new mathematics discovered by AI."
+> 8. **The one genuine discovery lever: the Minimal Positive Realization Problem.** HMM (nonnegative) rank is
+>    often strictly greater than Hankel rank; computing it is NP-hard. A **Farkas/LP-infeasibility certificate
+>    that "no r-state positive HMM realizes this process"** is genuinely open *and* certificate-shaped — and our
+>    exact simplex already emits infeasibility certificates. This is the discovery-shaped frontier; the
+>    Hankel-rank separations below are verification-amplification.
 
 ## 1. The anchor and the reframe
 
