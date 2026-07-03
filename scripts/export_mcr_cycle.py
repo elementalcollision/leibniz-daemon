@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -91,16 +92,42 @@ def build_cycle() -> dict:
     )
 
 
+# Where the publication agent pipelines this: the separate site repo's ledger, `cycles[]`.
+_TARGET = "elementalcollision/codex-calculemus : ledger/calculemus.json -> cycles[]"
+
+
+def build_fragment(*, generated_at: str = "") -> dict:
+    """A self-describing, ready-to-pipeline `/cycles` fragment.
+
+    `meta` is fragment provenance for the publication agent (not ledger content);
+    `cycles` is the payload: merge each object into the site ledger's top-level
+    `cycles` array. See docs/audits/mcr-codex-cycle-publish.md."""
+    return {
+        "meta": {
+            "generated_at": generated_at,
+            "producer": "scripts/export_mcr_cycle.py",
+            "target": _TARGET,
+            "merge": "append each object in `cycles` to the site ledger's top-level `cycles` array; "
+                     "do not overwrite the ledger's own `generated_at`/`laws`/`held_back`.",
+        },
+        "cycles": [build_cycle()],
+    }
+
+
 def main(argv: list[str]) -> int:
-    cycle = build_cycle()
-    fragment = {"cycles": [cycle]}
+    # `--generated-at VALUE` for a reproducible stamp; default to UTC now.
+    if "--generated-at" in argv:
+        stamp = argv[argv.index("--generated-at") + 1]
+    else:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    fragment = build_fragment(generated_at=stamp)
     text = json.dumps(fragment, indent=2, ensure_ascii=False) + "\n"
     if "-o" in argv:
         i = argv.index("-o")
         out = Path(argv[i + 1])
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(text)
-        print(f"wrote {out}")
+        print(f"wrote {out}  (target: {_TARGET})")
     else:
         print(text, end="")
     return 0
