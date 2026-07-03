@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | amplification (T8-c = discovery probe) | **T8-a + T8-b GREEN kernel-verified (incl. ∀k infinite order); panel processed** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c GREEN kernel-verified (certs · ∀k infinite order · positive-realization gap)** |
 
 ---
 
@@ -205,10 +205,15 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   (q=1, **infinite Markov order**) and BM-4 excess-loss (q=1/2) instantiations elaborate 0-errors/0-sorries
   through the Mathlib REPL, all controls fail (`scripts/beyond_markov_recurrence.py`,
   `docs/results/beyond-markov-t8b-2026-07-03.md`). "order > K" is now a kernel `∀k` theorem; the
-  process-identification stays audit (full in-Lean identification is the F2b-scale follow-on). (c) **T8-c
-  (discovery probe)** MPRP: reproduce a known HMM-rank > Hankel-rank gap via an `exact_simplex` infeasibility
-  certificate; GREEN = the LP is certified infeasible for r-state and feasible for (r+1)-state; RED = no
-  reachable gap — a cheap pre-registered kill, like the covering probes.
+  process-identification stays audit (full in-Lean identification is the F2b-scale follow-on). (c) **T8-c ✅ GREEN, kernel-certified (2026-07-03) — resolved as AMPLIFICATION** — the necklace chain (valid
+  stationary rational process, Hankel rank 3) has minimal positive realization **4 > 3**, kernel-certified via a
+  **fooling-set** lower bound + rank minor (`scripts/beyond_markov_mprp.py`,
+  `docs/results/beyond-markov-t8c-2026-07-03.md`), both controls rejected. Three honest corrections: the sound
+  tool is the **combinatorial fooling `decide`**, NOT `exact_simplex`/LP (the panel's framing was wrong);
+  deciding nonneg-rank is **ExR-complete** (deferred SOS territory), so autonomous *search* is unreachable —
+  only *verification* of a supplied separation; and the gap is minimal (+1, fully-observed), **not** the deep
+  finite-OOM-no-finite-HMM phenomenon (Jaeger's probability clock — irrational, **DEFERRED**). Verdict: the one
+  discovery-shaped lever is amplification; **T8 is a verification-amplification domain**.
 
 ---
 
