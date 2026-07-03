@@ -1,8 +1,11 @@
 """ADR 0017: Calculemus site ledger export (CI-safe; no Lean, no network)."""
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+
 from leibniz.calculemus import Calculemus
-from leibniz.calculemus_site import law_payload, ledger_payload
+from leibniz.calculemus_site import cycle_payload, law_payload, ledger_payload
 from leibniz.propositio import Demonstratio, Enuntiatio, Expressio, Propositio
 from leibniz.trust import PROOF_EDGE
 from leibniz.types import ClaimType, EdgeEvidence, TrustTier, Verdict
@@ -61,3 +64,37 @@ def test_ledger_payload_shape():
     assert led["generated_at"] == "2026-06-21T00:00:00Z"
     assert led["laws"] == [] and led["held_back"] == []
     assert led["cycles"] == [{"cycle": 1}]
+
+
+def test_cycle_payload_shape_and_read_only():
+    # The work-log entry (Il Lavoro / /cycles) is descriptive: no certificate fields.
+    c = cycle_payload(
+        cycle=2, date="2026-07-03", domain="Formal verification", kind="audit",
+        title="An audit", summary="what happened",
+        findings=[{"id": "P1", "verdict": "VACUOUS"}], artifacts=[{"name": "x.lean"}],
+    )
+    assert c["cycle"] == 2 and c["date"] == "2026-07-03" and c["kind"] == "audit"
+    assert c["domain"] == "Formal verification" and c["title"] == "An audit"
+    assert c["findings"][0]["verdict"] == "VACUOUS" and c["artifacts"][0]["name"] == "x.lean"
+    assert c["links"] == [] and c["laws"] == []                 # optional fields default empty
+    # a cycle mints no certificate: no kernel_verified / qed / promulgated leaks in
+    assert not ({"kernel_verified", "qed", "promulgated"} & set(c))
+    # it composes into the ledger under `cycles`, untouched
+    assert ledger_payload(Calculemus(), cycles=[c])["cycles"] == [c]
+
+
+def test_mcr_audit_cycle_carries_all_eight_verdicts():
+    # Lock the shipped MCR work-log entry (scripts/export_mcr_cycle.py -> the /cycles fragment).
+    root = Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("export_mcr_cycle", root / "scripts" / "export_mcr_cycle.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    c = m.build_cycle()
+    assert c["kind"] == "audit" and c["domain"] == "Formal verification"
+    ids = [f["id"] for f in c["findings"]]
+    assert ids == ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"]     # every problem is present
+    verdicts = {f["id"]: f["verdict"] for f in c["findings"]}
+    assert verdicts["P4"].startswith("REFUTED") and verdicts["P7"] == "NOT-PROVEN"  # the honest downgrade held
+    assert verdicts["P8"] == "PROVEN"                                  # the steelman is carried
+    assert {a["name"] for a in c["artifacts"]} == {"mcr_p4_not_derivable.lean", "mcr_audit_artifacts.py"}
+    assert "no-op stub" in c["summary"]                               # the flagship VACUOUS framing survives

@@ -65,6 +65,46 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
     }
 
 
+def cycle_payload(
+    *,
+    cycle: object,
+    date: str,
+    domain: str,
+    kind: str,
+    title: str,
+    summary: str,
+    findings: Optional[list] = None,
+    artifacts: Optional[list] = None,
+    links: Optional[list] = None,
+    laws: Optional[list] = None,
+) -> dict:
+    """One work-log entry for *Il Lavoro* (the site's `/cycles` page, ADR 0017).
+
+    A cycle records what the daemon *did* — seeds surveyed, candidates quarantined,
+    and (when it happens) a law promulgated. It is descriptive, not a certificate:
+    it carries **no** `kernel_verified`, mints **no** edge, and promulgates nothing.
+    Any kernel/Z3 evidence a cycle references lives under `findings`/`artifacts` as
+    *reported* results, tagged by the checker that produced them — never as a
+    promulgated Q.E.D. (`laws` only lists ids of laws the gated pipeline already
+    promulgated; publication remains the operator's separate, guarded act.)
+
+    Core fields mirror the rendered work-log badge (cycle · date · domain · kind ·
+    summary); `findings`/`artifacts`/`links` are optional and degrade gracefully if
+    the renderer does not surface them yet."""
+    return {
+        "cycle": cycle,
+        "date": date,
+        "domain": domain,
+        "kind": kind,
+        "title": title,
+        "summary": summary,
+        "findings": list(findings or []),
+        "artifacts": list(artifacts or []),
+        "links": list(links or []),
+        "laws": list(laws or []),
+    }
+
+
 def ledger_payload(calc: Calculemus, *, generated_at: str = "", cycles: Optional[list] = None) -> dict:
     """The full source ledger: operator-published laws + held-back colophon + cycles.
 
