@@ -580,6 +580,18 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     unproven); a **new large-block kernel-PSD-certification primitive** (generalizable trust-primitive
     research, not a producer build); or abandon quadruple. Measure-before-build vindicated — the cheapest gate
     returned the decision. Guarded by `tests/test_terwilliger_gms_gate0.py`; invariants byte-identical.
+  - **PSD PRIMITIVE (2026-07-02) — a stronger kernel-checkable PSD certificate + the ceiling study (route 2
+    after GATE 0):** `docs/results/terwilliger-psd-primitive-2026-07-02.md`, `scripts/terwilliger_psd_lowrank.py`.
+    Measured the real kernel-PSD wall: the earlier "N≈26" was partly a `maxHeartbeats 200000` artifact — with
+    heartbeats off the current ldltOK reaches ~N=40, and the TRUE wall is the raw `decide` reduction cost of
+    the nested-List matmul (heartbeat- and source-size-independent; an N=60 case at 16 KiB still costs ~86 s).
+    Shipped `lowRankOK`, a **strict sound generalization of ldltOK** (kernel recomputes the identity, never
+    trusts the rank → fail-closed; r=N recovers ldltOK): low-rank thin factor (O(r·N²) not O(N³)) + column-scale
+    fusion (never materialize diag(d)) → **~2× the N ceiling (~40→~60+) and ~50× smaller source** at r=8;
+    kernel-attested (valid accepted, corrupted rejected). **Honest scope:** does NOT rescue GMS N=130-414
+    (GATE 0 RED stands); the `decide` reduction is the fundamental wall, and breaking N≫60 needs **generated
+    proof terms / finer chunking, not arithmetic** — recorded as the next frontier probe. Guarded by
+    `tests/test_terwilliger_psd_lowrank.py`; invariants byte-identical.
 
 ## The ADRs
 
