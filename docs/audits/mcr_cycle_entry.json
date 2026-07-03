@@ -1,4 +1,10 @@
 {
+  "meta": {
+    "generated_at": "2026-07-03T15:02:11Z",
+    "producer": "scripts/export_mcr_cycle.py",
+    "target": "elementalcollision/codex-calculemus : ledger/calculemus.json -> cycles[]",
+    "merge": "append each object in `cycles` to the site ledger's top-level `cycles` array; do not overwrite the ledger's own `generated_at`/`laws`/`held_back`."
+  },
   "cycles": [
     {
       "cycle": 2,
