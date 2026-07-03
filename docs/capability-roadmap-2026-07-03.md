@@ -19,8 +19,8 @@ just validated on a real external target (the MCR whitepaper audit).
   any change that would require editing it is a **STOP**.
 - Q.E.D. is minted only by `LeanVerifier.discharge`. Precisely: `discharge` is the sole writer of a *fresh*
   `kernel_verified` verdict; `runtime.py` hydration *replays* a persisted verdict via the `Demonstratio`
-  constructor (a recall, not a decision). **There is currently no mechanical guard test enforcing "only
-  `discharge` mints a fresh verdict"** — see H0 below.
+  constructor (a recall, not a decision). This is now **mechanically enforced** by the H0 sole-writer guard
+  (`tests/test_kernel_verified_writers.py`) — see H0 below.
 - Trust-touching increments (F2c, an external checker, a large-block PSD primitive) are gated behind a
   dedicated ADR + PreToolUse hook + operator sign-off + a witness round (0044/0045/0046 precedent).
 
@@ -41,22 +41,20 @@ just validated on a real external target (the MCR whitepaper audit).
 
 ---
 
-## H0 — Cross-cutting trust-integrity hardening (recommended FIRST; cheap, no compute)
+## H0 — Cross-cutting trust-integrity hardening ✅ GREEN (2026-07-03; `docs/results/h0-trust-hardening-2026-07-03.md`)
 
-The critique's top finding. Two small guards that must land **before** any admitted-axiom scaffold (F2b) so a
-scaffold can never be mislabeled:
+The critique's top finding — both guards now landed (cheap, no compute, no core edit):
 
-1. **"No new fresh `kernel_verified` writer" guard.** A test (grep/AST) asserting that `discharge` is the only
-   site that mints a *fresh* verdict; the `runtime.py` constructor is whitelisted as replay-only.
-   **Gate:** GREEN = the guard passes on HEAD and RED-flags a planted second writer. Tier: pure trust-integrity,
-   no core edit.
-2. **Axiom-closure honesty gate.** A `#print axioms` closure assertion, wired into a test **and** into
-   `export_calculemus.py --check`: GREEN iff the target theorem's axiom footprint is exactly the intended set
-   (empty project-axioms for a discharged law; the single named admitted lemma for an F2b scaffold), RED on any
-   stray `sorryAx` or unlisted axiom. **Gate:** an admitted-axiom scaffold cannot reach Observatory/reading-room
-   labeled as discharged. Tier: audit, read-only.
+1. **"No new fresh `kernel_verified` writer" guard ✅** — `tests/test_kernel_verified_writers.py`: an AST scan
+   of `leibniz/**/*.py` asserts the `kernel_verified` write set is exactly `{LeanVerifier.discharge` (mints),
+   `_row_to_prop` (replays)`}`; a planted second writer fails. Mechanizes the charter invariant previously only
+   stated in `CLAUDE.md`.
+2. **Axiom-closure honesty gate ✅** — `scripts/export_calculemus.py::axiom_closure`, wired into `--check` +
+   `tests/test_axiom_closure.py`: for every claimed-Q.E.D. law it runs `#print axioms` and RED-flags any
+   `sorryAx` or axiom outside the standard Lean/Mathlib set. An admitted-axiom scaffold can no longer reach the
+   reading-room labeled as discharged. Verified against the real kernel (clean passes; `sorry`/admitted fail).
 
-Nothing else on the roadmap that produces an admitted axiom should land until H0 is green.
+These must stay green before any F2b scaffold lands.
 
 ---
 
