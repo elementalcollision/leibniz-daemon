@@ -1,0 +1,32 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "inner_dim": 2,
+    "factorization_H_eq_FB": true,
+    "words_len<=": 3,
+    "rank_ge2_minor_det": "1/18",
+    "rank_ge2": true,
+    "rank_exact_2": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "bad_factorization": {
+        "failed_as_required": true
+      },
+      "understated_bound": {
+        "failed_as_required": true
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.Tactic"
+  ],
+  "reading": "T8 rank-UPPER bridge lemma, kernel-verified in Lean/Mathlib: a factorization H=F.B (inner dim r) proves the GLOBAL rank(H) <= r that window minors cannot. GREEN = rank_le_of_factor + rank_eq_of_factor_of_ge + the concrete Hc instantiation elaborate 0 errors/0 sorries AND both controls (broken factorization; understated bound) FAIL, AND the even-process word-Hankel factors through Q^2 (audit) with a nonsingular 2x2 minor -> rank EXACTLY 2. The lemma is Q.E.D.; the process factorization is audit (full in-Lean identification is F2b-scale). No trust surface touched."
+}
