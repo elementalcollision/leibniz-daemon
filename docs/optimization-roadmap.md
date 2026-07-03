@@ -614,6 +614,22 @@ After the 7-family scout returned all-DEAD, the discovery question went to a 5-m
     revisited, an **external verified PSD checker is recommended over native_decide** (keeps per-cert trust
     mechanical). Trigger to revisit: a live large-block cell not already in the tables AND reachable by the
     solve leg — none exists today. No code, no trust.py change; invariants byte-identical.
+  - **F2b BRIEF REVISED via external witness panel (2026-07-03, review response):** 8 reviewers (Fugu, Fugu
+    Ultra, Deepseek v4 Pro, Kimi, GLM 5.2, Gemini 3.1 Pro, Qwen 3.7 Max, MiniMax M3) critiqued the F2b
+    formalization brief; findings folded in + review archived at
+    `docs/results/terwilliger-f2b-witness-review-2026-07-03.md`. Durable fixes to
+    `docs/briefs/terwilliger-f2b-external-brief-2026-07-02.md`: **trust framing corrected to match ADR 0046**
+    (admitted lemma = NON-PROMOTING scaffold; `#print axioms` closure audit; no Q.E.D. until axiom footprint
+    empty — the panel's #1 finding, and it was our own policy the brief contradicted); **target theorem
+    restated algebraically** (no 2ⁿ matrix — GLM's fatal-flaw catch; drop `IsTripleDistribution`; bound
+    k≤n/2; self-adjoint) with a **forward-direction-first** option that ~halves the risk; β **guarded-binomial
+    + β=cert** mandate (our `C(a,b)` is already guarded — the Nat-subtraction trap is a Lean-port warning, not
+    our bug); PSD pinned over ℝ (`conjTranspose_mul_mul_same`); un-normalized **rational** basis (avoid
+    `Real.sqrt`) + multiplicities `q_k`; explicit scope table; a $0 pre-formalization statement-probe; and
+    made genuinely self-contained for a cold Mathlib recipient. Estimate consensus: ~1-2 wks admitted-wiring,
+    ~3-6 months full discharge. Strategic standing unchanged: F2b is **verification-amplification** of 3 known
+    bounds (ADR 0046), not discovery — send/no-send stays the operator's; the brief is now sound to send.
+    Docs only; invariants byte-identical.
 
 ## The ADRs
 
