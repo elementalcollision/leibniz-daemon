@@ -1,0 +1,32 @@
+{
+  "gate": "GREEN",
+  "audit": {
+    "D0": "-1/18",
+    "D1": "1/36",
+    "D0_is": true,
+    "D1_is": true,
+    "recurrence_quarter": true,
+    "nonzero_0_to_19": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "theorems_ok": true,
+    "theorem_errors": [],
+    "controls": {
+      "wrong_base_case": {
+        "failed_as_required": true
+      },
+      "wrong_recurrence_ratio": {
+        "failed_as_required": true
+      }
+    },
+    "controls_all_fail": true,
+    "sound": true
+  },
+  "imports": [
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.Tactic"
+  ],
+  "reading": "Full in-Lean INFINITE-ORDER identification: the even process defined from its OOM operators is proven to have infinite Markov order in-kernel (forall k, the cross-multiplied order-k conditional gap D_k != 0; D_{k+2}=1/4 D_k from T1^2=1/2 I, base cases evaluated, closed by the T8-b recurrence bridge). GREEN = all theorems elaborate 0 errors/0 sorries, both controls fail, and the Python cross-check confirms D_0=-1/18, D_1=1/36, D_{k+2}=1/4 D_k, all nonzero. Lifts T8-b from audit to Q.E.D. With the rank identification, the even process's rank=2 AND infinite order are both kernel-derived. Amplification, not discovery. No trust surface touched."
+}

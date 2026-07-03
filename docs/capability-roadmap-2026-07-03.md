@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN; rank story now FULLY in-Lean (process defined from OOM ⇒ Hankel rank=2 derived in-kernel)** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN; even process rank=2 AND infinite order both FULLY kernel-derived from its OOM** |
 
 ---
 
@@ -221,10 +221,15 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   rank is **derived = 2 in the kernel** (`hankel_block_rank_le`: any r-dim OOM ⇒ every finite Hankel block has
   rank ≤ r, via `Tprod` being a monoid hom; `eB_det = 1/18` computed in-kernel ⇒ rank exactly 2). Lifts
   rank-upper/rank-exact from **audit to Q.E.D. about the actual process** (`scripts/beyond_markov_process_lean.py`,
-  `docs/results/beyond-markov-process-lean-2026-07-03.md`). Remaining audit-linked follow-ons: the **infinite-order**
-  (T8-b) identification needs the operator-power closed form (`eOp 1 ^ k`, parity induction), and the
-  **positive-realization** (T8-c) needs the fooling-set embedding proved in Lean — both build on the same
-  `Tprod`/`Pval` scaffold.
+  `docs/results/beyond-markov-process-lean-2026-07-03.md`).
+- **Full in-Lean INFINITE ORDER ✅ GREEN, kernel-verified (2026-07-03)** — the even process's **infinite Markov
+  order** is now derived in-kernel from its OOM operators: `eOp 1 · eOp 1 = ½I` ⇒ appending "11" halves every
+  `P` ⇒ the cross-multiplied order-k gap obeys `D_{k+2}=¼D_k` (base cases `−1/18, 1/36` evaluated in-kernel),
+  closed by the T8-b recurrence bridge (`even_infinite_order : ∀k, D_k ≠ 0`). Closes T8-b's audit link
+  (`scripts/beyond_markov_infinite_order_lean.py`, `docs/results/beyond-markov-infinite-order-lean-2026-07-03.md`).
+  **Both** the even process's rank=2 and its infinite order are now kernel-derived from its 2-dim OOM — the
+  canonical infinite-order-but-finite-dimension separation, end-to-end. The **T8-c positive-realization**
+  identification (the necklace fooling-set embedding in Lean) is the last remaining audit-linked follow-on.
 
 ---
 
