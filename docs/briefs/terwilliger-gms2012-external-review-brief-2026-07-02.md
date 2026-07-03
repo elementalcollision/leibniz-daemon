@@ -21,12 +21,17 @@ production**; the whole certificate (β vs eq.(7), stationarity, nonneg, bound, 
 
 ## The decision we have taken
 
-We measured that the base three-point family is **mined out** and that GMS 2012 (quadruple-distance) is the right
-**stronger** formulation — its product-β blocks `β^{t,w}_{i,j,k}·β^{s,v}_{i,j,l}` are the same objects our
-constant-weight build already ships. We are committing to **build toward GMS**, front-gated by a cheap
-GO/NO-GO spike. Two objectives share the build and differ only at the ends: **DISCOVERY** (tighten a current
-record — high-risk, gated) vs **VERIFICATION-AMPLIFICATION** (kernel-tier re-derivation of GMS's *published*
-records — unconditional win). Full plan attached.
+We measured that the base three-point family is **mined out** and that GMS 2012 (quadruple-distance) is the
+**most plausible stronger** formulation — a *hypothesis* until our Phase-0 gates confirm it, not a settled fact.
+We *suspect* GMS's product-β blocks `β^{t,w}_{i,j,k}·β^{s,v}_{i,j,l}` overlap with our constant-weight build's
+`(k,l)` machinery — **please attack that claim**: our build is the *Johnson-scheme* (constant-weight) quadruple,
+while GMS is the *Hamming-scheme* (unrestricted binary) quadruple (reduction group S_n vs S_w×S_v), so identify
+any missing multiplicities, normalizations, orbit constraints, or block-size differences. We are committing to
+**build toward GMS**, front-gated by a cheap GO/NO-GO spike. Two objectives share the build and differ only at
+the ends: **DISCOVERY** (tighten a current record — high-risk, gated) vs **VERIFICATION-AMPLIFICATION**
+(kernel-tier re-derivation of GMS's *published* records — a real win, but note it lands at our **audit/
+Observatory tier**: re-deriving a table bound is not *novel* by our own decision procedure, so it is a
+verification result, not a promulgated law). Full plan attached.
 
 ## What we ask of you
 
@@ -39,9 +44,13 @@ records — unconditional win). Full plan attached.
 
 **(B) Help tackle the four measured WALLS** (these gate the 4–6 week build; concrete help here is the highest
 value):
-1. **Block-diagonalization of the quadruple Terwilliger algebra.** We want the explicit `(k,l)`-indexed block
-   reduction (the analogue of Schrijver's Propositions 2–5 for four-point). Is there a clean statement of the
-   quadruple β / the change-of-basis, ideally citation-backed, that we can transcribe and kernel-verify?
+1. **Block-diagonalization of the quadruple Terwilliger algebra — and the decisive block-size question.** We want
+   the explicit `(k,l)`-indexed block reduction (the analogue of Schrijver's Propositions 2–5 for four-point):
+   a clean, citation-backed statement of the quadruple β / change-of-basis we can transcribe and kernel-verify.
+   **Critically: what is the dimension of the largest *reduced* PSD block as a function of n — O(n) or O(n²)?**
+   Our Johnson-scheme build's reduced blocks are O(n) (single-index range, kernel-verified at 26×26), but we
+   have not confirmed the Hamming quadruple reduces the same way; if the reduced blocks are O(n²) they exceed
+   our ~26–30 kernel ceiling and we would need the LPS-2017 split-Terwilliger reduction. This is our #1 gate.
 2. **SDPA-GMP conditioning** on ~40k-multiplier, β²-conditioned blocks at n≥22 — known precision/normalization
    recipes beyond Schrijver's eq.(8)?
 3. **Exact-rational LP active-set growth** — projected 3–5× the three-point tableau (~12k multipliers today);
