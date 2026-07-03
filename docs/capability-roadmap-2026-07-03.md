@@ -135,11 +135,15 @@ These must stay green before any F2b scaffold lands.
   True`; `tests/test_mcr_audit.py` (z3-gated) locks the verdicts.
 - **Trust.** No boundary contact; promulgates nothing (an audit is a record, not a law — ADR 0017).
 - **Measured EV.** **Measured-positive — but n=1.** Positive precisely because it is verification-amplification.
-- **Next increments.** (a) Audit-runner harness + regression pack; gate = re-drives MCR fixtures to
-  byte-identical verdicts. (b) Kernel-attest the P4 Lean leg in CI (gated). (c) **Second external target** — the
-  only increment that is genuine discovery *about the track* (is n=1 EV real?); gate = every verdict backed by a
-  re-runnable artifact + independent adversarial re-verify + HONEST-NEGATIVE if <50% of sub-claims reduce to a
-  mechanical artifact.
+- **Next increments.** (a) ✅ **GREEN (2026-07-03)** — audit-runner harness + regression pack
+  (`scripts/audit_runner.py`, `tests/test_audit_runner.py`, `docs/results/audit-runner-t5-2026-07-03.md`): the
+  MCR audit is now a re-runnable, CI-guarded instrument (an audit = a spec of `(verdict, artifact)`; the runner
+  reproduces the 8 verdicts, 6/8 artifacts re-run and pass). (b) ✅ **GREEN** — the P4 Lean leg is
+  kernel-attested via `lean_leg_ok()` (0 errors/0 sorries; corrupted control fails), no longer doc-asserted.
+  (c) **Second external target** — the only increment that is genuine discovery *about the track* (is n=1 EV
+  real?); the harness is now target-agnostic (a second target = a second spec) but **needs an actual target
+  (operator-supplied)**. Gate = every verdict backed by a re-runnable artifact + independent adversarial
+  re-verify + HONEST-NEGATIVE if <50% of sub-claims reduce to a mechanical artifact.
 - **Do not relitigate.** Autonomous novelty-at-the-producer; routing an audit into Le Leggi; weakening P7 back to
   REFUTED; posting the internal report verbatim.
 
