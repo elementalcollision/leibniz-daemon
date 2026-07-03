@@ -37,7 +37,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
-| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c GREEN kernel-verified (certs · ∀k infinite order · positive-realization gap)** |
+| **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **T8-a/b/c + rank-upper GREEN kernel-verified (rank=r exact · ∀k infinite order · positive-realization gap)** |
 
 ---
 
@@ -184,8 +184,10 @@ Nothing else on the roadmap that produces an admitted axiom should land until H0
   (1) Hankel-rank **lower** bounds via a nonsingular rational minor (`bareiss_minors`/`detSignOK`) — MATCH;
   (2) Markov order > K via cross-mult `det≠0` + denominator>0 — MATCH; (3) error floors: **linear** loss via
   Z3-LRA/exact-LP-dual, **quadratic** loss via a PSD/SOS cert (`ldltOK`) — never Z3-NRA; (4) rank **upper** bound
-  needs a linear-representation **bridge lemma** (`linear_rep ⇒ hankel_rank_le`, an F2b-style slice) — DIVERGE;
-  (5) process validity via a rational **HMM** (general-OOM validity is undecidable — DIVERGE, prefer HMMs).
+  via the linear-representation **bridge lemma** (`rank_le_of_factor : H=F·B ⇒ rank ≤ r`) — **✅ CLOSED, GREEN
+  kernel-verified (2026-07-03)**, `docs/results/beyond-markov-rank-upper-2026-07-03.md`; composed with (1) it
+  gives `rank = r` exactly; (5) process validity via a rational **HMM** (general-OOM validity is undecidable —
+  DIVERGE, prefer HMMs).
 - **Panel outcome (7 reviewers, GLM empty).** Two v1 errors corrected: **BM-2 is impossible on a stationary
   process (retracted)**; and **infinite-order is Q.E.D.-reachable via a recurrence + induction bridge lemma, NOT
   Observatory** (F2a already proves non-`decide` Mathlib theorems sorry-free through the REPL — the "Observatory
