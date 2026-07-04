@@ -1,6 +1,6 @@
-"""Counterexample-certificate domain (T9, **Tier 1**) — one reusable `certify(object)` interface over the
-finite/exact-decidable open-problem counterexamples, a sibling of the shipped process-complexity and
-code-bound certificate domains.
+"""Counterexample-certificate domain (T9) — one reusable `certify(object)` interface over the open-problem
+counterexamples, a sibling of the shipped process-complexity and code-bound certificate domains, across two
+honest tiers.
 
 Each object is a small typed spec `{"family", "params"}`; `certify(obj)` runs a bounded EXACT check and, where
 the witness is finite-decidable, emits a **kernel-`decide`-able Lean certificate** that names the fact it
@@ -18,9 +18,18 @@ Tier-1 families (this module — self-certifying via `decide`):
   * `n_absorbing` (CFFG Problem 30 / Anderson–Badawi) — the absorbing number of `(0)` in a finite ring `ℤ/m`:
     `⊥` is `k`-absorbing but not `(k−1)`-absorbing (a `decide` over `Fin(k+1) → ZMod m`).
 
-Tier 2 (attested — infinite-ring counterexamples, e.g. the pipeline-math 4b/20/27b/30c) is deliberately NOT in
-this module; it is scoped in `docs/t9-tier2-attested-scoping.md`. Tier disposition: audit,
-verification-AMPLIFICATION — a legible reusable certificate family, not new theorems. No trust surface touched.
+Tier-2 family (**attested** — infinite-ring counterexamples whose witness is a genuine multi-file proof, not a
+bounded `decide`):
+
+  * `pipeline_ring` (CFFG Problems 4b/20/27b/30c, from the public `Pengbinghui/pipeline-math` repo) — `certify`
+    returns the ATTESTATION: the frozen headline theorem, the checker (`lake build` on Lean 4.31 + Mathlib +
+    the authors' `verify.sh`), the `#print axioms` footprint we independently recorded (standard set, no
+    `sorryAx`), the exact source repo + commit, and a reproduction recipe. No Lean is emitted — the artifact is
+    the recipe + pins, since a Tier-2 download is a whole multi-file Mathlib project (see
+    `docs/t9-tier2-attested-scoping.md`).
+
+Tier disposition: audit, verification-AMPLIFICATION — a legible reusable certificate family, not new theorems.
+No trust surface touched.
 
 Run:  python scripts/counterexample_domain.py   (the checks are free-CPU; the kernel leg needs the Lean REPL)
 """
@@ -153,21 +162,62 @@ def certify_n_absorbing(params: dict) -> dict:
                        "check": "decide", "theorem": f"{ns}.absorbing_number_bot"}}
 
 
+# =========================================================================================================
+# family: pipeline_ring (Problems 4b/20/27b/30c) — Tier 2, ATTESTED (not self-certified by `decide`)
+# =========================================================================================================
+REF_PIPE = {"citation": ("Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). pipeline-math [Computer "
+                         "software]. GitHub."), "url": "https://github.com/Pengbinghui/pipeline-math"}
+_PIPELINE_COMMIT = "69d7df765a8f377a5e0628c6d36c088bce7642c9"
+_PIPELINE_RING = {
+    "4b": {"project": "problem-4b-formalization", "headline": "Prob4b.Solution.problem4b_false",
+           "type": "∃ S, FiniteConductor S ∧ ¬ QuasiCoherent S",
+           "plain": "finite-conductor is strictly weaker than quasi-coherent (R = Δ(B)+C^(ℕ), an infinite ring)"},
+    "20": {"project": "problem-20-formalization", "headline": "Prob20.Solution.problem20_answer",
+           "type": "∃ D K …, ¬ Injective (θ₂) ∧ ¬ (Int(D²) ⊆ range θ₂)",
+           "plain": "the canonical map θ₂ is neither injective nor surjective (D = 𝔽₂+𝔪 in 𝔽₂(t))"},
+    "27b": {"project": "problem-27b-form", "headline": "Prob27b.Solution.problem27b_false",
+            "type": "∃ g₁ g₂ ∈ IntA, g₁·g₂ ∉ IntA",
+            "plain": "Int(A) need not be a ring (a noncommutative Werner counterexample over 𝔽₂[π])"},
+    "30c": {"project": "problem-30c-formalization", "headline": "Prob30c.Solution.problem30c_false",
+            "type": "∃ R I, absorbingNumber(I.map C) ≠ absorbingNumber I",
+            "plain": "the absorbing number is not preserved under R → R[X] (A_q = 𝔽₂[t][X₀,X₁,X₂]/Arel)"},
+}
+
+
+def certify_pipeline_ring(params: dict) -> dict:
+    """A Tier-2 ATTESTATION: the external kernel proof is re-verified by `lake build`, not re-encoded as
+    `decide` (the witness is an infinite ring). The "certificate" is the attestation record + reproduction
+    recipe; the source is the *public* pipeline-math repo, so nothing is hidden."""
+    p = _PIPELINE_RING[params["problem"]]
+    repo = "https://github.com/Pengbinghui/pipeline-math"
+    return {
+        "verdict": "attested",
+        "witness": {"headline_theorem": p["headline"], "type": p["type"], "establishes": p["plain"]},
+        "kernel": {"check": "lake-build", "theorem": p["headline"],
+                   "checker": "lake build (Lean 4.31.0 + Mathlib rev v4.31.0) + the authors' scripts/verify.sh",
+                   "axioms": sorted(_STD),  # independently recorded from our re-verification; no sorryAx
+                   "reproduction": (f"git clone {repo} && cd pipeline-math && git checkout {_PIPELINE_COMMIT}"
+                                    f" && cd lean/{p['project']} && lake exe cache get && scripts/verify.sh --all"),
+                   "artifact": "recipe + pins (multi-file Mathlib project; sources public — see repo @ commit)"}}
+
+
 FAMILIES = {
-    "monomial_normal": (certify_monomial, [REF_CFFG, REF_HS, REF_RRV]),
-    "self_ordered": (certify_self_ordered, [REF_CFFG, REF_ACC]),
-    "n_absorbing": (certify_n_absorbing, [REF_CFFG, REF_AB]),
+    "monomial_normal": {"fn": certify_monomial, "refs": [REF_CFFG, REF_HS, REF_RRV], "tier": 1},
+    "self_ordered": {"fn": certify_self_ordered, "refs": [REF_CFFG, REF_ACC], "tier": 1},
+    "n_absorbing": {"fn": certify_n_absorbing, "refs": [REF_CFFG, REF_AB], "tier": 1},
+    "pipeline_ring": {"fn": certify_pipeline_ring, "refs": [REF_CFFG, REF_PIPE], "tier": 2},
 }
 
 
 def certify(obj: dict) -> dict:
-    """The Tier-1 certificate for one object `{"family", "params"}`."""
+    """The certificate for one object `{"family", "params"}` — Tier 1 (self-certified via `decide`) or Tier 2
+    (attested via `lake build`), per the family."""
     fam = obj["family"]
-    fn, refs = FAMILIES[fam]
-    c = fn(obj["params"])
-    return {"family": fam, "tier": 1, "params": obj["params"], "verdict": c["verdict"],
+    spec = FAMILIES[fam]
+    c = spec["fn"](obj["params"])
+    return {"family": fam, "tier": spec["tier"], "params": obj["params"], "verdict": c["verdict"],
             "witness": c.get("witness"), "detail": c.get("detail"), "kernel": c.get("kernel"),
-            "references": refs}
+            "references": spec["refs"]}
 
 
 def registry() -> list:
@@ -180,6 +230,11 @@ def registry() -> list:
         {"family": "self_ordered", "params": {"seq": "pow2", "bound": 6}},        # self-ordered base family
         {"family": "n_absorbing", "params": {"modulus": 4}},   # absorbingNumber(⊥) = 2
         {"family": "n_absorbing", "params": {"modulus": 9}},   # absorbingNumber(⊥) = 2
+        # Tier 2 — attested (lake build, not decide):
+        {"family": "pipeline_ring", "params": {"problem": "4b"}},
+        {"family": "pipeline_ring", "params": {"problem": "20"}},
+        {"family": "pipeline_ring", "params": {"problem": "27b"}},
+        {"family": "pipeline_ring", "params": {"problem": "30c"}},
     ]
 
 
@@ -202,8 +257,8 @@ def main() -> int:
             try:
                 for c in certs:
                     k = c.get("kernel")
-                    if not k:
-                        continue
+                    if not k or k.get("check") != "decide":
+                        continue   # Tier-2 attestations are checked by lake build, not the REPL `decide` leg
                     src = k["lean"] + f"\n#print axioms {k['theorem']}\n"
                     r = bk._run(src, tuple(k["imports"]))
                     msgs = (r or {}).get("messages", []) or []
@@ -226,14 +281,18 @@ def main() -> int:
 
     gate = ("GREEN" if kernel.get("all_ok") else
             "AMBER(kernel-unavailable)" if "unavailable" in str(kernel.get("status")) else "RED")
-    out = {"gate": gate, "tier": "audit", "ev": "AMPLIFICATION", "domain_tier": 1,
-           "families": sorted(FAMILIES), "certificates": certs, "kernel": kernel,
-           "reading": ("Tier-1 counterexample-certificate domain: one certify(object) interface over the "
-                       "finite/exact-decidable open-problem counterexamples (monomial-normality / self-ordered "
-                       "sequences / n-absorbing ideals), each object certified by a kernel-decidable Lean cert "
-                       "that names the fact. A sibling of the process-complexity and code-bound domains; "
-                       "verification-AMPLIFICATION. GREEN = every emitted cert elaborates with only standard "
-                       "axioms. Tier 2 (attested infinite-ring counterexamples) is scoped separately.")}
+    out = {"gate": gate, "tier": "audit", "ev": "AMPLIFICATION",
+           "families": {f: FAMILIES[f]["tier"] for f in FAMILIES},
+           "n_tier1": sum(1 for c in certs if c["tier"] == 1), "n_tier2": sum(1 for c in certs if c["tier"] == 2),
+           "certificates": certs, "kernel": kernel,
+           "reading": ("Counterexample-certificate domain: one certify(object) interface across two tiers. "
+                       "Tier 1 (self-certified) — the finite/exact-decidable counterexamples (monomial-normality "
+                       "/ self-ordered sequences / n-absorbing ideals), each object certified by a "
+                       "kernel-`decide`-able Lean cert that names the fact. Tier 2 (attested) — the infinite-ring "
+                       "pipeline-math counterexamples (4b/20/27b/30c), re-verified by `lake build` (not `decide`), "
+                       "the certificate being the attestation + reproduction recipe against the public repo. A "
+                       "sibling of the process-complexity and code-bound domains; verification-AMPLIFICATION. "
+                       "GREEN = every Tier-1 emitted cert elaborates with only standard axioms.")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, default=str) + "\n")
     print(f"\ngate={gate}  tier=audit  ev=AMPLIFICATION  families={sorted(FAMILIES)}\n-> {OUT}")

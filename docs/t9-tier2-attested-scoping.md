@@ -1,9 +1,13 @@
 # T9 — Tier-2 "attested" counterexample family: scoping
 
-*Scoped 2026-07-04 (in parallel with the Tier-1 domain build). The Tier-1 domain
-(`scripts/counterexample_domain.py`) is Tier-1-only for now, per operator direction; this doc scopes Tier 2 so
-it can be folded in later. Input: a 4-agent per-problem attestation-spec pass over the pipeline-math
-formalizations we already audited FAITHFUL + `lake build`-re-verified this session.*
+*Scoped 2026-07-04 (in parallel with the Tier-1 domain build). Input: a 4-agent per-problem attestation-spec
+pass over the pipeline-math formalizations we already audited FAITHFUL + `lake build`-re-verified this session.*
+
+> **UPDATE — folded in.** Per operator direction, the `pipeline_ring` Tier-2 family is now **in**
+> `scripts/counterexample_domain.py`: `certify({"family":"pipeline_ring","params":{"problem": "4b"|"20"|"27b"|"30c"}})`
+> returns the attestation record (headline theorem + `lake build`/`verify.sh` checker + recorded axiom footprint
+> + the reproduction recipe against the public repo @ `69d7df7`). The "download option 1" below (recipe + pins)
+> is the model. This doc remains the design record + open questions.
 
 ## The boundary — why these are *attested*, not *self-certified*
 
