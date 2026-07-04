@@ -1,0 +1,38 @@
+{
+  "gate": "GREEN",
+  "kernel": {
+    "status": "checked",
+    "cases": [
+      {
+        "case": "scaffold (admits the engine lemma)",
+        "expected": "SCAFFOLD",
+        "got": "SCAFFOLD",
+        "extra_axioms": [
+          "block_psd_iff"
+        ],
+        "correct": true
+      },
+      {
+        "case": "discharged (real proof, no axiom)",
+        "expected": "DISCHARGED",
+        "got": "DISCHARGED",
+        "extra_axioms": [],
+        "correct": true
+      },
+      {
+        "case": "broken (rests on sorry)",
+        "expected": "BROKEN",
+        "got": "BROKEN",
+        "extra_axioms": [
+          "sorryAx"
+        ],
+        "correct": true
+      }
+    ],
+    "all_correct": true,
+    "sound": true
+  },
+  "scaffold_axiom": "block_psd_iff",
+  "f2b_current_verdict": "SCAFFOLD (not discharged)",
+  "reading": "The F2b discharge validator mechanizes the brief's acceptance gate via #print axioms: DISCHARGED (only standard axioms) / SCAFFOLD (rests on the named engine lemma, wires the pipeline but is not a proof) / BROKEN (sorry / unexpected axiom / error). GREEN = the three demonstration cases classify correctly against the real kernel. Current F2b state = SCAFFOLD: the engine lemma (block-diag PSD-iff) is not dischargeable in-session (this pin's Finsupp-based PosSemidef, no Mathlib lemma, Aristotle 0/1), so it stays the external-round ask; the validator is ready to certify a real discharge when one returns."
+}
