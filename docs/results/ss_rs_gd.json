@@ -1,0 +1,50 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "problem": "Yun-Sra-Jadbabaie COLT-2021 open problem (SS-RS-GD inequalities); SS-RS half refuted",
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "axioms": {
+      "SSRSGD.gap_identity": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.ss_exceeds_rs": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.violation_at_half": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.sos_cofactor": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.paper_eq_1_7_false_at_half": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.lamRS_ge_muRS_at_half": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    "all_clean": true
+  },
+  "artifact": "docs/colt/ss_rs_gd_refutation.lean",
+  "findings": {
+    "refutation_verified": "Conjecture 1.1 (SS-RS) kernel-refuted: lamSS > lamRS on [1/4,1); concrete witness q=1/2",
+    "scout_false_alarm": "an LLM scout flagged sos_cofactor as wrong; the kernel confirms the PAPER is correct",
+    "paper_erratum_1_7": "the paper's printed identity (1.7) does NOT hold (kernel + independent exact-rational check agree); supporting-lemma only, main result unaffected; the intended inequality lamRS >= muRS still holds"
+  },
+  "reading": "Independent kernel attestation of the SS-RS-GD refutation core (COLT-2021 open problem): the gap identity, positivity, the violation lamSS > lamRS, and a concrete witness are kernel-verified with only the standard axioms. Verification-AMPLIFICATION (the maths is the paper's). Two by-products: the kernel vindicates the paper against an LLM scout's false-alarm, and attests an erratum in the paper's supporting identity (1.7) that does not affect the main result."
+}
