@@ -228,6 +228,8 @@ def registry() -> list:
         {"family": "monomial_normal", "params": {"a": 4, "b": 5, "c": 7}},   # NOT normal (Huneke–Swanson)
         {"family": "monomial_normal", "params": {"a": 7, "b": 3, "c": 2},     # NOT normal — Ataka–Matsuoka (2026)
          "note": "sharp-bound witness for μ(I)≤7 ⇒ normal; closure has 8 generators (arXiv:2602.01782, Ex. 4.5)"},
+        {"family": "monomial_normal", "params": {"a": 3, "b": 4, "c": 5},     # NOT normal — the OTHER minimal triple
+         "note": "with (2,3,7), the smallest non-normal corner triple (a+b+c=12); census scripts/prob41_census.py"},
         {"family": "monomial_normal", "params": {"a": 3, "b": 3, "c": 3}},   # normal
         {"family": "self_ordered", "params": {"seq": "cube", "bound": 6}},        # NOT self-ordered
         {"family": "self_ordered", "params": {"seq": "triangular", "bound": 6}},  # self-ordered base family
