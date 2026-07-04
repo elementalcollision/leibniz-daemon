@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from leibniz.calculemus_site import cycle_payload  # noqa: E402
+from leibniz.calculemus_site import cycle_payload, downloadable_artifact  # noqa: E402
 
 # Public-safe: describes artifacts by name + checker + result only; no internal repo
 # paths reach the public site (the internal report warns against posting those).
@@ -58,11 +58,15 @@ _FINDINGS = [
              "weaker claim. Offered as the constructive path, not as support for §13."},
 ]
 
+_AUDITS = Path(__file__).resolve().parent.parent / "docs" / "audits"
+# Downloadable artifacts: the exact kernel-checked files, published to the public site with SHA-256 so the
+# underpinnings are auditable even though the source repository is private.
 _ARTIFACTS = [
-    {"name": "mcr_p4_not_derivable.lean", "kind": "lean-proof",
-     "checker": "Lean 4.31 kernel + Mathlib", "result": "0 errors, 0 sorry"},
-    {"name": "mcr_audit_artifacts.py", "kind": "smt+exact-numeric",
-     "checker": "Z3 4.16.0 + exact rational arithmetic", "result": "all reproducible artifacts GREEN: True"},
+    downloadable_artifact(_AUDITS / "mcr_p4_not_derivable.lean", cycle_id="cycle_000002", kind="lean-proof",
+                          checker="Lean 4.31 kernel + Mathlib", result="0 errors, 0 sorry"),
+    downloadable_artifact(_AUDITS / "mcr_audit_artifacts.py", cycle_id="cycle_000002", kind="smt+exact-numeric",
+                          checker="Z3 4.16.0 + exact rational arithmetic",
+                          result="all reproducible artifacts GREEN: True"),
 ]
 
 _SUMMARY = (
