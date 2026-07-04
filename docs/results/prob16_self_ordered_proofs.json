@@ -1,0 +1,26 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "problem": "CFFG Problem 16 (Chabert)",
+  "theorems": [
+    "identity_selfOrdered",
+    "arith_selfOrdered",
+    "even_selfOrdered",
+    "arith_3_5_selfOrdered"
+  ],
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 4,
+    "axiom_lines": [
+      "'identity_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'arith_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'even_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'arith_3_5_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]"
+    ],
+    "clean": true
+  },
+  "artifact": "docs/crt/prob16_self_ordered_proofs.lean",
+  "reading": "The positive side of Problem 16, PROVED: the identity and every arithmetic sequence \u03b1+\u03b2n are self-ordered (kernel-verified, standard axioms). Complements the census refutations; upgrades the census's self-ordered arithmetic cases from bounded evidence to theorems. Geometric (Gaussian-binomial) is future work."
+}
