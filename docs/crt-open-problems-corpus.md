@@ -140,10 +140,15 @@ Ranked by measured tractability × additive value across both sources:
    depend on any axioms") in both the collapsed and direct forms, witnessed by `x²y⁴z⁵ ∈ closure(I²) ∖ I²`; the
    reusable `certify(a,b,c)` checker classifies (4,5,7) not-normal and (3,3,3)/(2,3,5)/(1,1,1)/(4,5,6) normal.
    A genuine new instrument on a still-open classification (certified instances, not a competing classification).
-2. **CREATE — a commutative-ring / integer-valued-polynomial counterexample-certificate *domain*.** A sibling of
-   the shipped process-complexity and code-bound domains: `certify(object)` bundling the finite decidable checks
-   (n-absorbing, self-ordered, monomial-normal, McCoy) each naming its kernel lemma. Turns the one-off
-   pipeline-math counterexamples (4b/20/27b/30c) + new ones into a legible, kernel-attestable family.
+2. **CREATE — a counterexample-certificate *domain* ✅ Tier-1 DONE (`scripts/counterexample_domain.py`).** A
+   sibling of the shipped process-complexity and code-bound domains: one `certify(object)` interface over the
+   finite/exact-decidable counterexamples, each object certified by a kernel-`decide`-able Lean cert.
+   **Tier-1 families shipped** — `monomial_normal` (Problem 41), `self_ordered` (Problem 16: refute {n²}/{n³},
+   positive base families), `n_absorbing` (Problem 30: absorbingNumber of ⊥ in ℤ/m); 7 objects certified, every
+   emitted cert kernel-verified (monomial + n-absorbing axiom-free, self-ordered standard axioms). **Tier 2**
+   (the attested infinite-ring pipeline-math counterexamples 4b/20/27b/30c) is deliberately *out* of the domain
+   for now and fully scoped in `docs/t9-tier2-attested-scoping.md` (they are `lake build` attestations, not
+   `decide` — the "download" is a reproduction recipe + pins against the public repo, not a self-contained file).
 3. **EXPOUND — independent kernel attestation of published resolutions.** Already done for pipeline-math's four
    (audit + `lake build`); extend to the now-resolved 30a/30b/9 (formalize the known counterexamples/proof cores).
 4. **CREATE — Erdős statement-formalization lane.** Faithful Lean statements for the DB's problems (367 shipped as
