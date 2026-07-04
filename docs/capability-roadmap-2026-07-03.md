@@ -32,7 +32,7 @@ just validated on a real external target (the MCR whitepaper audit).
 |---|---|---|---|---|
 | **H0** | Trust-integrity hardening (sole-fresh-writer guard + axiom-closure gate) | trust-integrity; no core edit | n/a | ✅ **GREEN** (#268) |
 | **T1** | Certificate amplification (Delsarte LP + Terwilliger 3-point SDP) | audit `DUAL_CERTIFICATE_CHECKED` | **amplification** | GREEN, measured DRY for discovery |
-| **T2** | The audit→Q.E.D. formalization ladder (F1/F2a done; F2b/F2c open) | audit → (gated) Q.E.D. | amplification | F1+F2a GREEN; **F2b discharge-validator GREEN — current F2b = SCAFFOLD, not discharged**; out for external round |
+| **T2** | The audit→Q.E.D. formalization ladder (F1/F2a done; F2b/F2c open) | audit → (gated) Q.E.D. | amplification | F1+F2a GREEN; **F2b-M2 PSD engine lemma DISCHARGED (clean axioms)**; validator GREEN; full F2b out for external round |
 | **T3** | Trust-tier expansion: the ~N≈60 kernel-PSD ceiling & the bridge | audit; expansion = new tier, gated | amplification-enabling | ADR 0047 HOLD |
 | **T4** | The organic discovery loop (proposer / faithfulness / prover / novelty) | proposal-side; audit | amplification | CONCLUDED-RED for autonomous novelty |
 | **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR); audit-runner instrument + P4 kernel-attested in CI (#270); **F2b discharge-validator = instrument applied to an internal claim (SCAFFOLD verdict)**; 2nd external target pending |
@@ -88,18 +88,23 @@ These must stay green before any F2b scaffold lands.
 - **Trust.** F1/F2a touch no trusted surface. The gap to a statement *about codes* is F2b (block-diagonalization
   Theorem 1). F2c (Q.E.D. wiring) is the sole trust-touching step, DECIDED-DEFERRED (ADR 0046).
 - **Measured EV.** Amplification — the three attested bounds reproduce Table I (Schrijver n≤28).
-- **Next increments.** F2b-M1 (forward-only skeleton, admitted lemma) → F2b-M2 (discharge the PSD engine
-  lemma / M0) → F2b-M3 (full sorry-free discharge, empty project-axiom footprint) → F2c (gated). **Each gate =
-  `#print axioms` closure** (H0). External formalization round in flight (brief finalized; Aristotle M0 = honest
-  0/1). Consensus cost: ~1–2 wks admitted-wiring, ~3–6 months full discharge.
+- **Next increments.** F2b-M1 (forward-only skeleton, admitted lemma) → **F2b-M2 ✅ DISCHARGED (the PSD engine
+  lemma, see below)** → F2b-M3 (full sorry-free discharge, empty project-axiom footprint) → F2c (gated). **Each
+  gate = `#print axioms` closure** (H0). Full-F2b external formalization round still in flight (brief finalized;
+  Aristotle full-M0 = honest 0/1). Consensus cost for the *full* theorem: ~3–6 months.
 - **F2b discharge validator ✅ GREEN (2026-07-03; `scripts/f2b_validate.py`, `tests/test_f2b_validate.py`).**
   The M-gate above is now a *mechanical, re-runnable* classifier, not a manual `#print axioms` read: it labels
   any F2b attempt DISCHARGED (only std axioms) / SCAFFOLD (rests on the single named engine lemma) / BROKEN
-  (sorry / unexpected axiom / error), verified against the real kernel on three demonstration cases. **Measured
-  now:** the engine lemma (block-diagonal PSD-iff) is *not* dischargeable in-session — this Mathlib pin defines
-  `Matrix.PosSemidef` via a Finsupp bilinear form, Mathlib has no block-diagonal PSD lemma (`exact?` empty), and
-  Aristotle returned 0/1 — so **current F2b = SCAFFOLD, not discharged.** The validator is ready to certify a
-  real discharge the instant an external formalizer returns one (it is exactly the brief's acceptance gate).
+  (sorry / unexpected axiom / error), verified against the real kernel on three demonstration cases.
+- **F2b-M2 — the PSD engine lemma ✅ DISCHARGED, kernel-verified (2026-07-03; `scripts/f2b_engine_lemma_lean.py`,
+  `tests/test_f2b_engine_lemma.py`, `docs/f2b/block_diag_posSemidef_iff.lean`).** The self-contained block-
+  diagonal PSD-iff `(Matrix.fromBlocks A 0 0 D).PosSemidef ↔ A.PosSemidef ∧ D.PosSemidef` over ℝ is proved with
+  **0 sorries and `#print axioms = [propext, Classical.choice, Quot.sound]`** — it classifies **DISCHARGED** under
+  the validator above. This supersedes the earlier in-session "not dischargeable" finding: the Finsupp-`PosSemidef`
+  wall was dissolved by the plain-function characterization `PosSemidef.of_dotProduct_mulVec_nonneg` +
+  `fromBlocks_mulVec` + `isHermitian_fromBlocks_iff` (Mathlib had the Schur-complement `fromBlocks₁₁/₂₂` but no
+  clean block-diagonal iff; this fills the gap, inverse-free). **This is the engine lemma only, not full F2b** —
+  the Schrijver Theorem-1 block-diagonalization of the 2ⁿ Terwilliger algebra remains the external round.
 - **Do not relitigate.** F2c is deferred by ADR 0046; the 2ⁿ×2ⁿ ambient-matrix target (DEAD, GLM); baking
   `IsTripleDistribution` into the algebra (DEAD, Fugu).
 

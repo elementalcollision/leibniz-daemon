@@ -1,0 +1,25 @@
+{
+  "gate": "GREEN",
+  "milestone": "F2b-M2 (PSD engine lemma)",
+  "theorem": "block_diag_posSemidef_iff : (fromBlocks A 0 0 D).PosSemidef \u2194 A.PosSemidef \u2227 D.PosSemidef",
+  "kernel": {
+    "status": "checked",
+    "verdict": "DISCHARGED",
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "extra_axioms": [],
+    "has_sorry": false,
+    "discharged": true
+  },
+  "key_lemmas": [
+    "Matrix.PosSemidef.of_dotProduct_mulVec_nonneg",
+    "Matrix.PosSemidef.dotProduct_mulVec_nonneg",
+    "Matrix.fromBlocks_mulVec",
+    "Matrix.isHermitian_fromBlocks_iff"
+  ],
+  "artifact": "docs/f2b/block_diag_posSemidef_iff.lean",
+  "reading": "The self-contained block-diagonal PSD-iff engine lemma for F2b is kernel-DISCHARGED: 0 errors, 0 sorries, #print axioms = [propext, Classical.choice, Quot.sound]. Validated DISCHARGED by scripts/f2b_validate.py against the real kernel. This is F2b-M2, not full F2b \u2014 the Schrijver Theorem-1 block-diagonalization of the 2^n Terwilliger algebra remains the external round. Mathlib had the Schur-complement fromBlocks lemmas but no clean block-diagonal iff; this fills that gap inverse-free."
+}
