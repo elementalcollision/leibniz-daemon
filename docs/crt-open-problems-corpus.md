@@ -151,9 +151,14 @@ Ranked by measured tractability × additive value across both sources:
    `decide` — the "download" is a reproduction recipe + pins against the public repo, not a self-contained file).
 3. **EXPOUND — independent kernel attestation of published resolutions.** Already done for pipeline-math's four
    (audit + `lake build`); extend to the now-resolved 30a/30b/9 (formalize the known counterexamples/proof cores).
-4. **CREATE — Erdős statement-formalization lane.** Faithful Lean statements for the DB's problems (367 shipped as
-   the exemplar), with the FORMALIZE faithfulness gate; plus a scouting pass tagging the finite/combinatorial
-   subset that Leibniz can actually attack.
+4. **CREATE — Erdős statement-formalization lane ✅ SHIPPED (`scripts/erdos_formalize.py`).** Faithful Lean
+   statements of Erdős problems (NOT solutions — the DB is mostly asymptotic and kernel-undecidable), each
+   passing the **faithfulness gate** (elaborates + a faithfulness anchor + a non-vacuity note). Two exemplars
+   pass: **367** (an OPEN asymptotic 2-full-part bound; statement + `B₂` anchors) and **477** (the thirteenth
+   powers have a tiling complement — a resolved combinatorial problem, `IsTilingComplement` + a `tiling_sanity`
+   anchor; a bridge to the counterexample domain). **Not** submitting to erdosproblems.com (their AI-contribution
+   policy); the 477 statement was sourced from the public pipeline-math paper, not the site. A scouting pass over
+   a chosen batch is the remaining growth step (operator picks the slice).
 5. **MUTATE — extend the Prob30c scaffolding.** 30a/30b share `IsNAbsorbing`/`absorbingNumber` with the
    already-formalized 30c; the resolved answers can be formalized on that running start.
 

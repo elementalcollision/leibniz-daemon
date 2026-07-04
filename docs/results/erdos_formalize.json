@@ -1,0 +1,41 @@
+{
+  "gate": "GREEN",
+  "tier": "presentation",
+  "ev": "AMPLIFICATION",
+  "kernel_status": "checked",
+  "problems": [
+    {
+      "id": "367",
+      "title": "products of the 2-full part over short intervals",
+      "status": "OPEN \u2014 asymptotic (\u2018cannot be resolved with a finite computation\u2019); not a Leibniz solve target",
+      "url": "https://www.erdosproblems.com/367",
+      "apa": "Erd\u0151s, P., & Graham, R. L. (1980). Old and new problems and results in combinatorial number theory (Monographies de L'Enseignement Math\u00e9matique No. 28). Universit\u00e9 de Gen\u00e8ve.",
+      "anchor": "B\u2082 #eval/native_decide on witnesses (9800\u21a69800, 9802\u21a6169, 12\u21a64, squarefree 30\u21a61)",
+      "non_vacuity": "\u2200k\u2200\u03b5\u2203C\u2200n form of \u226a n^{2+o(1)}; the o(1) is essential (van Doorn: fails \u226a_k n\u00b2 for k\u22653), so the statement is not trivially true and the quantifier order is load-bearing.",
+      "artifact": "docs/erdos/erdos_367.lean",
+      "conjecture": "Erdos367",
+      "elaborates": true,
+      "conjecture_is_prop": true,
+      "n_anchors": 4,
+      "faithful": true,
+      "errors": []
+    },
+    {
+      "id": "477",
+      "title": "the thirteenth powers have a tiling complement in \u2124",
+      "status": "RESOLVED affirmatively (Peng, Tao, Wang, Yu & Liu, 2026)",
+      "url": "https://www.erdosproblems.com/477",
+      "apa": "Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). Erd\u0151s problem 477 [Preprint]. In pipeline-math. GitHub. https://github.com/Pengbinghui/pipeline-math",
+      "anchor": "tiling_sanity proved (\u2124 = univ \u2295 {0}) \u2014 the definition captures *unique* representation",
+      "non_vacuity": "\u2203A, \u2200n \u2203! (a,b) \u2026; the uniqueness (\u2203!) is the whole content \u2014 a plain \u2203 would be trivially true, so the \u2203! is load-bearing.",
+      "artifact": "docs/erdos/erdos_477.lean",
+      "conjecture": "Erdos477",
+      "elaborates": true,
+      "conjecture_is_prop": true,
+      "n_anchors": 1,
+      "faithful": true,
+      "errors": []
+    }
+  ],
+  "reading": "Erd\u0151s statement-formalization lane: faithful Lean statements of Erd\u0151s problems (NOT solutions \u2014 the DB is mostly asymptotic and kernel-undecidable), each passing the faithfulness gate (elaborates + a faithfulness anchor + a non-vacuity note). 367 is an OPEN asymptotic bound (statement only); 477 is a resolved combinatorial problem (bridge to the counterexample domain). Not submitting to erdosproblems.com (their AI policy); the url is attribution. GREEN = every registered statement passes the gate."
+}
