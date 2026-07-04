@@ -77,6 +77,7 @@ def cycle_payload(
     artifacts: Optional[list] = None,
     links: Optional[list] = None,
     laws: Optional[list] = None,
+    references: Optional[list] = None,
 ) -> dict:
     """One work-log entry for *Il Lavoro* (the site's `/cycles` page, ADR 0017).
 
@@ -87,6 +88,13 @@ def cycle_payload(
     *reported* results, tagged by the checker that produced them — never as a
     promulgated Q.E.D. (`laws` only lists ids of laws the gated pipeline already
     promulgated; publication remains the operator's separate, guarded act.)
+
+    **Sources MUST be cited.** Any cycle that audits, verifies, refutes, or builds on
+    external work carries a `references` list — APA-formatted citations rendered as a
+    reference list at the foot of the published page. Each reference is a dict
+    ``{"citation": "<full APA reference>", "url": "<optional link>"}``. This is a hard
+    scholarly-integrity requirement, enforced by ``requires_references``; a cite-worthy
+    cycle with no references is a defect, not a stylistic choice.
 
     Core fields mirror the rendered work-log badge (cycle · date · domain · kind ·
     summary); `findings`/`artifacts`/`links` are optional and degrade gracefully if
@@ -102,7 +110,20 @@ def cycle_payload(
         "artifacts": list(artifacts or []),
         "links": list(links or []),
         "laws": list(laws or []),
+        "references": list(references or []),
     }
+
+
+# Cycle kinds whose whole point is engaging external work — these MUST cite their source.
+_CITE_WORTHY_KINDS = frozenset({"audit", "verification", "review", "refutation", "certification"})
+
+
+def requires_references(cycle: dict) -> bool:
+    """A cite-worthy cycle (an audit/verification/refutation of external work) with no
+    `references` is a scholarly-integrity defect. Returns True iff `cycle` is cite-worthy
+    yet carries no references — the condition a publish-time check must reject."""
+    kind = str(cycle.get("kind", "")).lower()
+    return kind in _CITE_WORTHY_KINDS and not cycle.get("references")
 
 
 def ledger_payload(calc: Calculemus, *, generated_at: str = "", cycles: Optional[list] = None) -> dict:
