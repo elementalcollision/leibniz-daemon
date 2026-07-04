@@ -9,6 +9,7 @@ operator's act). `kernel_verified`/`qed` are read straight from the Demonstratio
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -133,6 +134,21 @@ def requires_references(cycle: dict) -> bool:
     yet carries no references — the condition a publish-time check must reject."""
     kind = str(cycle.get("kind", "")).lower()
     return kind in _CITE_WORTHY_KINDS and not cycle.get("references")
+
+
+def file_sha256(path) -> str:
+    """SHA-256 of a file's bytes — the integrity hash published beside a downloadable artifact."""
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def downloadable_artifact(path, *, cycle_id: str, checker: str, result: str, kind: str = "") -> dict:
+    """An `artifacts` entry that publishes the *exact* kernel-checked file so it is independently
+    auditable even though our repository is private: name + checker + result, plus a public
+    ``download`` URL (site convention ``/artifacts/<cycle_id>/<basename>``) and the ``sha256``
+    integrity hash. The public download is the authoritative artifact; the hash pins byte-identity."""
+    p = Path(path)
+    return {"name": p.name, "kind": kind, "checker": checker, "result": result,
+            "download": f"/artifacts/{cycle_id}/{p.name}", "sha256": file_sha256(p)}
 
 
 def ledger_payload(calc: Calculemus, *, generated_at: str = "", cycles: Optional[list] = None) -> dict:

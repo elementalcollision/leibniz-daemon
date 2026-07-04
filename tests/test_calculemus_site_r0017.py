@@ -5,7 +5,14 @@ import importlib.util
 from pathlib import Path
 
 from leibniz.calculemus import Calculemus
-from leibniz.calculemus_site import cycle_payload, law_payload, ledger_payload, requires_references
+from leibniz.calculemus_site import (
+    cycle_payload,
+    downloadable_artifact,
+    file_sha256,
+    law_payload,
+    ledger_payload,
+    requires_references,
+)
 from leibniz.propositio import Demonstratio, Enuntiatio, Expressio, Propositio
 from leibniz.trust import PROOF_EDGE
 from leibniz.types import ClaimType, EdgeEvidence, TrustTier, Verdict
@@ -84,6 +91,17 @@ def test_cycle_payload_shape_and_read_only():
     assert ledger_payload(Calculemus(), cycles=[c])["cycles"] == [c]
 
 
+def test_downloadable_artifact_publishes_bytes_with_hash(tmp_path):
+    # Because the source repo is private, the public download IS the auditable artifact — pinned by sha256.
+    f = tmp_path / "cert.lean"
+    f.write_text("theorem t : True := trivial\n")
+    a = downloadable_artifact(f, cycle_id="cycle_000005", checker="Lean 4.31", result="0 errors", kind="lean-proof")
+    assert a["name"] == "cert.lean" and a["download"] == "/artifacts/cycle_000005/cert.lean"
+    assert a["sha256"] == file_sha256(f) and len(a["sha256"]) == 64
+    import hashlib
+    assert a["sha256"] == hashlib.sha256(f.read_bytes()).hexdigest()   # the exact bytes served
+
+
 def test_sources_must_be_cited_on_cite_worthy_cycles():
     # A cite-worthy cycle (audit/verification/refutation of external work) MUST carry references (APA).
     ref = {"citation": "Kheltz. (2026). MCR: A universal transition equation [Whitepaper].", "url": ""}
@@ -112,6 +130,10 @@ def test_mcr_audit_cycle_carries_all_eight_verdicts():
     assert verdicts["P4"].startswith("REFUTED") and verdicts["P7"] == "NOT-PROVEN"  # the honest downgrade held
     assert verdicts["P8"] == "PROVEN"                                  # the steelman is carried
     assert {a["name"] for a in c["artifacts"]} == {"mcr_p4_not_derivable.lean", "mcr_audit_artifacts.py"}
+    # the underpinnings are publicly downloadable with an integrity hash (private repo notwithstanding)
+    for a in c["artifacts"]:
+        assert a["download"] == f"/artifacts/cycle_000002/{a['name']}"
+        assert len(a["sha256"]) == 64 and all(ch in "0123456789abcdef" for ch in a["sha256"])
     assert "no-op stub" in c["summary"]                               # the flagship VACUOUS framing survives
     # the audited source is cited (APA) — the scholarly-integrity requirement
     assert c["references"] and "Kheltz" in c["references"][0]["citation"]
