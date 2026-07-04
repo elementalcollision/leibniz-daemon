@@ -84,6 +84,14 @@ _REFERENCES = [
     {"citation": "Kheltz. (2026). MCR: A universal transition equation [Whitepaper].", "url": ""},
 ]
 
+# The auditable code trail — the source package audited and our own repo where the artifacts live.
+_REPOSITORIES = [
+    {"name": "elementalcollision/chimera", "url": "https://github.com/elementalcollision/chimera/tree/196838e",
+     "role": "source", "note": "the MCR audit package (commit 196838e)"},
+    {"name": "elementalcollision/leibniz-daemon", "url": "https://github.com/elementalcollision/leibniz-daemon",
+     "role": "produced", "note": "docs/audits/mcr_p4_not_derivable.lean + mcr_audit_artifacts.py"},
+]
+
 
 def build_cycle() -> dict:
     return cycle_payload(
@@ -96,6 +104,7 @@ def build_cycle() -> dict:
         findings=_FINDINGS,
         artifacts=_ARTIFACTS,
         references=_REFERENCES,
+        repositories=_REPOSITORIES,
     )
 
 

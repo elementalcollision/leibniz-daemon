@@ -77,6 +77,7 @@ def test_cycle_payload_shape_and_read_only():
     assert c["domain"] == "Formal verification" and c["title"] == "An audit"
     assert c["findings"][0]["verdict"] == "VACUOUS" and c["artifacts"][0]["name"] == "x.lean"
     assert c["links"] == [] and c["laws"] == [] and c["references"] == []   # optional fields default empty
+    assert c["repositories"] == []                                          # code-provenance defaults empty
     # a cycle mints no certificate: no kernel_verified / qed / promulgated leaks in
     assert not ({"kernel_verified", "qed", "promulgated"} & set(c))
     # it composes into the ledger under `cycles`, untouched
@@ -115,6 +116,10 @@ def test_mcr_audit_cycle_carries_all_eight_verdicts():
     # the audited source is cited (APA) — the scholarly-integrity requirement
     assert c["references"] and "Kheltz" in c["references"][0]["citation"]
     assert not requires_references(c)                                 # a cited audit passes the guard
+    # the code trail links back to GitHub — the auditable provenance
+    roles = {r["role"] for r in c["repositories"]}
+    assert {"source", "produced"} <= roles
+    assert all(r["url"].startswith("https://github.com/") for r in c["repositories"])
     p3 = {f["id"]: f for f in c["findings"]}["P3"]
     assert "ambiguous state" in p3["note"] and "per-symbol" in p3["note"]  # the state-a correction is carried
 
