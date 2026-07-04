@@ -35,7 +35,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T2** | The audit→Q.E.D. formalization ladder (F1/F2a done; F2b/F2c open) | audit → (gated) Q.E.D. | amplification | F1+F2a GREEN; **F2b-M2 PSD engine lemma DISCHARGED (clean axioms)**; validator GREEN; full F2b out for external round |
 | **T3** | Trust-tier expansion: the ~N≈60 kernel-PSD ceiling & the bridge | audit; expansion = new tier, gated | amplification-enabling | ADR 0047 HOLD |
 | **T4** | The organic discovery loop (proposer / faithfulness / prover / novelty) | proposal-side; audit | amplification | CONCLUDED-RED for autonomous novelty |
-| **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR); audit-runner instrument + P4 kernel-attested in CI (#270); **F2b discharge-validator = instrument applied to an internal claim (SCAFFOLD verdict)**; 2nd external target pending |
+| **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=2)** | GREEN (MCR); audit-runner + P4 kernel-attested (#270); **2nd external target GREEN — SS-RS-GD COLT refutation kernel-verified + erratum caught**; F2b validator on an internal claim |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
 | **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE & ZERO-AUDIT: every property (rank / ∀k infinite order / positive realization) kernel-derived from Lean process definitions** |
@@ -148,16 +148,23 @@ These must stay green before any F2b scaffold lands.
 - **Exit test today.** `python3 docs/audits/mcr_audit_artifacts.py` prints `all reproducible artifacts GREEN:
   True`; `tests/test_mcr_audit.py` (z3-gated) locks the verdicts.
 - **Trust.** No boundary contact; promulgates nothing (an audit is a record, not a law — ADR 0017).
-- **Measured EV.** **Measured-positive — but n=1.** Positive precisely because it is verification-amplification.
+- **Measured EV.** **Measured-positive, now n=2** (MCR whitepaper + the SS-RS-GD COLT refutation). Positive
+  precisely because it is verification-amplification — and the second target even yielded a kernel-caught erratum.
 - **Next increments.** (a) ✅ **GREEN (2026-07-03)** — audit-runner harness + regression pack
   (`scripts/audit_runner.py`, `tests/test_audit_runner.py`, `docs/results/audit-runner-t5-2026-07-03.md`): the
   MCR audit is now a re-runnable, CI-guarded instrument (an audit = a spec of `(verdict, artifact)`; the runner
   reproduces the 8 verdicts, 6/8 artifacts re-run and pass). (b) ✅ **GREEN** — the P4 Lean leg is
   kernel-attested via `lean_leg_ok()` (0 errors/0 sorries; corrupted control fails), no longer doc-asserted.
-  (c) **Second external target** — the only increment that is genuine discovery *about the track* (is n=1 EV
-  real?); the harness is now target-agnostic (a second target = a second spec) but **needs an actual target
-  (operator-supplied)**. Gate = every verdict backed by a re-runnable artifact + independent adversarial
-  re-verify + HONEST-NEGATIVE if <50% of sub-claims reduce to a mechanical artifact.
+  (c) **Second external target — ✅ GREEN (2026-07-03; n→2).** The daemon adjudicated a *second, independent*
+  external target: the **SS-RS-GD refutation** (Yun–Sra–Jadbabaie, COLT-2021 open problem), from the
+  `Pengbinghui/pipeline-math` repo (`scripts/ss_rs_gd_lean.py`, `tests/test_ss_rs_gd.py`,
+  `docs/colt/ss_rs_gd_refutation.lean`). The refutation's algebraic core is **kernel-verified** (the gap identity
+  1.8, positivity, the violation λ_SS > λ_RS on [1/4,1), a concrete witness at q=1/2 — all with only the standard
+  axioms), so **Conjecture 1.1 is machine-refuted**. Two by-products vindicate the audit stance: the kernel
+  **corrected an LLM scout** (which had falsely flagged a correct SOS identity), and **attested an erratum** in the
+  paper's supporting identity (1.7) — which does not affect the main result (the intended inequality λ_RS ≥ μ_RS
+  still holds). n=1 EV is now n=2, and *positive* — verification-amplification with a found erratum. (d) also
+  GREEN — the F2b discharge validator applied the instrument to an *internal* claim (T2).
   (d) ✅ **GREEN (2026-07-03)** — the same audit instrument applied to an *internal* formal claim: the **F2b
   discharge validator** (`scripts/f2b_validate.py`, T2 above) classifies any F2b discharge attempt via the H0
   `#print axioms` gate. Honest audit verdict on the current F2b state: **SCAFFOLD, not discharged** (the engine
