@@ -1,0 +1,333 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "domain_tier": 1,
+  "families": [
+    "monomial_normal",
+    "n_absorbing",
+    "self_ordered"
+  ],
+  "certificates": [
+    {
+      "family": "monomial_normal",
+      "tier": 1,
+      "params": {
+        "a": 4,
+        "b": 5,
+        "c": 7
+      },
+      "verdict": "not-normal",
+      "witness": [
+        2,
+        4,
+        5
+      ],
+      "detail": {
+        "L": 140,
+        "weights": [
+          35,
+          28,
+          20
+        ]
+      },
+      "kernel": {
+        "lean": "namespace Prob41_4_5_7\n/-- L-cleared weighted degree wrt (4,5,7); L = lcm = 140, weights = (35,28,20). -/\ndef wt (a b c : \u2115) : \u2115 := 35*a + 28*b + 20*c\n/-- x^u \u2208 I\u00b2 collapses to \u2203 v \u2264 u with 140 \u2264 wt v \u2264 wt u \u2212 140. Here wt u = 282. -/\ndef inI2 : Bool :=\n  (List.range 3).any fun a => (List.range 5).any fun b => (List.range 6).any fun c =>\n    140 \u2264 wt a b c && wt a b c \u2264 142\n/-- (4,5,7) is NOT normal: x^(2, 4, 5) \u2208 closure(I\u00b2) (wt=282 \u2265 280) but \u2209 I\u00b2. -/\ntheorem triple_4_5_7_not_normal : 280 \u2264 wt 2 4 5 \u2227 inI2 = false := by decide\nend Prob41_4_5_7\n",
+        "imports": [
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "Prob41_4_5_7.triple_4_5_7_not_normal"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Huneke, C., & Swanson, I. (2006). Integral closure of ideals, rings, and modules (LMS Lecture Note Series No. 336). Cambridge University Press.",
+          "url": ""
+        },
+        {
+          "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "monomial_normal",
+      "tier": 1,
+      "params": {
+        "a": 3,
+        "b": 3,
+        "c": 3
+      },
+      "verdict": "normal",
+      "witness": null,
+      "detail": {
+        "L": 3,
+        "weights": [
+          1,
+          1,
+          1
+        ]
+      },
+      "kernel": null,
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Huneke, C., & Swanson, I. (2006). Integral closure of ideals, rings, and modules (LMS Lecture Note Series No. 336). Cambridge University Press.",
+          "url": ""
+        },
+        {
+          "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "self_ordered",
+      "tier": 1,
+      "params": {
+        "seq": "cube",
+        "bound": 6
+      },
+      "verdict": "not-self-ordered",
+      "witness": [
+        3,
+        2
+      ],
+      "detail": null,
+      "kernel": {
+        "lean": "namespace SO_cube\ndef a (k : \u2115) : \u2124 := (k:\u2124)^3\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- \u00ac self-ordered: at (m,n)=(3,2), D_2 \u2224 P_{3,2}. -/\ntheorem not_self_ordered : P 3 2 % D 2 \u2260 0 := by decide\nend SO_cube\n",
+        "imports": [
+          "Mathlib.Algebra.BigOperators.Intervals",
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "SO_cube.not_self_ordered"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Adam, D., Cahen, P.-J., & Fares, Y. (2010). Subsets of \u2124 with simultaneous ordering. Integers, 10, 437\u2013451.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "self_ordered",
+      "tier": 1,
+      "params": {
+        "seq": "triangular",
+        "bound": 6
+      },
+      "verdict": "self-ordered (bound 6)",
+      "witness": null,
+      "detail": null,
+      "kernel": {
+        "lean": "namespace SO_triangular\ndef a (k : \u2115) : \u2124 := ((k*(k+1)/2:\u2115):\u2124)\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by decide\nend SO_triangular\n",
+        "imports": [
+          "Mathlib.Algebra.BigOperators.Intervals",
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "SO_triangular.self_ordered_lt6"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Adam, D., Cahen, P.-J., & Fares, Y. (2010). Subsets of \u2124 with simultaneous ordering. Integers, 10, 437\u2013451.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "self_ordered",
+      "tier": 1,
+      "params": {
+        "seq": "pow2",
+        "bound": 6
+      },
+      "verdict": "self-ordered (bound 6)",
+      "witness": null,
+      "detail": null,
+      "kernel": {
+        "lean": "namespace SO_pow2\ndef a (k : \u2115) : \u2124 := (2:\u2124)^k\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by decide\nend SO_pow2\n",
+        "imports": [
+          "Mathlib.Algebra.BigOperators.Intervals",
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "SO_pow2.self_ordered_lt6"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Adam, D., Cahen, P.-J., & Fares, Y. (2010). Subsets of \u2124 with simultaneous ordering. Integers, 10, 437\u2013451.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "n_absorbing",
+      "tier": 1,
+      "params": {
+        "modulus": 4
+      },
+      "verdict": "absorbingNumber(\u22a5 : \u2124/4) = 2",
+      "witness": {
+        "absorbing_number": 2
+      },
+      "detail": null,
+      "kernel": {
+        "lean": "namespace NAbs4\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 4, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 4) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by decide\nend NAbs4\n",
+        "imports": [
+          "Mathlib.Data.ZMod.Basic",
+          "Mathlib.Algebra.BigOperators.Basic",
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "NAbs4.absorbing_number_bot"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Anderson, D. F., & Badawi, A. (2011). On n-absorbing ideals of commutative rings. Communications in Algebra, 39(5), 1646\u20131672.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "family": "n_absorbing",
+      "tier": 1,
+      "params": {
+        "modulus": 9
+      },
+      "verdict": "absorbingNumber(\u22a5 : \u2124/9) = 2",
+      "witness": {
+        "absorbing_number": 2
+      },
+      "detail": null,
+      "kernel": {
+        "lean": "namespace NAbs9\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 9, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 9) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by decide\nend NAbs9\n",
+        "imports": [
+          "Mathlib.Data.ZMod.Basic",
+          "Mathlib.Algebra.BigOperators.Basic",
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "NAbs9.absorbing_number_bot"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Anderson, D. F., & Badawi, A. (2011). On n-absorbing ideals of commutative rings. Communications in Algebra, 39(5), 1646\u20131672.",
+          "url": ""
+        }
+      ]
+    }
+  ],
+  "kernel": {
+    "status": "checked",
+    "checked": [
+      {
+        "family": "monomial_normal",
+        "params": {
+          "a": 4,
+          "b": 5,
+          "c": 7
+        },
+        "theorem": "Prob41_4_5_7.triple_4_5_7_not_normal",
+        "errors": 0,
+        "axioms": [],
+        "ok": true
+      },
+      {
+        "family": "self_ordered",
+        "params": {
+          "seq": "cube",
+          "bound": 6
+        },
+        "theorem": "SO_cube.not_self_ordered",
+        "errors": 0,
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "ok": true
+      },
+      {
+        "family": "self_ordered",
+        "params": {
+          "seq": "triangular",
+          "bound": 6
+        },
+        "theorem": "SO_triangular.self_ordered_lt6",
+        "errors": 0,
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "ok": true
+      },
+      {
+        "family": "self_ordered",
+        "params": {
+          "seq": "pow2",
+          "bound": 6
+        },
+        "theorem": "SO_pow2.self_ordered_lt6",
+        "errors": 0,
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "ok": true
+      },
+      {
+        "family": "n_absorbing",
+        "params": {
+          "modulus": 4
+        },
+        "theorem": "NAbs4.absorbing_number_bot",
+        "errors": 0,
+        "axioms": [],
+        "ok": true
+      },
+      {
+        "family": "n_absorbing",
+        "params": {
+          "modulus": 9
+        },
+        "theorem": "NAbs9.absorbing_number_bot",
+        "errors": 0,
+        "axioms": [],
+        "ok": true
+      }
+    ],
+    "all_ok": true
+  },
+  "reading": "Tier-1 counterexample-certificate domain: one certify(object) interface over the finite/exact-decidable open-problem counterexamples (monomial-normality / self-ordered sequences / n-absorbing ideals), each object certified by a kernel-decidable Lean cert that names the fact. A sibling of the process-complexity and code-bound domains; verification-AMPLIFICATION. GREEN = every emitted cert elaborates with only standard axioms. Tier 2 (attested infinite-ring counterexamples) is scoped separately."
+}
