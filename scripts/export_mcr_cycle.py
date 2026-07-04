@@ -79,6 +79,12 @@ _SUMMARY = (
 )
 
 
+# The audited source — cited APA, rendered as the reference list at the foot of the published cycle.
+_REFERENCES = [
+    {"citation": "Kheltz. (2026). MCR: A universal transition equation [Whitepaper].", "url": ""},
+]
+
+
 def build_cycle() -> dict:
     return cycle_payload(
         cycle=2,  # the illustrative entry is Cycle 1; renumber to the next int in your ledger if needed
@@ -89,6 +95,7 @@ def build_cycle() -> dict:
         summary=_SUMMARY,
         findings=_FINDINGS,
         artifacts=_ARTIFACTS,
+        references=_REFERENCES,
     )
 
 
