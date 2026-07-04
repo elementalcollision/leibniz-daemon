@@ -1,0 +1,163 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "problem": "CFFG Problem 16 (Chabert)",
+  "N": 12,
+  "self_ordered_to_N": [
+    "identity",
+    "arith_3_5",
+    "square",
+    "triangular",
+    "pow2"
+  ],
+  "not_self_ordered": [
+    "cube",
+    "quartic",
+    "factorial",
+    "fibonacci",
+    "primes"
+  ],
+  "n2_self_ordered_to_30": true,
+  "census": [
+    {
+      "name": "identity",
+      "desc": "a\u2099 = n (arithmetic)",
+      "self_ordered": true,
+      "witness": null
+    },
+    {
+      "name": "arith_3_5",
+      "desc": "a\u2099 = 3 + 5n (arithmetic)",
+      "self_ordered": true,
+      "witness": null
+    },
+    {
+      "name": "square",
+      "desc": "a\u2099 = n\u00b2",
+      "self_ordered": true,
+      "witness": null
+    },
+    {
+      "name": "cube",
+      "desc": "a\u2099 = n\u00b3",
+      "self_ordered": false,
+      "witness": [
+        3,
+        2
+      ],
+      "prefix": [
+        0,
+        1,
+        8,
+        27
+      ],
+      "D_n": 56,
+      "P_mn": 702
+    },
+    {
+      "name": "quartic",
+      "desc": "a\u2099 = n\u2074",
+      "self_ordered": false,
+      "witness": [
+        4,
+        3
+      ],
+      "prefix": [
+        0,
+        1,
+        16,
+        81,
+        256
+      ],
+      "D_n": 421200,
+      "P_mn": 15667200
+    },
+    {
+      "name": "triangular",
+      "desc": "a\u2099 = n(n+1)/2",
+      "self_ordered": true,
+      "witness": null
+    },
+    {
+      "name": "pow2",
+      "desc": "a\u2099 = 2\u207f (geometric)",
+      "self_ordered": true,
+      "witness": null
+    },
+    {
+      "name": "factorial",
+      "desc": "a\u2099 = (n+1)!",
+      "self_ordered": false,
+      "witness": [
+        3,
+        2
+      ],
+      "prefix": [
+        1,
+        2,
+        6,
+        24
+      ],
+      "D_n": 20,
+      "P_mn": 506
+    },
+    {
+      "name": "fibonacci",
+      "desc": "distinct Fibonacci 1,2,3,5,8,\u2026",
+      "self_ordered": false,
+      "witness": [
+        4,
+        3
+      ],
+      "prefix": [
+        1,
+        2,
+        3,
+        5,
+        8
+      ],
+      "D_n": 24,
+      "P_mn": 210
+    },
+    {
+      "name": "primes",
+      "desc": "a\u2099 = (n+1)-th prime",
+      "self_ordered": false,
+      "witness": [
+        3,
+        2
+      ],
+      "prefix": [
+        2,
+        3,
+        5,
+        7
+      ],
+      "D_n": 6,
+      "P_mn": 20
+    }
+  ],
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 5,
+    "axiom_lines": [
+      "'SO_cube.cube_not_self_ordered' depends on axioms: [propext]",
+      "'SO_quartic.quartic_not_self_ordered' depends on axioms: [propext]",
+      "'SO_factorial.factorial_not_self_ordered' depends on axioms: [propext]",
+      "'SO_fibonacci.fibonacci_not_self_ordered' depends on axioms: [propext]",
+      "'SO_primes.primes_not_self_ordered' depends on axioms: [propext]"
+    ],
+    "clean": true
+  },
+  "artifact": "docs/crt/prob16_census_certificate.lean",
+  "theorems": [
+    "SO_cube.cube_not_self_ordered",
+    "SO_quartic.quartic_not_self_ordered",
+    "SO_factorial.factorial_not_self_ordered",
+    "SO_fibonacci.fibonacci_not_self_ordered",
+    "SO_primes.primes_not_self_ordered"
+  ],
+  "reading": "A self-ordered sequence census: certified refutations of natural non-self-ordered sequences (n\u00b3, n\u2074, factorial, Fibonacci, primes) plus a correction \u2014 n\u00b2 is self-ordered (to N=30), not refutable as the corpus doc loosely claimed. Certified instances of an open classification; verification-amplification, no trust surface."
+}
