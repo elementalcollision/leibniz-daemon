@@ -30,11 +30,12 @@ just validated on a real external target (the MCR whitepaper audit).
 
 | Track | Capability | Tier | Measured EV | Status |
 |---|---|---|---|---|
+| **H0** | Trust-integrity hardening (sole-fresh-writer guard + axiom-closure gate) | trust-integrity; no core edit | n/a | ✅ **GREEN** (#268) |
 | **T1** | Certificate amplification (Delsarte LP + Terwilliger 3-point SDP) | audit `DUAL_CERTIFICATE_CHECKED` | **amplification** | GREEN, measured DRY for discovery |
-| **T2** | The audit→Q.E.D. formalization ladder (F1/F2a done; F2b/F2c open) | audit → (gated) Q.E.D. | amplification | F1+F2a GREEN; F2b out for external round |
+| **T2** | The audit→Q.E.D. formalization ladder (F1/F2a done; F2b/F2c open) | audit → (gated) Q.E.D. | amplification | F1+F2a GREEN; **F2b discharge-validator GREEN — current F2b = SCAFFOLD, not discharged**; out for external round |
 | **T3** | Trust-tier expansion: the ~N≈60 kernel-PSD ceiling & the bridge | audit; expansion = new tier, gated | amplification-enabling | ADR 0047 HOLD |
 | **T4** | The organic discovery loop (proposer / faithfulness / prover / novelty) | proposal-side; audit | amplification | CONCLUDED-RED for autonomous novelty |
-| **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR) |
+| **T5** | Daemon as external audit instrument | audit (promulgates nothing) | **measured-positive (n=1)** | GREEN (MCR); audit-runner instrument + P4 kernel-attested in CI (#270); **F2b discharge-validator = instrument applied to an internal claim (SCAFFOLD verdict)**; 2nd external target pending |
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
 | **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE & ZERO-AUDIT: every property (rank / ∀k infinite order / positive realization) kernel-derived from Lean process definitions** |
@@ -91,6 +92,14 @@ These must stay green before any F2b scaffold lands.
   lemma / M0) → F2b-M3 (full sorry-free discharge, empty project-axiom footprint) → F2c (gated). **Each gate =
   `#print axioms` closure** (H0). External formalization round in flight (brief finalized; Aristotle M0 = honest
   0/1). Consensus cost: ~1–2 wks admitted-wiring, ~3–6 months full discharge.
+- **F2b discharge validator ✅ GREEN (2026-07-03; `scripts/f2b_validate.py`, `tests/test_f2b_validate.py`).**
+  The M-gate above is now a *mechanical, re-runnable* classifier, not a manual `#print axioms` read: it labels
+  any F2b attempt DISCHARGED (only std axioms) / SCAFFOLD (rests on the single named engine lemma) / BROKEN
+  (sorry / unexpected axiom / error), verified against the real kernel on three demonstration cases. **Measured
+  now:** the engine lemma (block-diagonal PSD-iff) is *not* dischargeable in-session — this Mathlib pin defines
+  `Matrix.PosSemidef` via a Finsupp bilinear form, Mathlib has no block-diagonal PSD lemma (`exact?` empty), and
+  Aristotle returned 0/1 — so **current F2b = SCAFFOLD, not discharged.** The validator is ready to certify a
+  real discharge the instant an external formalizer returns one (it is exactly the brief's acceptance gate).
 - **Do not relitigate.** F2c is deferred by ADR 0046; the 2ⁿ×2ⁿ ambient-matrix target (DEAD, GLM); baking
   `IsTripleDistribution` into the algebra (DEAD, Fugu).
 
@@ -144,6 +153,11 @@ These must stay green before any F2b scaffold lands.
   real?); the harness is now target-agnostic (a second target = a second spec) but **needs an actual target
   (operator-supplied)**. Gate = every verdict backed by a re-runnable artifact + independent adversarial
   re-verify + HONEST-NEGATIVE if <50% of sub-claims reduce to a mechanical artifact.
+  (d) ✅ **GREEN (2026-07-03)** — the same audit instrument applied to an *internal* formal claim: the **F2b
+  discharge validator** (`scripts/f2b_validate.py`, T2 above) classifies any F2b discharge attempt via the H0
+  `#print axioms` gate. Honest audit verdict on the current F2b state: **SCAFFOLD, not discharged** (the engine
+  lemma rests on an admitted lemma; kernel-verified on three demonstration cases). This is an audit *record*,
+  not a law — it promulgates nothing and is the acceptance gate for a future external discharge.
 - **Do not relitigate.** Autonomous novelty-at-the-producer; routing an audit into Le Leggi; weakening P7 back to
   REFUTED; posting the internal report verbatim.
 
