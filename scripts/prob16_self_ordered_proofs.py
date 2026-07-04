@@ -24,7 +24,8 @@ _ROOT = Path(__file__).resolve().parent.parent
 ARTIFACT = _ROOT / "docs" / "crt" / "prob16_self_ordered_proofs.lean"
 OUT = _ROOT / "docs" / "results" / "prob16_self_ordered_proofs.json"
 IMPORTS = ("Mathlib.Tactic", "Mathlib.RingTheory.Polynomial.Pochhammer")
-THEOREMS = ["identity_selfOrdered", "arith_selfOrdered", "even_selfOrdered", "arith_3_5_selfOrdered"]
+THEOREMS = ["identity_selfOrdered", "arith_selfOrdered", "qf_dvd_ffall", "geom_selfOrdered",
+            "even_selfOrdered", "arith_3_5_selfOrdered", "pow2_selfOrdered"]
 _STD = {"propext", "Classical.choice", "Quot.sound"}
 
 
