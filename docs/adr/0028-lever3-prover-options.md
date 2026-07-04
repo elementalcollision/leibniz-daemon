@@ -99,3 +99,32 @@ Three live learnings, now fixed in code:
   configurable for harness A.
 - Live (billable): `scripts/try_aristotle.py "<goal>"` — Aristotle proves, our kernel
   re-verifies. `scripts/measure_goedel.py` — a Goedel-backed calibration.
+
+## As-wired into the standing ensemble (2026-07-04)
+
+Both levers are now live in the operator `.env`, with routing chosen by cost/latency profile:
+
+- **Goedel-Prover-V2 (via Featherless) → STANDING ensemble member.** Featherless is flat-rate
+  and OpenAI-compatible; Goedel-V2-8B beats DeepSeek-Prover-V2-671B on miniF2F. It is added
+  through ADR 0028 per-model gateway routing — `LEIBNIZ_PROVER_MODELS` now lists
+  `Goedel-LM/Goedel-Prover-V2-8B@featherless` alongside `deepseek/deepseek-prover-v2` and the
+  `anthropic/claude-opus-4-8` witness (it **replaced** a redundant duplicate `deepseek` entry —
+  two identical ids are one voter under N+1). Result: **three distinct kernel-verified voter
+  identities** for the `LEIBNIZ_PROOF_CONSENSUS=2` bar. Config:
+  `LEIBNIZ_GATEWAY_FEATHERLESS_URL=https://api.featherless.ai/v1/chat/completions`,
+  `LEIBNIZ_GATEWAY_FEATHERLESS_KEY_ENV=FEATHERLESS_API_KEY`.
+  *Verified end-to-end today:* Goedel-V2-8B proposed a parity proof of `6 ∣ n·(n+1)·(n+2)` and
+  **our own Lean 4.31 kernel re-verified it (Q.E.D.)**. Operational note: Featherless returns a
+  transient `503` on cold-start/capacity for larger requests — retry with backoff (the smoke
+  harness and any standing use should tolerate it); a bare `max_tokens` probe warms the model.
+
+- **Aristotle → ON-DEMAND escalation only, NOT standing.** It is a hosted proof *agent*: billable
+  per goal and minutes→hours per run, so appending it to every routine proof is the wrong default.
+  `LEIBNIZ_ARISTOTLE` is left unset in `.env` (documented toggle inline). Invoke it deliberately on
+  hard goals / kernel near-misses, e.g. `LEIBNIZ_ARISTOTLE=1 python scripts/try_aristotle.py
+  --from-memory 3`, or the targeted `scripts/terwilliger_f2b_aristotle.py`. Availability confirmed
+  today (`ARISTOTLE_API_KEY` present, `aristotlelib` importable). The kernel re-verifies its output
+  exactly as for any other prover — routing never touches the trust bar.
+
+Reusable availability check (no billable Aristotle run; the Featherless leg is flat-rate):
+`python scripts/smoke_provers.py`.
