@@ -78,6 +78,7 @@ def cycle_payload(
     links: Optional[list] = None,
     laws: Optional[list] = None,
     references: Optional[list] = None,
+    repositories: Optional[list] = None,
 ) -> dict:
     """One work-log entry for *Il Lavoro* (the site's `/cycles` page, ADR 0017).
 
@@ -96,6 +97,13 @@ def cycle_payload(
     scholarly-integrity requirement, enforced by ``requires_references``; a cite-worthy
     cycle with no references is a defect, not a stylistic choice.
 
+    **Link back to the code.** When a cycle pulls code from a repository — the source we
+    audited, or our own repo where the verification artifacts live — that repository is
+    recorded in `repositories`, each entry a dict
+    ``{"name", "url", "role", "note"}`` (``role`` ∈ audited / produced / contributed /
+    source), ideally pinned to the exact commit or PR. Papers go in `references` (APA);
+    repositories go here. Together they are the tractable, auditable trail of existence.
+
     Core fields mirror the rendered work-log badge (cycle · date · domain · kind ·
     summary); `findings`/`artifacts`/`links` are optional and degrade gracefully if
     the renderer does not surface them yet."""
@@ -111,6 +119,7 @@ def cycle_payload(
         "links": list(links or []),
         "laws": list(laws or []),
         "references": list(references or []),
+        "repositories": list(repositories or []),
     }
 
 
