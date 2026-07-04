@@ -58,6 +58,8 @@ REF_ACC = {"citation": ("Adam, D., Cahen, P.-J., & Fares, Y. (2010). Subsets of 
                         "Integers, 10, 437–451."), "url": ""}
 REF_AB = {"citation": ("Anderson, D. F., & Badawi, A. (2011). On n-absorbing ideals of commutative rings. "
                        "Communications in Algebra, 39(5), 1646–1672."), "url": ""}
+REF_AM = {"citation": ("Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables "
+                       "(arXiv:2602.01782). arXiv."), "url": "https://arxiv.org/abs/2602.01782"}
 
 
 # =========================================================================================================
@@ -202,7 +204,7 @@ def certify_pipeline_ring(params: dict) -> dict:
 
 
 FAMILIES = {
-    "monomial_normal": {"fn": certify_monomial, "refs": [REF_CFFG, REF_HS, REF_RRV], "tier": 1},
+    "monomial_normal": {"fn": certify_monomial, "refs": [REF_CFFG, REF_HS, REF_RRV, REF_AM], "tier": 1},
     "self_ordered": {"fn": certify_self_ordered, "refs": [REF_CFFG, REF_ACC], "tier": 1},
     "n_absorbing": {"fn": certify_n_absorbing, "refs": [REF_CFFG, REF_AB], "tier": 1},
     "pipeline_ring": {"fn": certify_pipeline_ring, "refs": [REF_CFFG, REF_PIPE], "tier": 2},
@@ -224,6 +226,8 @@ def registry() -> list:
     """The initial corpus — one entry per certified object, across the three Tier-1 families."""
     return [
         {"family": "monomial_normal", "params": {"a": 4, "b": 5, "c": 7}},   # NOT normal (Huneke–Swanson)
+        {"family": "monomial_normal", "params": {"a": 7, "b": 3, "c": 2},     # NOT normal — Ataka–Matsuoka (2026)
+         "note": "sharp-bound witness for μ(I)≤7 ⇒ normal; closure has 8 generators (arXiv:2602.01782, Ex. 4.5)"},
         {"family": "monomial_normal", "params": {"a": 3, "b": 3, "c": 3}},   # normal
         {"family": "self_ordered", "params": {"seq": "cube", "bound": 6}},        # NOT self-ordered
         {"family": "self_ordered", "params": {"seq": "triangular", "bound": 6}},  # self-ordered base family

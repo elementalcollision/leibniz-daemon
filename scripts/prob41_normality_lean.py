@@ -74,6 +74,34 @@ def certify(a: int, b: int, c: int) -> dict:
     return {"triple": [a, b, c], "L": L, "weights": [wa, wb, wc], "normal": True, "witness": None}
 
 
+def min_generators(a: int, b: int, c: int) -> list:
+    """Minimal monomial generators of I = closure(x^a, y^b, z^c). A monomial x^u is in I iff u lies in the
+    Newton-polyhedron up-set {u ≥ 0 : wt(u) ≥ L} (wt = L-cleared weighted degree, L = lcm); u is a *minimal*
+    generator iff it is in I but u − e_i leaves I for every coordinate i with u_i > 0. Any minimal generator
+    obeys u_i ≤ (pure power) (else it is a multiple of x_i^{power}), so the box [0,a]×[0,b]×[0,c] is complete.
+    Returns the generator exponent triples in lexicographic order. (Used to certify the Ataka–Matsuoka
+    generator-count sharpness claim: closure(x^7,y^3,z^2) has exactly 8.)"""
+    L = _lcm3(a, b, c)
+    wa, wb, wc = L // a, L // b, L // c
+
+    def in_I(u) -> bool:
+        return wa * u[0] + wb * u[1] + wc * u[2] >= L
+
+    def is_min(u) -> bool:
+        if not in_I(u):
+            return False
+        for i in range(3):
+            if u[i] > 0:
+                v = list(u)
+                v[i] -= 1
+                if in_I(tuple(v)):
+                    return False
+        return True
+
+    return sorted((i, j, k) for i in range(a + 1) for j in range(b + 1) for k in range(c + 1)
+                  if is_min((i, j, k)))
+
+
 def lean_cert(a: int, b: int, c: int, witness) -> str:
     """Emit the collapsed-form Lean non-normality certificate for a triple + witness (kernel-decidable)."""
     L = _lcm3(a, b, c)
