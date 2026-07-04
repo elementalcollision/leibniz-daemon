@@ -1,0 +1,134 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Ataka\u2013Matsuoka (2026), arXiv:2602.01782v1, Example 4.7 (\u00a74.3)",
+  "findings": {
+    "4.7(1)": "CONFIRMED normal (I, I\u00b2 integrally closed; single Newton facet x+2y+2z\u22653)",
+    "4.7(2)": "ERRATUM: NOT integrally closed \u2014 xz\u00b2 \u2208 closure(I) \u2216 I since (xz\u00b2)\u00b2 = (x\u00b2z)(z\u00b3) \u2208 I\u00b2; \u03bc(\u012a) = 8 > 7, so Theorem 3.1 (needs I = \u012a, \u03bc \u2264 7) does not apply as printed. Independent of the Main Theorem (Example 4.5 verified separately)."
+  },
+  "analysis": {
+    "4.7(1)": {
+      "generators": [
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          2
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1
+        ]
+      ],
+      "I_integrally_closed": true,
+      "I2_integrally_closed": true,
+      "normal": true,
+      "closure_witness_I": null,
+      "closure_witness_I2": null
+    },
+    "4.7(2)": {
+      "generators": [
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          0,
+          3
+        ],
+        [
+          2,
+          1,
+          0
+        ],
+        [
+          1,
+          2,
+          0
+        ],
+        [
+          2,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1
+        ]
+      ],
+      "I_integrally_closed": false,
+      "I2_integrally_closed": false,
+      "normal": false,
+      "closure_witness_I": [
+        1,
+        0,
+        2
+      ],
+      "closure_witness_I2": [
+        1,
+        0,
+        5
+      ]
+    },
+    "erratum_k": 2,
+    "checks": {
+      "4.7(1)_is_normal": true,
+      "4.7(2)_not_integrally_closed": true,
+      "4.7(2)_witness_is_xz2": true,
+      "xz2_integral_over_I_at_k2": true,
+      "xz2_not_in_I": true,
+      "xz2_squared_in_I2": true
+    }
+  },
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "axiom_free": true,
+    "axiom_lines": [
+      "'AtakaMatsuoka47.xz2_not_in_I' does not depend on any axioms",
+      "'AtakaMatsuoka47.xz2_squared_in_I2' does not depend on any axioms",
+      "'AtakaMatsuoka47.I2_not_integrally_closed' does not depend on any axioms"
+    ],
+    "clean": true
+  },
+  "reference": {
+    "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv. https://arxiv.org/abs/2602.01782",
+    "url": "https://arxiv.org/abs/2602.01782"
+  },
+  "artifact": "docs/crt/ataka_matsuoka_47_certificate.lean",
+  "headline_theorems": [
+    "AtakaMatsuoka47.xz2_not_in_I",
+    "AtakaMatsuoka47.xz2_squared_in_I2",
+    "AtakaMatsuoka47.I2_not_integrally_closed"
+  ],
+  "reading": "General monomial-ideal normality instrument (integral-dependence membership + RRV d=3) independently verifying a Feb-2026 paper: 4.7(1) confirmed normal; 4.7(2) is a kernel-checkable erratum (not integrally closed). Verification-amplification; no trust surface. The erratum is minor (illustrative example) and independent of the Main Theorem."
+}
