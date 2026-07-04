@@ -20,9 +20,24 @@ def _load():
     return m
 
 
-def test_three_tier1_families_registered():
+def test_families_registered_across_two_tiers():
     m = _load()
-    assert set(m.FAMILIES) == {"monomial_normal", "self_ordered", "n_absorbing"}
+    assert set(m.FAMILIES) == {"monomial_normal", "self_ordered", "n_absorbing", "pipeline_ring"}
+    tiers = {f: m.FAMILIES[f]["tier"] for f in m.FAMILIES}
+    assert tiers["monomial_normal"] == 1 and tiers["self_ordered"] == 1 and tiers["n_absorbing"] == 1
+    assert tiers["pipeline_ring"] == 2
+
+
+def test_pipeline_ring_tier2_is_attested_not_decided():
+    m = _load()
+    for prob, thm in [("4b", "problem4b_false"), ("20", "problem20_answer"),
+                      ("27b", "problem27b_false"), ("30c", "problem30c_false")]:
+        c = m.certify({"family": "pipeline_ring", "params": {"problem": prob}})
+        assert c["tier"] == 2 and c["verdict"] == "attested"
+        assert c["kernel"]["check"] == "lake-build" and thm in c["kernel"]["theorem"]
+        assert set(c["kernel"]["axioms"]) == {"propext", "Classical.choice", "Quot.sound"}
+        assert "git checkout" in c["kernel"]["reproduction"] and "verify.sh" in c["kernel"]["reproduction"]
+        assert any("pipeline-math" in r.get("url", "") for r in c["references"])   # code trail cited
 
 
 def test_monomial_normal_family():
@@ -57,14 +72,14 @@ def test_every_certificate_carries_apa_references():
         c = m.certify(obj)
         assert c["references"] and all("citation" in r and r["citation"] for r in c["references"])
     # the shared CFFG source is cited by every family
-    assert all(any("Cahen" in r["citation"] for r in m.FAMILIES[f][1]) for f in m.FAMILIES)
+    assert all(any("Cahen" in r["citation"] for r in m.FAMILIES[f]["refs"]) for f in m.FAMILIES)
 
 
 def test_emitted_lean_has_no_stray_sorry():
     m = _load()
     for obj in m.registry():
         k = m.certify(obj).get("kernel")
-        if k:
+        if k and k.get("lean"):          # Tier-2 attestations carry a recipe, not Lean source
             for banned in ["sorry", "native_decide", "admit"]:
                 assert banned not in k["lean"]
 
@@ -80,7 +95,7 @@ def test_real_kernel_elaborates_all_emitted_certs():
     try:
         for obj in m.registry():
             k = m.certify(obj).get("kernel")
-            if not k:
+            if not k or k.get("check") != "decide":     # Tier-2 attestations use lake build, not the REPL
                 continue
             r = bk._run(k["lean"] + f"\n#print axioms {k['theorem']}\n", tuple(k["imports"]))
             msgs = (r or {}).get("messages", []) or []

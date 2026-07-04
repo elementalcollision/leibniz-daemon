@@ -2,12 +2,14 @@
   "gate": "GREEN",
   "tier": "audit",
   "ev": "AMPLIFICATION",
-  "domain_tier": 1,
-  "families": [
-    "monomial_normal",
-    "n_absorbing",
-    "self_ordered"
-  ],
+  "families": {
+    "monomial_normal": 1,
+    "self_ordered": 1,
+    "n_absorbing": 1,
+    "pipeline_ring": 2
+  },
+  "n_tier1": 7,
+  "n_tier2": 4,
   "certificates": [
     {
       "family": "monomial_normal",
@@ -244,6 +246,150 @@
           "url": ""
         }
       ]
+    },
+    {
+      "family": "pipeline_ring",
+      "tier": 2,
+      "params": {
+        "problem": "4b"
+      },
+      "verdict": "attested",
+      "witness": {
+        "headline_theorem": "Prob4b.Solution.problem4b_false",
+        "type": "\u2203 S, FiniteConductor S \u2227 \u00ac QuasiCoherent S",
+        "establishes": "finite-conductor is strictly weaker than quasi-coherent (R = \u0394(B)+C^(\u2115), an infinite ring)"
+      },
+      "detail": null,
+      "kernel": {
+        "check": "lake-build",
+        "theorem": "Prob4b.Solution.problem4b_false",
+        "checker": "lake build (Lean 4.31.0 + Mathlib rev v4.31.0) + the authors' scripts/verify.sh",
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "reproduction": "git clone https://github.com/Pengbinghui/pipeline-math && cd pipeline-math && git checkout 69d7df765a8f377a5e0628c6d36c088bce7642c9 && cd lean/problem-4b-formalization && lake exe cache get && scripts/verify.sh --all",
+        "artifact": "recipe + pins (multi-file Mathlib project; sources public \u2014 see repo @ commit)"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). pipeline-math [Computer software]. GitHub.",
+          "url": "https://github.com/Pengbinghui/pipeline-math"
+        }
+      ]
+    },
+    {
+      "family": "pipeline_ring",
+      "tier": 2,
+      "params": {
+        "problem": "20"
+      },
+      "verdict": "attested",
+      "witness": {
+        "headline_theorem": "Prob20.Solution.problem20_answer",
+        "type": "\u2203 D K \u2026, \u00ac Injective (\u03b8\u2082) \u2227 \u00ac (Int(D\u00b2) \u2286 range \u03b8\u2082)",
+        "establishes": "the canonical map \u03b8\u2082 is neither injective nor surjective (D = \ud835\udd3d\u2082+\ud835\udd2a in \ud835\udd3d\u2082(t))"
+      },
+      "detail": null,
+      "kernel": {
+        "check": "lake-build",
+        "theorem": "Prob20.Solution.problem20_answer",
+        "checker": "lake build (Lean 4.31.0 + Mathlib rev v4.31.0) + the authors' scripts/verify.sh",
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "reproduction": "git clone https://github.com/Pengbinghui/pipeline-math && cd pipeline-math && git checkout 69d7df765a8f377a5e0628c6d36c088bce7642c9 && cd lean/problem-20-formalization && lake exe cache get && scripts/verify.sh --all",
+        "artifact": "recipe + pins (multi-file Mathlib project; sources public \u2014 see repo @ commit)"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). pipeline-math [Computer software]. GitHub.",
+          "url": "https://github.com/Pengbinghui/pipeline-math"
+        }
+      ]
+    },
+    {
+      "family": "pipeline_ring",
+      "tier": 2,
+      "params": {
+        "problem": "27b"
+      },
+      "verdict": "attested",
+      "witness": {
+        "headline_theorem": "Prob27b.Solution.problem27b_false",
+        "type": "\u2203 g\u2081 g\u2082 \u2208 IntA, g\u2081\u00b7g\u2082 \u2209 IntA",
+        "establishes": "Int(A) need not be a ring (a noncommutative Werner counterexample over \ud835\udd3d\u2082[\u03c0])"
+      },
+      "detail": null,
+      "kernel": {
+        "check": "lake-build",
+        "theorem": "Prob27b.Solution.problem27b_false",
+        "checker": "lake build (Lean 4.31.0 + Mathlib rev v4.31.0) + the authors' scripts/verify.sh",
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "reproduction": "git clone https://github.com/Pengbinghui/pipeline-math && cd pipeline-math && git checkout 69d7df765a8f377a5e0628c6d36c088bce7642c9 && cd lean/problem-27b-form && lake exe cache get && scripts/verify.sh --all",
+        "artifact": "recipe + pins (multi-file Mathlib project; sources public \u2014 see repo @ commit)"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). pipeline-math [Computer software]. GitHub.",
+          "url": "https://github.com/Pengbinghui/pipeline-math"
+        }
+      ]
+    },
+    {
+      "family": "pipeline_ring",
+      "tier": 2,
+      "params": {
+        "problem": "30c"
+      },
+      "verdict": "attested",
+      "witness": {
+        "headline_theorem": "Prob30c.Solution.problem30c_false",
+        "type": "\u2203 R I, absorbingNumber(I.map C) \u2260 absorbingNumber I",
+        "establishes": "the absorbing number is not preserved under R \u2192 R[X] (A_q = \ud835\udd3d\u2082[t][X\u2080,X\u2081,X\u2082]/Arel)"
+      },
+      "detail": null,
+      "kernel": {
+        "check": "lake-build",
+        "theorem": "Prob30c.Solution.problem30c_false",
+        "checker": "lake build (Lean 4.31.0 + Mathlib rev v4.31.0) + the authors' scripts/verify.sh",
+        "axioms": [
+          "Classical.choice",
+          "Quot.sound",
+          "propext"
+        ],
+        "reproduction": "git clone https://github.com/Pengbinghui/pipeline-math && cd pipeline-math && git checkout 69d7df765a8f377a5e0628c6d36c088bce7642c9 && cd lean/problem-30c-formalization && lake exe cache get && scripts/verify.sh --all",
+        "artifact": "recipe + pins (multi-file Mathlib project; sources public \u2014 see repo @ commit)"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Peng, B., Tao, R., Wang, S., Yu, H., & Liu, D. (2026). pipeline-math [Computer software]. GitHub.",
+          "url": "https://github.com/Pengbinghui/pipeline-math"
+        }
+      ]
     }
   ],
   "kernel": {
@@ -329,5 +475,5 @@
     ],
     "all_ok": true
   },
-  "reading": "Tier-1 counterexample-certificate domain: one certify(object) interface over the finite/exact-decidable open-problem counterexamples (monomial-normality / self-ordered sequences / n-absorbing ideals), each object certified by a kernel-decidable Lean cert that names the fact. A sibling of the process-complexity and code-bound domains; verification-AMPLIFICATION. GREEN = every emitted cert elaborates with only standard axioms. Tier 2 (attested infinite-ring counterexamples) is scoped separately."
+  "reading": "Counterexample-certificate domain: one certify(object) interface across two tiers. Tier 1 (self-certified) \u2014 the finite/exact-decidable counterexamples (monomial-normality / self-ordered sequences / n-absorbing ideals), each object certified by a kernel-`decide`-able Lean cert that names the fact. Tier 2 (attested) \u2014 the infinite-ring pipeline-math counterexamples (4b/20/27b/30c), re-verified by `lake build` (not `decide`), the certificate being the attestation + reproduction recipe against the public repo. A sibling of the process-complexity and code-bound domains; verification-AMPLIFICATION. GREEN = every Tier-1 emitted cert elaborates with only standard axioms."
 }
