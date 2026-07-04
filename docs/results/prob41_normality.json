@@ -1,0 +1,102 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "problem": "CFFG/Swanson Problem 41",
+  "flagship": "(4,5,7) NOT normal; witness x^2 y^4 z^5 \u2208 closure(I^2) \\ I^2; kernel-decided, axiom-free",
+  "registry": [
+    {
+      "triple": [
+        4,
+        5,
+        7
+      ],
+      "L": 140,
+      "weights": [
+        35,
+        28,
+        20
+      ],
+      "normal": false,
+      "witness": [
+        2,
+        4,
+        5
+      ],
+      "witness_wt": 282
+    },
+    {
+      "triple": [
+        3,
+        3,
+        3
+      ],
+      "L": 3,
+      "weights": [
+        1,
+        1,
+        1
+      ],
+      "normal": true,
+      "witness": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        5
+      ],
+      "L": 30,
+      "weights": [
+        15,
+        10,
+        6
+      ],
+      "normal": true,
+      "witness": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        1
+      ],
+      "L": 1,
+      "weights": [
+        1,
+        1,
+        1
+      ],
+      "normal": true,
+      "witness": null
+    },
+    {
+      "triple": [
+        4,
+        5,
+        6
+      ],
+      "L": 60,
+      "weights": [
+        15,
+        12,
+        10
+      ],
+      "normal": true,
+      "witness": null
+    }
+  ],
+  "checker_ok": true,
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "axiom_free": true,
+    "axiom_lines": [
+      "'Prob41_457.four_five_seven_not_normal_collapsed' does not depend on any axioms",
+      "'Prob41_457.four_five_seven_not_normal_direct' does not depend on any axioms"
+    ],
+    "clean": true
+  },
+  "artifact": "docs/crt/prob41_457_certificate.lean",
+  "reading": "Reusable monomial-normality checker (Newton polyhedron + Reid\u2013Roberts\u2013Vitulli d=3 reduction) + the kernel-decided (4,5,7) non-normality certificate (axiom-free). CREATE (a verified 'is (a,b,c) normal?' instrument) + PROVE (certify boundary triples of a still-open classification). Verification-AMPLIFICATION; certified instances, not a classification."
+}
