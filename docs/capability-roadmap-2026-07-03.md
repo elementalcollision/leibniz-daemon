@@ -39,6 +39,7 @@ just validated on a real external target (the MCR whitepaper audit).
 | **T6** | New-frontier / second-domain scouting | audit | discovery EV measured LOW→ZERO | CONVERGED |
 | **T7** | Calculemus reading-room + publishing | non-guarded, read-only | presentation | Tier 4 complete |
 | **T8** | *Beyond-Markov process-complexity certificates* | audit | **amplification (measured: T8-c discovery probe = amplification)** | **COMPLETE & ZERO-AUDIT: every property (rank / ∀k infinite order / positive realization) kernel-derived from Lean process definitions** |
+| **T9** | *External open-problem corpus* (Cahen–Fontana–Frisch–Glaz CRT + Erdős DB) — tractability ledger, statement formalizations, certificate instruments | audit | amplification | **SCOPED** (`docs/crt-open-problems-corpus.md`): 44 CRT problems tiered (3 already resolved post-2013) + Erdős DB filtered (asymptotic bulk kernel-undecidable); **flagship target = CRT Problem 41** monomial-normality certificate; Erdős-367 statement formalized |
 
 ---
 
