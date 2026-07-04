@@ -133,10 +133,13 @@ scale (faithful Lean statements + a faithfulness gate), and (ii) attacking the *
 
 Ranked by measured tractability × additive value across both sources:
 
-1. **CREATE + PROVE — Problem 41 monomial-normality certificate (flagship).** A reusable Lean instrument:
-   Newton-polyhedron lattice-membership witness + `I²`-exclusion, keyed on the RRV `d=3` reduction; instantiated
-   first on the **(4,5,7)** non-normality boundary point and a normal companion (e.g. `(a,a,a)`). Delivers a
-   verified "is (a,b,c) normal?" checker — a genuine new instrument on a still-open classification.
+1. **CREATE + PROVE — Problem 41 monomial-normality certificate (flagship) ✅ DONE (#276).** A reusable Lean
+   instrument (`scripts/prob41_normality_lean.py`, `docs/crt/prob41_457_certificate.lean`,
+   `tests/test_prob41.py`): Newton-polyhedron lattice-membership witness + `I²`-exclusion, keyed on the RRV
+   `d=3` reduction. The **(4,5,7)** non-normality boundary point is **kernel-decided, axiom-free** ("does not
+   depend on any axioms") in both the collapsed and direct forms, witnessed by `x²y⁴z⁵ ∈ closure(I²) ∖ I²`; the
+   reusable `certify(a,b,c)` checker classifies (4,5,7) not-normal and (3,3,3)/(2,3,5)/(1,1,1)/(4,5,6) normal.
+   A genuine new instrument on a still-open classification (certified instances, not a competing classification).
 2. **CREATE — a commutative-ring / integer-valued-polynomial counterexample-certificate *domain*.** A sibling of
    the shipped process-complexity and code-bound domains: `certify(object)` bundling the finite decidable checks
    (n-absorbing, self-ordered, monomial-normal, McCoy) each naming its kernel lemma. Turns the one-off
@@ -149,8 +152,10 @@ Ranked by measured tractability × additive value across both sources:
 5. **MUTATE — extend the Prob30c scaffolding.** 30a/30b share `IsNAbsorbing`/`absorbingNumber` with the
    already-formalized 30c; the resolved answers can be formalized on that running start.
 
-**Recommended first demonstration:** Problem 41 (4,5,7) — the single highest tractability × additive-value target
-across all three external sources handled this cycle.
+**First demonstration ✅ DONE:** Problem 41 (4,5,7) — the single highest tractability × additive-value target
+across all three external sources — is kernel-certified non-normal (axiom-free), shipped in #276 as a reusable
+`certify(a,b,c)` instrument. *Next candidates:* the counterexample-certificate **domain** (item 2) and the
+Erdős statement-formalization lane (item 4).
 
 ---
 
