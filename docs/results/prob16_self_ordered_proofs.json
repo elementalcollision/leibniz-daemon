@@ -6,18 +6,24 @@
   "theorems": [
     "identity_selfOrdered",
     "arith_selfOrdered",
+    "qf_dvd_ffall",
+    "geom_selfOrdered",
     "even_selfOrdered",
-    "arith_3_5_selfOrdered"
+    "arith_3_5_selfOrdered",
+    "pow2_selfOrdered"
   ],
   "kernel": {
     "status": "checked",
     "errors": [],
-    "n_theorems": 4,
+    "n_theorems": 7,
     "axiom_lines": [
       "'identity_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
       "'arith_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'qf_dvd_ffall' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'geom_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
       "'even_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
-      "'arith_3_5_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]"
+      "'arith_3_5_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'pow2_selfOrdered' depends on axioms: [propext, Classical.choice, Quot.sound]"
     ],
     "clean": true
   },

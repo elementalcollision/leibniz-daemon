@@ -32,13 +32,16 @@ _SUMMARY = (
     "self-ordered: each factor (α+βx) − (α+βk) equals β(x − k), so both D_n and P(m,n) factor as βⁿ times the "
     "identity factorial; the shared βⁿ cancels and the claim reduces to the identity case. Corollaries "
     "instantiate the census's self-ordered arithmetic sequences — n, 2n, and 3 + 5n — as theorems, upgrading "
-    "them from 'self-ordered up to N = 30 (evidence)' to proofs. All four theorems depend only on the "
-    "standard axioms (propext, Classical.choice, Quot.sound); the proofs are complete, with no admitted goals "
-    "and no compiler-trusted shortcuts. Together with the census refutations (n³, n⁴, factorial, Fibonacci, "
-    "primes), Problem 16 now has both a certified negative side and a proved positive class. The harder "
-    "geometric case aₙ = qⁿ — whose ratio P/D is a Gaussian binomial coefficient in ℤ[q], hence an integer — "
-    "was routed to a hosted Goedel-Prover but did not converge in the time budget, and is left as future "
-    "work. LLMs propose nothing that counts here; the Lean kernel decides every step."
+    "them from 'self-ordered up to N = 30 (evidence)' to proofs. And the harder geometric case is now closed "
+    "too: every geometric sequence aₙ = qⁿ (q an integer) is self-ordered. Factoring qⁿ − qᵏ = qᵏ(q^{n−k} − 1) "
+    "reduces the divisibility to the fact that the Gaussian binomial coefficient is an integer; since Mathlib "
+    "has no Gaussian binomials, they are built from scratch (a ℤ-valued q-Pascal recurrence, with the product "
+    "identity proved by induction). All seven theorems depend only on the standard axioms (propext, "
+    "Classical.choice, Quot.sound); the proofs are complete, with no compiler-trusted shortcuts. Together with "
+    "the census refutations (n³, n⁴, factorial, Fibonacci, primes), Problem 16 now has a certified negative "
+    "side and two proved positive classes — arithmetic and geometric. LLMs propose nothing that counts here; "
+    "the Lean kernel decides every step. (The mechanical route — a hosted Goedel-Prover — timed out on the "
+    "geometric goal, which was then closed by hand with the q-factorial machinery, recorded honestly.)"
 )
 
 _FINDINGS = [
@@ -48,16 +51,18 @@ _FINDINGS = [
     {"id": "arith", "claim": "Every arithmetic sequence aₙ = α + βn is self-ordered", "verdict": "PROVED",
      "note": "Each factor scales by β, so D_n and P(m,n) share a factor βⁿ and it reduces to the identity "
              "case; fully general in α, β. Kernel-verified, standard axioms (arith_selfOrdered)."},
-    {"id": "geometric", "claim": "Geometric aₙ = qⁿ (Gaussian-binomial) — attempted mechanically",
-     "verdict": "FUTURE WORK",
-     "note": "Routed to the wired Goedel-Prover-V2 (Featherless); did not converge in the time budget. A hand "
-             "proof would go through the q-factorial / q-binomial integrality."},
+    {"id": "geometric", "claim": "Every geometric sequence aₙ = qⁿ (q : ℤ) is self-ordered", "verdict": "PROVED",
+     "note": "Factoring qⁿ − qᵏ = qᵏ(q^{n−k} − 1) reduces D_n | P(m,n) to a q-factorial divisibility — the "
+             "Gaussian binomial is an integer. Mathlib has none, so the q-binomial machinery (gBinom, "
+             "q-Pascal recurrence, the product identity) is built from scratch. Kernel-verified, standard "
+             "axioms (geom_selfOrdered). The mechanical route (Goedel-Prover) timed out on this goal; it was "
+             "closed by hand with the q-factorial machinery — recorded honestly."},
 ]
 
 _ARTIFACTS = [
     downloadable_artifact(_CERT, cycle_id="cycle_000012", kind="lean-proof",
                           checker="Lean 4.31 kernel",
-                          result="4 theorems elaborated, 0 sorry; #print axioms = standard set"),
+                          result="7 theorems elaborated, 0 sorry; #print axioms = standard set"),
 ]
 
 _REFERENCES = [

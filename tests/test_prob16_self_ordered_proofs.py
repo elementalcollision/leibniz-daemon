@@ -24,8 +24,9 @@ def _load():
 
 def test_artifact_states_the_predicate_and_theorems_no_cheating():
     src = _ARTIFACT.read_text(encoding="utf-8")
-    assert "def SelfOrdered" in src
-    for thm in ["identity_selfOrdered", "arith_selfOrdered", "even_selfOrdered", "arith_3_5_selfOrdered"]:
+    assert "def SelfOrdered" in src and "def gBinom" in src
+    for thm in ["identity_selfOrdered", "arith_selfOrdered", "qf_dvd_ffall", "geom_selfOrdered",
+                "even_selfOrdered", "arith_3_5_selfOrdered", "pow2_selfOrdered"]:
         assert f"theorem {thm}" in src
     for banned in ["sorry", "native_decide", "admit", ":= by sorry"]:
         assert banned not in src
@@ -39,6 +40,16 @@ def test_the_arithmetic_claim_holds_numerically():
             dn = prod(a(n) - a(k) for k in range(n))
             for m in range(10):
                 assert dn == 0 or prod(a(m) - a(k) for k in range(n)) % dn == 0, (alpha, beta, m, n)
+
+
+def test_the_geometric_claim_holds_numerically():
+    # Sanity the claim geom_selfOrdered generalizes: for aₙ = qⁿ, D_n | P(m,n) (Gaussian-binomial integrality).
+    for q in [2, 3, 5, -2, 10]:
+        a = lambda k: q ** k  # noqa: E731
+        for n in range(1, 7):
+            dn = prod(a(n) - a(k) for k in range(n))
+            for m in range(9):
+                assert dn == 0 or prod(a(m) - a(k) for k in range(n)) % dn == 0, (q, m, n)
 
 
 @pytest.mark.skipif(not os.environ.get("LEIBNIZ_RUN_LEAN"), reason="real-kernel test; set LEIBNIZ_RUN_LEAN=1")
