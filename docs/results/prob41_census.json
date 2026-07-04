@@ -1,0 +1,1808 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "problem": "CFFG/Swanson Problem 41",
+  "N": 9,
+  "summary": {
+    "total": 165,
+    "n_not_normal": 11,
+    "not_normal": [
+      [
+        2,
+        3,
+        7
+      ],
+      [
+        3,
+        4,
+        5
+      ],
+      [
+        2,
+        5,
+        7
+      ],
+      [
+        3,
+        5,
+        8
+      ],
+      [
+        4,
+        5,
+        7
+      ],
+      [
+        3,
+        7,
+        8
+      ],
+      [
+        5,
+        6,
+        7
+      ],
+      [
+        5,
+        6,
+        8
+      ],
+      [
+        5,
+        7,
+        9
+      ],
+      [
+        5,
+        8,
+        9
+      ],
+      [
+        7,
+        8,
+        9
+      ]
+    ],
+    "minimal_not_normal": [
+      [
+        2,
+        3,
+        7
+      ],
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "all_non_normal_have_distinct_coords": true,
+    "all_non_normal_have_a_ge_2": true,
+    "n_pairwise_coprime": 10,
+    "non_pairwise_coprime_examples": [
+      [
+        5,
+        6,
+        8
+      ]
+    ]
+  },
+  "census": [
+    {
+      "triple": [
+        1,
+        1,
+        1
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        2
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        1,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        2
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        2,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        3,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        4,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        5,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        5,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        5,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        5,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        5,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        6,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        6,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        1,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        2
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        2,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        7
+      ],
+      "normal": false,
+      "witness": [
+        1,
+        2,
+        6
+      ],
+      "witness_wt": 85
+    },
+    {
+      "triple": [
+        2,
+        3,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        3,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        4,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        5,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        5,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        5,
+        7
+      ],
+      "normal": false,
+      "witness": [
+        1,
+        4,
+        5
+      ],
+      "witness_wt": 141
+    },
+    {
+      "triple": [
+        2,
+        5,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        5,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        6,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        6,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        2,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        3
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        3,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        4,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        4,
+        5
+      ],
+      "normal": false,
+      "witness": [
+        2,
+        3,
+        3
+      ],
+      "witness_wt": 121
+    },
+    {
+      "triple": [
+        3,
+        4,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        4,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        4,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        4,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        5,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        5,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        5,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        5,
+        8
+      ],
+      "normal": false,
+      "witness": [
+        1,
+        4,
+        7
+      ],
+      "witness_wt": 241
+    },
+    {
+      "triple": [
+        3,
+        5,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        6,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        6,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        7,
+        8
+      ],
+      "normal": false,
+      "witness": [
+        2,
+        5,
+        5
+      ],
+      "witness_wt": 337
+    },
+    {
+      "triple": [
+        3,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        3,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        4
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        4,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        5,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        5,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        5,
+        7
+      ],
+      "normal": false,
+      "witness": [
+        2,
+        4,
+        5
+      ],
+      "witness_wt": 282
+    },
+    {
+      "triple": [
+        4,
+        5,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        5,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        6,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        6,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        4,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        5,
+        5
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        5,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        5,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        5,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        5,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        6,
+        7
+      ],
+      "normal": false,
+      "witness": [
+        3,
+        5,
+        4
+      ],
+      "witness_wt": 421
+    },
+    {
+      "triple": [
+        5,
+        6,
+        8
+      ],
+      "normal": false,
+      "witness": [
+        4,
+        2,
+        7
+      ],
+      "witness_wt": 241
+    },
+    {
+      "triple": [
+        5,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        7,
+        9
+      ],
+      "normal": false,
+      "witness": [
+        2,
+        5,
+        8
+      ],
+      "witness_wt": 631
+    },
+    {
+      "triple": [
+        5,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        5,
+        8,
+        9
+      ],
+      "normal": false,
+      "witness": [
+        3,
+        5,
+        7
+      ],
+      "witness_wt": 721
+    },
+    {
+      "triple": [
+        5,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        6,
+        6
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        6,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        6,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        6,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        6,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        7,
+        7,
+        7
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        7,
+        7,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        7,
+        7,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        7,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        7,
+        8,
+        9
+      ],
+      "normal": false,
+      "witness": [
+        4,
+        7,
+        5
+      ],
+      "witness_wt": 1009
+    },
+    {
+      "triple": [
+        7,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        8,
+        8,
+        8
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        8,
+        8,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        8,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    },
+    {
+      "triple": [
+        9,
+        9,
+        9
+      ],
+      "normal": true,
+      "witness": null,
+      "witness_wt": null
+    }
+  ],
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 11,
+    "axiom_free": true,
+    "clean": true
+  },
+  "artifact": "docs/crt/prob41_census_certificate.lean",
+  "theorems": [
+    "Prob41_2_3_7.triple_2_3_7_not_normal",
+    "Prob41_3_4_5.triple_3_4_5_not_normal",
+    "Prob41_2_5_7.triple_2_5_7_not_normal",
+    "Prob41_3_5_8.triple_3_5_8_not_normal",
+    "Prob41_4_5_7.triple_4_5_7_not_normal",
+    "Prob41_3_7_8.triple_3_7_8_not_normal",
+    "Prob41_5_6_7.triple_5_6_7_not_normal",
+    "Prob41_5_6_8.triple_5_6_8_not_normal",
+    "Prob41_5_7_9.triple_5_7_9_not_normal",
+    "Prob41_5_8_9.triple_5_8_9_not_normal",
+    "Prob41_7_8_9.triple_7_8_9_not_normal"
+  ],
+  "reading": "A kernel-certified census of corner-ideal normality: every triple up to N classified, each non-normal one carrying an axiom-free `decide` witness. Certified instances of an OPEN classification \u2014 with the empirical observation that the minimal non-normal corner ideal is the Ataka\u2013Matsuoka sharpness witness (2,3,7). Verification-amplification; no trust surface."
+}
