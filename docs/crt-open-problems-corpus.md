@@ -78,14 +78,34 @@ resolved after 2013** — the literature check earned its keep.
 
 | # | Tract | Rec | Status (post-2013) | Additive-value type |
 |---|:--:|---|---|---|
-| **41** monomial int-closure | **5** | **STRONG** | OPEN classification; RRV already reduces "all powers" to checking **I and I²**; Ataka–Matsuoka (arXiv:2602.01782, Feb 2026) active on this family | **CREATE** (reusable normality checker) + **PROVE** (certify boundary triples) |
+| **41** monomial int-closure | **5** | **STRONG** | OPEN classification; RRV already reduces "all powers" to checking **I and I²**; Ataka–Matsuoka (arXiv:2602.01782, Feb 2026) **verified** — see below | **CREATE** (reusable normality checker) + **PROVE** (certify boundary triples) + **VERIFY** (their Ex. 4.5, done) |
 | 16 self-ordered seq. | 3 | MAYBE | OPEN, but "natural" is undefined — headline unformalizable; the *finite periphery* is clean | CREATE (`SelfOrdered` predicate + `decide` checker; refute {n²},{nᵏ}) |
 | 24 recursion Int(E,ℤ) | 3 | MAYBE | OPEN for general (a,b); |b|=1 (Fibonacci/Lucas) known | CREATE (certify characteristic-sequence data for fixed instances) |
 | 17 Bhargava factorials | 2 | SKIP | OPEN; no finite kernel-formalizable core | — |
-| 30a strongly n-absorbing | 2 | SKIP | **RESOLVED 2023** (Secord, arXiv:2305.03878) | EXPOUND-only |
-| 30b rad(I)ⁿ ⊆ I | 2 | SKIP | **RESOLVED** (Choi–Walker) | EXPOUND-only |
-| 9 McCoy localizations | 2 | SKIP | **RESOLVED** (Haotian Ma) | EXPOUND-only |
+| 30a strongly n-absorbing | 2 | SKIP | **RESOLVED POSITIVELY** (Secord 2023, arXiv:2305.03878) — always true; **no counterexample** | EXPOUND-only |
+| 30b rad(I)ⁿ ⊆ I | 2 | SKIP | **RESOLVED POSITIVELY** (Choi–Walker 2016, arXiv:1610.10077) — always holds; **no counterexample** | EXPOUND-only |
+| 9 McCoy localizations | 2 | SKIP | **RESOLVED** (Haotian Ma 2026, arXiv:2604.07465) — counterexample exists but **intrinsically infinite** (Akiba/Nagata) | EXPOUND-only |
 | 10 McCoy (a.c.)+(Aₙ) | 2 | SKIP | OPEN; core not finite | — |
+
+**Resolved-candidate research (2026-07-04, paper-grounded + adversarially faithfulness-checked).** Before
+picking the next domain target, the three *resolved* Tier-A candidates went through a deep-research +
+refutation pass. Result: **none is a finite-`decide` counterexample.** 30a and 30b were both settled in the
+**positive** direction (the property always holds — nothing to falsify); Problem 9's counterexample is real
+but an **intrinsically infinite** Akiba/Nagata construction (infinite restricted products of DVRs), not a
+bounded `decide`. Each paper was independently re-fetched and confirmed faithful (verdict `FAITHFUL_BUT_NOT_
+DECIDABLE` ×3). Honest takeaway: the counterexample-domain's growth runs through the **open monomial**
+questions (Problem 41), not the resolved n-absorbing ones.
+
+**Ataka–Matsuoka (2026) Example 4.5 — INDEPENDENTLY KERNEL-VERIFIED (2026-07-04). ✅** Their Main Theorem
+(integrally closed monomial `I ⊆ k[x,y,z]` with `μ(I) ≤ 7` is normal) has a **sharp** bound; the sharpness
+witness is `I = closure(x⁷,y³,z²)` — 8 minimal generators, not normal. On the flagship Problem-41 instrument
+(extended with a minimal-generator computation) we reproduce **both** facts from the Newton polyhedron and
+cross-check them **verbatim** against Example 4.5 — the 8 generators `(x⁷,y³,z²,x⁵y,x³y²,x⁴z,y²z,x²yz)` and
+the non-normality witness `x⁶y²z ∈ closure(I²) ∖ I²` — kernel-decided, **axiom-free** (three theorems, each
+"does not depend on any axioms"). `scripts/verify_ataka_matsuoka.py`,
+`docs/crt/ataka_matsuoka_732_certificate.lean`, `tests/test_ataka_matsuoka.py`; registered in the
+counterexample-certificate domain as `monomial_normal {7,3,2}`. Verification-amplification of a Feb-2026
+result; no trust surface touched.
 
 **The standout is Problem 41.** Both load-bearing facts are finite and decidable: (1) *Newton-polyhedron
 membership* — a monomial `xᵘ` lies in the integral closure of a monomial ideal `J` iff the exponent `u` lies in

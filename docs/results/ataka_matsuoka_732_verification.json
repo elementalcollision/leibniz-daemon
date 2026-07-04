@@ -1,0 +1,98 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Ataka\u2013Matsuoka (2026), arXiv:2602.01782v1, Example 4.5 / Remark 1.3",
+  "claim_verified": "closure(x\u2077,y\u00b3,z\u00b2) has 8 minimal generators and is NOT normal \u2014 the sharp-bound witness for \u03bc(I) \u2264 7 \u21d2 normal in k[x,y,z]",
+  "provenance": {
+    "triple": [
+      7,
+      3,
+      2
+    ],
+    "L": 42,
+    "weights": [
+      6,
+      14,
+      21
+    ],
+    "generators": [
+      [
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        2,
+        1
+      ],
+      [
+        0,
+        3,
+        0
+      ],
+      [
+        2,
+        1,
+        1
+      ],
+      [
+        3,
+        2,
+        0
+      ],
+      [
+        4,
+        0,
+        1
+      ],
+      [
+        5,
+        1,
+        0
+      ],
+      [
+        7,
+        0,
+        0
+      ]
+    ],
+    "generator_count": 8,
+    "witness": [
+      6,
+      2,
+      1
+    ],
+    "witness_wt": 85,
+    "checks": {
+      "generator_count_is_8": true,
+      "generators_match_paper": true,
+      "is_not_normal": true,
+      "witness_matches_paper": true,
+      "weights_are_6_14_21": true
+    }
+  },
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "axiom_free": true,
+    "axiom_lines": [
+      "'AtakaMatsuoka732.eight_minimal_generators' does not depend on any axioms",
+      "'AtakaMatsuoka732.generators_are_paper_list' does not depend on any axioms",
+      "'AtakaMatsuoka732.not_normal_witness_x6y2z' does not depend on any axioms"
+    ],
+    "clean": true
+  },
+  "reference": {
+    "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv. https://arxiv.org/abs/2602.01782",
+    "url": "https://arxiv.org/abs/2602.01782"
+  },
+  "artifact": "docs/crt/ataka_matsuoka_732_certificate.lean",
+  "headline_theorems": [
+    "AtakaMatsuoka732.eight_minimal_generators",
+    "AtakaMatsuoka732.generators_are_paper_list",
+    "AtakaMatsuoka732.not_normal_witness_x6y2z"
+  ],
+  "reading": "Independent kernel verification (Newton polyhedron + Reid\u2013Roberts\u2013Vitulli d=3) of a Feb-2026 result: both the generator-count sharpness fact (\u03bc=8) and the non-normality witness (x\u2076y\u00b2z) are reproduced VERBATIM from Example 4.5 and kernel-decided, axiom-free. Verification-AMPLIFICATION on the flagship Problem-41 instrument; no trust surface."
+}
