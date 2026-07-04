@@ -79,7 +79,7 @@ resolved after 2013** — the literature check earned its keep.
 | # | Tract | Rec | Status (post-2013) | Additive-value type |
 |---|:--:|---|---|---|
 | **41** monomial int-closure | **5** | **STRONG** | OPEN classification; RRV already reduces "all powers" to checking **I and I²**; Ataka–Matsuoka (arXiv:2602.01782, Feb 2026) **verified** — see below | **CREATE** (reusable normality checker) + **PROVE** (certify boundary triples) + **VERIFY** (their Ex. 4.5, done) |
-| 16 self-ordered seq. | 3 | MAYBE | OPEN, but "natural" is undefined — headline unformalizable; the *finite periphery* is clean | CREATE (`SelfOrdered` predicate + `decide` checker; refute {n²},{nᵏ}) |
+| 16 self-ordered seq. | 3 | MAYBE | OPEN, but "natural" is undefined — headline unformalizable; the *finite periphery* is clean. **Census done** (`scripts/prob16_census.py`): {n³},{n⁴},factorial,Fibonacci,primes refuted (kernel witnesses); **{n²} is self-ordered to N=30** — the earlier "refute {n²}" was wrong, the refutable pure powers are k ≥ 3 | CREATE (`SelfOrdered` predicate + `decide` checker; refute {nᵏ} k≥3, factorial, Fibonacci, primes) |
 | 24 recursion Int(E,ℤ) | 3 | MAYBE | OPEN for general (a,b); |b|=1 (Fibonacci/Lucas) known | CREATE (certify characteristic-sequence data for fixed instances) |
 | 17 Bhargava factorials | 2 | SKIP | OPEN; no finite kernel-formalizable core | — |
 | 30a strongly n-absorbing | 2 | SKIP | **RESOLVED POSITIVELY** (Secord 2023, arXiv:2305.03878) — always true; **no counterexample** | EXPOUND-only |
