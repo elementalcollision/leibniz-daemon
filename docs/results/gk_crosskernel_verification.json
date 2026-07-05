@@ -1,0 +1,109 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "adr": "0048",
+  "target": "Guo & Krattenthaler (2014), arXiv:1301.7651 — cross-kernel (Lean #293 ↔ Rocq 9.0)",
+  "cross_check": {
+    "rows": [
+      {
+        "claim": "(5) | C(12,3)",
+        "divisible": true
+      },
+      {
+        "claim": "(11) | C(24,6)",
+        "divisible": true
+      },
+      {
+        "claim": "(17) | C(36,9)",
+        "divisible": true
+      },
+      {
+        "claim": "(23) | C(48,12)",
+        "divisible": true
+      },
+      {
+        "claim": "(29) | C(60,15)",
+        "divisible": true
+      },
+      {
+        "claim": "(35) | C(72,18)",
+        "divisible": true
+      },
+      {
+        "claim": "(41) | C(84,21)",
+        "divisible": true
+      },
+      {
+        "claim": "(47) | C(96,24)",
+        "divisible": true
+      },
+      {
+        "claim": "(5) | C(12,4)",
+        "divisible": true
+      },
+      {
+        "claim": "(11) | C(24,8)",
+        "divisible": true
+      },
+      {
+        "claim": "(17) | C(36,12)",
+        "divisible": true
+      },
+      {
+        "claim": "(23) | C(48,16)",
+        "divisible": true
+      },
+      {
+        "claim": "(29) | C(60,20)",
+        "divisible": true
+      },
+      {
+        "claim": "(35) | C(72,24)",
+        "divisible": true
+      },
+      {
+        "claim": "(41) | C(84,28)",
+        "divisible": true
+      },
+      {
+        "claim": "(47) | C(96,32)",
+        "divisible": true
+      },
+      {
+        "claim": "(65) | C(330,88)",
+        "divisible": true
+      }
+    ],
+    "all_ok": true,
+    "count": 17
+  },
+  "coq": {
+    "status": "checked",
+    "verified": true,
+    "audit_ran": true,
+    "opens_axioms": false,
+    "n_examples": 17
+  },
+  "instances": [
+    "div_12_3_n1",
+    "div_12_3_n2",
+    "div_12_3_n3",
+    "div_12_3_n4",
+    "div_12_3_n5",
+    "div_12_3_n6",
+    "div_12_3_n7",
+    "div_12_3_n8",
+    "div_12_4_n1",
+    "div_12_4_n2",
+    "div_12_4_n3",
+    "div_12_4_n4",
+    "div_12_4_n5",
+    "div_12_4_n6",
+    "div_12_4_n7",
+    "div_12_4_n8",
+    "div_330_88_n1"
+  ],
+  "artifact": "docs/crt/gk_coq_crosscheck.v",
+  "reading": "The Guo–Krattenthaler binomial divisibilities that Leibniz's Lean 4.31 kernel decided in PR #293, independently re-decided by the Rocq 9.0 (Coq) kernel over binary N and confirmed axiom-free by the sound rocqchk audit. Two independent trusted cores agree — a genuine cross-kernel amplification. Report-only (audit tier); no trust surface."
+}
