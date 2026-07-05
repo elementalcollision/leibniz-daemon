@@ -40,8 +40,9 @@ Real, **live-validated**, **report-only** backends and an amplification harness 
 
 - `leibniz/backends/coq_docker.py` — Rocq 9.0 (`rocq/rocq-prover:9.0`), source on stdin → `rocq compile`.
   `check_source` / `check_proof` / `check_source_with_detail` only **report** the kernel verdict.
-- `leibniz/backends/isabelle_docker.py` — Isabelle2025 (`makarius/isabelle:Isabelle2025`), a one-theory
-  HOL session → `isabelle build`. Same report-only surface.
+- `leibniz/backends/isabelle_docker.py` — Isabelle2025, native arm64
+  (`makarius/isabelle:Isabelle2025_ARM`), a one-theory HOL session → `isabelle build`. Same report-only
+  surface. (`image`/`platform` are overridable for an amd64 host.)
 - `scripts/verify_multi_kernel.py` + `docs/crt/{coq_demo.v,isabelle_demo.thy}` — genuine theorems
   kernel-verified end-to-end via `backend.check_source`, **with self-laundered and broken proofs correctly
   rejected**. Audit tier; no `Demonstratio`, no `kernel_verified`, no proof edge.
@@ -55,10 +56,20 @@ The live demo (gate GREEN) shows both kernels *gate*, not rubber-stamp:
 | self-laundered | `Admitted` → open axiom exposed → **REJECT** | `sorry` → hard error (`quick_and_dirty=false`) → **REJECT** |
 | broken | unification error, exit 1 → **REJECT** | *Failed to finish proof*, exit 1 → **REJECT** |
 
-The trust rule per kernel mirrors Lean's `#print axioms` / no-`sorry` discipline: Coq = compile-clean **and**
-closed-under-global-context (or only operator-approved axioms) **and** no `Admitted`/`admit`/`Axiom`;
-Isabelle = build-clean at `quick_and_dirty=false` (which hard-errors on `sorry`) **and** no
-`oops`/`axiomatization`.
+The trust rule per kernel mirrors Lean's `#print axioms` / no-`sorry` discipline, **hardened after an
+adversarial review (2026-07-05) found and closed two false-PASS holes** (both now pinned as regression tests):
+
+- **Coq** = compile-clean **and** closed-under-global-context (or only operator-approved axioms) **and** no
+  `Admitted`/`admit`/`Axiom`/`Parameter`/`Hypothesis`/`Variable`/`Context`. The review showed a proof could
+  hide an axiom (`Require Import Classical; apply classic`) by omitting `Print Assumptions`; the backend now
+  **injects `Print Assumptions <thm>.` for every declared theorem**, so the audit runs on kernel output the
+  prover cannot suppress. `Variable`/`Context` (section hypotheses the stated theorem secretly rests on)
+  were added to the forbidden set.
+- **Isabelle** = build-clean at `quick_and_dirty=false` (hard-errors on `sorry`) **and** no
+  `oops`/`axiomatization`/`quick_and_dirty` **and none of the ML/oracle escape hatches**
+  (`tactic`/`ML*`/`oracle`/`Skip_Proof`/`cheat_tac`). The review showed `by (tactic ‹Skip_Proof.cheat_tac …›)`
+  — the oracle `sorry` desugars to — proves `2+2=5` with exit 0 and no error marker; the scan now keeps
+  PROOF cartouches (stripping only comments and DOC cartouches) so such a cheat is caught.
 
 ## 3. Decision
 
@@ -118,8 +129,8 @@ deferred** until a real beat needs Coq/Isabelle *promulgation* (amplification is
 ## 6. Consequences
 
 - **Now:** independent Coq/Isabelle re-decision is available for verification-amplification (audit tier) via
-  the report-only backends. Images are pinned (`rocq/rocq-prover:9.0`, `makarius/isabelle:Isabelle2025`),
-  amd64-under-Rosetta on arm64 hosts.
+  the report-only backends. Images are pinned: `makarius/isabelle:Isabelle2025_ARM` runs **native arm64**;
+  `rocq/rocq-prover:9.0` is amd64-only, so it runs under Rosetta on arm64 hosts (`platform` is overridable).
 - **Deferred / open (HANDOFF ticket):** the §4.2 promotion layer — verifier/registry classes, the
   `Expressio.target_checker` field, the two trust-guard whitelist edits, the `KERNEL_PRODUCERS` refactor +
   per-kernel witness round, live-pipeline wiring, `sha256` image pinning, who sets `target_checker`

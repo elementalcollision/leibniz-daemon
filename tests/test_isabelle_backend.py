@@ -33,6 +33,23 @@ def test_real_sorry_or_oops_trips_forbidden():
     assert IsabelleResult(0, "", source="axiomatization where bad: False").uses_forbidden is True
 
 
+def test_ml_and_oracle_escape_hatches_forbidden():
+    # Regression (adversarial review, CRITICAL): the ML/oracle surface must be forbidden — `sorry` desugars
+    # to Skip_Proof.cheat_tac, reachable via the `tactic` method / `ML*` / `oracle`, which closes any goal.
+    for src in ('lemma x: "P" by (tactic \\<open>Skip_Proof.cheat_tac\\<close>)',
+                'ML \\<open>Thm.assume\\<close>', "oracle bad = ...", 'lemma x: "P" by (ML_prf \\<open>x\\<close>)'):
+        assert IsabelleResult(0, "", source=src).uses_forbidden is True
+
+
+def test_proof_cartouche_is_scanned_but_doc_cartouche_is_stripped():
+    # A cheat hidden in a PROOF cartouche is still caught; the SAME words inside a doc `text` cartouche are
+    # inert prose and must not false-positive.
+    proof = 'lemma bad: "(2::nat)+2=5" by (tactic \\<open>Skip_Proof.cheat_tac \\<^context> 1\\<close>)'
+    doc = 'text \\<open>we discuss the tactic method and ML here\\<close>\nlemma ok: "True" by simp'
+    assert IsabelleResult(0, "", source=proof).uses_forbidden is True
+    assert IsabelleResult(0, "", source=doc).uses_forbidden is False
+
+
 def test_build_error_marker_and_returncode():
     assert IsabelleResult(1, "*** Failed to finish proof", source="x").has_errors is True
     assert IsabelleResult(0, "Finished T", source='lemma x: "True" by simp').kernel_ok is True
@@ -61,6 +78,15 @@ def test_live_sorry_rejected():
 @pytest.mark.skipif(not _HAVE_ISA, reason="needs Docker + makarius/isabelle image")
 def test_live_broken_rejected():
     assert IsabelleDockerBackend().check_source(_BROKEN) is False
+
+
+@pytest.mark.skipif(not _HAVE_ISA, reason="needs Docker + makarius/isabelle image")
+def test_live_ml_cheat_tac_escape_rejected():
+    # Regression (adversarial review, CRITICAL): the ML cheat tactic proving 2+2=5 must FAIL (it builds
+    # exit-0 with no error marker, so only the forbidden-token scan catches it).
+    src = ('theory Scratch imports Main begin\nlemma bad: "(2::nat) + 2 = 5"\n'
+           '  by (tactic \\<open>Skip_Proof.cheat_tac \\<^context> 1\\<close>)\nend\n')
+    assert IsabelleDockerBackend().check_source(src) is False
 
 
 @pytest.mark.skipif(not (_HAVE_ISA and os.environ.get("LEIBNIZ_RUN_LEAN")),

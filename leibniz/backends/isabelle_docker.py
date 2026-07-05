@@ -7,21 +7,25 @@ admits ``"IsabelleVerifier.discharge"`` to ``trust.KERNEL_PRODUCERS`` (the defer
 edit; see ADR 0048 §4.2 / ADR 0045 precedent), an Isabelle proof edge is still rejected structurally at
 promotion — live for verification-amplification (audit tier), dormant for promulgation.
 
-Trust rule. Isabelle is stricter than Coq's ``Admitted``: under the default ``quick_and_dirty=false`` an
-``isabelle build`` **hard-errors** on ``sorry`` ("Cheating requires quick_and_dirty mode!"), so a laundered
-proof cannot build. A theory is kernel-verified iff:
-  (1) ``isabelle build`` exits 0 (which, at quick_and_dirty=false, rejects ``sorry`` and any unfinished
-      proof); AND
-  (2) the source carries no trust-defeating construct: ``sorry`` / ``oops`` / ``axiomatization`` /
-      ``quick_and_dirty`` (``oops`` abandons a goal without an error, so it is caught lexically; the others
-      would add an axiom or re-enable cheating).
+Trust rule. Under the default ``quick_and_dirty=false`` an ``isabelle build`` **hard-errors** on ``sorry``
+("Cheating requires quick_and_dirty mode!"), so that laundering route cannot build. But ``sorry`` desugars to
+the ``Skip_Proof.cheat_tac`` oracle, which — invoked directly through the ``tactic`` proof method or any
+``ML``/``oracle`` command — closes **any** goal (even ``2+2=5``), exits 0, and emits no error marker (found
+by adversarial review, 2026-07-05). So a theory is kernel-verified iff:
+  (1) ``isabelle build`` exits 0 (rejecting ``sorry`` and any unfinished proof); AND
+  (2) the source carries no trust-defeating construct — ``sorry`` / ``oops`` / ``axiomatization`` /
+      ``quick_and_dirty`` **and** the arbitrary-code escape hatches ``tactic`` / ``ML`` / ``ML_prf`` /
+      ``ML_val`` / ``ML_command`` / ``ML_file`` / ``oracle`` / ``Skip_Proof`` / ``cheat_tac``. The scan runs
+      on the source with ``(* … *)`` comments and DOC cartouches stripped but PROOF cartouches KEPT, so a
+      cheat hidden inside ``by (tactic \<open>…\<close>)`` is still caught.
 
 The theory is checked as a one-theory session ``S = HOL + theories S`` built on the image's prebuilt HOL
-heap (so a check is ~seconds, not a full HOL rebuild). The image is amd64-only, so ``--platform
-linux/amd64`` (OrbStack under Rosetta); its ENTRYPOINT is ``isabelle`` itself, so the container is invoked
-as ``build -D <dir>``. The session dir is a host tempdir bind-mounted **read-only** (build writes heaps to
-the container's own ``$ISABELLE_HEAPS``, never back to the mount); it is chmod 0755 so the container's
-non-root ``isabelle`` user can traverse it.
+heap (so a check is ~seconds, not a full HOL rebuild). The default image is native **arm64**
+(``makarius/isabelle:Isabelle2025_ARM``) so no Rosetta is needed on Apple Silicon; ``platform`` stays None
+(override both for an amd64 host). Its ENTRYPOINT is ``isabelle`` itself, so the container is invoked as
+``build -D <dir>``. The session dir is a host tempdir bind-mounted **read-only** (build writes heaps to the
+container's own ``$ISABELLE_HEAPS``, never back to the mount); it is chmod 0755 so the container's non-root
+``isabelle`` user can traverse it.
 """
 from __future__ import annotations
 
@@ -36,22 +40,35 @@ from typing import Optional
 
 from leibniz.propositio import Expressio
 
-DEFAULT_IMAGE = "makarius/isabelle:Isabelle2025"
-PLATFORM = "linux/amd64"
+# Native arm64 (pinned) — makarius publishes `<version>_ARM` variants; on Apple Silicon this avoids Rosetta.
+# Override `image`/`platform` for an amd64 host (e.g. image="makarius/isabelle:Isabelle2025", platform="linux/amd64").
+DEFAULT_IMAGE = "makarius/isabelle:Isabelle2025_ARM"
 
-_FORBIDDEN = ("sorry", "oops", "axiomatization", "quick_and_dirty")
+# Trust-defeating constructs. Beyond the obvious hole-leavers (sorry/oops) and axiom-introducers
+# (axiomatization) and the cheat re-enabler (quick_and_dirty), we MUST forbid the arbitrary-code escape
+# hatches: `sorry` desugars to `Skip_Proof.cheat_tac`, which — invoked directly via the `tactic` proof
+# method or any `ML*`/`oracle` command — closes ANY goal (even `2+2=5`), exits 0, and emits no error. A
+# keyword blocklist alone can't be exhaustive, but banning the ML/oracle surface removes the general escape.
+_FORBIDDEN = ("sorry", "oops", "axiomatization", "quick_and_dirty",
+              "tactic", "ML", "ML_prf", "ML_val", "ML_command", "ML_file",
+              "oracle", "Skip_Proof", "SkipProof", "cheat_tac")
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
 # The `theory NAME` DECLARATION begins a line (after optional whitespace) — anchor there so the word
 # "theory" inside a comment (e.g. "one-theory session") can't be mistaken for the declaration.
 _THEORY_NAME_RE = re.compile(r"(?m)^[ \t]*theory\s+([A-Za-z][A-Za-z0-9_']*)")
 _COMMENT_RE = re.compile(r"\(\*.*?\*\)", re.DOTALL)
-_CARTOUCHE_RE = re.compile(r"\\<open>.*?\\<close>", re.DOTALL)  # text/doc cartouches — inert prose
+# DOC cartouches only (text/section/…/\<comment> \<open>…\<close>) are inert prose to strip. PROOF cartouches
+# (e.g. `by (tactic \<open>…\<close>)`) are KEPT so an escape hatch hidden inside one is still scanned.
+_DOC_CARTOUCHE_RE = re.compile(
+    r"(?:\btext\b|\btxt\b|\bsection\b|\bsubsection\b|\bsubsubsection\b|\bchapter\b|\bparagraph\b|\\<comment>)"
+    r"\s*\\<open>.*?\\<close>", re.DOTALL)
 
 
 def _strip(src: str) -> str:
-    """Drop inert prose (``(* … *)`` comments and ``\\<open>…\\<close>`` cartouches) so a keyword
-    MENTIONED in documentation cannot be mistaken for a proof step. Real `sorry`/`oops` in code survive."""
-    return _CARTOUCHE_RE.sub(" ", _COMMENT_RE.sub(" ", src))
+    """Drop inert PROSE — ``(* … *)`` comments and DOC cartouches — so a keyword named in documentation isn't
+    mistaken for a proof step. PROOF cartouches are KEPT, so an ML/oracle/cheat escape hatch hidden in one is
+    still caught by the forbidden scan; a real `sorry`/`oops`/`tactic` in code survives."""
+    return _DOC_CARTOUCHE_RE.sub(" ", _COMMENT_RE.sub(" ", src))
 
 
 @dataclass(frozen=True)
@@ -92,6 +109,7 @@ class IsabelleDockerBackend:
     through it exactly as LeanVerifier discharges through LeanCliBackend."""
 
     image: str = DEFAULT_IMAGE
+    platform: Optional[str] = None   # None = native (arm64 image on arm64 host); set "linux/amd64" to emulate
     timeout_s: int = 300
     _cache: dict[str, IsabelleResult] = field(default_factory=dict, repr=False)
 
@@ -152,11 +170,11 @@ class IsabelleDockerBackend:
                 (Path(td) / f"{name}.thy").write_text(source)
                 for p in Path(td).iterdir():
                     os.chmod(p, 0o644)
-                proc = subprocess.run(
-                    ["docker", "run", "--rm", "--platform", PLATFORM,
-                     "-v", f"{td}:/work/sess:ro", self.image, "build", "-D", "/work/sess"],
-                    capture_output=True, text=True, timeout=self.timeout_s,
-                )
+                cmd = ["docker", "run", "--rm"]
+                if self.platform:
+                    cmd += ["--platform", self.platform]
+                cmd += ["-v", f"{td}:/work/sess:ro", self.image, "build", "-D", "/work/sess"]
+                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout_s)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return None
         res = IsabelleResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source)

@@ -41,6 +41,24 @@ def test_real_admitted_in_code_trips_forbidden():
     assert CoqResult(0, "", source="Axiom bad : False.").uses_forbidden is True
 
 
+def test_section_hypothesis_keywords_forbidden():
+    # Regression (adversarial review): `Variable`/`Context`/`Hypothesis` introduce an assumption the stated
+    # theorem then rests on (discharged into a vacuous premise when the Section closes) — must be forbidden.
+    for src in ("Variable bad : False.", "Context (bad : False).", "Hypotheses h : False."):
+        assert CoqResult(0, "", source=src).uses_forbidden is True
+
+
+def test_audit_source_injects_mandatory_print_assumptions():
+    # Regression: the backend forces an axiom audit on every theorem, so a cert can't hide an axiom by
+    # simply omitting `Print Assumptions`.
+    from leibniz.backends.coq_docker import _audit_source
+    out = _audit_source("Require Import Classical.\nTheorem foo : True.\nProof. exact I. Qed.\n")
+    assert "Print Assumptions foo." in out
+    # a comment mentioning a theorem-like word must NOT be audited (no such global exists)
+    assert "Print Assumptions" in _audit_source("(* Lemma faux *)\nTheorem real : True. Proof. exact I. Qed.")
+    assert "Print Assumptions real." in _audit_source("(* Lemma faux *)\nTheorem real : True. Proof. exact I. Qed.")
+
+
 def test_available_returns_bool_and_never_raises():
     assert isinstance(coq_docker.available("definitely/not-an-image:nope"), bool)
 
@@ -66,6 +84,23 @@ def test_live_admitted_rejected():
 @pytest.mark.skipif(not _HAVE_COQ, reason="needs Docker + rocq/rocq-prover image")
 def test_live_broken_rejected():
     assert CoqDockerBackend().check_source(_BROKEN) is False
+
+
+@pytest.mark.skipif(not _HAVE_COQ, reason="needs Docker + rocq/rocq-prover image")
+def test_live_omitted_audit_axiom_dependence_rejected():
+    # Regression (adversarial review, high): a Classical-axiom proof that OMITS `Print Assumptions` to hide
+    # its `classic` dependence must FAIL — the backend injects the audit so the axiom is exposed.
+    src = ("Require Import Classical.\nTheorem em_fp : forall P : Prop, P \\/ ~ P.\n"
+           "Proof. intro P. apply classic. Qed.\n")
+    assert CoqDockerBackend().check_source(src) is False
+
+
+@pytest.mark.skipif(not _HAVE_COQ, reason="needs Docker + rocq/rocq-prover image")
+def test_live_section_hypothesis_evasion_rejected():
+    # Regression: `Variable`/`Context bad : False` in a Section, proving `1 = 2`, must FAIL.
+    for kw in ("Variable bad : False.", "Context (bad : False)."):
+        src = f"Section S. {kw} Theorem t : 1 = 2. Proof. destruct bad. Qed. End S.\n"
+        assert CoqDockerBackend().check_source(src) is False
 
 
 @pytest.mark.skipif(not (_HAVE_COQ and os.environ.get("LEIBNIZ_RUN_LEAN")),

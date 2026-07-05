@@ -35,12 +35,34 @@ DEFAULT_IMAGE = "rocq/rocq-prover:9.0"
 PLATFORM = "linux/amd64"
 
 # Self-laundering / trust-defeating constructs. A source containing any of these cannot earn a kernel
-# verdict — they either add an axiom (Admitted/Axiom/Parameter/Hypothesis/Conjecture) or leave a hole
-# (admit). Matched as whole words so e.g. `admit` does not spuriously fire inside an identifier.
-_FORBIDDEN = ("Admitted", "admit", "Axiom", "Parameter", "Hypothesis", "Conjecture")
+# verdict — they add an axiom (Axiom/Parameter/Conjecture), assume a hypothesis the stated theorem then
+# secretly rests on (Hypothesis/Variable/Context — discharged into a vacuous premise when the Section
+# closes), or leave a hole (Admitted/admit). Matched as whole words so e.g. `admit` does not fire inside an
+# identifier. NOTE: the keyword list is defence-in-depth; the load-bearing guard against a hidden axiom is
+# the MANDATORY `Print Assumptions` the backend injects (see _audit_source) — the prover cannot suppress it.
+_FORBIDDEN = ("Admitted", "admit", "Axiom", "Axioms", "Parameter", "Parameters",
+              "Hypothesis", "Hypotheses", "Variable", "Variables", "Conjecture", "Context")
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
 _ERROR_RE = re.compile(r"^Error", re.MULTILINE)
 _COMMENT_RE = re.compile(r"\(\*.*?\*\)", re.DOTALL)  # Coq comments are inert prose — strip before the scan
+# Every theorem-like declaration, so the backend can force an axiom audit on each.
+_THM_DECL_RE = re.compile(
+    r"\b(?:Theorem|Lemma|Corollary|Proposition|Remark|Fact|Property|Example)\s+([A-Za-z_][A-Za-z0-9_']*)")
+
+
+def _audit_source(source: str) -> str:
+    """Append a MANDATORY `Print Assumptions <thm>.` for every declared theorem. The axiom audit is then
+    driven by the backend, not the cert: a source that OMITS its own `Print Assumptions` to hide an axiom
+    dependency (e.g. `Require Import Classical; apply classic`) still has the audit run on it, so `opens_axioms`
+    reflects the true footprint. Names are read from comment-stripped code so prose isn't audited."""
+    code = _COMMENT_RE.sub(" ", source)
+    seen: list[str] = []
+    for m in _THM_DECL_RE.finditer(code):
+        if m.group(1) not in seen:
+            seen.append(m.group(1))
+    if not seen:
+        return source
+    return source + "\n" + "\n".join(f"Print Assumptions {n}." for n in seen) + "\n"
 
 
 @dataclass(frozen=True)
@@ -92,19 +114,19 @@ class CoqDockerBackend:
 
     # --- proof-edge surface (mirrors LeanBackend) -----------------------------
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        res = self._run(_assemble(expr, proof_src))
+        res = self._run(_audit_source(_assemble(expr, proof_src)))
         return res is not None and res.kernel_ok
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Coq source (already-assembled cert). True iff it
         compiles clean, audits closed, and carries no laundering construct; False if the kernel rejects
         it; None if the backend is unavailable. Never touches kernel_verified."""
-        res = self._run(source)
+        res = self._run(_audit_source(source))
         return None if res is None else res.kernel_ok
 
     def check_source_with_detail(self, source: str) -> Optional[dict]:
         """Like check_source, but return the audit breakdown for a verification-amplification report."""
-        res = self._run(source)
+        res = self._run(_audit_source(source))
         if res is None:
             return None
         return {

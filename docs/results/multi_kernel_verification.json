@@ -16,7 +16,7 @@
         "opens_axioms": false,
         "uses_forbidden": false,
         "closed_under_global_context": true,
-        "output_tail": "Warning: Loading Stdlib without prefix is deprecated.\nUse \"From Stdlib Require List\" or the deprecated \"From Coq Require List\"\nfor compatibility with older Coq versions.\n[deprecated-missing-stdlib,deprecated-since-9.0,deprecated,default]\nClosed under the global context\nClosed under the global context\nClosed under the global context\n"
+        "output_tail": "[deprecated-missing-stdlib,deprecated-since-9.0,deprecated,default]\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\n"
       },
       "laundered_rejected": true,
       "broken_rejected": true,
@@ -31,7 +31,7 @@
         "returncode": 0,
         "has_errors": false,
         "uses_forbidden": false,
-        "output_tail": "Running Isabelle_Demo ...\nFinished Isabelle_Demo (0:00:01 elapsed time)\n0:00:05 elapsed time\n"
+        "output_tail": "Running Isabelle_Demo ...\nFinished Isabelle_Demo (0:00:00 elapsed time)\n0:00:02 elapsed time\n"
       },
       "laundered_rejected": true,
       "broken_rejected": true,
