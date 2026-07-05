@@ -1,0 +1,33 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Brualdi–Friedland–Pothen sparse-basis conjecture (Conjecture 2.1, sufficiency); counterexample by Aliabadi (2026), arXiv:2605.30401",
+  "integer_checks": {
+    "rankA": 4,
+    "membership": true,
+    "zerosets": true,
+    "elementary": true,
+    "bfp_inequalities": true,
+    "dependent": true,
+    "rankX": 3,
+    "all_ok": true
+  },
+  "matroid_faithful": true,
+  "symbolic": {
+    "zerosets": true,
+    "elementary": true,
+    "bfp_inequalities": true,
+    "dependent": true,
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "verified": true,
+    "no_cheating_axioms": true,
+    "axioms": "'bfp_counterexample' depends on axioms: [propext]",
+    "errors": []
+  },
+  "cert": "docs/crt/bfp_counterexample.lean",
+  "reading": "Independent confirmation of Aliabadi's counterexample to the Brualdi–Friedland–Pothen sparse-basis conjecture (refuting sufficiency of Conjecture 2.1). Leibniz reconstructs the four elementary vectors of an explicit 4×8 sparse-generic matrix itself, verifies symbolically over ℚ(a,…,l) that they are genuine elementary vectors satisfying every BFP rank-intersection inequality yet are linearly DEPENDENT (not a basis), and the Lean 4.31 kernel decides a matroid-faithful integer witness of the same facts (plain decide; #print axioms only propext). Exact linear algebra + kernel; no LLM judgment; no trust surface."
+}
