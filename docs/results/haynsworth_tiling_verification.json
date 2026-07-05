@@ -1,0 +1,23 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION-research",
+  "adr": "0047",
+  "target": "Schur-tiling soundness (Half 1) for the deferred large-block-PSD path",
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 2,
+    "axiom_lines": [
+      "'psd_of_congruence' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'psd_of_sum_congruence' depends on axioms: [propext, Classical.choice, Quot.sound]"
+    ],
+    "clean": true
+  },
+  "theorems": [
+    "psd_of_congruence",
+    "psd_of_sum_congruence"
+  ],
+  "artifact": "docs/crt/haynsworth_tiling_soundness.lean",
+  "reading": "The once-proved Haynsworth/block-LDL\u1d40 soundness lemma the Schur-tiling large-block-PSD path needs: congruence + sum preserve PSD, so an order-N block that is a sum of congruences of \u226460-order PSD pivots is PSD \u2014 reducing it to the small pivots + one kernel-recomputed (fail-closed) identity, no Schur-iff. Pure Mathlib theorem, axiom-clean; NO trust surface (it would be used by a future operator-gated tiling primitive). A down-payment on ADR 0047 Option 3's tractable Half 1."
+}
