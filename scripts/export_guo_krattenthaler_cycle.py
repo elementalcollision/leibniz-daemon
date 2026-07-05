@@ -91,8 +91,8 @@ _REPOSITORIES = [
      "url": "https://github.com/elementalcollision/leibniz-daemon/pull/293",
      "role": "produced",
      "note": "Phase 1: scripts/guo_krattenthaler_divisibility.py + docs/crt/guo_krattenthaler_certificate.lean"},
-    {"name": "elementalcollision/leibniz-daemon #PHASE2",
-     "url": "https://github.com/elementalcollision/leibniz-daemon/pull/PHASE2",
+    {"name": "elementalcollision/leibniz-daemon #296",
+     "url": "https://github.com/elementalcollision/leibniz-daemon/pull/296",
      "role": "produced",
      "note": "Phase 2: scripts/verify_gk_phase2.py + docs/crt/guo_krattenthaler_phase2.lean (prime-modulus theorem)"},
 ]
