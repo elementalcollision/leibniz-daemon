@@ -1,0 +1,46 @@
+{
+  "gate": "GREEN(measured)",
+  "tier": "probe",
+  "ev": "AMPLIFICATION-research",
+  "curve_a_bignat_op": [
+    {
+      "digits": 300,
+      "approx_bits": 996,
+      "ok": true,
+      "secs": 0.27
+    },
+    {
+      "digits": 3000,
+      "approx_bits": 9960,
+      "ok": true,
+      "secs": 0.33
+    },
+    {
+      "digits": 30000,
+      "approx_bits": 99600,
+      "ok": true,
+      "secs": 1.71
+    }
+  ],
+  "curve_b_fact_count": [
+    {
+      "K": 100,
+      "ok": true,
+      "secs": 2.9
+    },
+    {
+      "K": 400,
+      "ok": true,
+      "secs": 55.3
+    },
+    {
+      "K": 1600,
+      "ok": false,
+      "secs": 130.0
+    }
+  ],
+  "curve_a_gmp_flat": true,
+  "k_max_facts": 400,
+  "dense_N_max_est": 20,
+  "reading": "Curve A: a single big-Nat multiply+compare is GMP-FLAT (\u2248O(1) kernel steps) even at ~10^5 digits \u2014 so per-op arithmetic cost is NOT the wall. Curve B: a flat conjunction of distinct big-Nat facts walls at K_max \u2248 400 within the 130s cap \u2014 confirming the killer is the NUMBER of distinct facts, not per-op cost. A sound DENSE PSD check states \u03a9(N\u00b2) distinct facts, so the largest dense block a packed/CRT check clears is N_max \u2248 \u221aK_max \u2248 20. Since 20 << 130\u2013414, approach A/CRT does NOT break the dense wall \u2014 confirming ADR 0047's trust-model boundary, and SHARPENING it: the wall is distinct-fact-count \u03a9(N\u00b2), not arithmetic. The only escape is sub-\u03a9(N\u00b2) via STRUCTURE (Schur-tiling, probe 7b)."
+}
