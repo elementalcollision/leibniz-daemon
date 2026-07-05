@@ -1,0 +1,98 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Stanley (1985) dimer-covering conjecture / Lai (2024) Problem 33; disproved by Guo & Tao (2026), arXiv:2605.28195",
+  "rows": [
+    {
+      "k": 2,
+      "stanley_conjectured_order": 2,
+      "actual_minimal_order": 2,
+      "conjecture_holds": true
+    },
+    {
+      "k": 3,
+      "stanley_conjectured_order": 4,
+      "actual_minimal_order": 4,
+      "conjecture_holds": true
+    },
+    {
+      "k": 4,
+      "stanley_conjectured_order": 4,
+      "actual_minimal_order": 4,
+      "conjecture_holds": true
+    },
+    {
+      "k": 5,
+      "stanley_conjectured_order": 8,
+      "actual_minimal_order": 8,
+      "conjecture_holds": true
+    },
+    {
+      "k": 6,
+      "stanley_conjectured_order": 8,
+      "actual_minimal_order": 8,
+      "conjecture_holds": true
+    },
+    {
+      "k": 7,
+      "stanley_conjectured_order": 16,
+      "actual_minimal_order": 16,
+      "conjecture_holds": true
+    },
+    {
+      "k": 8,
+      "stanley_conjectured_order": 16,
+      "actual_minimal_order": 16,
+      "conjecture_holds": true
+    },
+    {
+      "k": 9,
+      "stanley_conjectured_order": 32,
+      "actual_minimal_order": 32,
+      "conjecture_holds": true
+    },
+    {
+      "k": 10,
+      "stanley_conjectured_order": 32,
+      "actual_minimal_order": 32,
+      "conjecture_holds": true
+    },
+    {
+      "k": 11,
+      "stanley_conjectured_order": 64,
+      "actual_minimal_order": 64,
+      "conjecture_holds": true
+    },
+    {
+      "k": 12,
+      "stanley_conjectured_order": 64,
+      "actual_minimal_order": 64,
+      "conjecture_holds": true
+    },
+    {
+      "k": 13,
+      "stanley_conjectured_order": 128,
+      "actual_minimal_order": 112,
+      "conjecture_holds": false
+    }
+  ],
+  "smallest_counterexample_k": 13,
+  "k13_minimal_order": 112,
+  "k13_stanley_order": 128,
+  "deficiency_eq_deg_f16": 16,
+  "conjecture_holds_below_13": true,
+  "even_subseq": {
+    "order": 56,
+    "stanley_bound": 64,
+    "window_eqs": 64
+  },
+  "kernel": {
+    "status": "checked",
+    "verified": true,
+    "axiom_free": true,
+    "errors": []
+  },
+  "cert": "docs/crt/stanley_dimer_13.lean",
+  "reading": "Independent first-principles confirmation of the Guo–Tao disproof of Stanley's 1985 dimer conjecture (Problem 33, 2024 AMS open-problems volume). Leibniz computes the domino-tiling counts A_{k,n} EXACTLY by a broken-profile DP and reads the true minimal recurrence order by exact Berlekamp–Massey: Stanley's 2^⌊(k+1)/2⌋ holds for k=2..12 but FAILS at k=13 (order 112 < 128 — the smallest counterexample; deficiency 16 = deg f₁₆). The Lean 4.31 kernel then DECIDES (axiom-free, plain decide) that a monic order-56 recurrence annihilates the even subsequence on 64 consecutive equations, forcing the even minimal order ≤ 56 < 64 = Stanley's proven bound. Exact arithmetic + the kernel decide; no LLM judgment; no trust surface."
+}
