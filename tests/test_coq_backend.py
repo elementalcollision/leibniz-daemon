@@ -93,6 +93,13 @@ def test_available_returns_bool_and_never_raises():
     assert isinstance(coq_docker.available("definitely/not-an-image:nope"), bool)
 
 
+def test_unavailable_backend_is_none_not_false():
+    # An unavailable backend (missing image / daemon down / no docker) must return None (unavailable), never
+    # False — which would masquerade as a REJECTED proof (adversarial-review fail-safe nicety).
+    assert CoqDockerBackend(image="leibniz/nonexistent-image:none").check_source(
+        "Theorem t : True. Proof. exact I. Qed.\n") is None
+
+
 # --- live kernel: genuine gating (needs Docker + image) -----------------------------------------------
 _GOOD = ("Theorem add_0_r : forall n : nat, n + 0 = n.\n"
          "Proof. intros n. induction n as [| n IH]. - reflexivity. - simpl. rewrite IH. reflexivity. Qed.\n")

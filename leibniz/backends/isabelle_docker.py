@@ -208,6 +208,8 @@ class IsabelleDockerBackend:
                 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout_s)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return None
+        if proc.returncode == 125 or "Cannot connect to the Docker daemon" in (proc.stderr or ""):
+            return None   # docker infra failure (missing image / daemon down) → UNAVAILABLE, not a rejection
         res = IsabelleResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source)
         self._cache[key] = res
         return res

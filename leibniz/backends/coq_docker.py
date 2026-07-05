@@ -200,6 +200,8 @@ class CoqDockerBackend:
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return None
+        if proc.returncode == 125 or "Cannot connect to the Docker daemon" in (proc.stderr or ""):
+            return None   # docker infra failure (missing image / daemon down) → UNAVAILABLE, not a rejection
         res = CoqResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source,
                         nonce=nonce, allow_axioms=self.allow_axioms)
         self._cache[key] = res

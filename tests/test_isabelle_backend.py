@@ -67,6 +67,12 @@ def test_available_returns_bool_and_never_raises():
     assert isinstance(isabelle_docker.available("definitely/not-an-image:nope"), bool)
 
 
+def test_unavailable_backend_is_none_not_false():
+    # Unavailable (missing image / daemon down / no docker) → None (unavailable), never False (rejection).
+    assert IsabelleDockerBackend(image="leibniz/nonexistent-image:none").check_source(
+        'theory T imports Main begin\nlemma x: "True" by simp\nend\n') is None
+
+
 # --- live kernel: genuine gating (needs Docker + image) -----------------------------------------------
 _GOOD = 'theory Good imports Main begin\nlemma add_0_r: "n + (0::nat) = n" by simp\nend\n'
 _LAUNDERED = 'theory Bad imports Main begin\nlemma bogus: "n + (0::nat) = n + 1" sorry\nend\n'
