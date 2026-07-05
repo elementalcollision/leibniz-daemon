@@ -1,0 +1,55 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "adr": "0048",
+  "target": "Erdős Problem 707 (Sidon-Extension Conjecture) finite core — cross-kernel (Lean #295 ↔ Rocq 9.0)",
+  "cross_check": {
+    "rows": [
+      {
+        "set": "A",
+        "sidon": true,
+        "non_extending": true
+      },
+      {
+        "set": "B",
+        "sidon": true,
+        "non_extending": true
+      },
+      {
+        "set": "AM5",
+        "sidon": true,
+        "non_extending": true
+      },
+      {
+        "set": "Hall",
+        "sidon": true,
+        "non_extending": true
+      }
+    ],
+    "all_ok": true
+  },
+  "coq": {
+    "status": "checked",
+    "verified": true,
+    "audit_ran": true,
+    "opens_axioms": false,
+    "n_examples": 12
+  },
+  "instances": [
+    "A_sidon",
+    "A_no_order4",
+    "A_no_order5",
+    "B_sidon",
+    "B_no_order4",
+    "B_no_order5",
+    "AM5_sidon",
+    "AM5_no_order5",
+    "AM5_no_order6",
+    "Hall_sidon",
+    "Hall_no_order5",
+    "Hall_no_order6"
+  ],
+  "artifact": "docs/crt/erdos_707_crosscheck.v",
+  "reading": "The Erdős-707 finite core (four counterexample sets Sidon + non-extending at small orders) that Leibniz's Lean 4.31 kernel decided in #295, independently re-decided by the Rocq 9.0 kernel via vm_compute and confirmed axiom-free by rocqchk. Two independent trusted cores agree on the finite exhaustion of a freshly-resolved $1000 Erdős problem — cross-kernel amplification. Report-only (audit tier); no trust surface."
+}
