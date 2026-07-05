@@ -1,0 +1,26 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Existence of EFX allocations (open problem in fair division); counterexample by Akrami, Mayorov, Mehlhorn, Srinivas & Weidenbach (2026), arXiv:2604.18216",
+  "checks": {
+    "valuations_are_permutations": [
+      true,
+      true,
+      true
+    ],
+    "valuations_monotone": [
+      true,
+      true,
+      true
+    ],
+    "n_allocations": 6561,
+    "n_efx_allocations": 0,
+    "nonempty_allocations": 5796,
+    "nonempty_exactly_one_violation": 272,
+    "nonempty_efx": 0,
+    "all_ok": true
+  },
+  "data": "docs/crt/efx/Val{0,1,2}ByCard.txt",
+  "reading": "Independent confirmation of the first counterexample to EFX existence. Over the paper's own valuation tables (3 agents, 8 goods, monotone ordinal valuations), Leibniz decides by exact exhaustive census that each valuation is a monotone bijection onto {0..255} and that NONE of the 3^8 = 6561 allocations is EFX. The count of all-nonempty allocations (5796) and of those violating exactly one of the 16 EFX-conditions (272) reproduce the paper's reported statistics bit-for-bit, certifying faithful ingestion. Exact-integer census; no floating point, no LLM judgment; no trust surface."
+}
