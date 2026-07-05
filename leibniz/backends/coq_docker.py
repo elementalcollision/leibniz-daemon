@@ -1,25 +1,25 @@
 """Coq / Rocq backend — the real Rocq (Coq) kernel, run in an OrbStack/Docker container (ADR 0048).
 
-A second *proof-edge* decider alongside Lean, built to the exact contract of ``leibniz.backends.lean_cli``:
-it shells out to a pinned Rocq toolchain, **REPORTS** what the kernel said, and never touches
-``Demonstratio.kernel_verified`` — ``CoqVerifier.discharge`` is the sole writer. Until the operator admits
-``"CoqVerifier.discharge"`` to ``trust.KERNEL_PRODUCERS`` (the deferred, PreToolUse-guarded edit; see ADR
-0048 §4.2 / ADR 0045 precedent), a Coq proof edge is still rejected structurally at promotion — so this
-backend is *live for verification-amplification* (audit tier) but *dormant for promulgation*.
+A second *proof-edge* decider alongside Lean, built to the contract of ``leibniz.backends.lean_cli``: it shells
+out to a pinned Rocq toolchain, **REPORTS** what the kernel said, and never touches
+``Demonstratio.kernel_verified`` — ``CoqVerifier.discharge`` (deferred; see ADR 0048 §4.2) is the sole writer.
 
-Trust rule — the Coq analogue of Lean's ``#print axioms`` discipline. A Coq proof is kernel-verified iff:
-  (1) ``rocq compile`` exits 0 with no ``Error`` diagnostic; AND
-  (2) no ``Print Assumptions`` in the source reports open ``Axioms:`` — every audited theorem is
-      "Closed under the global context" (or names only an operator-approved axiom); AND
-  (3) the source carries no self-laundering construct: ``Admitted`` / ``admit`` / ``Axiom`` / ``Parameter``
-      / ``Hypothesis`` / ``Conjecture``.
-``Admitted`` is the key laundering vector: it compiles to exit 0, but ``Print Assumptions`` then exposes the
-theorem itself as an open axiom (caught by (2)) and the keyword is caught lexically by (3). A cert SHOULD
-carry its own ``Print Assumptions <thm>.`` lines, exactly as a Lean cert carries ``#print axioms``.
+Trust rule — kernel-driven, name-agnostic. An adversarial review (2026-07-05) showed that a *source-side*
+axiom scan is defeatable: a proof can hide an axiom by omitting ``Print Assumptions`` and by using a binder
+form (``Definition``/``Goal``/``Instance``/``Fixpoint``/``Let``) a keyword regex doesn't enumerate. So the
+audit is instead driven by Rocq's separate library checker **``rocqchk``**, which re-validates the compiled
+``.vo`` and prints a CONTEXT SUMMARY of the WHOLE development's axioms and unsafe constructs — independent of
+how anything was named. A source is kernel-verified iff:
+  (1) ``rocq compile`` succeeds (no ``Error``); AND
+  (2) ``rocqchk -o`` reports ``* Axioms: <none>`` (or only operator-approved axioms) AND ``<none>`` for
+      type-in-type, unsafe (co)fixpoints, and assumed-positivity inductives; AND
+  (3) (defence-in-depth) the source carries no ``Admitted``/``admit``/``Axiom``/``Parameter``/``Hypothesis``/
+      ``Variable``/``Context``/``Conjecture`` — ``admit`` leaves a hole; ``Variable``/``Context`` let the
+      *stated* theorem secretly rest on a section hypothesis that ``rocqchk`` sees as a sound implication.
 
-Rocq 9.0 replaces ``coqc`` with ``rocq compile``. The image is amd64-only, so ``--platform linux/amd64``
-(OrbStack runs it under Rosetta). Source is piped on **stdin** into the container's own writable ``/tmp`` —
-no host filesystem is exposed, and the container is ``--rm``.
+Rocq 9.0 replaces ``coqc``/``coqchk`` with ``rocq compile`` / ``rocqchk``. The image is amd64-only, so
+``--platform linux/amd64`` (OrbStack under Rosetta). Source is piped on **stdin** into the container's own
+writable ``/tmp`` — no host filesystem is exposed, and the container is ``--rm``.
 """
 from __future__ import annotations
 
@@ -34,35 +34,35 @@ from leibniz.propositio import Expressio
 DEFAULT_IMAGE = "rocq/rocq-prover:9.0"
 PLATFORM = "linux/amd64"
 
-# Self-laundering / trust-defeating constructs. A source containing any of these cannot earn a kernel
-# verdict — they add an axiom (Axiom/Parameter/Conjecture), assume a hypothesis the stated theorem then
-# secretly rests on (Hypothesis/Variable/Context — discharged into a vacuous premise when the Section
-# closes), or leave a hole (Admitted/admit). Matched as whole words so e.g. `admit` does not fire inside an
-# identifier. NOTE: the keyword list is defence-in-depth; the load-bearing guard against a hidden axiom is
-# the MANDATORY `Print Assumptions` the backend injects (see _audit_source) — the prover cannot suppress it.
+# Defence-in-depth lexical guard (the load-bearing check is the rocqchk audit below). Whole-word matched.
 _FORBIDDEN = ("Admitted", "admit", "Axiom", "Axioms", "Parameter", "Parameters",
               "Hypothesis", "Hypotheses", "Variable", "Variables", "Conjecture", "Context")
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
 _ERROR_RE = re.compile(r"^Error", re.MULTILINE)
 _COMMENT_RE = re.compile(r"\(\*.*?\*\)", re.DOTALL)  # Coq comments are inert prose — strip before the scan
-# Every theorem-like declaration, so the backend can force an axiom audit on each.
-_THM_DECL_RE = re.compile(
-    r"\b(?:Theorem|Lemma|Corollary|Proposition|Remark|Fact|Property|Example)\s+([A-Za-z_][A-Za-z0-9_']*)")
+
+_CHK_MARK = "@@ROCQCHK@@"
+# Compile the stdin source to /tmp/m.vo, then re-check it with rocqchk and print its CONTEXT SUMMARY. The
+# module's logical name is Top.m (fixed by the -R /tmp Top load path), so the audit needs no source parsing.
+_CHECK_SCRIPT = (
+    "export PATH=$HOME/.opam/4.14.2+flambda/bin:$PATH; cd /tmp; cat > m.v; "
+    "rocq compile -q -R /tmp Top m.v 2>&1; ec=$?; "
+    f"echo '{_CHK_MARK}'; "
+    "if [ $ec -eq 0 ]; then rocqchk -o -R /tmp Top Top.m 2>&1; fi"
+)
+# The rocqchk CONTEXT SUMMARY lines that must each read "<none>" for a kernel-clean development.
+_SUMMARY_LABELS = (
+    "Axioms",
+    "Constants/Inductives relying on type-in-type",
+    "Constants/Inductives relying on unsafe (co)fixpoints",
+    "Inductives whose positivity is assumed",
+)
 
 
-def _audit_source(source: str) -> str:
-    """Append a MANDATORY `Print Assumptions <thm>.` for every declared theorem. The axiom audit is then
-    driven by the backend, not the cert: a source that OMITS its own `Print Assumptions` to hide an axiom
-    dependency (e.g. `Require Import Classical; apply classic`) still has the audit run on it, so `opens_axioms`
-    reflects the true footprint. Names are read from comment-stripped code so prose isn't audited."""
-    code = _COMMENT_RE.sub(" ", source)
-    seen: list[str] = []
-    for m in _THM_DECL_RE.finditer(code):
-        if m.group(1) not in seen:
-            seen.append(m.group(1))
-    if not seen:
-        return source
-    return source + "\n" + "\n".join(f"Print Assumptions {n}." for n in seen) + "\n"
+def _section(chk: str, label: str) -> Optional[str]:
+    """The content of a `* <label>:` section of the rocqchk summary, up to the next `*` (or end)."""
+    m = re.search(re.escape("* " + label) + r"\s*:(.*?)(?=\n\s*\*|\Z)", chk, re.DOTALL)
+    return m.group(1).strip() if m is not None else None
 
 
 @dataclass(frozen=True)
@@ -70,22 +70,45 @@ class CoqResult:
     returncode: int
     output: str
     source: str = ""
+    allow_axioms: frozenset = frozenset()
+
+    @property
+    def _parts(self) -> tuple[str, str]:
+        compile_out, _, chk = self.output.partition(_CHK_MARK)
+        return compile_out, chk
 
     @property
     def has_errors(self) -> bool:
-        return self.returncode != 0 or bool(_ERROR_RE.search(self.output)) or "Error:" in self.output
+        compile_out, _ = self._parts
+        return bool(_ERROR_RE.search(compile_out)) or "Error:" in compile_out
+
+    @property
+    def audit_ran(self) -> bool:
+        _, chk = self._parts
+        return "CONTEXT SUMMARY" in chk
 
     @property
     def opens_axioms(self) -> bool:
-        """A `Print Assumptions` that finds open axioms prints an `Axioms:` block; a fully-closed proof
-        prints "Closed under the global context"."""
-        return "Axioms:" in self.output
+        """True iff the rocqchk whole-library audit reports ANY axiom / unsafe construct (or did not run).
+        Fail-closed: a missing summary counts as unaudited → not clean."""
+        _, chk = self._parts
+        if not self.audit_ran:
+            return True
+        for label in _SUMMARY_LABELS:
+            content = _section(chk, label)
+            if content is None:                       # section absent → fail closed
+                return True
+            if content == "<none>":
+                continue
+            if label == "Axioms":                      # only operator-approved axioms may remain
+                names = [ln.strip() for ln in content.splitlines() if ln.strip()]
+                if all(n in self.allow_axioms for n in names):
+                    continue
+            return True
+        return False
 
     @property
     def uses_forbidden(self) -> bool:
-        # Scan CODE only: a keyword mentioned in a comment ("An `Admitted` proof …") is inert. The real
-        # anti-laundering guard is `opens_axioms` (Print Assumptions on the kernel's OUTPUT); this lexical
-        # scan is a belt-and-suspenders block on an actual Admitted/admit/Axiom in the source.
         return bool(_FORBIDDEN_RE.search(_COMMENT_RE.sub(" ", self.source)))
 
     @property
@@ -110,43 +133,40 @@ class CoqDockerBackend:
 
     image: str = DEFAULT_IMAGE
     timeout_s: int = 180
+    allow_axioms: frozenset = frozenset()   # operator-approved axiom names (default: none — strictest)
     _cache: dict[str, CoqResult] = field(default_factory=dict, repr=False)
 
     # --- proof-edge surface (mirrors LeanBackend) -----------------------------
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        res = self._run(_audit_source(_assemble(expr, proof_src)))
+        res = self._run(_assemble(expr, proof_src))
         return res is not None and res.kernel_ok
 
     def check_source(self, source: str) -> Optional[bool]:
-        """Report the kernel verdict on a COMPLETE Coq source (already-assembled cert). True iff it
-        compiles clean, audits closed, and carries no laundering construct; False if the kernel rejects
-        it; None if the backend is unavailable. Never touches kernel_verified."""
-        res = self._run(_audit_source(source))
+        """Report the kernel verdict on a COMPLETE Coq source. True iff it compiles clean, the rocqchk
+        whole-library audit is axiom/unsafe-free, and no laundering keyword is present; False if rejected;
+        None if the backend is unavailable. Never touches kernel_verified."""
+        res = self._run(source)
         return None if res is None else res.kernel_ok
 
     def check_source_with_detail(self, source: str) -> Optional[dict]:
         """Like check_source, but return the audit breakdown for a verification-amplification report."""
-        res = self._run(_audit_source(source))
+        res = self._run(source)
         if res is None:
             return None
         return {
             "verified": res.kernel_ok,
-            "returncode": res.returncode,
             "has_errors": res.has_errors,
+            "audit_ran": res.audit_ran,
             "opens_axioms": res.opens_axioms,
             "uses_forbidden": res.uses_forbidden,
-            "closed_under_global_context": "Closed under the global context" in res.output,
-            "output_tail": "\n".join(res.output.splitlines()[-8:]),
+            "output_tail": "\n".join(res.output.splitlines()[-12:]),
         }
 
     def compile_statement(self, expr: Expressio) -> bool:
-        """Syntactic validity: does the statement type-check with an admitted body? (Uses `Admitted.`,
-        which is fine here because we only ask whether the STATEMENT is well-formed, not proven.)"""
         res = self._run(_assemble(expr, "Proof. Admitted."))
         return res is not None and not res.has_errors
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
-        """Triviality probe: a statement some automatic tactic closes on its own is vacuous."""
         for tac in ("reflexivity", "trivial", "auto", "lia", "ring", "discriminate"):
             res = self._run(_assemble(expr, f"Proof. {tac}. Qed."))
             if res is not None and res.kernel_ok:
@@ -162,12 +182,13 @@ class CoqDockerBackend:
         try:
             proc = subprocess.run(
                 ["docker", "run", "--rm", "-i", "--platform", PLATFORM, self.image,
-                 "bash", "-lc", "cat > /tmp/leibniz.v && rocq compile -q /tmp/leibniz.v 2>&1"],
+                 "bash", "-lc", _CHECK_SCRIPT],
                 input=source, capture_output=True, text=True, timeout=self.timeout_s,
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return None
-        res = CoqResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source)
+        res = CoqResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source,
+                        allow_axioms=self.allow_axioms)
         self._cache[key] = res
         return res
 

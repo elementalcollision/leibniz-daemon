@@ -65,8 +65,9 @@ def main() -> int:
             print(f"  {leg['kernel']:9} UNAVAILABLE (Docker/image absent) — skip")
             continue
         d = leg.get("demo_detail") or {}
-        extra = ("closed-under-global-context" if d.get("closed_under_global_context") else
-                 f"rc={d.get('returncode')}")
+        extra = ("rocqchk: axioms <none>" if ("audit_ran" in d and d.get("audit_ran") and not d.get("opens_axioms"))
+                 else f"rc={d.get('returncode')}" if d.get("returncode") is not None
+                 else "flagged")
         print(f"  {leg['kernel']:9} demo_verified={leg['demo_verified']}  "
               f"laundered_rejected={leg['laundered_rejected']}  broken_rejected={leg['broken_rejected']}  "
               f"({extra})  -> {'GATES ✓' if leg['gates_correctly'] else 'ISSUE'}")

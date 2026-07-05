@@ -11,12 +11,11 @@
       "demo_verified": true,
       "demo_detail": {
         "verified": true,
-        "returncode": 0,
         "has_errors": false,
+        "audit_ran": true,
         "opens_axioms": false,
         "uses_forbidden": false,
-        "closed_under_global_context": true,
-        "output_tail": "[deprecated-missing-stdlib,deprecated-since-9.0,deprecated,default]\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\nClosed under the global context\n"
+        "output_tail": "  \n* Theory: Rewrite rules are not allowed\n  \n* Axioms: <none>\n  \n* Constants/Inductives relying on type-in-type: <none>\n  \n* Constants/Inductives relying on unsafe (co)fixpoints: <none>\n  \n* Inductives whose positivity is assumed: <none>\n  \n"
       },
       "laundered_rejected": true,
       "broken_rejected": true,

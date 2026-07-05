@@ -56,20 +56,31 @@ The live demo (gate GREEN) shows both kernels *gate*, not rubber-stamp:
 | self-laundered | `Admitted` → open axiom exposed → **REJECT** | `sorry` → hard error (`quick_and_dirty=false`) → **REJECT** |
 | broken | unification error, exit 1 → **REJECT** | *Failed to finish proof*, exit 1 → **REJECT** |
 
-The trust rule per kernel mirrors Lean's `#print axioms` / no-`sorry` discipline, **hardened after an
-adversarial review (2026-07-05) found and closed two false-PASS holes** (both now pinned as regression tests):
+The trust rule per kernel mirrors Lean's `#print axioms` / no-`sorry` discipline, **hardened over two
+adversarial-review rounds (2026-07-05) that found and closed four false-PASS holes** (all pinned as
+regression tests). The rounds taught the key lesson — a *source-side keyword scan* can never be complete
+(`tactic`→`setup`, `Theorem`-regex→`Definition`) — so the audit is driven by the kernel's own report where
+one exists:
 
-- **Coq** = compile-clean **and** closed-under-global-context (or only operator-approved axioms) **and** no
-  `Admitted`/`admit`/`Axiom`/`Parameter`/`Hypothesis`/`Variable`/`Context`. The review showed a proof could
-  hide an axiom (`Require Import Classical; apply classic`) by omitting `Print Assumptions`; the backend now
-  **injects `Print Assumptions <thm>.` for every declared theorem**, so the audit runs on kernel output the
-  prover cannot suppress. `Variable`/`Context` (section hypotheses the stated theorem secretly rests on)
-  were added to the forbidden set.
-- **Isabelle** = build-clean at `quick_and_dirty=false` (hard-errors on `sorry`) **and** no
-  `oops`/`axiomatization`/`quick_and_dirty` **and none of the ML/oracle escape hatches**
-  (`tactic`/`ML*`/`oracle`/`Skip_Proof`/`cheat_tac`). The review showed `by (tactic ‹Skip_Proof.cheat_tac …›)`
-  — the oracle `sorry` desugars to — proves `2+2=5` with exit 0 and no error marker; the scan now keeps
-  PROOF cartouches (stripping only comments and DOC cartouches) so such a cheat is caught.
+- **Coq — kernel-driven axiom audit.** After `rocq compile`, the backend runs Rocq's separate library
+  checker **`rocqchk -o`**, which re-validates the compiled `.vo` and prints a CONTEXT SUMMARY of the WHOLE
+  development's axioms **name-agnostically** (so `Definition foo := classic`, `Goal … Save`, `Instance`,
+  `Fixpoint`, … are all covered uniformly). Kernel-verified iff compile-clean **and** the summary shows
+  `* Axioms: <none>` (or only operator-approved axioms) **and** `<none>` for type-in-type / unsafe
+  (co)fixpoints / assumed-positivity. Defence-in-depth: `Admitted`/`admit`/`Axiom`/`Parameter`/`Hypothesis`/
+  `Variable`/`Context` are also blocked lexically (`Variable`/`Context` let the *stated* theorem rest on a
+  section hypothesis that `rocqchk` sees, post-discharge, as a sound implication).
+- **Isabelle — comprehensive ML-surface ban (best-effort).** Isabelle exposes no `rocqchk`-equivalent
+  reachable without ML, so the backend forbids the **entire arbitrary-ML entry surface**: `sorry`/`oops`/
+  `axiomatization`/`quick_and_dirty` **and** `ML*`/`SML_*`/`setup`/`local_setup`/`method_setup`/
+  `attribute_setup`/`simproc_setup`/`declaration`/`*_translation`/`oracle`/`tactic`/`raw_tactic`/
+  `Skip_Proof`/`cheat_tac` — because any of these runs `Thm.add_axiom_global`/`Skip_Proof.cheat_tac` at build
+  time (both were review exploits: `by (tactic ‹cheat_tac›)` and `setup ‹… add_axiom_global …›`). The scan
+  keeps PROOF cartouches (stripping only comments + DOC cartouches) so an in-cartouche cheat is caught.
+  **Honest scope:** this is a comprehensive *finite* blocklist, not a soundness proof — a future Isabelle
+  release adding a new ML-entry command would need it added; a kernel-driven oracle report is required before
+  promotion (§4.2). Sound for the amplification use case (well-formed certs); not hardened against a
+  maximally-adversarial cert.
 
 ## 3. Decision
 

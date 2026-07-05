@@ -13,11 +13,21 @@ the ``Skip_Proof.cheat_tac`` oracle, which — invoked directly through the ``ta
 ``ML``/``oracle`` command — closes **any** goal (even ``2+2=5``), exits 0, and emits no error marker (found
 by adversarial review, 2026-07-05). So a theory is kernel-verified iff:
   (1) ``isabelle build`` exits 0 (rejecting ``sorry`` and any unfinished proof); AND
-  (2) the source carries no trust-defeating construct — ``sorry`` / ``oops`` / ``axiomatization`` /
-      ``quick_and_dirty`` **and** the arbitrary-code escape hatches ``tactic`` / ``ML`` / ``ML_prf`` /
-      ``ML_val`` / ``ML_command`` / ``ML_file`` / ``oracle`` / ``Skip_Proof`` / ``cheat_tac``. The scan runs
-      on the source with ``(* … *)`` comments and DOC cartouches stripped but PROOF cartouches KEPT, so a
-      cheat hidden inside ``by (tactic \<open>…\<close>)`` is still caught.
+  (2) the source contains none of the trust-defeating constructs in ``_FORBIDDEN`` — the hole-leavers
+      (``sorry``/``oops``), axiom-introducer (``axiomatization``), cheat re-enabler (``quick_and_dirty``),
+      and the **entire arbitrary-ML entry surface** (``ML*``/``SML_*``, ``setup``/``local_setup``/
+      ``method_setup``/``attribute_setup``/``simproc_setup``/``declaration``/``*_translation``, ``oracle``,
+      ``tactic``/``raw_tactic``, ``Skip_Proof``/``cheat_tac``). The scan runs on the source with ``(* … *)``
+      comments and DOC cartouches stripped but PROOF cartouches KEPT, so a cheat inside
+      ``by (tactic <open>…<close>)`` or ``setup <open>…<close>`` is still caught.
+
+HONEST SCOPE. Unlike the Coq backend — whose axiom audit is kernel-driven (``rocqchk`` reports the whole
+development's axioms name-agnostically) — this Isabelle check is a **comprehensive but finite blocklist** of
+the known ML-entry commands, because Isabelle exposes no oracle/axiom report reachable without ML. It is
+sound for the verification-AMPLIFICATION use case (re-checking well-formed certificates) but is NOT a proof
+that no arbitrary code can run: a future Isabelle release adding a new ML-entry command not in the list would
+need it added here. Promotion to a proof edge (ADR 0048 §4.2, deferred) must first replace this with a
+kernel-driven oracle report (e.g. ``Thm.proof_body_of`` / an ``export_theory`` oracle scan).
 
 The theory is checked as a one-theory session ``S = HOL + theories S`` built on the image's prebuilt HOL
 heap (so a check is ~seconds, not a full HOL rebuild). The default image is native **arm64**
@@ -44,14 +54,26 @@ from leibniz.propositio import Expressio
 # Override `image`/`platform` for an amd64 host (e.g. image="makarius/isabelle:Isabelle2025", platform="linux/amd64").
 DEFAULT_IMAGE = "makarius/isabelle:Isabelle2025_ARM"
 
-# Trust-defeating constructs. Beyond the obvious hole-leavers (sorry/oops) and axiom-introducers
-# (axiomatization) and the cheat re-enabler (quick_and_dirty), we MUST forbid the arbitrary-code escape
-# hatches: `sorry` desugars to `Skip_Proof.cheat_tac`, which — invoked directly via the `tactic` proof
-# method or any `ML*`/`oracle` command — closes ANY goal (even `2+2=5`), exits 0, and emits no error. A
-# keyword blocklist alone can't be exhaustive, but banning the ML/oracle surface removes the general escape.
-_FORBIDDEN = ("sorry", "oops", "axiomatization", "quick_and_dirty",
-              "tactic", "ML", "ML_prf", "ML_val", "ML_command", "ML_file",
-              "oracle", "Skip_Proof", "SkipProof", "cheat_tac")
+# Trust-defeating constructs. Isabelle has no rocqchk-style whole-development audit reachable WITHOUT ML,
+# so — unlike the Coq backend, whose axiom check is kernel-driven — this backend must forbid the *entire*
+# arbitrary-ML entry surface, because any of it can run `Thm.add_axiom_global` / `Skip_Proof.cheat_tac` at
+# build time and prove `2+2=5` with exit 0 and no error marker (two adversarial-review findings, 2026-07-05:
+# `by (tactic ‹Skip_Proof.cheat_tac …›)` and `setup ‹… Thm.add_axiom_global …›`). This is a COMPREHENSIVE
+# but still finite blocklist of the known ML-entry commands + methods; it is NOT a soundness proof — see the
+# HONEST SCOPE in the module docstring. Every entry is whole-word matched against the source with comments
+# and DOC cartouches stripped (PROOF cartouches kept).
+_FORBIDDEN = (
+    # hole-leavers / axiom-introducers / cheat re-enabler
+    "sorry", "oops", "axiomatization", "quick_and_dirty",
+    # arbitrary-ML entry commands (each executes ML at build time)
+    "ML", "ML_prf", "ML_val", "ML_command", "ML_file", "ML_file_debug", "ML_file_no_debug",
+    "ML_export", "SML_file", "SML_export",
+    "setup", "local_setup", "method_setup", "attribute_setup", "simproc_setup", "declaration",
+    "syntax_declaration", "parse_translation", "print_translation", "typed_print_translation",
+    "parse_ast_translation", "print_ast_translation",
+    # ML/oracle proof surface
+    "oracle", "tactic", "raw_tactic", "Skip_Proof", "SkipProof", "cheat_tac",
+)
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
 # The `theory NAME` DECLARATION begins a line (after optional whitespace) — anchor there so the word
 # "theory" inside a comment (e.g. "one-theory session") can't be mistaken for the declaration.

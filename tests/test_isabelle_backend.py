@@ -34,10 +34,15 @@ def test_real_sorry_or_oops_trips_forbidden():
 
 
 def test_ml_and_oracle_escape_hatches_forbidden():
-    # Regression (adversarial review, CRITICAL): the ML/oracle surface must be forbidden — `sorry` desugars
-    # to Skip_Proof.cheat_tac, reachable via the `tactic` method / `ML*` / `oracle`, which closes any goal.
+    # Regression (adversarial review): the WHOLE arbitrary-ML entry surface must be forbidden — `sorry`
+    # desugars to Skip_Proof.cheat_tac (reachable via `tactic`/`ML*`/`oracle`), and `setup`/`method_setup`/
+    # `declaration`/... run arbitrary ML (e.g. Thm.add_axiom_global) at build time. Both were review exploits.
     for src in ('lemma x: "P" by (tactic \\<open>Skip_Proof.cheat_tac\\<close>)',
-                'ML \\<open>Thm.assume\\<close>', "oracle bad = ...", 'lemma x: "P" by (ML_prf \\<open>x\\<close>)'):
+                'ML \\<open>Thm.assume\\<close>', "oracle bad = ...", 'lemma x: "P" by (ML_prf \\<open>x\\<close>)',
+                'setup \\<open>Thm.add_axiom_global\\<close>', 'local_setup \\<open>x\\<close>',
+                'method_setup m = \\<open>x\\<close>', 'attribute_setup a = \\<open>x\\<close>',
+                'declaration \\<open>x\\<close>', 'simproc_setup s (p) = \\<open>x\\<close>',
+                'parse_translation \\<open>x\\<close>'):
         assert IsabelleResult(0, "", source=src).uses_forbidden is True
 
 
@@ -86,6 +91,18 @@ def test_live_ml_cheat_tac_escape_rejected():
     # exit-0 with no error marker, so only the forbidden-token scan catches it).
     src = ('theory Scratch imports Main begin\nlemma bad: "(2::nat) + 2 = 5"\n'
            '  by (tactic \\<open>Skip_Proof.cheat_tac \\<^context> 1\\<close>)\nend\n')
+    assert IsabelleDockerBackend().check_source(src) is False
+
+
+@pytest.mark.skipif(not _HAVE_ISA, reason="needs Docker + makarius/isabelle image")
+def test_live_setup_axiom_injection_rejected():
+    # Regression (adversarial re-attack, CRITICAL): `setup <ML: Thm.add_axiom_global>` injects an axiom then
+    # `by (rule ...)` proves 2+2=5, building exit-0. The forbidden `setup` catches it.
+    src = ('theory Scratch imports Main begin\n'
+           'setup \\<open>fn thy =>\n let val prop = HOLogic.mk_Trueprop (@{term "(2::nat)+2=5"})\n'
+           '   val ((_, th), thy2) = Thm.add_axiom_global (Binding.name "bogus", prop) thy\n'
+           '   val thy3 = Global_Theory.store_thm (Binding.name "bogusfact", th) thy2 |> #2\n in thy3 end\\<close>\n'
+           'lemma f: "(2::nat)+2=5" by (rule bogusfact)\nend\n')
     assert IsabelleDockerBackend().check_source(src) is False
 
 
