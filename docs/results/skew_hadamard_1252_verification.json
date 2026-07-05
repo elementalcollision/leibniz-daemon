@@ -1,0 +1,42 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Karoui (2026), arXiv:2602.16089 \u2014 skew-Hadamard matrix of order 1252",
+  "verification": {
+    "field_poly_x4_plus": [
+      2,
+      0,
+      2,
+      1
+    ],
+    "primitive_element": "x",
+    "found_offset": 0,
+    "I0": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "I1": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "D0_size": 312,
+    "D1_size": 312,
+    "skew": true,
+    "autocorrelation_sum": -2,
+    "shdf_valid": true
+  },
+  "reading": "Independent exact-arithmetic verification of the bordered skew-Hadamard difference family {D0,D1} over GF(5^4) (cyclotomic classes of order 16) underlying Karoui's order-1252 skew-Hadamard matrix: D0 is skew and the \u00b11 autocorrelations sum to -2 for all nonzero w, so a skew-Hadamard matrix of order 1252 exists by Goethals-Seidel \u2014 confirming the construction that fills the reported-missing order. Verification-amplification (audit tier); no trust surface."
+}
