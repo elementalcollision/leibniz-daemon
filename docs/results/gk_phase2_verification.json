@@ -1,0 +1,76 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Guo & Krattenthaler (2014), arXiv:1301.7651 \u2014 Phase 2 (prime-modulus theorem)",
+  "cross_check": {
+    "rows": [
+      {
+        "case": "(6n-1) | C(12n,3n)",
+        "prime_modulus_n_count": 100,
+        "sample_prime_n": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "all_divisible": true
+      },
+      {
+        "case": "(6n-1) | C(12n,4n)",
+        "prime_modulus_n_count": 100,
+        "sample_prime_n": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "all_divisible": true
+      },
+      {
+        "case": "(66n-1) | C(330n,88n)",
+        "prime_modulus_n_count": 75,
+        "sample_prime_n": [
+          2,
+          3,
+          4,
+          7,
+          9,
+          10,
+          13,
+          18
+        ],
+        "all_divisible": true
+      }
+    ],
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 4,
+    "axiom_lines": [
+      "'prime_dvd_choose_of_units_carry' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'gk_12_3_prime' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'gk_12_4_prime' depends on axioms: [propext, Classical.choice, Quot.sound]",
+      "'gk_330_88_prime' depends on axioms: [propext, Classical.choice, Quot.sound]"
+    ],
+    "clean": true
+  },
+  "theorems": [
+    "prime_dvd_choose_of_units_carry",
+    "gk_12_3_prime",
+    "gk_12_4_prime",
+    "gk_330_88_prime"
+  ],
+  "artifact": "docs/crt/guo_krattenthaler_phase2.lean",
+  "reading": "Phase 2 of the Guo\u2013Krattenthaler verification: the three all-n divisibilities are PROVED for the prime-modulus case (infinitely many n) via an elementary Kummer units-carry argument (Nat.factorization_choose), kernel-verified with standard axioms. The composite-modulus case needs the full prime-power carry / q-integer positivity \u2014 documented open escalation. Verification-amplification; no trust surface."
+}

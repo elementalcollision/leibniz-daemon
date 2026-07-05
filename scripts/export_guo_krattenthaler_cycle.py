@@ -1,4 +1,5 @@
-"""Emit the Guo–Krattenthaler verification (Phase 1) as a Codex Calculemus cycle (ADR 0017).
+"""Emit the Guo–Krattenthaler verification (Phase 1 census + Phase 2 prime-modulus theorem) as a Codex
+Calculemus cycle (ADR 0017).
 
 A verification cycle: Leibniz independently kernel-decides a published number-theory result's divisibility
 claims. Carries no `kernel_verified` edge, mints nothing, promulgates nothing; the `decide` results are
@@ -19,6 +20,7 @@ from leibniz.calculemus_site import cycle_payload, downloadable_artifact  # noqa
 
 _ROOT = Path(__file__).resolve().parent.parent
 _CERT = _ROOT / "docs" / "crt" / "guo_krattenthaler_certificate.lean"
+_CERT2 = _ROOT / "docs" / "crt" / "guo_krattenthaler_phase2.lean"
 
 _SUMMARY = (
     "An independent kernel verification of a Journal of Number Theory result. Guo and Krattenthaler (2014, "
@@ -35,8 +37,12 @@ _SUMMARY = (
     "for six qualifying pairs (a,b). All 23 theorems are decided by `decide` over exact Nat.choose and depend "
     "only on the standard axiom propext. This target was chosen because it reuses, verbatim, the from-scratch "
     "Gaussian-binomial machinery Leibniz built for the Problem-16 self-ordered proofs (the q-Pascal recurrence "
-    "and q-factorial divisibility) — the same q-integer positivity that underlies Guo–Krattenthaler; the "
-    "all-n theorem (Phase 2) is the natural follow-on."
+    "and q-factorial divisibility) — the same q-integer positivity that underlies Guo–Krattenthaler. Phase 2 "
+    "then lifts the census to a genuine all-n THEOREM over an infinite subfamily: whenever the modulus is prime "
+    "(infinitely many n, by Dirichlet), all three divisibilities hold, proved by an elementary Kummer "
+    "units-carry argument (Nat.factorization_choose) and kernel-verified with the standard axioms. The "
+    "composite-modulus / full all-n case stays open — it needs exactly the q-integer positivity route above — "
+    "and is recorded as the honest escalation."
 )
 
 _FINDINGS = [
@@ -48,16 +54,26 @@ _FINDINGS = [
      "note": "If a has a prime factor ∤ b, then ∃∞ n with (bn+1)∤C((a+b)n,an). Kernel-decided by explicit "
              "witnesses for (2,1),(3,1),(3,2),(4,3),(5,2),(2,3); the Catalan a=b=1 always-divides case anchors "
              "the contrast."},
-    {"id": "q", "claim": "Reuses the from-scratch Gaussian-binomial machinery (Problem 16)", "verdict": "NOTED",
-     "note": "The paper's mechanism is q-binomial-by-q-integer positivity — the same construction Leibniz "
-             "built (gBinom q-Pascal recurrence, qf, qf_dvd_ffall). The all-n theorem via q-positivity is the "
-             "Phase-2 follow-on."},
+    {"id": "phase2", "claim": "All-n theorem for the prime-modulus case (Phase 2)", "verdict": "CERTIFIED",
+     "note": "Lifted from census to theorem: for every n≥1 with the modulus prime — infinitely many n by "
+             "Dirichlet — (6n−1)∣C(12n,3n), (6n−1)∣C(12n,4n), (66n−1)∣C(330n,88n). Proved by an elementary "
+             "Kummer units-carry argument (the base-p units digits of k and m−k sum to ≥ p, forcing one carry, "
+             "so v_p(C)≥1); kernel-verified via Nat.factorization_choose, axioms = standard set."},
+    {"id": "q", "claim": "Composite-modulus / full all-n case — reuses the Gaussian-binomial machinery",
+     "verdict": "NOTED",
+     "note": "The full all-n theorem (composite modulus included) is research-level: it needs the q-binomial "
+             "-by-q-integer positivity — the same from-scratch construction Leibniz built for Problem 16 "
+             "(gBinom q-Pascal recurrence, qf, qf_dvd_ffall). Recorded as the honest open escalation."},
 ]
 
 _ARTIFACTS = [
     downloadable_artifact(_CERT, cycle_id="cycle_000013", kind="lean-proof",
                           checker="Lean 4.31 kernel (decide)",
-                          result="23 theorems decided; #print axioms = standard set (propext)"),
+                          result="Phase 1 — 23 theorems decided; #print axioms = standard set (propext)"),
+    downloadable_artifact(_CERT2, cycle_id="cycle_000013", kind="lean-proof",
+                          checker="Lean 4.31 kernel (elaboration)",
+                          result="Phase 2 — 4 theorems (prime-modulus all-n); #print axioms = standard set "
+                                 "(propext, Classical.choice, Quot.sound)"),
 ]
 
 _REFERENCES = [
@@ -66,13 +82,19 @@ _REFERENCES = [
      "url": "https://arxiv.org/abs/1301.7651"},
     {"citation": ("Sun, Z.-W. (2013). Products and sums divisible by central binomial coefficients. "
                   "Electronic Journal of Combinatorics, 20(1), #P9."), "url": ""},
+    {"citation": ("Kummer, E. E. (1852). Über die Ergänzungssätze zu den allgemeinen Reciprocitätsgesetzen. "
+                  "Journal für die reine und angewandte Mathematik, 44, 93–146."), "url": ""},
 ]
 
 _REPOSITORIES = [
     {"name": "elementalcollision/leibniz-daemon #293",
      "url": "https://github.com/elementalcollision/leibniz-daemon/pull/293",
      "role": "produced",
-     "note": "scripts/guo_krattenthaler_divisibility.py + docs/crt/guo_krattenthaler_certificate.lean"},
+     "note": "Phase 1: scripts/guo_krattenthaler_divisibility.py + docs/crt/guo_krattenthaler_certificate.lean"},
+    {"name": "elementalcollision/leibniz-daemon #296",
+     "url": "https://github.com/elementalcollision/leibniz-daemon/pull/296",
+     "role": "produced",
+     "note": "Phase 2: scripts/verify_gk_phase2.py + docs/crt/guo_krattenthaler_phase2.lean (prime-modulus theorem)"},
 ]
 
 _TARGET = "elementalcollision/codex-calculemus : ledger/calculemus.json -> cycles[]"
@@ -84,7 +106,8 @@ def build_cycle() -> dict:
         date="2026-07-05",
         domain="Number theory",
         kind="verification",
-        title=("Independent kernel verification of Guo–Krattenthaler (2014) binomial divisibility (Phase 1)"),
+        title=("Independent kernel verification of Guo–Krattenthaler (2014) binomial divisibility "
+               "(Phase 1 census + Phase 2 prime-modulus theorem)"),
         summary=_SUMMARY,
         findings=_FINDINGS,
         artifacts=_ARTIFACTS,
@@ -100,7 +123,10 @@ def build_fragment(*, generated_at: str = "") -> dict:
             "producer": "scripts/export_guo_krattenthaler_cycle.py",
             "target": _TARGET,
             "merge": "append the object in `cycles` to the site ledger's top-level `cycles` array; also copy "
-                     "docs/crt/guo_krattenthaler_certificate.lean to public/artifacts/cycle_000013/.",
+                     "docs/crt/guo_krattenthaler_certificate.lean and docs/crt/guo_krattenthaler_phase2.lean "
+                     "to public/artifacts/cycle_000013/. (If Cycle 13 was already published from Phase 1, "
+                     "replace that cycle object in place with this one — it supersedes it with the Phase-2 "
+                     "finding + artifact.)",
         },
         "cycles": [build_cycle()],
     }
