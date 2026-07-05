@@ -1,0 +1,49 @@
+{
+  "gate": "GREEN(measured)",
+  "tier": "probe",
+  "ev": "AMPLIFICATION-research",
+  "rows": [
+    {
+      "n": 20,
+      "entry_bits": 8,
+      "ok": true,
+      "secs": 3.5
+    },
+    {
+      "n": 20,
+      "entry_bits": 1000,
+      "ok": true,
+      "secs": 4.0
+    },
+    {
+      "n": 40,
+      "entry_bits": 8,
+      "ok": true,
+      "secs": 78.4
+    },
+    {
+      "n": 40,
+      "entry_bits": 1000,
+      "ok": true,
+      "secs": 125.3
+    },
+    {
+      "n": 60,
+      "entry_bits": 8,
+      "ok": false,
+      "secs": 160.0
+    },
+    {
+      "n": 60,
+      "entry_bits": 1000,
+      "ok": false,
+      "secs": 160.2
+    }
+  ],
+  "order60_1000bit_ok": false,
+  "order60_1000bit_secs": null,
+  "entry_size_penalty_order60": null,
+  "entry_size_penalty_order40": 1.6,
+  "entry_size_cheap_for_compact_decide": false,
+  "reading": "The DECISIVE tile-cost measurement (adversarial review of the 7a/7b findings). A COMPACT order-N full matmul-identity decide is the block-identity building block the Schur-tiling path needs. Order-60 with ~1000-bit entries: DID NOT verify within the 160s cap. Entry-size penalty at order-60 (1000-bit / 8-bit): n/a \u2014 so entry size is NOT free; large entries materially slow the compact decide. NET: realistic full-rank, large-entry order-60 tiles are HEAVIER than the borrowed r=8/8-bit point -> the effective tiling ceiling drops below 60 for real tiles; the tiling de-risk is downgraded (k rises, budget grows). Confirms the adversarial review's HIGH-severity gap."
+}
