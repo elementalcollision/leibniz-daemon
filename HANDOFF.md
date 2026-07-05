@@ -33,12 +33,38 @@ boundary):
   recombination).
 - **R6 — reading-room (*Calculemus*) + operator publish gate:** present (promotion ≠
   publication; the daemon never auto-publishes).
+- **Multi-kernel deciders (ADR 0048): report-only backends built + live-validated; promotion DEFERRED.**
+  Real *report-only* Coq (`backends/coq_docker.py`, Rocq 9.0) and Isabelle (`backends/isabelle_docker.py`,
+  Isabelle2025) backends. Both kernels genuinely gate (self-laundered `Admitted`/`sorry` and broken proofs
+  rejected — `scripts/verify_multi_kernel.py`, GREEN). Live for **verification-amplification** (audit
+  tier). **Promulgation is DEFERRED and operator-gated:** the `CoqVerifier`/`IsabelleVerifier` mirrors +
+  `VerifierRegistry` + `Expressio.target_checker` that would *write* `kernel_verified` and *mint* a proof
+  edge are **NOT landed** — prototyping them tripped the structural trust guards
+  (`test_kernel_verified_writers.py` / `test_boundary_guards.py`), whose whitelist edits are **operator-
+  only** (same class as the `KERNEL_PRODUCER`→`KERNEL_PRODUCERS` trust edit and task #54; ADR 0045 8/8
+  precedent). All three structural guards + `test_invariants.py` stay byte-identical. See the ticket below.
 Tracked at `github.com/elementalcollision/leibniz-daemon`, branch protection on `main`, a
 PreToolUse trust-edge hook, and CI (see §4). **The live work plan is now
 `docs/optimization-roadmap.md`, not §8** — §8's rung tickets are retained as the original
 climb plan (with status notes).
 **Goal (achieved through R6; ongoing in optimization):** climb R1 → R6 replacing marked seams
 with real backends, **without ever weakening the trust boundary**.
+
+> **Ticket — ADR 0048 promotion layer (operator-gated, DEFERRED).** The report-only backends already
+> *amplify*; to let a Coq/Isabelle proof *promulgate*, the operator lands the promotion layer as a
+> PreToolUse-guarded keystone: (1) add `CoqVerifier`/`IsabelleVerifier` (mirrors of `LeanVerifier`, each
+> running its own kernel) + a `VerifierRegistry` routing by a new `Expressio.target_checker` (default
+> `"lean"`, fail-closed) — these add `kernel_verified` write + `PROOF_EDGE` mint sites, so this step **also**
+> edits the two structural trust guards (add `CoqVerifier::discharge`/`IsabelleVerifier::discharge` to
+> `test_kernel_verified_writers.py::_WHITELIST` and `test_boundary_guards.py`), which are **themselves trust
+> decisions**; (2) refactor `trust.py` `KERNEL_PRODUCER` (scalar) → `KERNEL_PRODUCERS` (frozenset) + alias,
+> `validate_edge` → `not in KERNEL_PRODUCERS` (exact ADR 0041 `FAITHFULNESS_PRODUCERS` shape — does **not**
+> touch `test_invariants.py`), and add the producer string **one act per kernel** after a per-kernel witness
+> round (ADR 0045: the analogous Lean edit was deferred 8/8); (3) wire the live pipeline/consensus/
+> proof_repair discharge calls through the registry, and pin images by immutable `sha256`. Recommend
+> `target_checker` stays `"lean"` until a proposer opts in. Exit test: a Coq **and** an Isabelle N+1-sound
+> promulgation, all four structural guards still byte-identical. A working prototype of layer (1) exists in
+> this session's history if needed as a reference. Until then the amplification backends stand alone.
 
 This document is the porting manual and work plan. It deliberately lives *outside*
 `CLAUDE.md` (memory files should not carry execution plans). Read `CLAUDE.md` first
