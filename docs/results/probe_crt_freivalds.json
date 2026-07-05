@@ -1,0 +1,44 @@
+{
+  "gate": "GREEN(measured)",
+  "tier": "probe",
+  "ev": "AMPLIFICATION-research",
+  "rank": 8,
+  "full_identity": [
+    {
+      "n": 40,
+      "ok": true,
+      "secs": 16.2
+    },
+    {
+      "n": 60,
+      "ok": true,
+      "secs": 91.5
+    },
+    {
+      "n": 80,
+      "ok": false,
+      "secs": 160.0
+    }
+  ],
+  "freivalds_matvec": [
+    {
+      "n": 40,
+      "ok": true,
+      "secs": 15.5
+    },
+    {
+      "n": 60,
+      "ok": true,
+      "secs": 91.4
+    },
+    {
+      "n": 80,
+      "ok": false,
+      "secs": 160.0
+    }
+  ],
+  "full_N_max": 60,
+  "freivalds_N_max": 60,
+  "freivalds_reaches_higher_N": false,
+  "reading": "Full Gram identity (O(N\u00b2\u00b7r), r=8) reaches N\u224860; the Freivalds matVEC check (O(N\u00b2)) reaches N\u224860. Freivalds does NOT reach meaningfully higher N \u2014 the O(N\u00b2) matvec fact count is the wall, and mod-p/packing (per-op, 7a-A) cannot remove it. Either way this is NOT a sound break: single-vector Freivalds needs N+1 points (~N\u00d7 cost) or a Kronecker packing to be sound, so the measured cost is a LOWER bound on the sound check. Net: the CRT/Freivalds direction is confirmed to NOT escape the term-count wall \u2014 arithmetization is dead in its viable form too; the escape remains structure/tiling (Haynsworth), not arithmetic."
+}
