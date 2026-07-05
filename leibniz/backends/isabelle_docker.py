@@ -21,13 +21,17 @@ by adversarial review, 2026-07-05). So a theory is kernel-verified iff:
       comments and DOC cartouches stripped but PROOF cartouches KEPT, so a cheat inside
       ``by (tactic <open>…<close>)`` or ``setup <open>…<close>`` is still caught.
 
-HONEST SCOPE. Unlike the Coq backend — whose axiom audit is kernel-driven (``rocqchk`` reports the whole
-development's axioms name-agnostically) — this Isabelle check is a **comprehensive but finite blocklist** of
-the known ML-entry commands, because Isabelle exposes no oracle/axiom report reachable without ML. It is
-sound for the verification-AMPLIFICATION use case (re-checking well-formed certificates) but is NOT a proof
-that no arbitrary code can run: a future Isabelle release adding a new ML-entry command not in the list would
-need it added here. Promotion to a proof edge (ADR 0048 §4.2, deferred) must first replace this with a
-kernel-driven oracle report (e.g. ``Thm.proof_body_of`` / an ``export_theory`` oracle scan).
+HONEST SCOPE — read this. Unlike the Coq backend, whose axiom audit is **kernel-driven and sound**
+(``rocqchk`` reports the whole development's axioms name-agnostically, authenticated by an unforgeable
+marker), this Isabelle check is a **source-side blocklist and is NOT adversarially sound**. Three review
+rounds (2026-07-05) each found a fresh laundering route — ``by (tactic <cheat_tac>)``, then
+``setup <add_axiom_global>``, then ``code_printing … + by eval`` — and more almost certainly exist, because
+Isabelle exposes no oracle/axiom report reachable without ML. Use it ONLY for verification-AMPLIFICATION of
+**trusted-provenance** theories (our own certificates, published proofs) whose author is not trying to fool
+the checker; do NOT feed it adversarial prover output. A SOUND Isabelle decider — required before promotion
+to a proof edge (ADR 0048 §4.2, deferred) or any adversarial use — must inspect the KERNEL PROOF TERM of each
+target theorem (``Thm_Deps.thm_oracles`` + axiom dependencies, from a wrapper theory we control, with user ML
+already forbidden so the shared ML environment cannot be poisoned), not scan source.
 
 The theory is checked as a one-theory session ``S = HOL + theories S`` built on the image's prebuilt HOL
 heap (so a check is ~seconds, not a full HOL rebuild). The default image is native **arm64**
@@ -73,6 +77,11 @@ _FORBIDDEN = (
     "parse_ast_translation", "print_ast_translation",
     # ML/oracle proof surface
     "oracle", "tactic", "raw_tactic", "Skip_Proof", "SkipProof", "cheat_tac",
+    # code-generation reconfiguration (maps a constant to a false foreign literal) + code-trusting methods —
+    # a `code_printing … ⇀ (SML) "true"` + `by eval` route proved 2+2=5 (review round 3, 2026-07-05)
+    "code_printing", "code_reflect", "code_datatype", "code_instance", "code_identifier",
+    "code_reserved", "code_monad", "external_file", "generate_file", "compile_generated_files",
+    "eval", "normalization", "code_simp",
 )
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
 # The `theory NAME` DECLARATION begins a line (after optional whitespace) — anchor there so the word

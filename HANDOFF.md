@@ -65,6 +65,13 @@ with real backends, **without ever weakening the trust boundary**.
 > `target_checker` stays `"lean"` until a proposer opts in. Exit test: a Coq **and** an Isabelle N+1-sound
 > promulgation, all four structural guards still byte-identical. A working prototype of layer (1) exists in
 > this session's history if needed as a reference. Until then the amplification backends stand alone.
+> **(0) Isabelle prerequisite (BLOCKING for Isabelle promotion).** The Coq backend's axiom audit is
+> kernel-driven and sound (`rocqchk`, nonce-authenticated); the **Isabelle backend is a source blocklist and
+> is NOT adversarially sound** — three review rounds each found a fresh laundering route (`tactic ‹cheat_tac›`,
+> `setup ‹add_axiom_global›`, `code_printing + by eval`). Before any Isabelle *promotion* or adversarial use,
+> replace the blocklist with a **kernel proof-term audit** (`Thm_Deps.thm_oracles` + axiom deps of each target
+> theorem, run from a wrapper theory we control, with user ML forbidden so the shared ML env can't be
+> poisoned). Coq may promote first; Isabelle stays amplification-only (trusted-provenance) until this lands.
 
 This document is the porting manual and work plan. It deliberately lives *outside*
 `CLAUDE.md` (memory files should not carry execution plans). Read `CLAUDE.md` first

@@ -56,31 +56,32 @@ The live demo (gate GREEN) shows both kernels *gate*, not rubber-stamp:
 | self-laundered | `Admitted` → open axiom exposed → **REJECT** | `sorry` → hard error (`quick_and_dirty=false`) → **REJECT** |
 | broken | unification error, exit 1 → **REJECT** | *Failed to finish proof*, exit 1 → **REJECT** |
 
-The trust rule per kernel mirrors Lean's `#print axioms` / no-`sorry` discipline, **hardened over two
-adversarial-review rounds (2026-07-05) that found and closed four false-PASS holes** (all pinned as
-regression tests). The rounds taught the key lesson — a *source-side keyword scan* can never be complete
-(`tactic`→`setup`, `Theorem`-regex→`Definition`) — so the audit is driven by the kernel's own report where
-one exists:
+The trust rule per kernel was **hardened over three adversarial-review rounds (2026-07-05) that found and
+closed six false-PASS holes** (all pinned as regression tests). The rounds taught the decisive lesson — a
+*source-side keyword scan can never be complete* (`tactic`→`setup`→`code_printing`;
+`Theorem`-regex→`Definition`) — which split the two kernels apart on how far they can be trusted:
 
-- **Coq — kernel-driven axiom audit.** After `rocq compile`, the backend runs Rocq's separate library
-  checker **`rocqchk -o`**, which re-validates the compiled `.vo` and prints a CONTEXT SUMMARY of the WHOLE
+- **Coq — kernel-driven and SOUND.** After `rocq compile`, the backend runs Rocq's separate library checker
+  **`rocqchk -o`**, which re-validates the compiled `.vo` and prints a CONTEXT SUMMARY of the WHOLE
   development's axioms **name-agnostically** (so `Definition foo := classic`, `Goal … Save`, `Instance`,
-  `Fixpoint`, … are all covered uniformly). Kernel-verified iff compile-clean **and** the summary shows
-  `* Axioms: <none>` (or only operator-approved axioms) **and** `<none>` for type-in-type / unsafe
-  (co)fixpoints / assumed-positivity. Defence-in-depth: `Admitted`/`admit`/`Axiom`/`Parameter`/`Hypothesis`/
-  `Variable`/`Context` are also blocked lexically (`Variable`/`Context` let the *stated* theorem rest on a
-  section hypothesis that `rocqchk` sees, post-discharge, as a sound implication).
-- **Isabelle — comprehensive ML-surface ban (best-effort).** Isabelle exposes no `rocqchk`-equivalent
-  reachable without ML, so the backend forbids the **entire arbitrary-ML entry surface**: `sorry`/`oops`/
-  `axiomatization`/`quick_and_dirty` **and** `ML*`/`SML_*`/`setup`/`local_setup`/`method_setup`/
-  `attribute_setup`/`simproc_setup`/`declaration`/`*_translation`/`oracle`/`tactic`/`raw_tactic`/
-  `Skip_Proof`/`cheat_tac` — because any of these runs `Thm.add_axiom_global`/`Skip_Proof.cheat_tac` at build
-  time (both were review exploits: `by (tactic ‹cheat_tac›)` and `setup ‹… add_axiom_global …›`). The scan
-  keeps PROOF cartouches (stripping only comments + DOC cartouches) so an in-cartouche cheat is caught.
-  **Honest scope:** this is a comprehensive *finite* blocklist, not a soundness proof — a future Isabelle
-  release adding a new ML-entry command would need it added; a kernel-driven oracle report is required before
-  promotion (§4.2). Sound for the amplification use case (well-formed certs); not hardened against a
-  maximally-adversarial cert.
+  `Fixpoint`, unsafe-guard/positivity/type-in-type … are all covered uniformly). Round 3 showed a source
+  could *forge* that summary on compile stdout; closed by delimiting the authentic `rocqchk` block with an
+  **unforgeable random nonce** (in the container argv, never in the piped source) and parsing only the LAST
+  block. Kernel-verified iff compile-clean **and** the authentic summary shows `* Axioms: <none>` (or only
+  operator-approved axioms) **and** `<none>` for type-in-type / unsafe (co)fixpoints / assumed-positivity.
+  Defence-in-depth lexical bans: `Admitted`/`admit`/`Axiom`/`Parameter`/`Hypothesis`/`Variable`/`Context`/
+  `Declare ML Module`. This is a genuinely sound axiom/unsafe-construct auditor.
+- **Isabelle — source blocklist, NOT adversarially sound (honest scope).** Isabelle exposes no
+  `rocqchk`-equivalent reachable without ML, so the backend forbids the entire arbitrary-ML entry surface
+  (`ML*`/`SML_*`/`setup`-family/`*_translation`/`oracle`/`tactic`/`Skip_Proof`/`cheat_tac`), plus the
+  code-generation reconfiguration + code-trusting methods (`code_printing`/`code_reflect`/…/`eval`/
+  `normalization`/`code_simp`). Each of the three rounds still found a fresh route
+  (`tactic ‹cheat_tac›` → `setup ‹add_axiom_global›` → `code_printing + by eval`), and more likely exist.
+  **Therefore this backend is scoped to verification-AMPLIFICATION of TRUSTED-PROVENANCE theories** (our own
+  certificates, published proofs) — it must NOT be fed adversarial prover output. A *sound* Isabelle decider,
+  **required before promotion (§4.2) or any adversarial use**, must inspect the KERNEL PROOF TERM of each
+  target theorem (`Thm_Deps.thm_oracles` + axiom deps, from a wrapper theory we control, user ML already
+  forbidden), not scan source — this is recorded as the Isabelle prerequisite in the HANDOFF ticket.
 
 ## 3. Decision
 

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import secrets
 import subprocess
 from dataclasses import dataclass, field
 from typing import Optional
@@ -38,18 +39,25 @@ PLATFORM = "linux/amd64"
 _FORBIDDEN = ("Admitted", "admit", "Axiom", "Axioms", "Parameter", "Parameters",
               "Hypothesis", "Hypotheses", "Variable", "Variables", "Conjecture", "Context")
 _FORBIDDEN_RE = re.compile(r"\b(" + "|".join(_FORBIDDEN) + r")\b")
+_PLUGIN_RE = re.compile(r"Declare\s+ML\s+Module")   # loading an arbitrary Coq ML plugin
 _ERROR_RE = re.compile(r"^Error", re.MULTILINE)
 _COMMENT_RE = re.compile(r"\(\*.*?\*\)", re.DOTALL)  # Coq comments are inert prose — strip before the scan
 
-_CHK_MARK = "@@ROCQCHK@@"
-# Compile the stdin source to /tmp/m.vo, then re-check it with rocqchk and print its CONTEXT SUMMARY. The
-# module's logical name is Top.m (fixed by the -R /tmp Top load path), so the audit needs no source parsing.
-_CHECK_SCRIPT = (
-    "export PATH=$HOME/.opam/4.14.2+flambda/bin:$PATH; cd /tmp; cat > m.v; "
-    "rocq compile -q -R /tmp Top m.v 2>&1; ec=$?; "
-    f"echo '{_CHK_MARK}'; "
-    "if [ $ec -eq 0 ]; then rocqchk -o -R /tmp Top Top.m 2>&1; fi"
-)
+
+def _check_script(nonce: str) -> str:
+    """Compile the stdin source to /tmp/m.vo, then re-check it with rocqchk and print its CONTEXT SUMMARY.
+    The module's logical name is Top.m (fixed by -R /tmp Top). The `nonce` — a random token the compiled
+    source never sees (it is in the bash argv, not in the .v piped on stdin) — delimits the AUTHENTIC rocqchk
+    output: a malicious source can print a forged summary to compile stdout, but cannot forge this marker, and
+    the parser reads only the LAST (real) block. Closes the adversarial output-injection route (2026-07-05)."""
+    return (
+        "export PATH=$HOME/.opam/4.14.2+flambda/bin:$PATH; cd /tmp; cat > m.v; "
+        "rocq compile -q -R /tmp Top m.v 2>&1; ec=$?; "
+        f"printf '\\n%s\\n' '{nonce}'; "
+        "if [ $ec -eq 0 ]; then rocqchk -o -R /tmp Top Top.m 2>&1; fi"
+    )
+
+
 # The rocqchk CONTEXT SUMMARY lines that must each read "<none>" for a kernel-clean development.
 _SUMMARY_LABELS = (
     "Axioms",
@@ -70,12 +78,15 @@ class CoqResult:
     returncode: int
     output: str
     source: str = ""
+    nonce: str = ""
     allow_axioms: frozenset = frozenset()
 
     @property
     def _parts(self) -> tuple[str, str]:
-        compile_out, _, chk = self.output.partition(_CHK_MARK)
-        return compile_out, chk
+        # rpartition on the unforgeable nonce → the LAST block is rocqchk's authentic output; anything the
+        # source printed to compile stdout (incl. a forged marker+summary) stays in the compile prefix.
+        compile_out, sep, chk = self.output.rpartition(self.nonce) if self.nonce else (self.output, "", "")
+        return (compile_out if sep else self.output), (chk if sep else "")
 
     @property
     def has_errors(self) -> bool:
@@ -109,7 +120,8 @@ class CoqResult:
 
     @property
     def uses_forbidden(self) -> bool:
-        return bool(_FORBIDDEN_RE.search(_COMMENT_RE.sub(" ", self.source)))
+        code = _COMMENT_RE.sub(" ", self.source)
+        return bool(_FORBIDDEN_RE.search(code)) or bool(_PLUGIN_RE.search(code))
 
     @property
     def kernel_ok(self) -> bool:
@@ -179,16 +191,17 @@ class CoqDockerBackend:
         cached = self._cache.get(key)
         if cached is not None:
             return cached
+        nonce = "ROCQCHK_" + secrets.token_hex(16)   # unforgeable delimiter (source never sees the argv)
         try:
             proc = subprocess.run(
                 ["docker", "run", "--rm", "-i", "--platform", PLATFORM, self.image,
-                 "bash", "-lc", _CHECK_SCRIPT],
+                 "bash", "-lc", _check_script(nonce)],
                 input=source, capture_output=True, text=True, timeout=self.timeout_s,
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return None
         res = CoqResult(proc.returncode, f"{proc.stdout}\n{proc.stderr}", source=source,
-                        allow_axioms=self.allow_axioms)
+                        nonce=nonce, allow_axioms=self.allow_axioms)
         self._cache[key] = res
         return res
 

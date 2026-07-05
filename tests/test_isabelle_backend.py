@@ -42,7 +42,10 @@ def test_ml_and_oracle_escape_hatches_forbidden():
                 'setup \\<open>Thm.add_axiom_global\\<close>', 'local_setup \\<open>x\\<close>',
                 'method_setup m = \\<open>x\\<close>', 'attribute_setup a = \\<open>x\\<close>',
                 'declaration \\<open>x\\<close>', 'simproc_setup s (p) = \\<open>x\\<close>',
-                'parse_translation \\<open>x\\<close>'):
+                'parse_translation \\<open>x\\<close>',
+                # round-3: code-generation reconfiguration + code-trusting methods
+                'code_printing constant c \\<rightharpoonup> (SML) "true"', 'code_reflect X functions f',
+                'lemma x: "P" by eval', 'lemma x: "P" by normalization', 'lemma x: "P" by code_simp'):
         assert IsabelleResult(0, "", source=src).uses_forbidden is True
 
 
@@ -103,6 +106,16 @@ def test_live_setup_axiom_injection_rejected():
            '   val ((_, th), thy2) = Thm.add_axiom_global (Binding.name "bogus", prop) thy\n'
            '   val thy3 = Global_Theory.store_thm (Binding.name "bogusfact", th) thy2 |> #2\n in thy3 end\\<close>\n'
            'lemma f: "(2::nat)+2=5" by (rule bogusfact)\nend\n')
+    assert IsabelleDockerBackend().check_source(src) is False
+
+
+@pytest.mark.skipif(not _HAVE_ISA, reason="needs Docker + makarius/isabelle image")
+def test_live_code_printing_eval_rejected():
+    # Regression (adversarial re-attack round 3, CRITICAL): code_printing maps a false constant to an SML
+    # literal, then `by eval` trusts the generated code to prove it. Forbidding code_printing + eval blocks it.
+    src = ('theory Scratch imports Main begin\ndefinition chk :: bool where "chk = False"\n'
+           'code_printing constant chk \\<rightharpoonup> (SML) "true"\n'
+           'lemma "chk" unfolding chk_def by eval\nend\n')
     assert IsabelleDockerBackend().check_source(src) is False
 
 
