@@ -1,0 +1,72 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Mafi & Naderi (2021), arXiv:2112.02921 \u2014 integral closure of M_{3,t}",
+  "verification": {
+    "rows": [
+      {
+        "t": 1,
+        "closure_eq_veronese": true,
+        "capsum_eq_closure": true,
+        "closure_embedded_witness": null,
+        "M_embedded_witness": null
+      },
+      {
+        "t": 2,
+        "closure_eq_veronese": true,
+        "capsum_eq_closure": true,
+        "closure_embedded_witness": [
+          1,
+          1,
+          1
+        ],
+        "M_embedded_witness": null
+      },
+      {
+        "t": 3,
+        "closure_eq_veronese": true,
+        "capsum_eq_closure": true,
+        "closure_embedded_witness": [
+          1,
+          2,
+          2
+        ],
+        "M_embedded_witness": null
+      },
+      {
+        "t": 4,
+        "closure_eq_veronese": true,
+        "capsum_eq_closure": true,
+        "closure_embedded_witness": [
+          1,
+          3,
+          3
+        ],
+        "M_embedded_witness": null
+      }
+    ],
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 6,
+    "axiom_lines": [
+      "'MafiNaderi_t2.M_subsetneq_closure' does not depend on any axioms",
+      "'MafiNaderi_t2.closure_embedded_prime' does not depend on any axioms",
+      "'MafiNaderi_t2.M_no_embedded_prime' does not depend on any axioms"
+    ],
+    "clean": true
+  },
+  "theorems": [
+    "MafiNaderi_t2.M_subsetneq_closure",
+    "MafiNaderi_t2.closure_embedded_prime",
+    "MafiNaderi_t2.M_no_embedded_prime",
+    "MafiNaderi_t3.M_subsetneq_closure",
+    "MafiNaderi_t3.closure_embedded_prime",
+    "MafiNaderi_t3.M_no_embedded_prime"
+  ],
+  "artifact": "docs/crt/mafi_naderi_certificate.lean",
+  "reading": "Independent kernel verification of Mafi\u2013Naderi's Theorem 1.6 (closure = Veronese cap-sum ideal) and Corollary 1.7 (the integral closure gains an embedded prime (x,y,z) that the Cohen\u2013Macaulay ideal M_{3,t} lacks), for n = 3, via the general monomial-ideal instrument. Agreement with the paper (no erratum). Verification-amplification; no trust surface."
+}
