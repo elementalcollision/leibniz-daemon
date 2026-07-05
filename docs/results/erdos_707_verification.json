@@ -1,0 +1,144 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Erd\u0151s Problem 707 (Sidon-Extension Conjecture); Alexeev\u2013Mixon arXiv:2510.19804, Niu arXiv:2604.25214",
+  "verification": {
+    "rows": {
+      "A": {
+        "set": [
+          0,
+          1,
+          3,
+          11
+        ],
+        "sidon": true,
+        "non_extending_orders": [
+          [
+            4,
+            13
+          ],
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            31
+          ],
+          [
+            7,
+            43
+          ]
+        ],
+        "extends_at": []
+      },
+      "B": {
+        "set": [
+          0,
+          1,
+          4,
+          11
+        ],
+        "sidon": true,
+        "non_extending_orders": [
+          [
+            4,
+            13
+          ],
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            31
+          ],
+          [
+            7,
+            43
+          ]
+        ],
+        "extends_at": []
+      },
+      "AM5": {
+        "set": [
+          1,
+          2,
+          4,
+          8,
+          13
+        ],
+        "sidon": true,
+        "non_extending_orders": [
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            31
+          ],
+          [
+            7,
+            43
+          ]
+        ],
+        "extends_at": []
+      },
+      "Hall": {
+        "set": [
+          1,
+          3,
+          9,
+          10,
+          13
+        ],
+        "sidon": true,
+        "non_extending_orders": [
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            31
+          ],
+          [
+            7,
+            43
+          ]
+        ],
+        "extends_at": []
+      }
+    },
+    "all_ok": true,
+    "check_vmax": 43
+  },
+  "kernel": {
+    "status": "checked",
+    "errors": [],
+    "n_theorems": 12,
+    "axiom_lines": [
+      "'Erdos707.A_sidon' does not depend on any axioms",
+      "'Erdos707.A_no_order4' does not depend on any axioms"
+    ],
+    "clean": true
+  },
+  "theorems": [
+    "Erdos707.A_sidon",
+    "Erdos707.A_no_order4",
+    "Erdos707.A_no_order5",
+    "Erdos707.B_sidon",
+    "Erdos707.B_no_order4",
+    "Erdos707.B_no_order5",
+    "Erdos707.AM5_sidon",
+    "Erdos707.AM5_no_order5",
+    "Erdos707.AM5_no_order6",
+    "Erdos707.Hall_sidon",
+    "Erdos707.Hall_no_order5",
+    "Erdos707.Hall_no_order6"
+  ],
+  "artifact": "docs/crt/erdos_707_certificate.lean",
+  "reading": "Independent kernel verification of the finite core of Erd\u0151s 707's resolution: the Sidon property + the non-extension (no PDS of the given small order contains the set) for the Alexeev\u2013Mixon size-5 counterexamples and the Niu size-4 candidates. The full 'no PDS at all' is an infinite claim proven non-finitely; we certify the finite exhaustion. Verification-amplification; no trust surface."
+}
