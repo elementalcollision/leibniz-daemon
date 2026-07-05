@@ -1,0 +1,45 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "adr": "0048",
+  "target": "Multi-kernel proof-edge deciders: Rocq 9.0 + Isabelle2025 (dormant for promulgation)",
+  "legs": [
+    {
+      "kernel": "coq",
+      "available": true,
+      "demo_verified": true,
+      "demo_detail": {
+        "verified": true,
+        "has_errors": false,
+        "audit_ran": true,
+        "opens_axioms": false,
+        "uses_forbidden": false,
+        "output_tail": "  \n* Theory: Rewrite rules are not allowed\n  \n* Axioms: <none>\n  \n* Constants/Inductives relying on type-in-type: <none>\n  \n* Constants/Inductives relying on unsafe (co)fixpoints: <none>\n  \n* Inductives whose positivity is assumed: <none>\n  \n"
+      },
+      "laundered_rejected": true,
+      "broken_rejected": true,
+      "gates_correctly": true
+    },
+    {
+      "kernel": "isabelle",
+      "available": true,
+      "demo_verified": true,
+      "demo_detail": {
+        "verified": true,
+        "returncode": 0,
+        "has_errors": false,
+        "uses_forbidden": false,
+        "output_tail": "Running Isabelle_Demo ...\nFinished Isabelle_Demo (0:00:00 elapsed time)\n0:00:02 elapsed time\n"
+      },
+      "laundered_rejected": true,
+      "broken_rejected": true,
+      "gates_correctly": true
+    }
+  ],
+  "certs": [
+    "docs/crt/coq_demo.v",
+    "docs/crt/isabelle_demo.thy"
+  ],
+  "reading": "Genuine Coq and Isabelle theorems, kernel-verified end-to-end, with self-laundered (Admitted / sorry) and broken proofs correctly REJECTED \u2014 proof each backend gates. Report-only (audit tier); CoqVerifier/IsabelleVerifier producers are unadmitted in trust.KERNEL_PRODUCERS, so this cannot promulgate. Verification-amplification."
+}
