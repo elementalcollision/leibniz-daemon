@@ -1,0 +1,46 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Ziegler's cross-polytope conjecture for simplicial 0/1-polytopes (Question 1.1); counterexample by Kaibel & Pokutta (2026), arXiv:2606.31640",
+  "exact_checks": {
+    "dim": 7,
+    "n_facets": 136,
+    "simplicial": true,
+    "aff_indep": true,
+    "closed_pseudomanifold": true,
+    "n_ridges": 476,
+    "balanced": true,
+    "antipode_absent": [
+      0,
+      4,
+      5,
+      9
+    ],
+    "not_centrally_symmetric": true,
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "ziegler_dim_notsym": {
+        "verified": true,
+        "axioms": "'ziegler_dim_notsym' depends on axioms: [propext]",
+        "no_cheating": true
+      },
+      "ziegler_supporting": {
+        "verified": true,
+        "axioms": "'ziegler_supporting' depends on axioms: [propext]",
+        "no_cheating": true
+      },
+      "ziegler_closed": {
+        "verified": true,
+        "axioms": "'ziegler_closed' depends on axioms: [propext]",
+        "no_cheating": true
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/ziegler_counterexample.lean",
+  "reading": "Independent confirmation of Kaibel & Pokutta's counterexample to Ziegler's cross-polytope conjecture: the convex hull of 14 explicit vertices in {0,1}^7 is a simplicial 7-polytope with 2·7 vertices that is NOT centrally symmetric. Leibniz re-decides it by exact rational linear algebra (the paper's own method): dim 7; exactly 136 supporting facets, each an affinely-independent 6-simplex; every one of the 476 ridges in exactly 2 facets (closed pseudomanifold ⇒ complete); and not centrally symmetric (balanced, yet four cube-antipodes absent). The Lean 4.31 kernel independently re-decides the dimension, the supporting-hyperplane structure, the pseudomanifold completeness, and the non-central-symmetry. Exact arithmetic + the kernel; no LLM judgment; no trust surface."
+}
