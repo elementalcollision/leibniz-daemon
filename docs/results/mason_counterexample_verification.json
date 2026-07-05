@@ -1,0 +1,27 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Mason's matroid log-concavity conjecture; counterexample in arXiv:2607.02208 (2026), Ex. 2.2",
+  "exact_checks": {
+    "formula_validated_vs_bruteforce": true,
+    "W75": 18551,
+    "W74": 983775,
+    "W73": 52954525,
+    "matches_paper": true,
+    "W74_sq": 967813250625,
+    "W73_W75": 982359393275,
+    "deficit": 14546142650,
+    "log_concavity_fails_at_74": true,
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "verified": true,
+    "no_cheating": true,
+    "axioms": "'mason_whitney_values' depends on axioms: [propext] 'mason_log_concavity_fails' depends on axioms: [propext]",
+    "errors": []
+  },
+  "cert": "docs/crt/mason_counterexample.lean",
+  "reading": "Independent confirmation of the counterexample to Mason's conjecture that the Whitney numbers of the second kind of a matroid are log-concave. Leibniz re-derives the flat counts of the graphic matroid of Θ(1,26,26,26) from first principles — flats ↔ connected vertex partitions, counted by a transfer generating function validated against brute-force enumeration on small theta graphs — obtaining W_75=18551, W_74=983775, W_73=52954525, so W_74²=967813250625 < 982359393275=W_73·W_75 (log-concavity fails at k=74). The Lean 4.31 kernel independently assembles the Whitney numbers by exact polynomial arithmetic and decides the strict inequality. Exact combinatorics + the kernel; no LLM judgment; no trust surface."
+}
