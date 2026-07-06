@@ -1,0 +1,65 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Determinant congruence conjectured by Z.-W. Sun; Zhang & Yang (2026), arXiv:2605.19486",
+  "checks": {
+    "composite_n2_divides": {
+      "4": true,
+      "6": true,
+      "8": true,
+      "9": true,
+      "10": true,
+      "12": true
+    },
+    "prime_sufficiency": {
+      "5": true,
+      "7": true,
+      "11": true,
+      "13": true
+    },
+    "sharpness": {
+      "5": {
+        "witness_residue_d": 1,
+        "witness_vp": 1
+      },
+      "7": {
+        "witness_residue_d": 4,
+        "witness_vp": 1
+      },
+      "11": {
+        "witness_residue_d": 1,
+        "witness_vp": 1
+      },
+      "13": {
+        "witness_residue_d": 1,
+        "witness_vp": 1
+      }
+    },
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "sun_comp_n4_c1_d2": {
+        "verified": true,
+        "axioms": "'sun_comp_n4_c1_d2' depends on axioms: [propext]"
+      },
+      "sun_comp_n6_c1_d2": {
+        "verified": true,
+        "axioms": "'sun_comp_n6_c1_d2' depends on axioms: [propext]"
+      },
+      "sun_prime_p5_c1_d2": {
+        "verified": true,
+        "axioms": "'sun_prime_p5_c1_d2' depends on axioms: [propext]"
+      },
+      "sun_prime_p7_c1_d3": {
+        "verified": true,
+        "axioms": "'sun_prime_p7_c1_d3' depends on axioms: [propext]"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/sun_determinant.lean",
+  "reading": "Independent confirmation of Zhang & Yang's proof of Sun's determinant congruence. By exact integer linear algebra (the matrix reconstructed from the formula), Leibniz verifies that n² | Dₙ(c,d) = det[(i²+cij+dj²)^{n−2}] for every tested composite n and all small c,d, and that for prime p the divisibility p² | Dₚ holds at every quadratic non-residue d (the divisibility genuinely failing at some residues), while a residue witness shows the Legendre condition is not vacuous. The Lean 4.31 kernel re-decides several small instances by computing the determinant and checking divisibility. Exact arithmetic + the kernel; no LLM judgment; no trust surface."
+}
