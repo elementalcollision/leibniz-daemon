@@ -45,8 +45,31 @@ def _consensus(prop: Propositio) -> int:
     return 0
 
 
-def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = False) -> dict:
-    """One published law as the site's ledger shape (the Propositio triad)."""
+# ADR 0050 — report-only law provenance vocabularies. NEITHER gates promotion; both are
+# read off an already-promulgated Propositio and only describe how a surviving law is rendered.
+_TIERS = frozenset({"kernel-decided", "exact-procedure", "cross-kernel"})
+_ORIGINATIONS = frozenset({"originated", "amplified"})
+
+
+def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = False,
+                tier: str = "kernel-decided", origination: str = "amplified",
+                references: Optional[list] = None) -> dict:
+    """One published law as the site's ledger shape (the Propositio triad).
+
+    ADR 0050 adds two **report-only** provenance attributes — never consulted by the trust
+    gates, `kernel_verified`, or `promulgate`; they only make the ledger describe *how* a law
+    survived and *whether it is the daemon's own*:
+
+    - ``tier`` ∈ {kernel-decided, exact-procedure, cross-kernel} — the confidence ladder
+      (ADRs 0045/0048).
+    - ``origination`` ∈ {originated, amplified} — a fact the daemon originated vs a re-decision of
+      published work. An ``amplified`` law MUST cite its source (``references``, same discipline as
+      cite-worthy cycles); an ``originated`` law asserts a fact no cited source states.
+    """
+    if tier not in _TIERS:
+        raise ValueError(f"tier must be one of {sorted(_TIERS)}, got {tier!r}")
+    if origination not in _ORIGINATIONS:
+        raise ValueError(f"origination must be one of {sorted(_ORIGINATIONS)}, got {origination!r}")
     en, ex, de = prop.enuntiatio, prop.expressio, prop.demonstratio
     return {
         "id": _law_id(prop),
@@ -63,6 +86,10 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
         "consensus": _consensus(prop),
         "published_at": published_at,
         "specimen": specimen,
+        # ADR 0050 report-only provenance (does not gate promotion)
+        "tier": tier,
+        "origination": origination,
+        "references": list(references or []),
     }
 
 
