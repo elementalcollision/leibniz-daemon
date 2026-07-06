@@ -76,14 +76,62 @@ vacuously (it asserts ≥ 11 tests collected).
 
 ---
 
-## 3. Current state (as of 2026‑07‑06)
+## 3. Current state (as of 2026‑07‑06, late)
 
 - **Post‑R6 optimization phase.** The rung climb R1→R6 is substantially complete (real Lean
   4.31 kernel via Docker; faithfulness + Z3; novelty retrieval; proposal models + ADR 0029
   repair panel; KFM / MAP‑Elites archive; the *Calculemus* reading‑room + operator publish
   gate). Binding constraint is **novelty/discovery yield**, not prover reach or the trust
   boundary. Live plan: `docs/optimization-roadmap.md`.
-- **Ledger — Calculemus Cycles 17–27 shipped this run** (each a `scripts/verify_*.py` +
+- **Ledger now runs to Cycle 34.** The most recent session shipped **Cycles 28–34** (all
+  merged to `main`; trust boundary byte‑identical throughout; every kernel theorem
+  `#print axioms`‑clean — `[propext]` at most, never `sorryAx`):
+
+  | # | Result | Domain (new) | Decider |
+  |---|---|---|---|
+  | 28 | Minimal double blocking sets 3q−1 in PG(2,q) — **refutes a 1984 Hill conjecture** | Finite geometry | Lean `decide` |
+  | 29 | PΓU(5,3) on H(4,9) non‑spreading — base case of the **open** Conjecture 4.1 | Finite polar spaces | Lean `decide` |
+  | 30 | Markoff (1,1,1) 2‑adic divisibility → connected cage (two routes; Mersenne to 2³¹−1) | Arithmetic geometry | Lean `decide` |
+  | 31 | Kissing number **k(19) ≥ 11948** (record, beats Cohn–Li by 256) | Sphere packing | Lean `decide` (BST min‑dist) |
+  | 32 | Complex Hadamard matrix of **order 94** (previously open) | Complex Hadamard matrices | Lean + exact ℤ/ℤ[i] |
+  | 33 | Low‑degree ovoids of Q⁺(7,q): Kantor at q=4, **fails at q=8** | Finite geometry (ovoids) | Lean `decide` (in‑kernel GF(2ʰ)) |
+  | 34 | Simplest Kochen–Specker set (14 bases) — **disproof of a 2025 PRL conjecture** | Quantum contextuality | Lean `decide` (in‑kernel Z[ω] + backtracking UNSAT) |
+
+  Highlights: a **record** (kissing k(19)), an **open‑existence** resolution (complex Hadamard 94),
+  a **published‑conjecture disproof** (Cabello KS, fully in‑kernel incl. the uncolorability UNSAT via a
+  ~1.2k‑node backtracking search), and three separate **faithfulness catches** (PGU origin non‑degeneracy;
+  a kissing Table‑1 typo; a Cabello dropped‑minus‑sign) — the exact deciders doing real work.
+- **Codex publication.** `elementalcollision/codex-calculemus` PR **#3** (`publish-cycles-16-31`, now
+  extended to **16–34**) backfills the public ledger + `public/artifacts/` to a contiguous **1–34** —
+  **awaiting operator merge** (publication stays operator‑gated). Mechanics: each cycle's
+  `scripts/export_*_cycle.py` fragment → `ledger/calculemus.json` `cycles[]`; cert copied to
+  `public/artifacts/cycle_0000NN/` with `sha256` pinned; `node scripts/sync-ledger.mjs` regenerates the
+  Astro content. `laws[]`/`held_back[]` are untouched.
+- **Deferred + queued targets — build these next** (from an adversarially‑vetted survey; all distinct
+  from the ledger). The immediate one is **deferred, not rejected**:
+  - **srg(1666,105,0,7) non‑existence** (Belousova–Makhnev–Tokbaeva 2026, *Vestnik Perm. Univ.*,
+    DOI 10.17072/1993‑0550‑2026‑1‑29‑34; PDF: `press.psu.ru/index.php/Math/article/view/11312/7961`,
+    Russian). **Deferred** because it is a proof‑reconstruction, not a self‑certifying witness: the
+    parameter set is *feasible* by every standard bound (integer eigenvalues 7,−14; multiplicities
+    1105,560), so non‑existence rests on the paper's **triple‑intersection‑number** argument (Vidali /
+    Coolsaet–Jurišić method) for the bipartite DRG with array `{105,104,98,7,1;1,7,98,104,105}`,
+    terminating in a single non‑negativity contradiction. Needs the Russian PDF read carefully; weak
+    faithfulness anchor — give it a focused session, don't force it.
+  - Other strong survey‑2 finalists still open: **shifted‑square Frobenius number** closed form
+    (Hyun–Song, arXiv:2605.25542; self‑checking exact Apéry‑set census — cleanest fresh domain),
+    **permutation‑trinomial disproof** (Bouyacoub–El‑Baz–Kihel, arXiv:2603.03368; one exact F₃₁ collision),
+    **vertex‑minor Ramsey R_vm(4)=11** (Bae, arXiv:2604.13434; disproof of the 2ᵏ−1 bound — *scope to the
+    lower‑bound witness only*), the **Shilla b=6** five‑array non‑existence batch (Makhnev et al.,
+    UMJ 2025), and **cyclic PG(3,q) ovoids** (Abdukhalikov–Ball–Ho–Popatia, arXiv:2410.04126; F₄₀₉₆ tower).
+- **Reusable pattern established this session (copy it):** for a target reducible to a small finite object,
+  the kernel can compute the *field/structure itself* rather than baking tables — e.g. **in‑kernel GF(2ʰ)**
+  multiplication (carryless multiply‑and‑reduce from the irreducible; Cycle 33), **in‑kernel GF(q²)** with
+  Frobenius = X‑coord negation (Cycle 29), **Eisenstein ℤ[ω]** arithmetic (Cycle 34), and a **bounded
+  backtracking search** for finite UNSAT / KS‑uncolorability when the search tree is small (~10³ nodes;
+  Cycle 34) — this dodges the 2ⁿ brute‑force *and* the dense‑matrix `decide` wall. When a dense product is
+  unavoidably large (e.g. 94×94 in Cycle 32, or an 819k‑pair census in Cycle 31), reduce via structure
+  (circulant → first‑row autocorrelation) or push it to the exact procedure and kernel‑attest the core.
+- **Prior run — Calculemus Cycles 17–27** (each a `scripts/verify_*.py` +
   a downloadable cert under `docs/crt/` + tests + a results doc under `docs/results/` + a
   `scripts/export_*_cycle.py`), spanning eleven fresh domains:
 
