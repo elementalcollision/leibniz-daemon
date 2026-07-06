@@ -1,0 +1,58 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AUDIT",
+  "target": "srg(1666,105,0,7) non-existence via the bipartite double DRG {105,104,98,7,1;1,7,98,104,105}; Belousova, Makhnev & Tokbaeva (2026), Vestnik Perm. Univ. 1(72), 29-34, DOI 10.17072/1993-0550-2026-1-29-34 (Russian)",
+  "finding": "The published proof of Theorem 1 does NOT decide the parameter set: its contradiction is arithmetically vacuous and the triple-intersection method leaves the array feasible. Reported as an audit; NOT a claim that the graph exists or does not exist. Treat srg(1666,105,0,7) as OPEN.",
+  "exact_checks": {
+    "n_vertices": 3332,
+    "lemma1_reproduced": true,
+    "p2_33_paper": 543,
+    "p2_33_correct": 1461,
+    "p2_33_typo_forced": true,
+    "lemma2_unique": true,
+    "lemma3_one_parameter_r1_0_to_7": true,
+    "num_zero_krein_equations": 81,
+    "mean_lambda_route1_edgecount": "1461*1460 - 98*1364 = 1999388",
+    "mean_lambda_route2_f4count": "98*97 + 1461*1362 = 1999388",
+    "two_routes_identically_equal": true,
+    "structural_identity_1364_plus_97_eq_1461": true,
+    "paper_gap_is_from_using_104_not_98": true,
+    "lemma3_all_8_witnesses_valid_marginals_krein_nonneg": true,
+    "lemma2_witness_valid": true,
+    "control_r1_8_rejected": true,
+    "all_ok": true
+  },
+  "canonical_cross_check_sage_drg": {
+    "tool": "sage-drg (Vidali) in SageMath 10.9 (native arm64), the package the authors cite",
+    "check_feasible": "clean (array not ruled out)",
+    "deeper_checks_all_pass": ["absoluteBound", "combinatorial", "2design", "terwilliger", "localEigenvalues", "handshake"],
+    "triple_sweep_zero_solution_configs": "none",
+    "tripleSolution_generator_2_2_2": "8 solutions",
+    "srg_antipodal_quotient_105_104_1_7_check_feasible": "clean (srg(1666,105,0,7) itself not ruled out)",
+    "p2_33_reported": 1461,
+    "verdict": "sage-drg does NOT rule out this array (feasible/open)"
+  },
+  "sage_srg_existence_oracle": {
+    "call": "strongly_regular_graph(1666, 105, 0, 7, existence=True)",
+    "sagemath_version": "10.9 (2026-05-04), native arm64",
+    "verdict": "Unknown",
+    "meaning": "SageMath's built-in strongly-regular-graph existence database classifies (1666,105,0,7) as OPEN (not False/nonexistent)"
+  },
+  "independent_reconstructions": 3,
+  "kernel": {
+    "status": "checked",
+    "backend": "Lean 4.31 kernel via Docker (leibniz-lean-repl:v4.31.0), plain decide",
+    "legs": {
+      "srg1666_row_identity": {"verified": true, "axioms": "does not depend on any axioms", "no_cheating": true},
+      "srg1666_contradiction_vacuous": {"verified": true, "axioms": "does not depend on any axioms", "no_cheating": true},
+      "srg1666_paper_gap_from_104": {"verified": true, "axioms": "does not depend on any axioms", "no_cheating": true},
+      "srg1666_lemma3_feasible": {"verified": true, "axioms": "'srg1666_lemma3_feasible' depends on axioms: [propext]", "no_cheating": true},
+      "srg1666_lemma2_feasible": {"verified": true, "axioms": "'srg1666_lemma2_feasible' depends on axioms: [propext]", "no_cheating": true},
+      "srg1666_control_r1_8": {"verified": true, "axioms": "'srg1666_control_r1_8' depends on axioms: [propext]", "no_cheating": true}
+    },
+    "all_verified": true
+  },
+  "report_only": true,
+  "kernel_verified_flag_set": false
+}
