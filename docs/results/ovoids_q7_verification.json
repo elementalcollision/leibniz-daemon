@@ -1,0 +1,73 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "The Kantor degree-2 functions f1=xy+z^2, f2=xz+y^2+z^2, f3=yz+x^2+y^2+z^2 define an ovoid of Q+(7,q) for q in {2,4,16} but NOT for q=8; Bartoli, Durante, Grimaldi & Timpanella (2025), arXiv:2502.02219 (Condition (3))",
+  "checks": {
+    "per_q": {
+      "2": {
+        "is_ovoid": true,
+        "witness": null,
+        "gf_sanity": true,
+        "npoints": 8
+      },
+      "4": {
+        "is_ovoid": true,
+        "witness": null,
+        "gf_sanity": true,
+        "npoints": 64
+      },
+      "8": {
+        "is_ovoid": false,
+        "witness": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            3
+          ]
+        ],
+        "gf_sanity": true,
+        "npoints": 512
+      }
+    },
+    "q8_witness": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        3
+      ]
+    ],
+    "q8_witness_form_zero": true,
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "ovoid_q2": {
+        "verified": true,
+        "axioms": "'ovoid_q2' depends on axioms: [propext]"
+      },
+      "ovoid_q4": {
+        "verified": true,
+        "axioms": "'ovoid_q4' depends on axioms: [propext]"
+      },
+      "ovoid_q8_fails": {
+        "verified": true,
+        "axioms": "'ovoid_q8_fails' depends on axioms: [propext]"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/ovoids_q7.lean",
+  "reading": "Independent confirmation of the Kantor low-degree ovoid facts for Q+(7,q): by exact GF(2^h) arithmetic Leibniz decides Condition (3) -- the Kantor functions define an ovoid for q=2 and q=4 (and q=16 with --full), and do NOT for q=8, where the explicit distinct pair (0,0,0),(0,1,3) gives F=0. The Lean 4.31 kernel re-decides Condition (3) for q=2 and q=4 (the census over F_q^3) and the q=8 witness, with GF(2^h) multiplication computed in-kernel from the irreducible polynomial; #print axioms at most [propext]. A single 2025 source yields both a positive and a printed negative. Exact finite-field arithmetic + the kernel; no LLM judgment; no trust surface."
+}
