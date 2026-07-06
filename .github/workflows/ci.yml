@@ -4,6 +4,12 @@ name: ci
 # a build is red if any of the 11 invariants fail OR if fewer than 11 are
 # collected (a "0 collected" run must never masquerade as a pass).
 
+# Least-privilege GITHUB_TOKEN (ADR 0049): read-only. Fork PRs use the `pull_request`
+# trigger (never `pull_request_target`) and require no secrets, so a malicious PR cannot
+# escalate or exfiltrate. Widen per-job only if a job ever needs to write.
+permissions:
+  contents: read
+
 on:
   push:
   pull_request:

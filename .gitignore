@@ -52,3 +52,7 @@ probe_alpha_out/
 
 # Probe β pilot output (operator-local)
 probe_beta_out/
+
+# Node/JS build deps for the Calculemus reading-room site — never tracked (ADR 0049).
+node_modules/
+**/node_modules/
