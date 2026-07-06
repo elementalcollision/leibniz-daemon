@@ -1,0 +1,120 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Conjecture 4.1 (open) on solution-count symmetry n(κ)=n(−κ) over F_{q²}, underpinning the non-spreading of PΓU(5,q) on H(4,q²) [Theorem 4.2, conditional]; Bamberg, Giudici, Lansdown & Royle, Des. Codes Cryptogr. (2024), arXiv:2403.17576",
+  "prime_cases_checked": [
+    3,
+    5,
+    7
+  ],
+  "kernel_cases": [
+    3
+  ],
+  "checks": {
+    "prime_cases": {
+      "3": {
+        "q": 3,
+        "r": 2,
+        "n_valid_b": 4,
+        "n_valid_suw": 225,
+        "symmetry_holds_for_nontrivial": true,
+        "origin_is_sole_exception": true,
+        "failing_suw_count": 1,
+        "specificity_asymmetric_pair": null,
+        "ok": true
+      },
+      "5": {
+        "q": 5,
+        "r": 2,
+        "n_valid_b": 6,
+        "n_valid_suw": 3025,
+        "symmetry_holds_for_nontrivial": true,
+        "origin_is_sole_exception": true,
+        "failing_suw_count": 1,
+        "specificity_asymmetric_pair": {
+          "b": [
+            1,
+            1
+          ],
+          "suw": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "n": {
+            "1": 6,
+            "2": 2,
+            "3": 2,
+            "4": 6
+          }
+        },
+        "ok": true
+      },
+      "7": {
+        "q": 7,
+        "r": 3,
+        "n_valid_b": 8,
+        "n_valid_suw": 16513,
+        "symmetry_holds_for_nontrivial": true,
+        "origin_is_sole_exception": true,
+        "failing_suw_count": 1,
+        "specificity_asymmetric_pair": {
+          "b": [
+            2,
+            2
+          ],
+          "suw": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "n": {
+            "1": 8,
+            "2": 2,
+            "3": 8,
+            "4": 8,
+            "5": 2,
+            "6": 8
+          }
+        },
+        "ok": true
+      }
+    },
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "pgu_q3_symmetry": {
+        "verified": true,
+        "axioms": "'pgu_q3_symmetry' does not depend on any axioms"
+      },
+      "pgu_q3_origin": {
+        "verified": true,
+        "axioms": "'pgu_q3_origin' does not depend on any axioms"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/pgu_nonspreading.lean",
+  "reading": "Independent exact-arithmetic verification of the open Conjecture 4.1: over F_{q²} for the primes q ∈ {3,5,7}, the solution-count symmetry n(κ)=n(−κ) holds for every admissible b and every non-trivial (s,u,w) on the norm cone. The literal statement has exactly one exception, the trivial origin (0,0,0) — the zero vector, no geometric point — which Leibniz flags and which the kernel confirms breaks the symmetry; with (s,u,w) ≠ 0 the conjecture is satisfied with zero violations. For q ≥ 5 the symmetry is specifically κ ↦ −κ (tuples with n(1) ≠ n(2) exist). The Lean 4.31 kernel re-decides the base case q = 3 (plain decide; depends on no axioms), which makes Theorem 4.2 unconditional there: PΓU(5,3) on H(4,9) is non-spreading. Exact finite-field arithmetic + the kernel; no LLM judgment; no trust surface."
+}

@@ -1,0 +1,206 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Existence of minimal double blocking sets of size 3q−1 in PG(2,q) admitting two (q−1)-secants (refuting a 1984 conjecture of R. Hill; first sets of size < 3q for prime q > 13); Csajbók & Héger, European J. Combin. 78 (2019), 655–678, arXiv:1805.01267",
+  "prime_cases_checked": [
+    13,
+    19,
+    31,
+    37,
+    43
+  ],
+  "kernel_cases": [
+    13,
+    19
+  ],
+  "checks": {
+    "prime_cases": {
+      "13": {
+        "q": 13,
+        "size": 38,
+        "size_ok": true,
+        "n_lines": 183,
+        "double_blocking": true,
+        "minimal": true,
+        "full_dist": {
+          "12": 2,
+          "8": 1,
+          "7": 1,
+          "6": 4,
+          "5": 10,
+          "4": 19,
+          "3": 51,
+          "2": 95
+        },
+        "published_dist": {
+          "12": 2,
+          "8": 1,
+          "7": 1,
+          "6": 4,
+          "5": 10,
+          "4": 19,
+          "3": 51
+        },
+        "dist_match": true,
+        "neg_control_not_double_blocking": true,
+        "ok": true
+      },
+      "19": {
+        "q": 19,
+        "size": 56,
+        "size_ok": true,
+        "n_lines": 381,
+        "double_blocking": true,
+        "minimal": true,
+        "full_dist": {
+          "18": 2,
+          "11": 1,
+          "7": 2,
+          "6": 4,
+          "5": 22,
+          "4": 57,
+          "3": 111,
+          "2": 182
+        },
+        "published_dist": {
+          "18": 2,
+          "11": 1,
+          "7": 2,
+          "6": 4,
+          "5": 22,
+          "4": 57,
+          "3": 111
+        },
+        "dist_match": true,
+        "neg_control_not_double_blocking": true,
+        "ok": true
+      },
+      "31": {
+        "q": 31,
+        "size": 92,
+        "size_ok": true,
+        "n_lines": 993,
+        "double_blocking": true,
+        "minimal": true,
+        "full_dist": {
+          "30": 2,
+          "10": 1,
+          "8": 4,
+          "7": 4,
+          "6": 12,
+          "5": 58,
+          "4": 147,
+          "3": 334,
+          "2": 431
+        },
+        "published_dist": {
+          "30": 2,
+          "10": 1,
+          "8": 4,
+          "7": 4,
+          "6": 12,
+          "5": 58,
+          "4": 147,
+          "3": 334
+        },
+        "dist_match": true,
+        "neg_control_not_double_blocking": true,
+        "ok": true
+      },
+      "37": {
+        "q": 37,
+        "size": 110,
+        "size_ok": true,
+        "n_lines": 1407,
+        "double_blocking": true,
+        "minimal": true,
+        "full_dist": {
+          "36": 2,
+          "8": 3,
+          "7": 6,
+          "6": 27,
+          "5": 79,
+          "4": 230,
+          "3": 445,
+          "2": 615
+        },
+        "published_dist": {
+          "36": 2,
+          "8": 3,
+          "7": 6,
+          "6": 27,
+          "5": 79,
+          "4": 230,
+          "3": 445
+        },
+        "dist_match": true,
+        "neg_control_not_double_blocking": true,
+        "ok": true
+      },
+      "43": {
+        "q": 43,
+        "size": 128,
+        "size_ok": true,
+        "n_lines": 1893,
+        "double_blocking": true,
+        "minimal": true,
+        "full_dist": {
+          "42": 2,
+          "8": 4,
+          "7": 8,
+          "6": 26,
+          "5": 122,
+          "4": 321,
+          "3": 590,
+          "2": 820
+        },
+        "published_dist": {
+          "42": 2,
+          "8": 4,
+          "7": 8,
+          "6": 26,
+          "5": 122,
+          "4": 321,
+          "3": 590
+        },
+        "dist_match": true,
+        "neg_control_not_double_blocking": true,
+        "ok": true
+      }
+    },
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "db13_blocking": {
+        "verified": true,
+        "axioms": "'db13_blocking' does not depend on any axioms"
+      },
+      "db13_minimal": {
+        "verified": true,
+        "axioms": "'db13_minimal' does not depend on any axioms"
+      },
+      "db13_control": {
+        "verified": true,
+        "axioms": "'db13_control' does not depend on any axioms"
+      },
+      "db19_blocking": {
+        "verified": true,
+        "axioms": "'db19_blocking' does not depend on any axioms"
+      },
+      "db19_minimal": {
+        "verified": true,
+        "axioms": "'db19_minimal' does not depend on any axioms"
+      },
+      "db19_control": {
+        "verified": true,
+        "axioms": "'db19_control' does not depend on any axioms"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/double_blocking.lean",
+  "reading": "Independent confirmation that minimal double blocking sets of size 3q−1 exist in PG(2,q) — smaller than the trivial 3q triangle and, for prime q > 13, the first known below 3q — refuting R. Hill's 1984 expectation that none with two (q−1)-secants exist. From the points printed in the paper, Leibniz reconstructs each set and verifies by exact GF(q) incidence arithmetic, over the five prime cases q ∈ {13,19,31,37,43}, that every one of the q²+q+1 lines meets it in ≥ 2 points (double blocking) and that every point lies on a 2-secant (minimality), reproducing the paper's published secant distribution exactly in each case. The Lean 4.31 kernel re-decides both properties, plus a discriminating negative control, for q = 13 and q = 19 (plain decide; every theorem depends on no axioms; no native_decide, no sorry). Exact arithmetic + the kernel; no LLM judgment; no trust surface."
+}
