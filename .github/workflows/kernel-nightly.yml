@@ -5,6 +5,14 @@ name: kernel-nightly
 # lane targets a SELF-HOSTED runner labelled `lean` that has docker + the image. It runs nightly and on
 # demand. If no such runner is registered, the scheduled job simply does not run — it never reports a
 # false green. scripts/run_kernel_tests.sh fails loudly if the image is absent or a kernel test skips.
+#
+# PUBLIC-REPO SAFETY (ADR 0049): this lane never uses the `pull_request`/`pull_request_target` trigger,
+# so a fork PR cannot cause code to run on the self-hosted runner — only `schedule` and an operator's
+# `workflow_dispatch` can. Keep it that way; a self-hosted runner reachable from fork PRs is an RCE risk.
+
+# Least-privilege GITHUB_TOKEN (ADR 0049): read-only.
+permissions:
+  contents: read
 
 on:
   schedule:

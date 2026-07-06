@@ -2,15 +2,30 @@
 # This is enforcement layer 4 (HANDOFF §4): the live PreToolUse hook
 # (.claude/hooks/guard-trust-files.py) guards the interactive session; CODEOWNERS
 # + branch protection guard the merge path. Both are needed — a hook only covers
-# this agent's session, not a direct git push.
-#
+# this agent's session, not a direct git push. On a PUBLIC repo (ADR 0049) this is
+# the primary defense against an outside PR weakening the trust boundary.
+
+# Default owner: every PR needs operator review. Path rules below add REDUNDANT
+# owner review on the trust-critical files even if the default is ever relaxed.
+*                                @elementalcollision
+
+# --- the trust boundary (LLMs propose; only the kernel/Z3/exact procedures decide) ---
 /leibniz/trust.py                @elementalcollision
 /leibniz/verifiers.py            @elementalcollision
 /leibniz/types.py                @elementalcollision
 /leibniz/propositio.py           @elementalcollision
-/leibniz/gates/verification.py   @elementalcollision
-/leibniz/gates/faithfulness.py   @elementalcollision
-/leibniz/gates/novelty.py        @elementalcollision
+/leibniz/pipeline.py             @elementalcollision
+/leibniz/gates/                  @elementalcollision
 /tests/test_invariants.py        @elementalcollision
+/tests/test_boundary_guards.py   @elementalcollision
+/tests/test_kernel_verified_writers.py  @elementalcollision
+
+# --- session + merge-path enforcement, governance, and CI ---
 /.claude/hooks/guard-trust-files.py  @elementalcollision
 /.claude/settings.json           @elementalcollision
+/.github/                        @elementalcollision
+/CODEOWNERS                      @elementalcollision
+/SECURITY.md                     @elementalcollision
+/CONTRIBUTING.md                 @elementalcollision
+/LICENSE.md                      @elementalcollision
+/docs/adr/                       @elementalcollision
