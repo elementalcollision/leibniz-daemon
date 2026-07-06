@@ -1,0 +1,58 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Record lower bound k(19) >= 11948 for the kissing number in 19 dimensions (improving Cohn-Li by 256), via an explicit 1280-word min-distance-5 code in a 5-punctured extended Golay code; Boon Suan Ho (2026), arXiv:2603.10425",
+  "checks": {
+    "dim_M": 6,
+    "dim_K": 10,
+    "dim_D": 12,
+    "M_is_64": true,
+    "K_is_1024": true,
+    "D_is_4096": true,
+    "B_size": 320,
+    "A_size": 1280,
+    "A_subset_D": true,
+    "s5_identity": true,
+    "D_min_weight": 3,
+    "n_forbidden": 21,
+    "table1_matches": true,
+    "min_distance_pairwise": 5,
+    "min_distance_forbidden_diff_ge5": true,
+    "H_recognises_D": true,
+    "bound": 11948,
+    "ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "kissing_bound": {
+        "verified": true,
+        "axioms": "'kissing_bound' does not depend on any axioms"
+      },
+      "kissing_distinct": {
+        "verified": true,
+        "axioms": "'kissing_distinct' does not depend on any axioms"
+      },
+      "kissing_subset_D": {
+        "verified": true,
+        "axioms": "'kissing_subset_D' depends on axioms: [propext]"
+      },
+      "kissing_forbidden_complete": {
+        "verified": true,
+        "axioms": "'kissing_forbidden_complete' depends on axioms: [propext]"
+      },
+      "kissing_mindist": {
+        "verified": true,
+        "axioms": "'kissing_mindist' depends on axioms: [propext]"
+      },
+      "kissing_negcontrol": {
+        "verified": true,
+        "axioms": "'kissing_negcontrol' depends on axioms: [propext]"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/kissing19.lean",
+  "reading": "Independent confirmation of the current record kissing-number lower bound k(19) >= 11948, improving Cohn-Li's 11692 by 256. By the Cohn-Li odd-sign construction it suffices to exhibit a length-19 binary code of minimum distance 5 and size 1280 inside a 5-punctured extended Golay code D. Leibniz reconstructs the code A from the paper's explicit generators (no data file), and verifies by exact bit arithmetic that dim D = 12, |A| = 1280, A ⊆ D, the 21 weight-3/4 words of D match the paper's Table 1 (correcting one transcription), and A has minimum distance exactly 5 (an 818560-pair census, cross-checked by the forbidden-difference test) — hence k(19) >= 10668 + 1280 = 11948. The Lean 4.31 kernel re-decides the finite core with everything rebuilt inside the kernel: the bound, |A|=1280 distinct, A ⊆ D (parity), the forbidden set is complete (weight-3/4 words of the rebuilt D), the minimum-distance test (via a balanced-BST membership), and a discriminating negative control — all plain decide, #print axioms at most [propext]. Exact bit arithmetic + the kernel; no LLM judgment; no trust surface."
+}
