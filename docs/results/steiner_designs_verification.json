@@ -1,0 +1,122 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "Existence of Steiner systems S(2,8,225) and S(2,9,289) (two of 129 undecided Handbook cases); Hetman (2026), arXiv:2509.10673",
+  "checks": {
+    "difference_family": {
+      "S8_225_A1": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S8_225_A2": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S8_225_B1": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S8_225_B2": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S8_225_B3": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S8_225_B4": {
+        "ok": true,
+        "v": 225,
+        "n_diffs": 224,
+        "distinct": 224,
+        "each_once": true
+      },
+      "S9_289_1": {
+        "ok": true,
+        "v": 289,
+        "n_diffs": 288,
+        "distinct": 288,
+        "each_once": true
+      },
+      "S9_289_2": {
+        "ok": true,
+        "v": 289,
+        "n_diffs": 288,
+        "distinct": 288,
+        "each_once": true
+      },
+      "S9_289_3": {
+        "ok": true,
+        "v": 289,
+        "n_diffs": 288,
+        "distinct": 288,
+        "each_once": true
+      },
+      "S9_289_4": {
+        "ok": true,
+        "v": 289,
+        "n_diffs": 288,
+        "distinct": 288,
+        "each_once": true
+      }
+    },
+    "direct_development": {
+      "S8_225_A1": {
+        "ok": true,
+        "v": 225,
+        "n_blocks": 900,
+        "pairs": 25200,
+        "expected_pairs": 25200
+      },
+      "S8_225_B1": {
+        "ok": true,
+        "v": 225,
+        "n_blocks": 900,
+        "pairs": 25200,
+        "expected_pairs": 25200
+      },
+      "S9_289_1": {
+        "ok": true,
+        "v": 289,
+        "n_blocks": 1156,
+        "pairs": 41616,
+        "expected_pairs": 41616
+      }
+    },
+    "n_S8_225": 6,
+    "n_S9_289": 4,
+    "all_ok": true
+  },
+  "kernel": {
+    "status": "checked",
+    "legs": {
+      "steiner_S8_225": {
+        "verified": true,
+        "axioms": "'steiner_S8_225' depends on axioms: [propext]"
+      },
+      "steiner_S9_289": {
+        "verified": true,
+        "axioms": "'steiner_S9_289' depends on axioms: [propext]"
+      }
+    },
+    "all_verified": true
+  },
+  "cert": "docs/crt/steiner_designs.lean",
+  "reading": "Independent confirmation that the Steiner systems S(2,8,225) and S(2,9,289) exist, resolving two undecided Handbook of Combinatorial Designs cases. From the base blocks, Leibniz verifies by exact finite-group arithmetic that all ten families are (v,k,1)-difference families (the nonzero differences hit every nonzero group element exactly once) and, directly, that a representative of each parameter set develops to a design in which every pair of points lies in exactly one block. The Lean 4.31 kernel re-decides the difference-family property for one marquee system of each parameter set. Exact arithmetic + the kernel; no LLM judgment; no trust surface."
+}
