@@ -58,6 +58,24 @@ def test_law_payload_carries_triad_and_certificate():
     assert pl["imports"] == ["Mathlib.Tactic"]
 
 
+def test_law_payload_provenance_report_only_adr0050():
+    import pytest
+    # defaults: kernel-decided / amplified / no references
+    pl = law_payload(_law("Addition commutes", "add_comm"))
+    assert pl["tier"] == "kernel-decided" and pl["origination"] == "amplified" and pl["references"] == []
+    # explicit provenance is carried through verbatim
+    refs = [{"citation": "Some Author (2026). A result.", "url": "https://example.org"}]
+    pl2 = law_payload(_law("A record", "rec"), tier="exact-procedure", origination="originated", references=refs)
+    assert pl2["tier"] == "exact-procedure" and pl2["origination"] == "originated" and pl2["references"] == refs
+    # provenance is validated against the closed vocabularies (a labelling defect must fail loudly)
+    with pytest.raises(ValueError):
+        law_payload(_law("x", "x"), tier="native_decide")
+    with pytest.raises(ValueError):
+        law_payload(_law("x", "x"), origination="discovered")
+    # provenance NEVER gates promotion: it is read off an already-verified triad only
+    assert pl["kernel_verified"] is True and pl["qed"] == "Q.E.D."
+
+
 def test_unverified_law_carries_no_qed_and_cannot_reach_codex():
     p = _law("Bad claim", "bad", verified=False)
     pl = law_payload(p)
