@@ -1,0 +1,38 @@
+{
+  "gate": "GREEN",
+  "tier": "audit",
+  "ev": "AMPLIFICATION",
+  "target": "A Kochen-Specker set of 33 qutrit vectors with only 14 orthogonal bases (a record-low minimum number of bases, refuting Conjecture 2 of PRL 134, 010201 (2025)); Cabello, PRL 135, 190203 (2025), arXiv:2508.07335",
+  "checks": {
+    "n_rays": 33,
+    "n_rays_ok": true,
+    "n_bases": 14,
+    "all_bases_orthogonal": true,
+    "bases_orth": {
+      "x0": true,
+      "x1": true,
+      "x2": true,
+      "x3": true,
+      "x4": true,
+      "y0": true,
+      "y1": true,
+      "y2": true,
+      "y3": true,
+      "y4": true,
+      "y5": true,
+      "y6": true,
+      "y7": true,
+      "y8": true
+    },
+    "n_edges": 78,
+    "ks_uncolorable": true,
+    "control_13basis_colorable": true,
+    "z3_unsat": true,
+    "ok": true
+  },
+  "kernel": {
+    "status": "skipped"
+  },
+  "cert": "docs/crt/cabello_ks.lean",
+  "reading": "Independent confirmation of Cabello's simplest Kochen-Specker set: over the Eisenstein integers Z[w], each of the 14 printed bases is mutually orthogonal and the vectors span exactly 33 distinct rays; and the set is KS-uncolorable -- no {0,1}-assignment with exactly-one per basis and at-most-one per orthogonal edge exists (a finite UNSAT verified by a bounded backtracking search of ~1.2k nodes). Reproducing basis orthogonality corrected one text-extraction artifact (the x=3 third vector is (w^2,-w,1)). The Lean 4.31 kernel re-decides basis orthogonality and uncolorability directly (exact Z[w] arithmetic; the backtracking solver in-kernel), plus a negative control (a 13-basis subset is colorable). With 14 bases this beats the previous record of 16, refuting the minimum-inputs conjecture. Exact arithmetic + the kernel; no LLM judgment; no trust surface."
+}
