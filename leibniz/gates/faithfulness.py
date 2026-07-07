@@ -29,7 +29,7 @@ gate tries, strongest first:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, Protocol
+from typing import Callable, Optional, Protocol
 
 from leibniz.gates.sound_backends import CertificateRechecker, SoundFaithfulnessBackend
 from leibniz.propositio import Propositio
@@ -71,6 +71,14 @@ class FaithfulnessGate:
     # (the dormant default is therefore maximally safe). This pins soundness
     # structurally rather than trusting an honest tag.
     recheckers: dict[str, CertificateRechecker] = field(default_factory=dict)
+    # ADR 0056 Track A increment-2 obligation 5: gate-side STATEMENT BINDING, keyed by
+    # kind. The template renders this claim's canonical statement from PROP'S OWN fields
+    # (never from the certificate); a PASS additionally requires the certificate's claimed
+    # statement to be byte-identical (builtin `str`, compared with `str.__ne__` so a
+    # str-subclass __eq__ cannot spoof — the tools-registry E7 discipline replicated on
+    # this accept path). Binding a kind can only REFUSE passes it would previously have
+    # accepted (tightening-only); kinds with no template behave exactly as before.
+    templates: dict[str, Callable[[Propositio], Optional[str]]] = field(default_factory=dict)
 
     def check(self, prop: Propositio) -> EdgeEvidence:
         assert prop.expressio is not None, "formalize before faithfulness"
@@ -126,8 +134,20 @@ class FaithfulnessGate:
                 # Authoritative: the GATE independently re-checks the certificate via
                 # its own re-checker for this kind. A self-reported PASS with no
                 # registered re-checker, or one whose re-check fails, is NOT a pass.
+                # For kinds with a registered statement TEMPLATE, the PASS additionally
+                # requires the certificate's claimed statement to be byte-identical to
+                # the canonical statement the gate renders from PROP'S OWN fields —
+                # binding the certificate to THIS claim (ADR 0056 obligation 5; the E7
+                # discipline). Tightening-only: template-less kinds behave as before.
                 rechecker = self.recheckers.get(v.certificate.kind)
-                if rechecker is not None and rechecker(v.certificate):
+                template = self.templates.get(v.certificate.kind)
+                bound = True
+                if template is not None:
+                    expected = template(prop)
+                    claimed = (v.certificate.detail or {}).get("statement")
+                    bound = (type(expected) is str and type(claimed) is str
+                             and not str.__ne__(expected, claimed))
+                if bound and rechecker is not None and rechecker(v.certificate):
                     return EdgeEvidence(
                         edge=FAITHFULNESS_EDGE,
                         tier=TrustTier.MECHANICAL,
@@ -136,6 +156,7 @@ class FaithfulnessGate:
                             "backend": backend.name,
                             "certificate_kind": v.certificate.kind,
                             "rechecked_by_gate": True,
+                            "statement_bound": template is not None,
                             **v.detail,
                         },
                         cost_units=2.0,
