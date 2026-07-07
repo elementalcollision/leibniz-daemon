@@ -2,77 +2,156 @@
 
 This is the artifact the ADR 0056 review said must exist before the renderer can be trusted: a
 mis-encoding renderer passes any string-identity check while both strings denote the wrong
-proposition, so *only* a conformance suite catches it. It pins, over a grid **including negatives**,
-that the Lean operators the renderer emits denote the SAME integer function as the DSL/Z3 backend —
-the load-bearing cases being Euclidean ``Int.emod``/``Int.ediv`` (not Lean's truncating ``%``/``/``)
-and real ℤ subtraction (not ℕ monus).
+proposition, so *only* a conformance suite catches it.
 
-The ground truth is doubly anchored:
-- The DSL/Z3 meaning is modelled by Python ``%``/``//`` which, for the DSL's positive constant divisor,
-  ARE Euclidean (non-negative remainder, floor quotient) — exactly Z3's integer ``mod``/``div``.
-- The Lean meaning of each emitted operator token is an INDEPENDENT table (:data:`TOKEN_SEM`), whose
-  entries are pinned to hand-verified Lean values (``Int.emod (-7) 2 = 1``, ``Int.ediv (-7) 2 = -4``,
-  truncating ``(-7) % 2 = -1``, ``(-7) / 2 = -3``). An optional Lean-image end-to-end test
-  (``LEIBNIZ_LEAN_E2E=1``) anchors those values in the real kernel.
+The load-bearing test **actually parses and evaluates the Lean string ``render_pred`` emits** (via an
+independent evaluator :func:`eval_lean`) and compares its value to the DSL/Z3 meaning over a grid
+**including negatives**. This is the fix for the increment-1 re-review's critical finding: the first
+version re-evaluated the DSL AST with the *same* Euclidean functions on both sides and never looked at
+the emitted string, so a garbage renderer would have passed. Now the emitted operators, operands,
+structure, and parenthesisation are all exercised: a truncating ``%``/``/`` (or ``Nat.sub`` monus, a
+swapped operand, a dropped term) diverges from the DSL meaning on the grid — or fails to parse — and
+the test fails.
+
+Two independent anchors keep the evaluator honest:
+- the DSL/Z3 meaning is modelled by Python ``%``/``//`` which, for the DSL's positive constant divisor,
+  ARE Euclidean (non-negative remainder, floor quotient) — exactly Z3's integer ``mod``/``div``;
+- ``eval_lean`` interprets ``Int.emod``/``Int.ediv`` as Euclidean — an audited fact pinned to
+  hand-verified kernel values (``Int.emod (-7) 2 = 1``, ``Int.ediv (-7) 2 = -4``) and, with
+  ``LEIBNIZ_LEAN_E2E=1``, to the real Lean 4 kernel.
 """
 from __future__ import annotations
 
 import ast
 import os
+import re
 
 import pytest
 
 from leibniz import dsl_to_lean as d2l
 
 
-# --- Independent semantics tables (audited; pinned to hand-verified Lean values below) -------------
+# --- An INDEPENDENT evaluator of the emitted Lean string ------------------------------------------
+# The renderer emits a small, fully-parenthesised Lean subset. This evaluator parses that exact subset
+# and computes its value under an independent Lean-semantics reading of each operator — so it genuinely
+# tests render_pred's OUTPUT, not the DSL AST. Its integer-op semantics (Int.emod/Int.ediv Euclidean,
+# real subtraction) are the audited meaning of the Lean operators, pinned below to kernel values.
 
-def _euclid_mod(a: int, m: int) -> int:  # Z3 / Int.emod : non-negative remainder for m>0
-    return a % m
-
-def _euclid_div(a: int, m: int) -> int:  # Z3 / Int.ediv : floor quotient for m>0
-    return a // m
-
-def _trunc_mod(a: int, m: int) -> int:   # Lean HMod (Int.mod) : truncated, sign of dividend
-    return a - m * int(a / m)
-
-def _trunc_div(a: int, m: int) -> int:   # Lean HDiv (Int.div) : truncation toward zero
-    return int(a / m)
-
-TOKEN_SEM = {
-    "Int.emod": _euclid_mod, "Int.ediv": _euclid_div,   # the conformant (renderer's) choices
-    "%": _trunc_mod, "/": _trunc_div,                    # the WRONG choices, for the regression guard
-}
+_TOKEN_RE = re.compile(r"Int\.emod|Int\.ediv|[A-Za-z_][A-Za-z0-9_]*|\d+|≤|≥|≠|∧|∨|¬|ℕ|ℤ|[()+\-*^<>=:]")
 
 
-def test_audited_semantics_table_matches_hand_verified_lean_values():
-    """The independent Lean-semantics table is itself pinned to values a human verified in Lean."""
-    assert TOKEN_SEM["Int.emod"](-7, 2) == 1     # Euclidean: non-negative
-    assert TOKEN_SEM["Int.ediv"](-7, 2) == -4    # Euclidean: floor
-    assert TOKEN_SEM["%"](-7, 2) == -1           # truncating: sign of dividend
-    assert TOKEN_SEM["/"](-7, 2) == -3           # truncating: toward zero
-    # The renderer must have chosen the Euclidean operators (this is what makes the suite meaningful).
+class LeanParseError(AssertionError):
+    """The emitted string is not in the renderer's expected Lean subset (a renderer defect)."""
+
+
+def eval_lean(src: str, asn: dict):
+    """Evaluate a rendered Lean predicate/term string over an assignment. Euclidean Int.emod/Int.ediv,
+    real ℤ subtraction. Raises :class:`LeanParseError` on anything outside the emitted subset — so a
+    renderer that emits truncating ``%``/``/``, ``Nat.sub``, or malformed output cannot silently pass."""
+    toks = _TOKEN_RE.findall(src)
+    pos = [0]
+
+    def peek():
+        return toks[pos[0]] if pos[0] < len(toks) else None
+
+    def take(expect=None):
+        if pos[0] >= len(toks):
+            raise LeanParseError(f"unexpected end of input in {src!r}")
+        tok = toks[pos[0]]
+        if expect is not None and tok != expect:
+            raise LeanParseError(f"expected {expect!r} got {tok!r} in {src!r}")
+        pos[0] += 1
+        return tok
+
+    def node():
+        tok = peek()
+        if tok == "(":
+            take("(")
+            v = paren_body()
+            take(")")
+            return v
+        if tok is not None and tok.isdigit():
+            return int(take())
+        # a bare integer VARIABLE (a callee like `min` never appears un-parenthesised)
+        name = take()
+        if name in asn:
+            return asn[name]
+        raise LeanParseError(f"unbound/unexpected token {name!r} in {src!r}")
+
+    def paren_body():
+        tok = peek()
+        if tok in ("Int.emod", "Int.ediv"):
+            take()
+            a, b = node(), node()
+            return (a % b) if tok == "Int.emod" else (a // b)   # Euclidean for the positive divisor
+        if tok in ("min", "max"):
+            take()
+            a, b = node(), node()
+            return min(a, b) if tok == "min" else max(a, b)
+        if tok == "¬":
+            take()
+            return not node()
+        if tok == "-":                                          # unary minus: (-x)
+            take()
+            return -node()
+        left = node()
+        op = peek()
+        if op in ("+", "-", "*"):
+            take()
+            right = node()
+            return left + right if op == "+" else left - right if op == "-" else left * right
+        if op == "^":
+            take()
+            take("(")
+            k = int(take())
+            take(":")
+            take("ℕ")
+            take(")")
+            return left ** k
+        if op in ("<", "≤", ">", "≥", "=", "≠"):
+            take()
+            right = node()
+            return {"<": left < right, "≤": left <= right, ">": left > right,
+                    "≥": left >= right, "=": left == right, "≠": left != right}[op]
+        if op in ("∧", "∨"):
+            vals = [left]
+            while peek() == op:
+                take()
+                vals.append(node())
+            return all(vals) if op == "∧" else any(vals)
+        return left                                            # a redundantly-parenthesised value
+
+    v = node()
+    if pos[0] != len(toks):
+        raise LeanParseError(f"trailing tokens {toks[pos[0]:]} in {src!r}")
+    return v
+
+
+def test_eval_lean_is_pinned_to_hand_verified_lean_values():
+    """The evaluator's integer-op semantics equal what the Lean kernel computes (Euclidean)."""
+    assert eval_lean("(Int.emod a 2)", {"a": -7}) == 1             # Int.emod: non-negative
+    assert eval_lean("(Int.ediv a 2)", {"a": -7}) == -4            # Int.ediv: floor
+    assert eval_lean("((a - b) * a)", {"a": 2, "b": 5}) == -6      # real ℤ subtraction, not monus
+    assert eval_lean("(a ^ (3 : ℕ))", {"a": -2}) == -8
+    assert eval_lean("((a < b) ∧ (b < a))", {"a": 1, "b": 2}) is False
     assert d2l.MOD_OP == "Int.emod" and d2l.DIV_OP == "Int.ediv"
 
 
-# --- A reference evaluator over the DSL AST, parameterised by the mod/div semantics ---------------
+# --- The DSL/Z3 ground truth (Python %/// are Euclidean for the positive constant divisor) ---------
 
-def _eval(node: ast.AST, asn: dict, mod_fn, div_fn):
-    """Evaluate a DSL node over an assignment, using `mod_fn`/`div_fn` for `%`/`/`. Real ℤ subtraction
-    throughout (there is no ℕ monus — the renderer emits `∀ (v:ℤ)`)."""
+def _dsl_truth(pred: str, asn: dict):
+    tree = ast.parse(pred.replace("^", "**"), mode="eval").body
+    return _eval_dsl(tree, asn)
+
+
+def _eval_dsl(node: ast.AST, asn: dict):
     if isinstance(node, ast.BoolOp):
-        vals = [_eval(v, asn, mod_fn, div_fn) for v in node.values]
+        vals = [_eval_dsl(v, asn) for v in node.values]
         return all(vals) if isinstance(node.op, ast.And) else any(vals)
     if isinstance(node, ast.UnaryOp):
-        if isinstance(node.op, ast.Not):
-            return not _eval(node.operand, asn, mod_fn, div_fn)
-        if isinstance(node.op, ast.USub):
-            return -_eval(node.operand, asn, mod_fn, div_fn)
-        raise AssertionError("unexpected unary")
+        return (not _eval_dsl(node.operand, asn)) if isinstance(node.op, ast.Not) else -_eval_dsl(node.operand, asn)
     if isinstance(node, ast.BinOp):
-        a = _eval(node.left, asn, mod_fn, div_fn)
-        b = _eval(node.right, asn, mod_fn, div_fn)
-        op = node.op
+        a, b, op = _eval_dsl(node.left, asn), _eval_dsl(node.right, asn), node.op
         if isinstance(op, ast.Add):
             return a + b
         if isinstance(op, ast.Sub):
@@ -82,29 +161,25 @@ def _eval(node: ast.AST, asn: dict, mod_fn, div_fn):
         if isinstance(op, ast.Pow):
             return a ** b
         if isinstance(op, (ast.Div, ast.FloorDiv)):
-            return div_fn(a, b)
+            return a // b       # floor == Euclidean for b>0 (matches Z3)
         if isinstance(op, ast.Mod):
-            return mod_fn(a, b)
-        raise AssertionError("unexpected binop")
+            return a % b        # non-negative == Euclidean for b>0 (matches Z3)
     if isinstance(node, ast.Compare):
-        left = _eval(node.left, asn, mod_fn, div_fn)
-        ok = True
+        left, ok = _eval_dsl(node.left, asn), True
         for op, comp in zip(node.ops, node.comparators):
-            right = _eval(comp, asn, mod_fn, div_fn)
-            ok = ok and {
-                ast.Lt: left < right, ast.LtE: left <= right, ast.Gt: left > right,
-                ast.GtE: left >= right, ast.Eq: left == right, ast.NotEq: left != right,
-            }[type(op)]
+            right = _eval_dsl(comp, asn)
+            ok = ok and {ast.Lt: left < right, ast.LtE: left <= right, ast.Gt: left > right,
+                         ast.GtE: left >= right, ast.Eq: left == right, ast.NotEq: left != right}[type(op)]
             left = right
         return ok
     if isinstance(node, ast.Call):
-        args = [_eval(a, asn, mod_fn, div_fn) for a in node.args]
+        args = [_eval_dsl(a, asn) for a in node.args]
         return min(args) if node.func.id == "min" else max(args)
     if isinstance(node, ast.Name):
         return asn[node.id]
     if isinstance(node, ast.Constant):
         return node.value
-    raise AssertionError(f"unexpected node {type(node).__name__}")
+    raise AssertionError(f"unexpected DSL node {type(node).__name__}")
 
 
 def _grid(vars_, lo=-8, hi=8):
@@ -117,8 +192,6 @@ def _grid(vars_, lo=-8, hi=8):
             yield {head: val, **tail}
 
 
-# Predicates that exercise the load-bearing cases: negative intermediates through mod/div/sub, nesting,
-# composition through min/max, multivariable modular polynomials.
 CONFORMANCE_PREDS = [
     "(a*a + b*b) % 4 == 3",
     "(a*a + a*b + b*b) % 3 != 2",
@@ -131,34 +204,40 @@ CONFORMANCE_PREDS = [
     "(a*a*a - a) % 6 == 0",              # a^3 - a  (cubic, negative-capable)
     "((a - b) % 6) % 4 == 1",            # nested mod
     "n*n % 4 == 0 or n*n % 4 == 1",      # single-var
+    "0 <= a - b and (a - b) % 3 == 1",   # comparison chaining + subtraction
+    "(a - b)^2 % 4 == 0 or (a - b)^2 % 4 == 1",   # power of a negative-capable base
 ]
 
 
 @pytest.mark.parametrize("pred", CONFORMANCE_PREDS)
-def test_renderer_ops_denote_the_DSL_function_over_negatives(pred):
-    """For every grid point (including negatives), the DSL/Z3 meaning (Euclidean) equals the meaning of
-    the operator tokens the renderer emitted. A regression to truncating `%`/`/` or to ℕ monus would
-    diverge at a negative intermediate and fail here."""
+def test_EMITTED_lean_denotes_the_dsl_function_over_negatives(pred):
+    """The load-bearing conformance test: parse and evaluate render_pred's EMITTED string, and require
+    it to equal the DSL/Z3 meaning at every grid point (including negatives). A truncating op, a monus,
+    a swapped operand, or malformed output diverges or fails to parse → this fails."""
+    lean = d2l.render_pred(pred)
     tree = ast.parse(pred.replace("^", "**"), mode="eval").body
-    vars_ = sorted({n.id for n in ast.walk(tree) if isinstance(n, ast.Name)})
-    # sanity: the renderer accepts it (in-fragment)
-    d2l.render_pred(pred)
-    emit_mod, emit_div = TOKEN_SEM[d2l.MOD_OP], TOKEN_SEM[d2l.DIV_OP]
+    vars_ = sorted({n.id for n in ast.walk(tree)
+                    if isinstance(n, ast.Name) and not _is_callee(n, tree)})
     for asn in _grid(vars_):
-        dsl_truth = _eval(tree, asn, _euclid_mod, _euclid_div)          # what the DSL/Z3 means
-        emitted_truth = _eval(tree, asn, emit_mod, emit_div)           # what the emitted Lean means
-        assert dsl_truth == emitted_truth, f"{pred} @ {asn}: DSL={dsl_truth} emitted={emitted_truth}"
+        got = eval_lean(lean, asn)
+        want = _dsl_truth(pred, asn)
+        assert got == want, f"{pred} @ {asn}: emitted-lean={got} dsl={want}  ({lean})"
 
 
-def test_regression_guard_would_fire_if_renderer_used_truncating_ops():
-    """Proof the suite has teeth: had the renderer chosen Lean's truncating `%`/`/`, the differential
-    would diverge on a negative intermediate."""
-    tree = ast.parse("(a - b) % 5 == 2", mode="eval").body
-    diverged = any(
-        _eval(tree, asn, _euclid_mod, _euclid_div) != _eval(tree, asn, TOKEN_SEM["%"], TOKEN_SEM["/"])
-        for asn in _grid(["a", "b"])
-    )
-    assert diverged, "truncating vs Euclidean must diverge somewhere on the negative grid"
+def _is_callee(name_node, tree):
+    return any(isinstance(c, ast.Call) and c.func is name_node for c in ast.walk(tree))
+
+
+def test_the_conformance_test_has_teeth():
+    """Prove the differential is not tautological: a WRONG emission (truncating mod, or a swapped
+    operand) is caught by eval_lean vs the DSL truth on the negative grid."""
+    # 1. Had the renderer emitted truncating `%` semantics, eval_lean would refuse to parse it.
+    with pytest.raises(LeanParseError):
+        eval_lean("((a - b) % 5)", {"a": 1, "b": 4})            # bare `%` is not in the emitted subset
+    # 2. A parseable-but-wrong emission (a+b where the DSL means a-b) diverges from the DSL truth.
+    wrong = eval_lean("((Int.emod (a + b) 5) = 2)", {"a": 1, "b": 4})   # (1+5)%5? no: (1+4)%5=0 ≠ 2
+    right = _dsl_truth("(a - b) % 5 == 2", {"a": 1, "b": 4})            # (1-4)%5 = 2 → True
+    assert wrong != right
 
 
 # --- Golden structural pins ----------------------------------------------------------------------
@@ -170,6 +249,7 @@ def test_emits_euclidean_operators_and_integer_binder():
     div = d2l.render_pred("n / 4 == 1")
     assert "Int.ediv n 4" in div and " / " not in div      # Euclidean div, never truncating `/`
 
+
 def test_pair_is_over_integer_box_and_requires_established_domain():
     p = d2l.faithfulness_pair("(a*a + b*b) % 4 == 0", "(a*a + b*b) % 4 != 3", "(a*a + b*b) % 4 == 0")
     assert p["coverage"].startswith("∀ (a b : ℤ),") and "0 ≤ a" in p["coverage"]
@@ -178,6 +258,18 @@ def test_pair_is_over_integer_box_and_requires_established_domain():
     assert "ℕ" not in p["property"] and "Nat.sub" not in p["property"]
     with pytest.raises(d2l.RenderError):
         d2l.faithfulness_pair("n % 2 == 0", "n % 2 == 0", None)   # missing established_domain → DEFER
+
+
+def test_min_max_predicates_do_not_capture_the_callee_as_a_bound_variable():
+    """Regression for the free_vars capture bug: `min`/`max` are call targets, not ℤ variables, so the
+    binder must be ∀ (a b : ℤ) — never ∀ (a b min : ℤ) with `(min a b)` applying a bound variable."""
+    assert d2l.free_vars("min(a, b) % 3 == 0") == ["a", "b"]      # not ['a','b','min']
+    p = d2l.faithfulness_pair("min(a, b) % 3 == 0", "max(a, b) % 2 != 1", "min(a, b) % 3 == 0")
+    assert p["coverage"].startswith("∀ (a b : ℤ),")              # no `min`/`max` in the binder
+    for stmt in p.values():
+        assert "min : ℤ" not in stmt and "max : ℤ" not in stmt and "0 ≤ min" not in stmt
+        assert "(min a b)" in stmt or "(max a b)" in stmt        # used as a function, correctly
+
 
 def test_canonical_statement_is_deterministic():
     args = ("(a*a + b*b) % 4 == 0", "(a*a + b*b) % 4 != 3", "(a*a + b*b) % 4 == 0")
@@ -202,22 +294,19 @@ def test_out_of_fragment_predicates_are_refused(bad):
         d2l.render_pred(bad)
 
 
-# --- Optional: anchor the audited table in the real Lean kernel (opt-in; needs the Lean image) -----
+# --- Optional: anchor the audited Euclidean values in the real Lean kernel (opt-in) ----------------
+# NB: the unbounded ∀-over-ℤ pair is NOT `decide`-able (no `Decidable (∀ a:ℤ, …)` instance); its proof
+# needs the residue reduction that is Track A increment 2, so it is deliberately NOT asserted here.
 
 @pytest.mark.skipif(not os.environ.get("LEIBNIZ_LEAN_E2E"), reason="set LEIBNIZ_LEAN_E2E=1 to run Lean e2e")
-def test_lean_kernel_confirms_euclidean_semantics_and_a_true_pair():  # pragma: no cover
+def test_lean_kernel_confirms_euclidean_semantics():  # pragma: no cover
     from leibniz.backends.lean_repl import LeanReplBackend, available
     if not available():
         pytest.skip("Lean image unavailable")
     backend = LeanReplBackend()
     try:
-        # Anchor the audited values in the kernel, and confirm a known-true pair `decide`s.
-        checks = [
-            "example : Int.emod (-7) 2 = 1 := by decide",
-            "example : Int.ediv (-7) 2 = -4 := by decide",
-            "example : ∀ (a b : ℤ), 0 ≤ a → 0 ≤ b → Int.emod (a*a + b*b) 4 ≠ 3 := by decide",
-        ]
-        for src in checks:
+        for src in ("example : Int.emod (-7) 2 = 1 := by decide",
+                    "example : Int.ediv (-7) 2 = -4 := by decide"):
             assert backend._run(src, ()) is not None
     finally:
         backend.close()

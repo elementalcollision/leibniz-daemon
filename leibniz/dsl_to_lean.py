@@ -153,14 +153,28 @@ def render_pred(src: str) -> str:
 
 
 def free_vars(*srcs: str) -> list[str]:
-    """The sorted distinct variable names across the given DSL predicate strings (the ∀/∃ binder)."""
+    """The sorted distinct integer VARIABLE names across the given DSL predicate strings (the ∀/∃
+    binder). A call target (``min``/``max``) is a function name, not a variable, so it is excluded —
+    exactly as ``smt_z3._conv`` treats it (it never creates a Z3 var for the callee). Walking every
+    ``ast.Name`` naively would bind ``min`` as a ℤ variable and then emit ``(min a b)`` applying that
+    bound variable, capturing the callee — an ill-typed statement (kernel-rejected → DEFER) for every
+    ``min``/``max`` predicate."""
     names: set[str] = set()
+
+    def visit(node: ast.AST) -> None:
+        if isinstance(node, ast.Call):
+            for a in node.args:          # descend into the arguments only, never node.func
+                visit(a)
+            return
+        if isinstance(node, ast.Name):
+            names.add(node.id)
+        for child in ast.iter_child_nodes(node):
+            visit(child)
+
     for src in srcs:
         if src is None:
             continue
-        for node in ast.walk(_parse(src)):
-            if isinstance(node, ast.Name):
-                names.add(node.id)
+        visit(_parse(src))
     return sorted(names)
 
 
