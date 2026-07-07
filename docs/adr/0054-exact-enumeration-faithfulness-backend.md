@@ -1,9 +1,74 @@
 # ADR 0054 — An exact-enumeration / periodicity faithfulness backend (unifies Lever A + Lever B)
 
-**Status:** Proposed (2026-07-07) — **blocked on an adversarial soundness review** (do not implement
-until it clears). Complements ADR 0002 (faithfulness gate), ADR 0037 (sound-backend seam — the seam
-this uses), ADR 0020/0022 (contract encodability / probe), ADR 0051 (the review precedent). Supersedes
-the "cheap Lever A" framing in `docs/fleet-review-raising-the-ceiling.md`.
+**Status:** **NEEDS REDESIGN (2026-07-07)** — the adversarial soundness review below returned
+`needs-redesign` (high confidence, **not safe to implement**). Do **not** implement the design as
+written; the capability is sound in principle but three of the six decision points are unsound as
+specified (one is a *regression* in gate soundness). A redesign (a v2 ADR) folding in the seven
+required mitigations must clear its **own** review before any code. Complements ADR 0002 (faithfulness
+gate), ADR 0037 (sound-backend seam), ADR 0020/0022 (contract encodability / probe), ADR 0051 (the
+review precedent — likewise rejected on review). Supersedes the "cheap Lever A" framing in
+`docs/fleet-review-raising-the-ceiling.md`.
+
+## Review outcome — NEEDS REDESIGN (do not implement as written)
+
+A four-lens adversarial review (verdict `needs-redesign`, high confidence, `safe_to_implement:false`)
+verified three unsound decision points **against the code**, not merely in the abstract:
+
+1. **The decision target is wrong, and dropping `established_domain` is a *regression* (critical).**
+   Point 2 enumerates `claim_domain ∧ ¬claim_property` — a claim-**truth** check, not a
+   statement↔claim **faithfulness** check. The real probe (`probes.py:61-68`) checks *two* conjuncts
+   that both reference `established_domain` (coverage: `claim_domain ∧ ¬established_domain` UNSAT;
+   property: `established_domain ∧ claim_domain ∧ ¬claim_property` UNSAT). A strong-contract /
+   weak-theorem claim — `established_domain` honestly narrowed to `a==0`, `claim_property` true
+   everywhere — enumerates zero points → **false EXACT-PASS** while the kernel proves only the `a==0`
+   slice → a permanently mislabelled law (ADR 0002's worst case). Worse: today `coverage_probe`
+   makes that same case a **safe DEFER** (`probes.py:62-63`), so ADR 0054 would make the gate
+   *strictly less sound* for exactly the claims it targets. And an accepted backend PASS returns
+   before the coverage probe (`faithfulness.py:125-148`), so the coverage half is bypassed.
+2. **The certificate re-check is prop-blind and cannot express the named guards (critical).**
+   `CertificateRechecker = Callable[[Certificate], bool]` (`sound_backends.py:48`) receives no `prop`,
+   so it validates the certificate against itself and re-confirms a wrong derived domain/period. The
+   ADR's "gate-derived period" and "independent re-check" guards require `prop` — i.e. **new gate
+   code / a widened seam**, contradicting the ADR's "reuse the ADR 0037 seam" premise.
+3. **The period formula under-derives the true period (high).** "lcm of the `mᵢ`" drops every
+   non-modulus period source: floor-division `/d` (a DSL-whitelisted const op, `smt_z3.py:177-181`)
+   multiplies the period by `d` — `(b/2)%8` has true period 16, not 8, so a gaming point at `b=12,13`
+   is never enumerated → false EXACT-PASS; likewise `gcd(v,c)` (period `c`) and bounded `Σ/Π` index
+   ranges. Point 4 only DEFERs on `%`/`÷` by a *variable*, not by a constant.
+
+Plus vacuity/tautology gaps (empty `claim_domain` → vacuous PASS; all-of-ℤ/m property → non-discriminating PASS) and TCB growth (the interpreter **and** the period-deriver are trusted and unguarded by `test_invariants.py`; a shared trusted-input error reproduces on re-check).
+
+**Required mitigations (the redesign blueprint for a v2):**
+1. Re-specify the target: enumerate the **faithfulness PAIR over `established_domain`** exactly as
+   `probes.py` does (coverage *and* property both zero over the decisive domain) — never
+   `claim_domain ∧ ¬claim_property` alone. Delete the false "same target the probe/Z3 use" claim.
+2. Bind the Certificate to `established_domain` **and** the `theorem_src`/statement hash, so it cannot
+   be replayed for a broader claim (a COMPUTE certificate must name the exact statement it certifies).
+3. Thread `prop` into the re-check: widen `CertificateRechecker` to `(Certificate, Propositio) → bool`
+   (or have the gate derive the period from `prop`'s AST and assert it equals the certificate's), and
+   state plainly that this is **new gate code**, not the unchanged ADR 0037 seam.
+4. Replace "lcm of the `mᵢ`" with a **per-op period contract**: `% m`→`m`; `/d` on a decisive path →
+   ×`d` (or DEFER on any `/const` on a decisive path); `gcd(v,c)`→`c`; bounded `Σ/Π`/factorial → the
+   index cap enters the decisive range; any op without a proven period contract ⇒ DEFER. Add
+   `/ by a constant` to the DEFER list.
+5. **Build** (not merely name) vacuity/discrimination controls on the EXACT-PASS path: a
+   `claim_domain`-SAT positive control (empty domain ⇒ DEFER), a non-tautology control, and a
+   positive/negative/DEFER regression triple the checker must respectively FAIL/PASS/DEFER.
+6. Treat the period-deriver + interpreter as **inside the faithfulness TCB, not protected by the
+   re-check**; pin them with an adversarial trust-boundary regression suite (nested mod, `/const`
+   phase, `gcd` second-arg, Σ/Π index range, differential derived-vs-bruteforce period, an interpreter
+   known-answer set) before shipping.
+7. Move the AST periodicity/DEFER screen into the **gate** (which holds `prop`), not the
+   backend-owned `applies()`; DEFER on any non-whitelisted construct before accepting an exact PASS.
+
+The capability remains worth pursuing (exact enumeration genuinely decides two-variable modular UNSAT
+where Z3 returns unknown, and unblocks the richer laws the daemon already conjectures) — but only via
+a v2 that adopts all seven mitigations and passes a fresh adversarial review. As written, ADR 0054 is
+not implementable.
+
+---
+
+*Original proposal (retained for the record — do not implement without the redesign above):*
 
 ## Context — the empirical correction
 
