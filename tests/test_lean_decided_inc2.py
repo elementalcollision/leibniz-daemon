@@ -69,6 +69,24 @@ def test_classify_rejects_out_of_skeleton(bad):
     assert ld.classify_property(bad) is None
 
 
+@pytest.mark.parametrize("bad", [
+    "(2*a) % 2 == 2",                    # c == m: 2 ≡ 0 in ZMod 2 → key vacuously true, ℤ stmt false
+    "a*3 % 3 == 3",                      # c == m
+    "(a*a + b*b) % 4 == 5",              # c > m
+    "(a*a) % 2 == 0 or (a*a) % 2 == 2",  # residue_set with an out-of-range residue → whole thing DEFERs
+])
+def test_classify_rejects_out_of_range_residues(bad):
+    # STATIC guard: soundness must not depend on the `simpa` bridge failing in the kernel.
+    assert ld.classify_property(bad) is None
+
+
+def test_is_pure_poly_bounds_exponent_by_max_pow():
+    from leibniz.dsl_to_lean import _parse
+    from leibniz.backends.smt_z3 import MAX_POW
+    assert ld._is_pure_poly(_parse(f"a ** {MAX_POW}"))
+    assert not ld._is_pure_poly(_parse(f"a ** {MAX_POW + 1}"))   # over cap → not a renderable poly
+
+
 def test_is_pure_poly():
     from leibniz.dsl_to_lean import _parse
     assert ld._is_pure_poly(_parse("a*a + b*b - 3*a"))
@@ -229,6 +247,32 @@ def test_register_wires_all_three():
     gate = _gate_with_backend(FakeKernel())
     assert ld.KIND in gate.recheckers and ld.KIND in gate.templates
     assert any(getattr(b, "name", "") == "lean-decided" for b in gate.sound_backends)
+
+
+# --- the assembly opt-in guard (default OFF; on only with flag AND a real image) ------------------
+
+def test_maybe_register_lean_decided_is_default_off():
+    from leibniz import assembly
+    gate = _bare_gate()
+    # no flag → not registered, even if the image were available
+    assert assembly.maybe_register_lean_decided(gate, "img", env={}) is False
+    assert ld.KIND not in gate.recheckers
+
+
+def test_maybe_register_lean_decided_needs_flag_AND_image(monkeypatch):
+    from leibniz import assembly
+    from leibniz.backends import lean_repl
+    # flag set but image unavailable → still fail-closed
+    monkeypatch.setattr(lean_repl, "available", lambda image: False)
+    gate = _bare_gate()
+    assert assembly.maybe_register_lean_decided(gate, "img", env={"LEIBNIZ_LEAN_DECIDED": "1"}) is False
+    assert ld.KIND not in gate.recheckers
+    # flag set AND image available → registers (backend construction stubbed to avoid Docker)
+    monkeypatch.setattr(lean_repl, "available", lambda image: True)
+    monkeypatch.setattr(lean_repl, "LeanReplBackend", lambda image=None: FakeKernel())
+    gate2 = _bare_gate()
+    assert assembly.maybe_register_lean_decided(gate2, "img", env={"LEIBNIZ_LEAN_DECIDED": "1"}) is True
+    assert ld.KIND in gate2.recheckers and ld.KIND in gate2.templates
 
 
 # --- opt-in real-kernel integration (ground truth) ------------------------------------------------

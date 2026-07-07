@@ -236,6 +236,26 @@ def _proof_verifier(cli_lean: LeanVerifier, repl_image: str | None = None) -> Le
     return cli_lean
 
 
+def maybe_register_lean_decided(faithfulness: FaithfulnessGate, repl_image: str, *, env=None) -> bool:
+    """ADR 0056 Track A increment 2 — OPT-IN, DEFAULT OFF. Register the Lean-decided faithfulness
+    backend (the Lean kernel decides the faithfulness pair for multivariable modular-polynomial
+    claims — the fragment Z3 returns `unknown` on and the daemon's richer conjectures die at the gate
+    in today) iff **both** `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is available.
+
+    Without both, the gate stays **fail-closed**: no re-checker is registered for the kind, so
+    `FaithfulnessGate.check` can never accept a PASS of it (a self-reported PASS with no gate
+    re-checker is not a pass). Cleared for activation by the ADR 0056 code-level review (no soundness
+    holes; every adversarial attack DEFERs) — re-run `scripts/verify_lean_decided.py` against the
+    deployed image before enabling. The backend import is inside the guard, so the fail-closed path
+    never loads it. Returns True iff it registered."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return False
+    from leibniz.gates.lean_decided import register as _register
+    _register(faithfulness, lean_repl.LeanReplBackend(image=repl_image))
+    return True
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -256,6 +276,9 @@ def build_daemon(
     ledger_knowns = self_ledger_entries(default_db_path())
     novelty = NoveltyGate(CorpusBackend.from_json(cfg.corpus_path, extra=ledger_knowns), lean)
     faithfulness = FaithfulnessGate(smt=smt, probes=default_probes(smt), judge=ConservativeJudge())
+    # ADR 0056 Track A increment 2 — OPT-IN activation of the Lean-decided faithfulness backend
+    # (default OFF; fail-closed otherwise). See maybe_register_lean_decided.
+    maybe_register_lean_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).

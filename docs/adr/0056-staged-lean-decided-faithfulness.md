@@ -152,8 +152,34 @@ unbounded `∀ … : ℤ` pair via `ZMod.intCast_eq_intCast_iff'` + `push_cast`.
 
 **Still fail-closed:** nothing in the assembly imports or registers `lean_decided`; `register(gate, kernel)`
 is an explicit **operator** action. Until then `recheckers.get(kind)` is `None` and no PASS of this kind is
-accepted. **Activation (the operator calling `register`) is gated on a code-level adversarial review** of
-`lean_decided.py` + the `faithfulness.py` binding — the same discipline that gated every prior step.
+accepted.
+
+### Code-level activation review — CLEARED (2026-07-07)
+
+The 5-lens code review (`safe-to-activate`, high confidence) found **no soundness holes**: the
+ZMod-`decide` → `intCast_eq_intCast_iff'` → `simpa` bridge proves *exactly* the `Int.emod` statement the
+renderer emits, and every attack a proposer can mount — false congruences, residue collapse, out-of-range
+residues, vacuous/empty domains — resolves to a `decide`-refusal or a `simpa` elaboration failure, i.e.
+**DEFER, never a false Q.E.D.** It required three hardening items, all applied:
+
+1. **Static residue-range guard** (`classify_property`/`_atom`): reject `c ∉ [0, m)` so soundness no longer
+   *depends on* the `simpa` bridge failing — an out-of-range residue now DEFERs at classification.
+2. **`_is_pure_poly` bounded by `MAX_POW`** — restores total-or-DEFER even under a future refactor.
+3. **`find_witness`** skips a per-point evaluator surprise (`continue`) instead of aborting the search.
+
+The review's 12-probe attack list was then run through the **real Lean 4.31 kernel**
+(`scripts/verify_lean_decided.py`, a committed pre-activation regression): **probes 1–9 all DEFER — zero
+false-EXACT-PASS** (1–4 at the new static guard; 5–6 kernel-rejects the false property; 7–8 no ∃-witness;
+9 kernel-rejects false coverage), the positive controls (incl. real ℤ subtraction) PASS, and the
+`% == Int.emod` / Euclidean defeq canaries hold. (A bare-constant, variable-independent `claim_property`
+DEFERs rather than passing — a benign over-DEFER, not a false PASS; such triviality is the novelty gate's
+job anyway.)
+
+**Activation is therefore CLEARED at the code level.** The remaining step is an explicit operator decision to
+wire `register(gate, kernel)` into the assembly (proposed behind an opt-in flag, default off) — re-running
+`scripts/verify_lean_decided.py` against the deployed image first. Renderer-conformance
+(`tests/test_dsl_to_lean_conformance.py`, and its `LEIBNIZ_LEAN_E2E` legs, confirmed here by the defeq
+canaries + the controls' kernel-checked `Int.emod` statements) is the co-requisite and is green.
 
 ### Track B — deferred to ADR 0057 (direction, not design)
 

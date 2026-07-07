@@ -62,6 +62,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from leibniz.backends.lean_axioms import axiom_closure
+from leibniz.backends.smt_z3 import MAX_POW
 from leibniz.dsl_to_lean import (
     RenderError,
     _parse,
@@ -109,8 +110,11 @@ def _is_pure_poly(node: ast.AST) -> bool:
         if isinstance(node.op, (ast.Add, ast.Sub, ast.Mult)):
             return _is_pure_poly(node.left) and _is_pure_poly(node.right)
         if isinstance(node.op, ast.Pow):
+            # Bound the exponent by MAX_POW so `_term` (which enforces the same cap) can never raise
+            # on a poly `_is_pure_poly` accepted — keeps decide_certificate total-or-DEFER even if a
+            # future refactor reaches `property_proof`'s `_term` before `faithfulness_pair` renders.
             return (_is_pure_poly(node.left) and isinstance(node.right, ast.Constant)
-                    and isinstance(node.right.value, int))
+                    and isinstance(node.right.value, int) and 0 <= node.right.value <= MAX_POW)
     return False
 
 
@@ -129,6 +133,15 @@ def _atom(node: ast.AST) -> Optional[tuple[str, ast.AST, int, int]]:
         return None
     m, c = _const(left.right), _const(right)
     if m is None or m < 2 or c is None or not _is_pure_poly(left.left):
+        return None
+    # STATIC residue-range guard (code-review hardening): a residue outside [0, m) is degenerate —
+    # for `eq`/`residue_set` the ZMod key can be vacuously true (e.g. `poly % 2 == 2`: 2 ≡ 0 in
+    # ZMod 2) while the ℤ statement `Int.emod poly m = c` is FALSE. Today the eq/residue bridge's
+    # `simpa` step fails on such a `c` → DEFER, but that makes soundness depend on tactic behavior in
+    # the pinned image. Rejecting `c ∉ [0, m)` here moves the guard to classification, so no skeleton
+    # with an out-of-range residue is ever built. (`neq` with `c ≥ m` is trivially true, not unsound,
+    # but is likewise degenerate — reject uniformly.)
+    if not (0 <= c < m):
         return None
     if isinstance(cmp_op, ast.Eq):
         return ("eq", left.left, m, c)
@@ -312,7 +325,7 @@ def find_witness(pred_srcs: list[str], vs: list[str]) -> Optional[tuple[int, ...
             if all(_eval_pred(t, asn) for t in trees):
                 return point
         except (RenderError, KeyError, ZeroDivisionError):
-            return None
+            continue   # a per-point evaluation surprise skips that point, never aborts the search
     return None
 
 
