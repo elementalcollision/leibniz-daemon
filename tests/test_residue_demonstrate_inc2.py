@@ -90,32 +90,29 @@ def test_fastpath_promotes_on_one_and_rewrites_theorem_src():
     assert ev.detail.get("decision_procedure") == "residue-poly-zmod" and ev.detail.get("consensus") == 1
 
 
-def test_the_promoted_proof_edge_passes_validate_path():
-    # the fast-path's PROOF edge is a real MECHANICAL/PASS/KERNEL_PRODUCER edge that promulgates
-    # alongside PASSing faithfulness + novelty edges.
+def test_the_full_fastpath_path_promulgates_end_to_end():
+    # The REAL edge set — the fast-path's PROOF edge + the lean_decided/kernel faithfulness edge these
+    # claims carry (now admitted to FAITHFULNESS_PRODUCERS) + a novelty PASS — validate_paths.
     stage = ResidueDemonstrate(inner=FakeInner(), lean=FakeLean(accept=True, clean=True))
     prop = mkprop(*MODULAR)
     stage.run(prop)
-    proof = [e for e in prop.edges if e.edge == PROOF_EDGE][0]
+    assert any(e.edge == PROOF_EDGE and e.producer == KERNEL_PRODUCER for e in prop.edges)
+    assert any(e.edge == FAITHFULNESS_EDGE and e.producer == "lean_decided/kernel" for e in prop.edges)
+    TrustPolicy().validate_path(list(prop.edges) + [
+        EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
+    ])                                                             # must NOT raise — the lever promulgates
+
+
+def test_lean_decided_faithfulness_producer_is_admitted():
+    # ADR 0056 lean_decided is an operator-admitted faithfulness producer, so a lean_decided/kernel
+    # faithfulness edge is NOT rejected by validate_path (the gap that had blocked all promulgation).
+    from leibniz.trust import FAITHFULNESS_PRODUCERS
+    assert "lean_decided/kernel" in FAITHFULNESS_PRODUCERS
     TrustPolicy().validate_path([
-        proof,
-        EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="FaithfulnessGate"),
+        EdgeEvidence(PROOF_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer=KERNEL_PRODUCER),
+        EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="lean_decided/kernel"),
         EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
     ])                                                             # must NOT raise
-
-
-def test_lean_decided_faithfulness_producer_gap_is_explicit():
-    # DOCUMENTS the required operator trust-core edit (ADR 0041): until 'lean_decided/kernel' is admitted
-    # to FAITHFULNESS_PRODUCERS, validate_path REJECTS the faithfulness edge these claims carry, so the
-    # ceiling-raiser cannot promulgate end-to-end. This test passes today (proving the gap) and will
-    # fail once the operator admits the producer — the signal to delete it.
-    from leibniz.trust import TrustViolation
-    with pytest.raises(TrustViolation):
-        TrustPolicy().validate_path([
-            EdgeEvidence(PROOF_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer=KERNEL_PRODUCER),
-            EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="lean_decided/kernel"),
-            EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
-        ])
 
 
 def test_falls_through_when_kernel_rejects():
