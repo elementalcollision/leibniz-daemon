@@ -22,7 +22,7 @@ from leibniz.backends.lean_cli import LeanCliBackend
 from leibniz.backends.smt_z3 import Z3Backend
 from leibniz.budget import TrustBudget
 from leibniz.consensus import ConsensusDemonstrate, NoOpDerive, ProofConsensus
-from leibniz.corpus import CorpusBackend
+from leibniz.corpus import CorpusBackend, self_ledger_entries
 from leibniz.cost import CostBudget
 from leibniz.daemon import Leibniz
 from leibniz.discovery import (
@@ -49,7 +49,7 @@ from leibniz.providers.decomposition_prover import DecompositionProver
 from leibniz.providers.failover_provider import FailoverProvider
 from leibniz.providers.huggingface_provider import HuggingFaceProvider
 from leibniz.providers.openrouter_provider import OpenRouterProvider
-from leibniz.runtime import PersistentRuntime
+from leibniz.runtime import PersistentRuntime, default_db_path
 from leibniz.selection import KFM, Archive
 from leibniz.trust import TrustPolicy
 from leibniz.verifiers import LeanVerifier, SMTVerifier
@@ -250,7 +250,11 @@ def build_daemon(
     lean = LeanVerifier(LeanCliBackend(image=cfg.lean_image))
     smt = SMTVerifier(Z3Backend())
     # ADR 0033: pin the corpus per instance (PROD: audited; UAT/dev: may override).
-    novelty = NoveltyGate(CorpusBackend.from_json(cfg.corpus_path), lean)  # ADR 0031 L2 retracted; exact-hash novelty
+    # ADR 0052: augment the known-results corpus with the daemon's OWN promulgated laws (from the
+    # runtime DB, read-only) so it stops rediscovering itself. Kill-only gate ⇒ soundness-safe;
+    # matches by formal_hash ⇒ never false-KNOWN; fail-safe if the DB is absent.
+    ledger_knowns = self_ledger_entries(default_db_path())
+    novelty = NoveltyGate(CorpusBackend.from_json(cfg.corpus_path, extra=ledger_knowns), lean)
     faithfulness = FaithfulnessGate(smt=smt, probes=default_probes(smt), judge=ConservativeJudge())
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
