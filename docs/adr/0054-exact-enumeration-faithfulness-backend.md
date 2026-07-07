@@ -1,10 +1,13 @@
 # ADR 0054 — An exact-enumeration / periodicity faithfulness backend (unifies Lever A + Lever B)
 
-**Status:** **NEEDS REDESIGN (2026-07-07)** — the adversarial soundness review below returned
+**Status:** **NEEDS REDESIGN (2026-07-07) — SUPERSEDED-BY [ADR 0055](0055-lean-decided-faithfulness-backend.md)
+(2026-07-07).** The adversarial soundness review below returned
 `needs-redesign` (high confidence, **not safe to implement**). Do **not** implement the design as
 written; the capability is sound in principle but three of the six decision points are unsound as
-specified (one is a *regression* in gate soundness). A redesign (a v2 ADR) folding in the seven
-required mitigations must clear its **own** review before any code. Complements ADR 0002 (faithfulness
+specified (one is a *regression* in gate soundness). The redesign (the "v2 ADR" this called for) is
+**ADR 0055**, which moves the enumeration onto the Lean kernel (per the external fleet review) so a
+wrong period or a buggy evaluator DEFERs instead of false-PASSing; it folds in all seven mitigations
+below and must clear its **own** review before any code. Complements ADR 0002 (faithfulness
 gate), ADR 0037 (sound-backend seam), ADR 0020/0022 (contract encodability / probe), ADR 0051 (the
 review precedent — likewise rejected on review). Supersedes the "cheap Lever A" framing in
 `docs/fleet-review-raising-the-ceiling.md`.
