@@ -47,6 +47,7 @@ FAITHFULNESS_PRODUCERS = frozenset({
     "ClaimProbe",                   # the per-ClaimType mechanical probe
     "FaithfulnessGate",             # the gate's own DEFER / refusal (not a judge)
     "walnut/recheck",               # the Walnut sound backend (ADR 0037 / 0038)
+    "lean_decided/kernel",          # the Lean-decided faithfulness backend (ADR 0056; reviewed + activated)
 })
 
 

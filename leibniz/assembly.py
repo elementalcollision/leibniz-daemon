@@ -256,17 +256,19 @@ def maybe_register_lean_decided(faithfulness: FaithfulnessGate, repl_image: str,
     return True
 
 
-def maybe_wrap_residue(demonstrate, consensus, *, env=None):
+def maybe_wrap_residue(demonstrate, consensus, repl_image, *, env=None):
     """ADR 0058 increment 2 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the residue
     decision-procedure fast-path (prove a modular-polynomial claim's canonical law by the ZMod bridge
-    and promote on the single kernel verification) iff `LEIBNIZ_LEAN_DECIDED` is set — the *same*
-    activation as the faithfulness backend, since these claims only reach DERIVE once `lean_decided`
-    has certified them. The fast-path uses the ensemble's own kernel verifier (`discharge`, the sole
-    `kernel_verified` writer) and falls through to `demonstrate` (the unchanged N+1 ensemble) for
-    non-modular claims or when the kernel rejects the generated proof. Without the flag the stage is
-    returned unchanged — fail-closed. Returns the (possibly wrapped) DEMONSTRATE stage."""
+    and promote on the single kernel verification) iff `LEIBNIZ_LEAN_DECIDED` is set **and a real Lean
+    REPL image is available** — the SAME gate as `maybe_register_lean_decided`, so the fast-path is
+    never on while the statement-binding faithfulness backend (`lean_decided`) is off. This closes the
+    activation asymmetry (flag-set-but-REPL-absent would otherwise wrap DEMONSTRATE over a CLI kernel
+    with `lean_decided` unregistered) and guarantees a REPL backend for the promotion-time
+    `axiom_closure`. The fast-path additionally promotes only claims carrying a `lean_decided/kernel`
+    faithfulness edge, and falls through to `demonstrate` (the unchanged N+1 ensemble) otherwise.
+    Without both conditions the stage is returned unchanged — fail-closed."""
     env = env if env is not None else os.environ
-    if not env.get("LEIBNIZ_LEAN_DECIDED"):
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
         return demonstrate
     from leibniz.providers.residue_prover import ResidueDemonstrate
     return ResidueDemonstrate(inner=demonstrate, lean=consensus.lean)
@@ -356,7 +358,8 @@ def build_daemon(
         demonstrate = DecomposingDemonstrate(consensus, decomposer)
     else:
         demonstrate = ConsensusDemonstrate(consensus)
-    demonstrate = maybe_wrap_residue(demonstrate, consensus)   # ADR 0058: opt-in decision-procedure fast-path
+    demonstrate = maybe_wrap_residue(                          # ADR 0058: opt-in decision-procedure fast-path
+        demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_PATH") or str(_DEFAULT_FRONTIER)

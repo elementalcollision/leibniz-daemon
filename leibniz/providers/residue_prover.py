@@ -40,9 +40,15 @@ from leibniz.gates.lean_decided import (
     classify_property,
 )
 from leibniz.propositio import Demonstratio
+from leibniz.trust import FAITHFULNESS_EDGE
 from leibniz.types import EdgeEvidence, Verdict
+from leibniz.verifiers import normalize_statement
 
 IMPORTS = ("Mathlib.Tactic",)   # ZMod + intCast_eq_intCast_iff' resolve here (as in lean_decided)
+# The producer stamped by the STATEMENT-BINDING faithfulness backend (lean_decided). The fast-path
+# promotes on one kernel verification ONLY for a claim this backend certified, because it alone
+# byte-binds the canonical ℤ-box statement to the claim (ADR 0056 obligation 5 / ADR 0058 A2).
+LEAN_DECIDED_PRODUCER = "lean_decided/kernel"
 
 
 def law_statement(claim_domain: str, claim_property: str, vs: list[str]) -> str:
@@ -145,8 +151,11 @@ class ResidueDemonstrate:
       this hardcoded path, reached only when the operator activates it and only for claims `residue_law`
       accepts. There is no identity string or class to forge.
     - **A2 (statement binding):** the promulgated `theorem_src` is **re-rendered here** from the DSL
-      contract the faithfulness gate vetted (`en.claim_domain / en.claim_property`), so the proven
-      statement *is* the certified one — not the autoformalizer's free-text `theorem_src`.
+      contract the faithfulness gate vetted, so the proven statement *is* the certified one — not the
+      autoformalizer's free-text `theorem_src`. Enforced two ways: the fast-path promotes **only** a
+      claim that carries a **`lean_decided/kernel` faithfulness PASS edge** (the sole statement-binding
+      backend, which byte-binds the canonical statement and DEFERs vacuous domains), and it refreshes
+      `normalized_hash`/`established_domain` so the ledger + self-dedup key the published statement.
     - **A4 (axiom footprint):** a promotion-time `axiom_closure` rejects `sorryAx`/`Lean.ofReduceBool`
       (`native_decide`); the generated proofs use only kernel `decide`.
     - **Kernel-gated (the crux):** `LeanVerifier.discharge` remains the sole `kernel_verified` writer;
@@ -167,27 +176,48 @@ class ResidueDemonstrate:
         return self.inner.run(prop)
 
     def _fastpath(self, prop) -> bool:
+        try:
+            return self._promote(prop)
+        except Exception:
+            return False   # any non-kernel surprise → fall through to the ensemble, never crash DEMONSTRATE
+
+    def _promote(self, prop) -> bool:
         en, expr = prop.enuntiatio, getattr(prop, "expressio", None)
         if expr is None or not (en.claim_domain and en.claim_property):
+            return False
+        # A2 (statement binding): promote-on-one ONLY for a claim the STATEMENT-BINDING faithfulness
+        # backend (lean_decided) certified — it alone byte-binds the canonical ℤ-box statement to this
+        # claim (and DEFERs empty/vacuous domains via its ∃-witness controls). If faithfulness passed
+        # some OTHER way (the Z3 probe, the gaming spine, or the OPEN_FORM judge), the canonical LAW was
+        # never vetted *as a statement*, so fall through — no promote-on-one. This makes the fast-path
+        # robust regardless of which faithfulness path or deployment config is live.
+        if not any(e.edge == FAITHFULNESS_EDGE and e.verdict is Verdict.PASS
+                   and e.producer == LEAN_DECIDED_PRODUCER for e in prop.edges):
             return False
         gen = residue_law(_law_name(en.claim_domain, en.claim_property), en.claim_domain, en.claim_property)
         if gen is None:
             return False
         theorem_src, proof = gen
-        # A2: prove the gate-rendered canonical statement (Mathlib.Tactic pins ZMod/Euclidean %).
-        law_expr = replace(expr, theorem_src=theorem_src, imports=IMPORTS)
+        # A2: prove and promulgate the gate-rendered canonical statement. Refresh normalized_hash and
+        # established_domain so the ledger + ADR-0052 self-dedup key the PUBLISHED statement, not the
+        # autoformalizer's stale one (Mathlib.Tactic pins ZMod / Euclidean %).
+        law_expr = replace(expr, theorem_src=theorem_src, imports=IMPORTS,
+                           established_domain=en.claim_domain,
+                           normalized_hash=normalize_statement(theorem_src))
         demo = Demonstratio(proof_obligation=self.obligation, proof_src=proof)
         ev = self.lean.discharge(law_expr, demo)              # sole kernel_verified writer
-        if not demo.kernel_verified:
+        if not (demo.kernel_verified and ev.verdict is Verdict.PASS):
             return False                                      # kernel rejected → fall to the ensemble
         # A4: clean axiom footprint (no native_decide / sorry). backend needed for `#print axioms`.
         backend = getattr(self.lean, "backend", None)
         if backend is None or not axiom_closure(backend, theorem_src, proof, IMPORTS).get("ok"):
             return False
+        if getattr(prop, "signature", None) is not None:      # keep novelty/dedup identity in sync
+            prop.signature = replace(prop.signature, formal_hash=law_expr.normalized_hash)
         prop.expressio = law_expr                             # promulgate the canonical statement
         prop.demonstratio = demo
         prop.record(EdgeEvidence(
-            edge=ev.edge, tier=ev.tier, verdict=Verdict.PASS,
+            edge=ev.edge, tier=ev.tier, verdict=ev.verdict,   # the kernel's own verdict, never hardcoded
             detail={**ev.detail, "decision_procedure": "residue-poly-zmod", "consensus": 1},
             cost_units=ev.cost_units, producer=ev.producer,   # KERNEL_PRODUCER, preserved from discharge
         ))
