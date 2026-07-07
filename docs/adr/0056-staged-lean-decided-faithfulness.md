@@ -132,6 +132,29 @@ reduction-ownership hole). **Increment-2 build obligations (build to this, or do
 7. **Modulus-presence guard:** a non-modular in-fragment pair (`a*a ≥ a`) has no finite residue proof —
    detect modulus-absence and DEFER, never attempt an unsound closure.
 
+### Increment 2 — BUILT (behind fail-closed), pending a code-level review before activation
+
+`leibniz/gates/lean_decided.py` implements the Lean-decided backend to all seven obligations, and every
+statement **and proof** the kernel checks is **gate-owned**, constructed here from the three DSL contract
+strings — no proposer `proof_src` is ever accepted. The residue reduction is the **ZMod bridge**
+(validated against the real Lean 4.31 kernel): a `decide`-closed key lemma over `ZMod m`, lifted to the
+unbounded `∀ … : ℤ` pair via `ZMod.intCast_eq_intCast_iff'` + `push_cast`. Obligation map:
+
+| # | Obligation | How increment 2 meets it |
+|---|---|---|
+| 1 | Gate-owned reduction, never proposer `proof_src` | All 4 statements + proofs built by `lean_decided` templates from `cert.data`; a **false** claim makes the ZMod key's `decide` refuse → kernel rejects → DEFER (validated: `(a²+b²)%4≠2` DEFERs). |
+| 2 | Pinned `cert.data` contract | Exactly `{claim_domain, claim_property, established_domain}`, all builtin `str`; a stray shape → DEFER. |
+| 3 | Re-checker re-derives + `axiom_closure` inside | `make_rechecker` re-renders + kernel-checks all four and runs the shared `axiom_closure` (`leibniz/backends/lean_axioms.py`, lifted from `export_calculemus`) rejecting `sorryAx`/`Lean.ofReduceBool` at faithfulness time. |
+| 4 | Bind all four individually | Coverage, property, `∃ claim_domain`, `∃ established ∧ claim` each kernel-checked; the ∃-witnesses are the vacuity control (empty domain → no witness → DEFER, validated). |
+| 5 | Statement binding on the accept path | `FaithfulnessGate.check` gained a `templates` map; a PASS requires `template(prop) == cert.detail["statement"]` (builtin-`str`, `str.__ne__`) — the E7 discipline on the gate path. Tightening-only; validated a tampered statement is refused. |
+| 6 | Robustness → DEFER | `decide_certificate`/`applies`/the re-checker are total; any `RenderError`/surprise is a DEFER, never a crash. |
+| 7 | Modulus-presence / fragment guard | The *reduction* fragment (pure poly `% m ⋈ c`) is strictly narrower than the renderer fragment; `min`/`max`/division/non-modular DEFER; a residue budget caps `mⁿ`; 1-var stays on the cheap Z3 probe (invariant 5). |
+
+**Still fail-closed:** nothing in the assembly imports or registers `lean_decided`; `register(gate, kernel)`
+is an explicit **operator** action. Until then `recheckers.get(kind)` is `None` and no PASS of this kind is
+accepted. **Activation (the operator calling `register`) is gated on a code-level adversarial review** of
+`lean_decided.py` + the `faithfulness.py` binding — the same discipline that gated every prior step.
+
 ### Track B — deferred to ADR 0057 (direction, not design)
 
 The review found Track B **relocates** the TCB rather than shrinking it to a lint: "author in Lean, gate
