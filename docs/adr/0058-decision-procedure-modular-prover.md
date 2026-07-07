@@ -66,6 +66,32 @@ independently found the masquerade defect, plus a binding gap. **Corrected desig
 The original identity/allowlist prose below (§Decision-2/3) is **superseded by A1** wherever they
 conflict (it described string-identity keying).
 
+### Increment-2 implementation note (2026-07-07): a DEMONSTRATE fast-path, not a pluggable prover
+
+Increment 2 realises decision-procedure promotability as a **DEMONSTRATE fast-path**
+(`leibniz/providers/residue_prover.py::ResidueDemonstrate`, opt-in via `LEIBNIZ_LEAN_DECIDED`) rather
+than a pluggable prover in the consensus ensemble. For a modular claim it proves the gate-rendered
+canonical ℤ-box law by the ZMod bridge and records the proof edge on the **single** kernel
+verification; everything else falls through to the unchanged N+1 ensemble. This is **strictly more
+conservative** than the reviewed ensemble-prover design and satisfies the same obligations more simply:
+
+- **A1 is obviated, not merely fixed.** There is *no registrable prover object* to masquerade as — the
+  decision procedure is one fixed, operator-activated code path reached only for claims `residue_law`
+  accepts. No identity string or class to forge; `_prover_identity` is not involved.
+- **A2** — the promoted `theorem_src` is re-rendered *in the fast-path* from the faithfulness-vetted DSL
+  contract, so the proven statement is the certified one.
+- **A4** — a promotion-time `axiom_closure` rejects `sorryAx`/`Lean.ofReduceBool`; the proofs use only
+  kernel `decide`.
+- **Trust boundary byte-identical** — `consensus.py`, `trust.py`, `TrustPolicy.validate_path`, and
+  `tests/test_invariants.py` are **unchanged**. The promoted edge is `discharge`'s own
+  `MECHANICAL/PASS/KERNEL_PRODUCER` edge; promulgation is still gated by `validate_path`. The fast-path
+  merely does not *add* the N+1 requirement (a consensus-layer policy, never a trust-core one) to a
+  deterministic, kernel-verified proof — exactly the ADR's decision.
+
+Kernel-validated end-to-end (the live claim `((a·b)²+a·b) % 6 ∈ {0,2}` is proved and promoted; a false
+claim's generated proof is kernel-rejected → fall-through). **Fail-closed** until the operator sets the
+flag; **activation is gated on a code-level review** (as ADR 0056 increment 2 was).
+
 ## Context — the binding constraint moved to the prover
 
 Activating the Lean-decided faithfulness backend (ADR 0056) let the daemon's richer two-variable

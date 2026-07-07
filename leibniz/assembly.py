@@ -256,6 +256,22 @@ def maybe_register_lean_decided(faithfulness: FaithfulnessGate, repl_image: str,
     return True
 
 
+def maybe_wrap_residue(demonstrate, consensus, *, env=None):
+    """ADR 0058 increment 2 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the residue
+    decision-procedure fast-path (prove a modular-polynomial claim's canonical law by the ZMod bridge
+    and promote on the single kernel verification) iff `LEIBNIZ_LEAN_DECIDED` is set — the *same*
+    activation as the faithfulness backend, since these claims only reach DERIVE once `lean_decided`
+    has certified them. The fast-path uses the ensemble's own kernel verifier (`discharge`, the sole
+    `kernel_verified` writer) and falls through to `demonstrate` (the unchanged N+1 ensemble) for
+    non-modular claims or when the kernel rejects the generated proof. Without the flag the stage is
+    returned unchanged — fail-closed. Returns the (possibly wrapped) DEMONSTRATE stage."""
+    env = env if env is not None else os.environ
+    if not env.get("LEIBNIZ_LEAN_DECIDED"):
+        return demonstrate
+    from leibniz.providers.residue_prover import ResidueDemonstrate
+    return ResidueDemonstrate(inner=demonstrate, lean=consensus.lean)
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -340,6 +356,7 @@ def build_daemon(
         demonstrate = DecomposingDemonstrate(consensus, decomposer)
     else:
         demonstrate = ConsensusDemonstrate(consensus)
+    demonstrate = maybe_wrap_residue(demonstrate, consensus)   # ADR 0058: opt-in decision-procedure fast-path
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
     _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_PATH") or str(_DEFAULT_FRONTIER)

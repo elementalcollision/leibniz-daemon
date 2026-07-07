@@ -22,8 +22,11 @@ unsound law. Here the generator is exercised only against a real kernel in tests
 """
 from __future__ import annotations
 
+import hashlib
+from dataclasses import dataclass, replace
 from typing import Optional
 
+from leibniz.backends.lean_axioms import axiom_closure
 from leibniz.dsl_to_lean import RenderError, _binder, _nonneg, free_vars, render_pred
 from leibniz.gates.lean_decided import (
     MAX_RESIDUE_CELLS,
@@ -36,6 +39,8 @@ from leibniz.gates.lean_decided import (
     _term,
     classify_property,
 )
+from leibniz.propositio import Demonstratio
+from leibniz.types import EdgeEvidence, Verdict
 
 IMPORTS = ("Mathlib.Tactic",)   # ZMod + intCast_eq_intCast_iff' resolve here (as in lean_decided)
 
@@ -111,3 +116,79 @@ def residue_law(name: str, claim_domain: str, claim_property: str) -> Optional[t
         return theorem_src, _law_proof(skel, vs)
     except RenderError:
         return None
+
+
+def _law_name(claim_domain: str, claim_property: str) -> str:
+    """A stable, valid Lean identifier for the law, derived from its contract."""
+    h = hashlib.sha256(f"{claim_domain}␟{claim_property}".encode()).hexdigest()[:12]
+    return f"residue_law_{h}"
+
+
+# --- ADR 0058 increment 2: the DEMONSTRATE fast-path (decision procedure, promote-on-one) ---------
+
+
+@dataclass
+class ResidueDemonstrate:
+    """DEMONSTRATE fast-path realising ADR 0058's *decision-procedure promotability* — the more
+    conservative form of the reviewed design (there is **no pluggable prover to masquerade as**; the
+    decision procedure is this single, fixed, operator-activated code path).
+
+    For a modular-polynomial claim it proves the **gate-rendered canonical ℤ-box LAW**
+    (`residue_law`, kernel-validated) and, on the **single** kernel verification, records the proof
+    edge — **promote-on-one**. Everything else (non-modular claims, or a claim whose generated proof
+    the kernel rejects) **falls through to `inner`** (the unchanged N+1 consensus ensemble).
+
+    How the review's obligations are met **without touching `consensus.py`/`trust.py`/`validate_path`/
+    `test_invariants`** (all byte-identical):
+
+    - **A1 (masquerade):** none possible — the decision procedure is not a registrable prover; it is
+      this hardcoded path, reached only when the operator activates it and only for claims `residue_law`
+      accepts. There is no identity string or class to forge.
+    - **A2 (statement binding):** the promulgated `theorem_src` is **re-rendered here** from the DSL
+      contract the faithfulness gate vetted (`en.claim_domain / en.claim_property`), so the proven
+      statement *is* the certified one — not the autoformalizer's free-text `theorem_src`.
+    - **A4 (axiom footprint):** a promotion-time `axiom_closure` rejects `sorryAx`/`Lean.ofReduceBool`
+      (`native_decide`); the generated proofs use only kernel `decide`.
+    - **Kernel-gated (the crux):** `LeanVerifier.discharge` remains the sole `kernel_verified` writer;
+      the recorded edge is its own `MECHANICAL/PASS/KERNEL_PRODUCER` edge. A generator bug ⇒ the kernel
+      rejects ⇒ fall-through, never an unsound law. Promotion is still gated by `TrustPolicy.validate_path`
+      (unchanged) — this path merely does not *add* the N+1 requirement (a consensus-layer policy, never a
+      trust-core one) to a deterministic, kernel-verified proof.
+
+    Fail-closed: nothing constructs this unless the operator opts in (see `assembly.maybe_wrap_residue`)."""
+
+    inner: object                 # the wrapped DEMONSTRATE stage (Consensus/Repairing/Decomposing)
+    lean: object                  # the LeanVerifier (discharge = sole kernel_verified writer)
+    obligation: str = "claim"
+
+    def run(self, prop):
+        if self._fastpath(prop):
+            return prop
+        return self.inner.run(prop)
+
+    def _fastpath(self, prop) -> bool:
+        en, expr = prop.enuntiatio, getattr(prop, "expressio", None)
+        if expr is None or not (en.claim_domain and en.claim_property):
+            return False
+        gen = residue_law(_law_name(en.claim_domain, en.claim_property), en.claim_domain, en.claim_property)
+        if gen is None:
+            return False
+        theorem_src, proof = gen
+        # A2: prove the gate-rendered canonical statement (Mathlib.Tactic pins ZMod/Euclidean %).
+        law_expr = replace(expr, theorem_src=theorem_src, imports=IMPORTS)
+        demo = Demonstratio(proof_obligation=self.obligation, proof_src=proof)
+        ev = self.lean.discharge(law_expr, demo)              # sole kernel_verified writer
+        if not demo.kernel_verified:
+            return False                                      # kernel rejected → fall to the ensemble
+        # A4: clean axiom footprint (no native_decide / sorry). backend needed for `#print axioms`.
+        backend = getattr(self.lean, "backend", None)
+        if backend is None or not axiom_closure(backend, theorem_src, proof, IMPORTS).get("ok"):
+            return False
+        prop.expressio = law_expr                             # promulgate the canonical statement
+        prop.demonstratio = demo
+        prop.record(EdgeEvidence(
+            edge=ev.edge, tier=ev.tier, verdict=Verdict.PASS,
+            detail={**ev.detail, "decision_procedure": "residue-poly-zmod", "consensus": 1},
+            cost_units=ev.cost_units, producer=ev.producer,   # KERNEL_PRODUCER, preserved from discharge
+        ))
+        return True
