@@ -62,10 +62,14 @@ class FakeInner:
         return prop
 
 
-def mkprop(cd, cp):
+def mkprop(cd, cp, *, lean_decided_faith=True):
     en = Enuntiatio(statement="t", claim_type=ClaimType.INVARIANT, falsifiable_claim="x",
                     claim_domain=cd, claim_property=cp)
-    return Propositio(enuntiatio=en, expressio=Expressio(theorem_src="theorem llm (a b : Nat) : True"))
+    prop = Propositio(enuntiatio=en, expressio=Expressio(theorem_src="theorem llm (a b : Nat) : True"))
+    if lean_decided_faith:   # the statement-binding faithfulness PASS the fast-path requires (A2)
+        prop.record(EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS,
+                                 producer="lean_decided/kernel"))
+    return prop
 
 
 def test_fastpath_promotes_on_one_and_rewrites_theorem_src():
@@ -86,16 +90,32 @@ def test_fastpath_promotes_on_one_and_rewrites_theorem_src():
     assert ev.detail.get("decision_procedure") == "residue-poly-zmod" and ev.detail.get("consensus") == 1
 
 
-def test_the_promoted_edge_passes_validate_path():
-    # the fast-path edge, with the faithfulness + novelty edges FORMALIZE records, must promulgate
+def test_the_promoted_proof_edge_passes_validate_path():
+    # the fast-path's PROOF edge is a real MECHANICAL/PASS/KERNEL_PRODUCER edge that promulgates
+    # alongside PASSing faithfulness + novelty edges.
     stage = ResidueDemonstrate(inner=FakeInner(), lean=FakeLean(accept=True, clean=True))
     prop = mkprop(*MODULAR)
     stage.run(prop)
-    edges = list(prop.edges) + [
-        EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
+    proof = [e for e in prop.edges if e.edge == PROOF_EDGE][0]
+    TrustPolicy().validate_path([
+        proof,
+        EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="FaithfulnessGate"),
         EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
-    ]
-    TrustPolicy().validate_path(edges)                             # must NOT raise
+    ])                                                             # must NOT raise
+
+
+def test_lean_decided_faithfulness_producer_gap_is_explicit():
+    # DOCUMENTS the required operator trust-core edit (ADR 0041): until 'lean_decided/kernel' is admitted
+    # to FAITHFULNESS_PRODUCERS, validate_path REJECTS the faithfulness edge these claims carry, so the
+    # ceiling-raiser cannot promulgate end-to-end. This test passes today (proving the gap) and will
+    # fail once the operator admits the producer — the signal to delete it.
+    from leibniz.trust import TrustViolation
+    with pytest.raises(TrustViolation):
+        TrustPolicy().validate_path([
+            EdgeEvidence(PROOF_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer=KERNEL_PRODUCER),
+            EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="lean_decided/kernel"),
+            EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS),
+        ])
 
 
 def test_falls_through_when_kernel_rejects():
@@ -121,13 +141,43 @@ def test_falls_through_outside_fragment(cd, cp):
     assert inner.called is True
 
 
-def test_assembly_wiring_is_default_off():
+def test_falls_through_without_lean_decided_faithfulness_edge():
+    # a modular claim that passed faithfulness some OTHER way (probe/judge — no lean_decided edge) is
+    # NOT fast-pathed: its canonical statement was never statement-bound-vetted (A2 gate).
+    inner = FakeInner()
+    prop = mkprop(*MODULAR, lean_decided_faith=False)
+    ResidueDemonstrate(inner=inner, lean=FakeLean(accept=True, clean=True)).run(prop)
+    assert inner.called is True and all(e.edge != PROOF_EDGE for e in prop.edges)
+
+
+def test_hash_refreshed_to_the_published_statement():
+    from leibniz.verifiers import normalize_statement
+    prop = mkprop(*MODULAR)
+    ResidueDemonstrate(inner=FakeInner(), lean=FakeLean(accept=True, clean=True)).run(prop)
+    # the ledger + self-dedup key the PUBLISHED canonical statement, not the autoformalizer's original
+    assert prop.expressio.normalized_hash == normalize_statement(prop.expressio.theorem_src)
+
+
+def test_exception_inside_fastpath_falls_through(monkeypatch):
+    import leibniz.providers.residue_prover as rp
+    inner = FakeInner()
+    monkeypatch.setattr(rp, "residue_law", lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+    ResidueDemonstrate(inner=inner, lean=FakeLean(accept=True)).run(mkprop(*MODULAR))
+    assert inner.called is True                                    # crash-safe: never breaks DEMONSTRATE
+
+
+def test_assembly_wiring_needs_flag_AND_repl(monkeypatch):
+    from leibniz.backends import lean_repl
     inner = FakeInner()
     consensus = type("C", (), {"lean": FakeLean()})()
-    # no flag → returned unchanged (not wrapped)
-    assert assembly.maybe_wrap_residue(inner, consensus, env={}) is inner
-    # flag set → wrapped in the fast-path
-    wrapped = assembly.maybe_wrap_residue(inner, consensus, env={"LEIBNIZ_LEAN_DECIDED": "1"})
+    # no flag → unchanged
+    assert assembly.maybe_wrap_residue(inner, consensus, "img", env={}) is inner
+    # flag set but REPL image ABSENT → still unchanged (activation asymmetry closed)
+    monkeypatch.setattr(lean_repl, "available", lambda image: False)
+    assert assembly.maybe_wrap_residue(inner, consensus, "img", env={"LEIBNIZ_LEAN_DECIDED": "1"}) is inner
+    # flag set AND REPL available → wrapped
+    monkeypatch.setattr(lean_repl, "available", lambda image: True)
+    wrapped = assembly.maybe_wrap_residue(inner, consensus, "img", env={"LEIBNIZ_LEAN_DECIDED": "1"})
     assert isinstance(wrapped, ResidueDemonstrate) and wrapped.inner is inner
 
 
