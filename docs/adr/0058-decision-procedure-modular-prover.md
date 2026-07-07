@@ -1,15 +1,70 @@
 # ADR 0058 — A deterministic modular-polynomial prover, promotable without LLM consensus (refines ADR 0006)
 
-**Status:** **PROPOSED — blocked on adversarial review.** Adds the *prover-reach* half of the
-ceiling-raiser: a **deterministic decision-procedure prover** for the modular-polynomial fragment, and
-a **refinement of the N+1 consensus policy (ADR 0006)** so that a kernel-verified proof from such a
-procedure is promotable on its single verification — the same principle by which a mechanical
-faithfulness gate (ADR 0056 `lean_decided`) or the novelty gate needs no LLM judge/consensus. Per the
-ADR 0051 / 0054 / 0055 / 0056 / 0057 precedent, **no code ships until this clears its own ≥3-lens
-adversarial review.** The **trust boundary is untouched**: the kernel still decides every proof
+**Status:** **AMENDED — review returned `needs-amendment` (2026-07-07); the build-time obligations
+A1–A4 below are binding before code.** The ≥3-lens adversarial review **validated the core principle**
+(promote-on-one for a genuine decision procedure is sound — §"Review outcome") but found the ADR's
+*implementation* of "decision procedure" unsafe: it keyed promotability on a **self-declared `model`
+string** (`_prover_identity`, `consensus.py:63`), which lets a stochastic LLM named after the residue
+prover masquerade and inherit promote-on-one. No path promulgates an *unproven* law (the kernel
+re-verifies every draft — `discharge` is unchanged), so this is a defense-in-depth/policy defect, not a
+kernel-soundness break — but it cannot ship as first drafted. The corrected design is A1–A5 below.
+
+Adds the *prover-reach* half of the ceiling-raiser: a **deterministic decision-procedure prover** for
+the modular-polynomial fragment, and a **refinement of the N+1 consensus policy (ADR 0006)** so that a
+kernel-verified proof from such a procedure is promotable on its single verification — the same
+principle by which a mechanical faithfulness gate (ADR 0056 `lean_decided`) or the novelty gate needs no
+LLM judge/consensus. The **trust boundary is untouched**: the kernel still decides every proof
 (`LeanVerifier.discharge`, the sole `kernel_verified` writer); `TrustPolicy.validate_path` and
-`tests/test_invariants.py` stay byte-identical. Complements ADR 0006 (consensus), ADR 0013/0041
-(producer allowlists), ADR 0056 (the faithfulness backend this unblocks).
+`tests/test_invariants.py` stay byte-identical (the new counting policy is *additionally* pinned by A3).
+Complements ADR 0006 (consensus), ADR 0013/0041 (producer allowlists), ADR 0056 (the faithfulness
+backend this unblocks).
+
+## Review outcome & corrected design (A1–A5) — supersede the identity/binding text below
+
+The review **confirmed the crux**: promote-on-one is sound — N+1 was *never* a kernel-soundness
+mechanism (every proof is checked by the *same* kernel, so consensus adds zero kernel assurance; the
+kernel + faithfulness + `axiom_closure` are the sole soundness mechanisms, all unchanged). Its only
+function was a weak hedge against *LLM-proposer stochasticity*, which a fixed, audited, non-sampled
+algorithm has none of. "Judgment is quorum-gated; decision is kernel-gated" holds. But three lenses
+independently found the masquerade defect, plus a binding gap. **Corrected design, binding before code:**
+
+- **A1 — class-based identity in the trust core (unblocks the masquerade, B1).** `DECISION_PROCEDURE_PROVERS`
+  membership is decided by **operator-imported class identity** — `isinstance(prover, ResiduePolyProver)`
+  where `ResiduePolyProver` is imported *into `leibniz/trust.py`* (the PreToolUse-guarded core), never a
+  `model`/name string and never a self-set flag. The check runs against the prover that **actually
+  produced the kernel-verified draft** (`verified[i][0]` in `ProofConsensus.prove`), **not** the
+  `_prover_identity` string and **not** the unwrapped `.base`. An `OpenRouterProvider(model="residue-poly-prover")`
+  (a colliding string) is *not* an instance of the class, so it still needs `min_consensus`.
+- **A2 — bind `theorem_src` to the faithfulness-vetted statement (unblocks B2).** `validate_path`
+  checks edge *presence*, not that the faithfulness edge and proof edge concern the *same* statement.
+  Promote-on-one is scoped to claims whose `theorem_src` is **gate-rendered from the vetted DSL
+  contract**; the promotion path pins `theorem_src` against the canonical statement the faithfulness
+  gate certified (reuse `lean_decided.canonical_statement` / the ADR 0056 binding), and the ℕ-vs-ℤ
+  domain must be reconciled (the prover proves the *same* domain the gate vetted, not a Nat re-phrasing
+  that only *looks* equivalent). Absent this, faithfulness vets statement A while the ledger publishes B.
+- **A3 — pin the new counting policy in `test_invariants.py` (B3).** Green invariants today prove
+  nothing about promote-on-one because the policy is invisible to them. Add regressions: an **LLM-only**
+  path needs `min_consensus`; a kernel-**rejected** draft never promotes; the allowlist is consulted
+  **only** against provers in `verified`; a colliding-`model` LLM still needs `min_consensus`.
+- **A4 — pin the generator to kernel `decide`, with a promotion-time axiom check (B4).** The residue
+  generator emits only kernel tactics (never `native_decide`); a promotion-time `axiom_closure` (or a
+  binding of the publish-time check to promotion) rejects `sorryAx`/`Lean.ofReduceBool`. Fixes the
+  promulgate-vs-publish conflation.
+- **A5 — single-procedure promotion, explicitly justified (the residual).** The review's one honest
+  residual: promote-on-one rests on a *single technique* (the ZMod bridge) over a *single kernel* with
+  no independent recomputation. **Justification (accepted over requiring two procedures):** the ZMod
+  substrate is **already trusted, load-bearingly, by `lean_decided` faithfulness** (a false faithfulness
+  PASS mis-labels a law; the prover's output is *not* load-bearing — the kernel re-verifies the actual
+  `theorem_src`, so a generator bug is a DEFER). Requiring a second technique for the *proof* while the
+  *faithfulness* gate already promotes on the same substrate would be inconsistent and add no substrate
+  independence the system doesn't already accept. **Cross-kernel replay** (the standing backlog) is the
+  correct backstop for a substrate/kernel flaw and applies to *all* laws, not just these. A second
+  independent decision procedure (e.g. a `polyrith`/Gröbner-cofactor prover) may later be *required to
+  agree* as a hardening, but is not a precondition. The premise is restated per the review: consensus
+  never added kernel-soundness.
+
+The original identity/allowlist prose below (§Decision-2/3) is **superseded by A1** wherever they
+conflict (it described string-identity keying).
 
 ## Context — the binding constraint moved to the prover
 
