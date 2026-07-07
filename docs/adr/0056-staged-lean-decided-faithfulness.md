@@ -1,15 +1,102 @@
 # ADR 0056 — Staged Lean-decided faithfulness: an audited renderer (bridge) + a native-Lean contract (target)
 
-**Status:** **PROPOSED — blocked on adversarial review.** Resolves the fork ADR 0055 opened (its v2.1
-re-review named the *DSL→Lean renderer* as the irreducible faithfulness TCB). The resolution is **both**
-tracks the fork posed, sequenced as one migration: **Track A** audits the DSL→Lean renderer so the
-*existing* DSL corpus can be kernel-decided (the near-term bridge), and **Track B** moves new claim
-authoring to a *native-Lean* faithfulness contract so new claims never touch the renderer (the target,
-shrinking the TCB toward a lint). Per the ADR 0051 / 0054 / 0055 precedent, **no code ships on the
-faithfulness path until this design clears its own ≥3-lens adversarial review.** Supersedes the open
-"v2.2 vs native-Lean" question in **ADR 0055**; keeps everything ADR 0055's two review rounds found
-sound (the reduction argument, the wrong-period-DEFERs guarantee, the fail-closed default). Complements
-ADR 0002 (faithfulness gate), ADR 0037 (sound-backend seam), ADR 0050 (law provenance).
+**Status:** **Track A: AMENDED, ready for a scoped first-increment re-review (2026-07-07). Track B:
+DEFERRED to ADR 0057.** The ≥3-lens adversarial review returned **per-track** verdicts (both
+`needs-amendment`, `safe_to_implement: false` as first written). Track A — the audited DSL→Lean renderer
+— had two concrete, fixable unguarded false-EXACT-PASSes; the amendments below (chiefly **ℤ-with-explicit-box
+instead of ℕ** and **routing the binding through the existing tool-registry E7 template pin**) close them,
+and Track A is now a near-term bridge pending a scoped re-review. Track B — the native-Lean contract — is
+**a direction, not yet a design**: it billed unbuilt TCB (an elaborated-term data model, an Expr-level
+fragment checker, and a gate-owned unbounded→finite reduction owner) as a "lint," so it is **carved out to
+ADR 0057** and not scoped for code here. The **fail-closed default holds** (no rechecker registered for the
+kind ⇒ no PASS accepted, `faithfulness.py:129-130`) — nothing is at risk today. Per the ADR 0051 / 0054 /
+0055 precedent, **no code ships on the faithfulness path until the amended Track A clears its scoped
+re-review.** Supersedes the open "v2.2 vs native-Lean" question in **ADR 0055**; keeps everything ADR 0055's
+two review rounds found sound (the reduction argument, the wrong-period-DEFERs guarantee, the fail-closed
+default). Complements ADR 0002 (faithfulness gate), ADR 0037 (sound-backend seam), ADR 0050 (law provenance).
+
+---
+
+## Review outcome & amendments (2026-07-07) — supersede Track A points 2–3 and defer Track B
+
+A five-lens adversarial review (renderer-conformance · binding-completeness · ℕ/ℤ-coherence ·
+Track-B-fragment-escape · migration-interface), each verified **against the code**, returned per-track
+`needs-amendment` / `safe_to_implement: false`. It re-confirmed the sound core (residue enumeration over
+`Fin m`; wrong/under-approximated period → open goals → DEFER; `decide` cannot be forced false by an unsound
+`Decidable` — `of_decide_eq_true` extracts a real proof and a smuggled `sorryAx`/`Lean.ofReduceBool` is
+caught by `axiom_closure` transitivity; the fail-closed default protects the daemon today). It found two
+Track-A criticals and showed Track B rests on unbuilt TCB.
+
+### Confirmed criticals (Track A) and their fixes
+
+- **`Nat.sub` monus false-EXACT-PASS.** The DSL admits real ℤ subtraction (`ast.Sub`, `smt_z3.py:160`) and
+  unary minus (`ast.USub`, `:152-153`), and the search box constrains only **variables** to be non-negative
+  (`:279-280`), not subexpressions. So Track A point 3's **ℕ-end-to-end** decision was unsound: rendering
+  `a - b` over ℕ is truncated **monus**, a *different Boolean function* — e.g. `(a-b)%5==0` is DSL-false at
+  `(a=0,b=1)` (`-1 % 5 = 4`) but ℕ-true (`0 % 5 = 0`), and `(a-b+1==0)` is DSL-SAT but ℕ-empty (vacuous
+  pair). The kernel then decides a different predicate than the Enuntiatio denotes. **Amendment 1 (below)
+  replaces ℕ with ℤ-with-explicit-box**, which is the *one conformant integer world* — it fixes subtraction
+  (real ℤ sub) **and** the ∃-witness non-emptiness (guarded `∃ v:ℤ, 0≤v ∧ …`) simultaneously.
+- **Identity target ≠ the kernel's decided goal.** The seam `CertificateRechecker = Callable[[Certificate],
+  bool]` (`sound_backends.py:48`) returns a bare bool; the kernel elaborates the goal *inside* `cert.data`,
+  and nothing forced the gate's re-rendered identity string to **be** that embedded goal — a backend could
+  carry honest strings in `detail` while `cert.data` proves `∀ vars, True`. Re-render-from-`prop` alone
+  (the v2.1/0056 amendment-2 mechanism) does not close it. **Amendment 2 routes the binding through the
+  existing tool-registry E7 template pin** (`leibniz/tools/registry.py:106-129`): the certificate's claimed
+  `statement` must equal `template(cert.data)` byte-for-byte, pinned to a builtin `str` and compared with
+  `str.__ne__` (defeats str-subclass `__eq__` spoofs), with the re-checker (E6) independently re-deriving
+  `True` from `cert.data`. That mechanism is already audited and already carries `provenance`.
+
+### Track A amendments (these supersede Track A points 2–3 and add 7–9)
+
+1. **ℤ-with-explicit-box, not ℕ (replaces point 3).** Render the pair as `∀ (v : ℤ), 0 ≤ v → …` and the
+   positive-content witnesses as guarded `∃ (v : ℤ), 0 ≤ v ∧ …`. Subtraction/USub render to real `Int`
+   ops; `/`,`%` by the DSL's always-positive divisor use `Int.fdiv`/`Int.emod` (which coincide with
+   `Int.ediv`/`Int.fmod` for positive divisors — pin this in the suite; the previously-stated pairing was
+   non-canonical). The non-negativity box is now *explicit in the proposition*, matching what every other
+   gate assumes without a separate ℕ world.
+2. **Bind via the tool-registry E7 template pin (replaces point 2).** Register the backend as a
+   `ToolRegistry` decider with a pure/deterministic `template(cert.data)` that renders the canonical pair;
+   acceptance requires E6 (independent re-derive `True`) **and** E7 (`str.__ne__(template(cert.data),
+   cert.detail["statement"])` is False, builtin-`str`-pinned). The gate stops using the bare
+   `Callable[[Certificate],bool]` path for this kind. This binds **the kernel's actual goal**, and the
+   ∃-witnesses are bound the same way (each is its own registry-graded statement), closing the unbound
+   side-channel for good.
+3. **Conformance suite must cover subtraction, USub, and composition.** Add negative-adjacent cases for
+   `-`/USub and compositional predicates (`min(a-b, c) % 3`) where a negative/again-clamped intermediate
+   propagates through admitted ops — per-op tests do not catch compositional divergence. Enforce
+   *structurally* that the renderer's admission set equals the conformance-pinned set (the renderer is a
+   second parser of the same DSL; a construct without a pinned rendering must be un-admittable, not merely
+   undocumented).
+4. **Resolve `gcd`.** `gcd` has **no DSL referent** (`_conv`'s `Call` branch admits only `min`/`max`,
+   `smt_z3.py:202-219`), so "conform to the DSL" is vacuous for it. **Drop `gcd(v,c)` from the first
+   increment scope**; re-admit it only once the DSL itself gains a `gcd` op with Z3 semantics to conform
+   against (backlog).
+5. **Per-track certificate kind + provenance.** Fail-closed is per-**kind** (`recheckers.get(kind)`), so
+   Track A uses a distinct kind from any future Track B, and registering Track A's re-checker must **not**
+   make any other kind eligible. Route through `ToolRegistry` so `provenance` rides the evidence (the
+   faithfulness `EdgeEvidence` has only `producer`, `types.py:106-117`), backing the ADR-0050
+   renderer-touch metric and enabling targeted quarantine of a non-conformant op.
+6. **`axiom_closure` at faithfulness time.** Confirm the shared `axiom_closure` (`export_calculemus.py:51-75`)
+   runs inside the faithfulness re-check on a *named* pair theorem — today it runs only at ledger export.
+
+**Track A first increment (scoped):** the ℤ-with-explicit-box renderer over the **modular-polynomial
+fragment with real ℤ subtraction** (no `gcd` yet), binding via the E7 template pin, with a conformance
+suite covering negative-argument and compositional cases and a faithfulness-time `axiom_closure`. This
+increment must clear a **further ≥3-lens re-review** focused on (a) conformance completeness over
+composition and (b) the E7 binding actually tying the identity string to `cert.data`.
+
+### Track B — deferred to ADR 0057 (direction, not design)
+
+The review found Track B **relocates** the TCB rather than shrinking it to a lint: "author in Lean, gate
+is a lint" presupposes (i) a single elaborated-term data model (today `propositio.py` has four independent
+free-text strings, no shared AST), (ii) an `Expr`-level fragment checker (a head-symbol whitelist cannot
+see truncated `-`, floor `/`, silent `↑` coercions, or definitional unfolding in the *elaborated* term),
+and (iii) **an owner for the unbounded→finite reduction** now that the renderer is gone — which must be
+**gate-owned**, or a proposer-authored finite surrogate with a wrong modulus is a false PASS no lint
+catches. None of these exist; each is new load-bearing faithfulness TCB. **ADR 0057 must specify the
+data model, the Expr fragment checker, the reduction owner, and a ℕ/coercion conformance discipline
+before Track B is reviewable.** It is removed from this ADR's implementation scope.
 
 ---
 
