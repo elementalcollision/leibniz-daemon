@@ -43,6 +43,13 @@ from leibniz.types import ClaimType, FinishReason
 _REPO = Path(__file__).resolve().parent.parent
 _DEFAULT_DB = _REPO / ".leibniz" / "memory.db"
 
+
+def default_db_path() -> str:
+    """The runtime DB path a default `PersistentRuntime()` would use (env override → repo default).
+    Exposed so read-only consumers (ADR 0052 novelty-against-own-ledger) resolve the same file
+    without constructing a runtime / opening a write connection."""
+    return str(os.environ.get("LEIBNIZ_RUNTIME_DB") or _DEFAULT_DB)
+
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS memory (
     pid TEXT PRIMARY KEY,

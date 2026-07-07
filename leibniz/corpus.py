@@ -58,13 +58,19 @@ class CorpusBackend:
                     self._by_sig.setdefault(s, e.name)
 
     @classmethod
-    def from_json(cls, path: Optional[Path] = None) -> "CorpusBackend":
+    def from_json(cls, path: Optional[Path] = None,
+                  extra: Optional[list["CorpusEntry"]] = None) -> "CorpusBackend":
+        """Load the curated known-results corpus, optionally augmented with `extra` entries
+        (ADR 0052: the daemon's own promulgated laws, so it stops rediscovering itself)."""
         data = json.loads(Path(path or _DEFAULT_PATH).read_text())
-        return cls([CorpusEntry(
+        entries = [CorpusEntry(
             name=d["name"], claim_type=d["claim_type"], subject=d["subject"],
             relation=d["relation"], formal_hash=d["formal_hash"],
             claim_domain=d.get("claim_domain"), claim_property=d.get("claim_property"),
-        ) for d in data])
+        ) for d in data]
+        if extra:
+            entries = entries + list(extra)
+        return cls(entries)
 
     # --- KnownCorpus Protocol -------------------------------------------------
     def contains_equivalent(self, sig: ClaimSignature) -> bool:
@@ -98,3 +104,44 @@ class CorpusBackend:
                 scored.append((e.name, round(score, 2)))
         scored.sort(key=lambda x: (-x[1], x[0]))
         return scored[:k]
+
+
+def self_ledger_entries(db_path: Optional[str]) -> list[CorpusEntry]:
+    """ADR 0052 — the daemon's OWN promulgated laws, as corpus entries, so a re-conjecture of a
+    law it already promulgated is caught as KNOWN (novelty against the ledger, not only the external
+    corpus — closing the HANDOFF §6 gap the daemon demonstrated by re-deriving n^4 % 5).
+
+    Soundness: the novelty gate is KILL-ONLY (it can quarantine, never promote), so seeding it with
+    more knowns can never cause an unsound promulgation — only prevent a rediscovery. Matching is by
+    the elaborator-canonical ``formal_hash`` (the same signal ``contains_equivalent`` uses), so a
+    genuinely distinct statement has a distinct hash and is never false-KNOWN. Read-only and
+    fail-safe: an absent/unreadable DB yields no entries, degrading to external-corpus-only behaviour.
+    Only PROMULGATED, kernel-verified laws seed the ledger — an unproven prior attempt must remain
+    re-attemptable."""
+    import sqlite3
+    if not db_path:
+        return []
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    except Exception:
+        return []
+    try:
+        rows = con.execute(
+            "SELECT theorem_src, normalized_hash, claim_type, claim_property FROM memory "
+            "WHERE lower(finish_reason) = 'promulgated' AND kernel_verified = 1 "
+            "AND normalized_hash IS NOT NULL AND normalized_hash != ''"
+        ).fetchall()
+    except Exception:
+        return []
+    finally:
+        con.close()
+    out: list[CorpusEntry] = []
+    for theorem_src, formal_hash, claim_type, claim_property in rows:
+        parts = (theorem_src or "").split()
+        name = parts[1] if len(parts) > 1 else (theorem_src or "law")
+        out.append(CorpusEntry(
+            name=f"ledger:{name}", claim_type=claim_type or "invariant",
+            subject="daemon_ledger", relation="promulgated",
+            formal_hash=formal_hash, claim_property=claim_property,
+        ))
+    return out
