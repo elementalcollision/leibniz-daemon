@@ -28,5 +28,14 @@
     "graph degree-sum / handshake invariants",
     "inclusion-exclusion cardinality identities",
     "bounds on the number of subsets of a finite set"
+  ],
+  "multivariable_and_extremal_arithmetic": [
+    "residue structure of a two-variable interaction a*b or a^2+b^2 modulo a composite m (a genuine two-variable fact, not reducible to one variable)",
+    "min/max invariants combining min(a,b) and max(a,b) with + and * that need a case split on which is larger",
+    "which residues (a+b)^k - a^k - b^k can take modulo a small composite (the mixed cross-terms)",
+    "a relation between two constructed quantities: Q1 % m equals Q2 % m for all inputs, or one is always < the other",
+    "CRT-style residue classes of a non-linear form modulo 9, 12, 16, or 24 (needs case analysis beyond parity)",
+    "residue set of a*b*(a+b) or a*b - a - b modulo a small composite over all a,b",
+    "an exact two-variable divisibility: for all a,b a fixed constant divides some non-linear combination of a and b"
   ]
 }
