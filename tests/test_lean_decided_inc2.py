@@ -69,6 +69,24 @@ def test_classify_rejects_out_of_skeleton(bad):
     assert ld.classify_property(bad) is None
 
 
+@pytest.mark.parametrize("bad", [
+    "(2*a) % 2 == 2",                    # c == m: 2 ≡ 0 in ZMod 2 → key vacuously true, ℤ stmt false
+    "a*3 % 3 == 3",                      # c == m
+    "(a*a + b*b) % 4 == 5",              # c > m
+    "(a*a) % 2 == 0 or (a*a) % 2 == 2",  # residue_set with an out-of-range residue → whole thing DEFERs
+])
+def test_classify_rejects_out_of_range_residues(bad):
+    # STATIC guard: soundness must not depend on the `simpa` bridge failing in the kernel.
+    assert ld.classify_property(bad) is None
+
+
+def test_is_pure_poly_bounds_exponent_by_max_pow():
+    from leibniz.dsl_to_lean import _parse
+    from leibniz.backends.smt_z3 import MAX_POW
+    assert ld._is_pure_poly(_parse(f"a ** {MAX_POW}"))
+    assert not ld._is_pure_poly(_parse(f"a ** {MAX_POW + 1}"))   # over cap → not a renderable poly
+
+
 def test_is_pure_poly():
     from leibniz.dsl_to_lean import _parse
     assert ld._is_pure_poly(_parse("a*a + b*b - 3*a"))
