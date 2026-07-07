@@ -15,8 +15,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from leibniz.assembly import build_daemon  # noqa: E402
-from leibniz.calculemus import Calculemus, render_propositio  # noqa: E402
+from leibniz.calculemus import render_propositio  # noqa: E402
 from leibniz.env import load_env  # noqa: E402
+from leibniz.types import FinishReason  # noqa: E402
 
 
 def main() -> int:
@@ -39,10 +40,14 @@ def main() -> int:
     for reason, n in sorted(report.by_reason.items()):
         print(f"    {reason:<14} {n}")
 
-    cx = Calculemus()
-    proven = [p for p in daemon.runtime.memory if getattr(p, "promulgated", False)]
+    # The runtime persists every candidate to SQLite; recall the most recent and pick out
+    # this cycle's promulgated laws by their DISPOSITION. A recalled memory carries
+    # `finish_reason`, never the policy-gated `promulgated` flag (that is set only by the live
+    # gate and never replayed from storage — see runtime._row_to_prop), so we filter on the
+    # disposition and render the triad; we do NOT re-promulgate a historical record.
+    recent = daemon.runtime.recall_recent(max(50, report.promulgated * 2))
+    proven = [p for p in recent if p.finish_reason is FinishReason.PROMULGATED][: report.promulgated]
     for p in proven:
-        cx.promulgate(p)
         print("\n=== PROMULGATED (kernel-checked) ===")
         print(render_propositio(p))
     if not proven:
