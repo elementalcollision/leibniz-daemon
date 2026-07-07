@@ -1,18 +1,72 @@
 # ADR 0057 — A native-Lean faithfulness contract (Track B of the staged Lean-decided design)
 
-**Status:** **PROPOSED — blocked on adversarial review.** This is the **deferred Track B of ADR 0056**
-(§"Track B — the native-Lean faithfulness contract"), which ADR 0056's review outcome held back with the
-verdict that Track B as first sketched *"relocates the TCB rather than shrinking it to a lint"* — it named
-five missing pieces (the shared data model, an Expr-level fragment check, the reduction owner, the ℕ/coercion
-discipline, novelty on a Lean AST). This ADR specifies exactly those pieces. Per the ADR 0051 / 0054 / 0055 /
-0056 precedent, **no code ships on the faithfulness path until this design clears its own ≥3-lens adversarial
-review.** It keeps everything ADR 0055's two rounds found sound — the kernel decides the pair; a
-wrong/under-approximated reduction leaves open goals → DEFER; exact-only PASS; the fail-closed default
-(`faithfulness.py:129-130`). Complements ADR 0002 (faithfulness gate), ADR 0037 (sound-backend seam), ADR 0050
-(law provenance). Track A (the audited DSL→Lean renderer, ADR 0056) ships first as the bridge; Track B is the
-target, and its cutover freezes and shrinks the renderer's trusted surface toward zero.
+**Status:** **NEEDS AMENDMENT (2026-07-07)** — the ≥3-lens adversarial review returned `needs-amendment`,
+high confidence, **`safe_to_implement: false`** (5/5 lenses concur). The **architecture is validated** (the
+two-leg core — single gate elaboration, fail-closed Expr walk, gate-owned reduction, kernel decides the
+unbounded pair — survived deliberate attack; every break is at the *perimeter*, not the trust model), but the
+design as written leaves unguarded false-EXACT-PASS paths and one non-implementable spec. **No Track B code
+ships until an amended §1/§2/§3 clears a focused re-review.** The **fail-closed default is intact**
+(`faithfulness.py:129-130`, no Track B rechecker registered) — nothing is at risk today. See "**Review outcome
+& required amendments**" below. This is the deferred Track B of ADR 0056; Track A (the DSL→Lean renderer +
+the **Lean-decided backend, increment 2**) is the near-term bridge and **proceeds unblocked** — it already
+implements the three findings the review said touch both tracks (E7 on the accept path, four-conjunct
+∃-binding, `Int.emod`-only + residue cap). Complements ADR 0002 (faithfulness gate), ADR 0037 (sound-backend
+seam), ADR 0050 (law provenance).
+
+## Review outcome & required amendments — the perimeter, not the architecture
+
+Five lenses (fragment-escape · reduction-ownership · elaborator-projection-TCB · canonicalizer-novelty ·
+migration-seam) verified against the code. **What holds** (do not relitigate): kernel-checks-the-unbounded-goal
+makes every reduction/extraction bug fail-closed; ∃-proofs are witness-checked so no fabricated vacuous witness;
+post-elaboration constant walking defeats *imported*-notation tricks; the single-elaboration data model is the
+right shape; the fail-closed default and per-kind rechecker isolation are real.
+
+**Confirmed false-EXACT-PASS paths (must fix before code):**
+
+- **C1 (critical) — the Expr→prose projection is unpinned.** The ADR restricts nothing about the contract
+  module's *commands*: a shadowing `def Int.emod`, an `@[app_unexpander]`/delaborator, `notation`, or a rogue
+  `instance : OfNat ℤ 3 := ⟨37⟩` all survive the §2 walk (which sees only the three Exprs) and make bare
+  pretty-printing in the module's own environment **publish the classical law while the kernel decided a
+  vacuous truth**. §2's canonical-instance pin covers only `Decidable`; the notation red-team bullet covers
+  only *imported* notation.
+- **C5 (high) — the ∃-witness conjuncts are missing from §3's E7 target.** §3's templated theorem is only the
+  two-conjunct pair; a vacuous `ClaimDom` closes with *any* moduli (the "wrong split → open goals" leg does not
+  apply to vacuous truths). *(Track A increment 2 already binds all four via `canonical_statement` — this
+  confirms that design; Track B must match it.)*
+- **C2 (high) — dual admission of `HMod.hMod` and `Int.emod`,** which are different functions on negative
+  subterms (the repo's own `dsl_to_lean.py` pins `Int.emod` for exactly this reason) yet pretty-print
+  identically — one is always a mis-statement relative to its prose.
+- **C4 (high) — the §2 allow-list names constants that never occur in elaborated terms** (`Int.add`/`Int.ofNat`
+  vs the actual `HAdd.hAdd`/`OfNat.ofNat` heads; `Neg.neg` absent), so a literal implementation is dead
+  (total-DEFER) and a realistic one deviates *unreviewed* at exactly the instance seam C1 exploits.
+- **C3 (high) — §3 leg 2's E7 binding is not on the accept path** and "byte-/Expr-identical" is unresolved (pp
+  is non-injective; reusing the novelty canonicalizer as the comparator turns every collision into a soundness
+  bug). *(Track A increment 2 fixes this by replicating E7 inside `FaithfulnessGate.check` — the amendment
+  route the adjudicator endorsed.)*
+- **C6 (high) — `Enuntiatio.statement`/`falsifiable_claim` are outside the projection set,** so the human-facing
+  prose channel stays open and the gaming spine silently degrades on Lean-syntax fields.
+
+**Required amendments (edit the ADR before re-review):** §1 — whitelist the module's command kinds (exactly
+`namespace` + three `def`s + `end`); a **gate-owned printer** with pinned options in an environment stripped of
+module extensions; an `elab(pp(Expr)) ≡ Expr` round-trip DEFER; a name-shadowing lint; project `statement` +
+`falsifiable_claim` from the same Exprs (or give them explicit non-projection status). §2 — re-specify the
+allow-list as **exact elaborated shapes** (head + type args + canonical instance constant per the pinned image)
+for every admitted typeclass; **`Int.emod`/`Int.ediv` only**, reject `HMod.hMod`/`HDiv.hDiv`; drop `gcd` (mirror
+ADR 0056) or specify its Eq-over-ℕ carve-out; literal divisors ≥ 1; telescope check; enumerate
+`mdata`/`letE`/`proj`/`forallE` handling. §3 — the E7-pinned object is the **four-conjunct join**; restate the
+0056 routing obligation (route through `ToolRegistry._accept_or_defer` **or** replicate E7 in the gate, as
+Track A does); binding identity is **raw structural Expr equality / deterministic non-pretty serialization —
+never** the novelty canonical form; name `MAX_RESIDUE_PRODUCT` with a binder-count exponent. Plus: name a Track
+B certificate **kind** distinct from `lean-decided-faithfulness`; state that §1–§3 live as versioned **in-image
+Lean meta-code** with a **digest-pinned image** and env hash recorded per certificate (the REPL seam is
+message-only — the Python gate cannot hold/walk Exprs); positional (not occurrence-order) α-normalization for
+novelty. **Build-time:** gate-stamped projection-hash re-verified at promulgation + a `test_invariants.py` pin;
+disable the ADR 0022 contract-repair loop for native claims; docker `--memory` limit; a conformance test that
+the §1 example module is accepted in the pinned image.
 
 ---
+
+*Original proposal (retained; do not implement without the amendments above):*
 
 ## Context — why native-Lean, and what 0056's review found missing
 
