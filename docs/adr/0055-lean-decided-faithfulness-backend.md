@@ -51,10 +51,12 @@ kernel-clean EXACT-PASS paths the Lean pivot does **not** close, plus four small
   (`smt_z3.py:160,279-280`); there is **no signal** for residual must-build #2 to detect. The emitted
   `∀ … : ℤ` proves the ℤ proposition faithfully, but an Enuntiatio whose prose reads "for all *naturals*"
   is a *different, false* claim under ℕ truncation. Replace the detector with a **typing discipline**.
-- **MEDIUM — tautological `claim_property` (e.g. `x % 1 == 0`).** Mostly **pre-defended**: the theorem
-  `∀ … → x%1==0` is `simp`-closable, so the non-triviality gate (which runs *before* faithfulness,
-  `pipeline.py:103→113`) quarantines it TRIVIAL. Kept as a specified backstop for tautologies the
-  trivial tactics miss.
+- **MEDIUM — tautological `claim_property` (e.g. `x % 1 == 0`).** **Pre-defended by ordering**: the
+  theorem `∀ … → x%1==0` is `simp`-closable, so the non-triviality gate (which runs *before*
+  faithfulness, `pipeline.py:103→113`) quarantines it TRIVIAL. Crucially, `is_trivial` is the *right*
+  discriminator — it closes the vacuous `x%1==0` but not the genuine `(a²+b²)%4≠3` — so the fix is to
+  **pin the ordering as a regression, not add a faithfulness-level tautology control** (which would
+  false-reject real universal laws; see amendment 3).
 
 ### PLAUSIBLE (guard-if-built)
 
@@ -80,9 +82,16 @@ kernel-clean EXACT-PASS paths the Lean pivot does **not** close, plus four small
    unless the certificate **also** carries kernel-checked ∃-witness proofs of `∃ (vars:ℤ), claim_domain`
    **and** `∃ (vars:ℤ), established_domain ∧ claim_domain`. Unsatisfiable `claim_domain` → no witness →
    the ∃ cannot be proved → DEFER. (Not a Z3 SAT call — Z3 is inert on this fragment.)
-3. **Discrimination backstop.** Reject if `∀ (vars:ℤ), claim_property` is itself kernel-provable (the
-   property is a content-free tautology). Note the interaction: the non-triviality gate already fells
-   the common cases first; this is the specified faithfulness-level backstop, not prose.
+3. **Discrimination is the non-triviality gate's job — and it already runs first.** Do **not** add a
+   "reject if `∀ (vars:ℤ), claim_property` is kernel-provable" control: that would **false-reject the
+   genuine universal laws this backend exists to find** — `(a²+b²)%4 ≠ 3` is true for *all* integers,
+   so its `∀` *is* provable, yet it is a real law, not a vacuous one. The correct discriminator between
+   a content-free tautology (`x%1==0`, closed by `simp`) and a genuine universal law (`(a²+b²)%4≠3`,
+   which needs the modular case-split) is exactly what `is_trivial` computes — and the non-triviality
+   gate runs **before** faithfulness (`pipeline.py:103→113`). So break #5 is closed **by ordering**, not
+   by a new faithfulness-level control. The only spec obligation here: assert the pipeline ordering as a
+   permanent regression (non-triviality precedes faithfulness), so a refactor cannot silently let a
+   `simp`-closable property reach an EXACT-PASS.
 4. **Typing discipline (replaces "detect Nat/Int mismatch").** Pin `ℤ` end-to-end — DSL → pair →
    `theorem_src` → **published Enuntiatio** — from **one elaborated AST**, so prose and formal cannot
    diverge. Forbid any construct whose Lean rendering is ℕ-sensitive unless the Enuntiatio is likewise
