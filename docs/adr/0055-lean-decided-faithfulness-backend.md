@@ -1,13 +1,105 @@
 # ADR 0055 — A Lean-decided faithfulness backend (v2 redesign of ADR 0054)
 
-**Status:** **PROPOSED — blocked on adversarial review.** This is the "v2 ADR" that ADR 0054
-(NEEDS REDESIGN, 2026-07-07) called for. It folds in all seven required mitigations from the ADR 0054
-review **and** the dominant correction from the nine-reviewer external fleet review
-(`docs/fleet-review-raising-the-ceiling.md` was the review packet). Following the ADR 0051 / ADR 0054
-precedent, **no code ships until this design clears its own ≥3-lens adversarial soundness review.**
-Supersedes the design in **ADR 0054** (which remains on record as the rejected v1). Complements ADR
-0002 (faithfulness gate), ADR 0037 (sound-backend seam), ADR 0020/0022 (contract encodability /
-probe), ADR 0050 (law provenance tier/origination).
+**Status:** **NEEDS AMENDMENT → v2.1 (2026-07-07).** The ≥3-lens adversarial review this design was
+blocked on has returned (`needs-amendment`, high confidence, **`safe_to_implement: false`**). The
+Lean-decided **architecture is validated** — it defeats the entire class of attacks that killed ADR
+0054 — but the spec as first written still left **two unguarded false-EXACT-PASS paths open inside the
+very fragment the backend exists to serve.** Six bounded amendments (none architectural) close them;
+they are specified in "**Review outcome & v2.1 amendments**" below and **supersede §Decision-4 and the
+residual must-builds** wherever they conflict. Per the ADR 0051 / ADR 0054 precedent, **no code ships
+until the amended (v2.1) spec re-clears the vacuity and statement-binding lenses.** This is the "v2
+ADR" ADR 0054 (NEEDS REDESIGN, 2026-07-07) called for; it folds in all seven ADR 0054 mitigations plus
+the nine-reviewer external fleet review's dominant correction. Supersedes the design in **ADR 0054**
+(the rejected v1). Complements ADR 0002 (faithfulness gate), ADR 0037 (sound-backend seam), ADR
+0020/0022 (contract encodability / probe), ADR 0050 (law provenance tier/origination).
+
+---
+
+## Review outcome & v2.1 amendments (do not implement §Decision-4 or the residual must-builds as first written)
+
+A five-lens adversarial soundness review (vacuity/discrimination · statement-binding/AST ·
+typed-AST/period-traps · seam/ordering/fall-through · reduction/kernel-trust), each verified **against
+the code**, returned **`needs-amendment` · high confidence · `safe_to_implement: false`**. It confirmed
+the core reduction argument is sound (a wrong/under-approximated period leaves open goals → the kernel
+rejects → DEFER, never a false PASS; `Int.emod`'s non-negative residues genuinely cover the negatives;
+the gaming spine at `faithfulness.py:90` runs *before* the backend loop at `:111`) — but found two
+kernel-clean EXACT-PASS paths the Lean pivot does **not** close, plus four smaller gaps.
+
+### Confirmed holes (verified against the code)
+
+- **CRITICAL — the binding binds the wrong object.** §Decision-4 (as first written) compares a
+  **backend-supplied `canonical_statement_hash`** to a gate recomputation — a field **disjoint from the
+  `theorem_src := proof_src` the kernel actually checks** (`CertificateRechecker` is prop-blind,
+  `sound_backends.py:48`; the accept path `faithfulness.py:125-143` calls `rechecker(v.certificate)`
+  with no `prop`). An untrusted backend puts `hash(real statement)` in the bound field and a provable
+  **narrowed/bounded/weaker** pair in `theorem_src`; both checks pass and never meet. This also
+  subsumes the "bounded-binder emission" attack (a shared canonicalizer would replicate the narrowing
+  on both sides so the hashes still match).
+- **HIGH — empty `claim_domain` vacuity; the named control is mis-targeted.** Both pair conjuncts carry
+  `claim_domain` as a hypothesis (`∀ … → claim_domain → …`). With an **unsatisfiable** `claim_domain`
+  (the ADR's own headline `(a²+b²)%4==3`, which is unsat), both conjuncts are **vacuously kernel-true**
+  with a clean axiom footprint → EXACT-PASS. The ADR's only vacuity control is `established_domain`-SAT
+  — fully satisfied here, so it cannot catch it. This is a **regression inside 0055's target fragment**:
+  the Z3 probe returns `unknown` on this two-variable nonlinear-modular UNSAT and safely DEFERs
+  (`probes.py:61-68`); 0055's kernel enumeration turns that DEFER into a PASS on a claim that asserts
+  nothing. And the non-triviality gate does **not** save us — closing `∀ a b:ℤ, (a²+b²)%4==3 → …`
+  needs the very modular case-split only this backend provides, so `is_trivial` (decide/simp/omega)
+  misses it. **The fix cannot be a Z3 SAT call** (Z3 is inert on this fragment) — it must be a
+  **Lean-side non-emptiness ∃-witness**.
+- **HIGH — "reject on Nat/Int mismatch" is unimplementable against an untyped DSL.** The DSL compiles
+  `−` to true Z3 `Int` subtraction with non-negativity added only as an out-of-band solver box
+  (`smt_z3.py:160,279-280`); there is **no signal** for residual must-build #2 to detect. The emitted
+  `∀ … : ℤ` proves the ℤ proposition faithfully, but an Enuntiatio whose prose reads "for all *naturals*"
+  is a *different, false* claim under ℕ truncation. Replace the detector with a **typing discipline**.
+- **MEDIUM — tautological `claim_property` (e.g. `x % 1 == 0`).** Mostly **pre-defended**: the theorem
+  `∀ … → x%1==0` is `simp`-closable, so the non-triviality gate (which runs *before* faithfulness,
+  `pipeline.py:103→113`) quarantines it TRIVIAL. Kept as a specified backstop for tautologies the
+  trivial tactics miss.
+
+### PLAUSIBLE (guard-if-built)
+
+- **`native_decide` / `Lean.ofReduceBool` at faithfulness time.** `axiom_closure` genuinely rejects it
+  (`export_calculemus.py:46,73`) — but that runs at ledger export, **disjoint from the faithfulness
+  re-check**. Sound *if built to spec*; the risk is a rechecker wired to plain elaboration.
+- **OPEN_FORM-tagged structured claim reaches the judge.** `applies()` is AST-shape-only; an
+  OPEN_FORM-mistagged modular claim that DEFERs falls through to `self.judge` (`faithfulness.py:164-176`).
+  Not a false-EXACT-PASS, but it enlarges the judged surface (invariant 3).
+
+### v2.1 amendments (these are the spec; they supersede §Decision-4 and the residual must-builds)
+
+1. **Binding = string/AST identity against the kernel-checked theorem, in `check()`.** In the
+   faithfulness gate's PASS-acceptance path (`FaithfulnessGate.check`, `faithfulness.py:125-143`), the
+   gate must (a) render `prop`'s canonical **unbounded `∀ (vars : ℤ)`** faithfulness pair from a
+   **single gate-owned canonicalizer** over the elaborated AST, and (b) assert **exact identity**
+   between that render and `certificate.data["theorem_src"]` — the *same string* handed to the kernel
+   re-checker — then (c) run the kernel re-check on that identical `theorem_src := proof_src`. **Delete
+   the backend-supplied `canonical_statement_hash`.** The bound object is the theorem the kernel checks,
+   nothing else. This closes cross-statement replay *and* the narrowed-binder attack (a narrowed binder
+   is not string-identical to the canonical unbounded `∀:ℤ` pair → REJECT).
+2. **Lean-side positive-content control (replaces the `established_domain`-SAT control).** No EXACT-PASS
+   unless the certificate **also** carries kernel-checked ∃-witness proofs of `∃ (vars:ℤ), claim_domain`
+   **and** `∃ (vars:ℤ), established_domain ∧ claim_domain`. Unsatisfiable `claim_domain` → no witness →
+   the ∃ cannot be proved → DEFER. (Not a Z3 SAT call — Z3 is inert on this fragment.)
+3. **Discrimination backstop.** Reject if `∀ (vars:ℤ), claim_property` is itself kernel-provable (the
+   property is a content-free tautology). Note the interaction: the non-triviality gate already fells
+   the common cases first; this is the specified faithfulness-level backstop, not prose.
+4. **Typing discipline (replaces "detect Nat/Int mismatch").** Pin `ℤ` end-to-end — DSL → pair →
+   `theorem_src` → **published Enuntiatio** — from **one elaborated AST**, so prose and formal cannot
+   diverge. Forbid any construct whose Lean rendering is ℕ-sensitive unless the Enuntiatio is likewise
+   ℤ. This also closes the four-independent-strings gap (`propositio.py`: `Enuntiatio.claim_domain/
+   claim_property` vs `Expressio.theorem_src/established_domain` are today independent free text).
+5. **Axiom footprint inside the rechecker.** The registered `lean-decided-faithfulness` re-checker must
+   call the shared `axiom_closure` (the one in `export_calculemus.py`) as a **hard step**, rejecting
+   `Lean.ofReduceBool` / `sorryAx` **at faithfulness time**, not only at export.
+6. **Hard resource cap + claim-type predicate on `applies()`.** A residue-product cap → DEFER at parse
+   time (name the constant; the Z3 path's analogue is `MAX_ORDER=64`, `smt_z3.py:46`); and
+   `applies()` must carry a claim-type predicate so an OPEN_FORM-tagged structured claim routes to the
+   backend/DEFER, never the judge.
+
+**Re-review gate:** the v2.1 spec must **re-clear the vacuity and statement-binding lenses** (the two
+that found criticals) against the amended text before any implementation. Everything the review found
+sound — the reduction argument, the wrong-period-DEFERs guarantee, the Python-decider elimination — is
+**kept unchanged**.
 
 ---
 
