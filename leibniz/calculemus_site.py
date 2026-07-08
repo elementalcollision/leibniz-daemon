@@ -79,6 +79,9 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
         "falsifiable_claim": en.falsifiable_claim,
         "domain": en.domain,
         "theorem_src": ex.theorem_src if ex else "",
+        # ADR 0062: operator-authored top-level defs/set_options prepended at discharge time. Stored so
+        # the honesty gate (export_calculemus --check) re-verifies the SAME full source the kernel saw.
+        "preamble": (ex.preamble if ex else ""),
         "proof_src": (de.proof_src or "") if de else "",
         "imports": list(ex.imports) if ex else [],
         "qed": de.qed if de else "Q.E.I.",
