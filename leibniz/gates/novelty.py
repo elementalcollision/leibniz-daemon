@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Optional, Protocol
 
 from leibniz.propositio import Propositio
+from leibniz.structural import is_coefficient_degenerate
 from leibniz.types import ClaimSignature, EdgeEvidence, FinishReason, TrustTier, Verdict
 from leibniz.trust import NOVELTY_EDGE
 from leibniz.verifiers import LeanVerifier
@@ -45,8 +46,23 @@ class NoveltyGate:
     def check(self, prop: Propositio) -> EdgeEvidence:
         assert prop.expressio is not None and prop.signature is not None
 
-        # Non-triviality first: cheapest, and a trivial result isn't worth a
-        # corpus lookup.
+        # ADR 0061: coefficient-degenerate non-triviality — the cheapest check (pure DSL, no Lean
+        # call) and one `is_trivial`'s tactic ladder misses in the modular fragment. A claim whose
+        # every congruence atom reduces to a constant mod m (e.g. `(2*a*b) % 2 == 0`) is vacuous.
+        en = prop.enuntiatio
+        if en is not None and is_coefficient_degenerate(en.claim_property):
+            prop.quarantine(FinishReason.TRIVIAL)
+            return EdgeEvidence(
+                edge=NOVELTY_EDGE,
+                tier=TrustTier.MECHANICAL,
+                verdict=Verdict.FAIL,
+                detail={"reason": "coefficient-degenerate modular claim (truth is variable-independent)"},
+                cost_units=1.0,
+                producer="structural.coefficient_degenerate",  # ADR 0013 §2
+            )
+
+        # Non-triviality (tactic ladder): a statement an automated tactic closes on its own is
+        # vacuous; and a trivial result isn't worth a corpus lookup.
         if self.lean.is_trivial(prop.expressio):
             prop.quarantine(FinishReason.TRIVIAL)
             return EdgeEvidence(
@@ -77,7 +93,6 @@ class NoveltyGate:
         # truth), so this cannot false-KNOWN — the unsoundness that retracted ADR 0031 L2.
         # Unrecognized shapes -> no signature -> stays NOVEL. No backend needed.
         structural_known = getattr(self.corpus, "structural_known", None)
-        en = prop.enuntiatio
         if callable(structural_known) and en is not None:
             match = structural_known(en.claim_property)
             if match:
@@ -114,6 +129,14 @@ class NoveltyGate:
         the final statement. Idempotent when the statement did not change (returns None)."""
         if prop.expressio is None:
             return None
+        en = prop.enuntiatio
+        if en is not None and is_coefficient_degenerate(en.claim_property):
+            prop.quarantine(FinishReason.TRIVIAL)
+            return EdgeEvidence(
+                edge=NOVELTY_EDGE, tier=TrustTier.MECHANICAL, verdict=Verdict.FAIL,
+                detail={"reason": "canonical law: coefficient-degenerate modular claim", "stage": "post-derive"},
+                cost_units=1.0, producer="structural.coefficient_degenerate",  # ADR 0013 §2
+            )
         if self.lean.is_trivial(prop.expressio):
             prop.quarantine(FinishReason.TRIVIAL)
             return EdgeEvidence(
@@ -129,7 +152,6 @@ class NoveltyGate:
                 cost_units=1.0, producer="CorpusBackend",  # ADR 0013 §2
             )
         structural_known = getattr(self.corpus, "structural_known", None)
-        en = prop.enuntiatio
         if callable(structural_known) and en is not None and structural_known(en.claim_property):
             prop.quarantine(FinishReason.KNOWN)
             return EdgeEvidence(
