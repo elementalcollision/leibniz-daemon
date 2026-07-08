@@ -38,6 +38,7 @@ from leibniz.gates.lean_decided import (
     _or_nest,
     _term,
     classify_property,
+    conjunction_proof,
 )
 from leibniz.propositio import Demonstratio
 from leibniz.trust import FAITHFULNESS_EDGE
@@ -64,6 +65,8 @@ def _law_proof(skel: Skeleton, vs: list[str]) -> str:
     `lean_decided.property_proof` except it introduces **one** domain antecedent (claim_domain),
     not the pair's two. A false claim makes the ZMod key's `decide` refuse → kernel rejects →
     the draft is not kernel-verified → it simply does not count (increment 2)."""
+    if skel.op == "conjunction":
+        return conjunction_proof(skel, vs, n_domain=1)   # claim_domain only (ADR 0059)
     poly = _term(skel.poly_src)
     m = skel.modulus
     intro_all = " ".join(vs) + " " + " ".join(f"_h{v}" for v in vs) + " _"   # box hyps + claim_domain
@@ -103,8 +106,9 @@ def _law_proof(skel: Skeleton, vs: list[str]) -> str:
 def residue_law(name: str, claim_domain: str, claim_property: str) -> Optional[tuple[str, str]]:
     """The deterministic generator: `(theorem_src, proof_src)` for the canonical ℤ-box law of a
     modular-polynomial claim, or **None** (abstain) when the claim is outside the reducible
-    fragment (reusing `lean_decided.classify_property`: pure-poly `% m ⋈ c`, eq/neq/residue-set,
-    two or three variables, residue product within budget). Total-or-abstain; never raises.
+    fragment (reusing `lean_decided.classify_property`: pure-poly `% m ⋈ c`, eq/neq/residue-set, or
+    an ADR 0059 single-modulus **conjunction** of such atoms, two or three variables, residue product
+    within budget). Total-or-abstain; never raises.
 
     Soundness is not this function's responsibility: whatever it emits, the Lean kernel
     re-verifies against the *actual* `theorem_src` (increment 2). A wrong or malformed proof

@@ -1,15 +1,73 @@
 # ADR 0059 — Fragment coverage: modular conjunctions + min/max algebraic identities
 
-**Status:** **PROPOSED — blocked on adversarial review.** Widens the *covered fragment* of the
-ceiling-raiser (ADR 0056 faithfulness + ADR 0058 prover) from a single modular atom / residue-set to
-the two clean shapes the conjecturer (ADR 0053) actually produces beyond it: **conjunctions of modular
-atoms**, and **min/max symmetric-function identities**. Each is a coordinated extension of *both* the
-faithfulness backend (a claim must be certified before it is proven) *and* the decision-procedure
-prover. Per the ADR 0051/0054/0055/0056/0057/0058 precedent, **no code ships until this design clears
-its own ≥3-lens adversarial review.** The **trust boundary is untouched**: the Lean kernel decides every
-proof and certifies every faithfulness pair; `TrustPolicy.validate_path` and `tests/test_invariants.py`
-stay byte-identical; both new procedures are exact-or-DEFER and fail-closed behind the same
-`LEIBNIZ_LEAN_DECIDED` activation.
+**Status:** **REVIEWED — SPLIT.** Modular conjunctions: **ACCEPTED (build, with amendments A.1–A.4)** —
+implemented in this increment. min/max identities: **HELD** for a follow-up increment (amendments
+B.1–B.4) and its own code-level re-review before its producer is admitted. Widens the *covered
+fragment* of the ceiling-raiser (ADR 0056 faithfulness + ADR 0058 prover) from a single modular atom /
+residue-set to the two clean shapes the conjecturer (ADR 0053) actually produces beyond it:
+**conjunctions of modular atoms**, and **min/max symmetric-function identities**. Each is a coordinated
+extension of *both* the faithfulness backend (a claim must be certified before it is proven) *and* the
+decision-procedure prover. Per the ADR 0051/0054/0055/0056/0057/0058 precedent, **no code ships until
+this design clears its own ≥3-lens adversarial review.** The **trust boundary is untouched**: the Lean
+kernel decides every proof and certifies every faithfulness pair; `TrustPolicy.validate_path` and
+`tests/test_invariants.py` stay byte-identical; both new procedures are exact-or-DEFER and fail-closed
+behind the same `LEIBNIZ_LEAN_DECIDED` activation.
+
+## Adversarial review outcome (4 lenses) — the families split
+
+The ≥3-lens review adjudicated the two families **separately**, and a controlled kernel run confirmed
+every soundness claim:
+
+- **Modular conjunctions — ACCEPTED, safe to build with amendments.** The family *inherits* the
+  already-wired end-to-end path: `classify_property` → `property_proof` (faithfulness) and
+  `residue_law` → `_law_proof` (prover) all render from the one shared `render_pred`, and `templates[KIND]`
+  is already registered — so the **A2 statement-binding is inherited byte-for-byte**. Every failure mode is
+  fail-closed: a false conjunct, mixed moduli, or a plumbing error makes `decide` refuse or the ℤ-bridge
+  type-mismatch → the kernel rejects → **DEFER**. Kernel-confirmed: `(a*a)%4≠3 ∧ (a*a)%4=2` (false
+  conjunct) **DEFERs**; the three true single-modulus conjunctions (eq+eq, eq+neq same poly, neq+neq diff
+  poly) **prove**. The only real work is the multi-atom `Skeleton` and the explicit single-modulus guard.
+- **min/max identities — HELD (not safe as written).** The order-split **tactic is sound** — kernel-confirmed
+  that a false identity (`max a b + min a b = a`), a missing-branch case (`min a b + max b c = a + c` under a
+  single split), and an inequality-shaped goal all fail closed → DEFER (a true identity like
+  `max a b ^2 + min a b ^2 = a^2 + b^2` proves). But the ADR as written claims a promotion path that
+  **does not exist**: the residue fast-path `_promote` structurally rejects min/max (`residue_law`→
+  `classify_property` abstains, and `_promote` requires a `lean_decided/kernel` edge), and the prose invites
+  a naive new fast-path that would skip the `templates[KIND]` statement-pin and re-open the ADR 0058
+  mis-stated-law hole. The fix is pure wiring+binding (B.1–B.4), deferred to its own increment.
+
+### Required amendments — modular conjunctions (folded into this increment)
+
+- **A.1** Extend `Skeleton` to carry per-atom `(op, poly, c)` with one shared modulus `m`; the proof is
+  `refine ⟨…⟩` over the conjuncts, each discharged by a per-atom ZMod key (`∀ vars:ZMod m, Pᵢᶻ := by decide`)
+  and the existing eq/neq bridge. **Net-new code, not a residue-set copy.** (Per-atom keys, each independently
+  `decide`-closed, are equivalent in soundness to one big conjunction key and simpler to bridge.)
+- **A.2** The new `And` branch of `classify_property` enforces **one shared modulus** (`len(moduli)==1`)
+  explicitly; rejects nested `And`, non-atom conjuncts, and empty/degenerate conjunctions; each conjunct
+  keeps the static residue-range guard (`0 ≤ c < m`) and pure-poly guard via the reused `_atom`.
+- **A.3** The residue budget and `MIN/MAX_VARS` are computed on the **union** `free_vars(cd, cp, ed)` across
+  all conjuncts (`decide_certificate`/`applies`/`residue_law` already pass the union — the classifier feeds it).
+  A conjunct cap (`MAX_CONJUNCTS`) bounds the total decide work.
+- **A.4 (load-bearing invariant).** The promulgated law is rendered from the DSL (`law_statement`→`render_pred`),
+  independent of the per-atom proof skeleton. This is the **Net-2** that makes a mis-encoded atom **DEFER
+  rather than mis-state**: the statement the kernel proves is the DSL contract, so a classifier that built the
+  wrong single-`m` skeleton yields a proof that fails to elaborate against the true statement → DEFER.
+
+### Required amendments — min/max identities (HELD for the follow-up increment)
+
+- **B.1** Specify a **separate min/max fast-path** (gated on a `minmax_identity/kernel` edge) that **re-renders
+  the law from the DSL** (`replace(theorem_src=…)`), never the autoformalizer's free text — mirror
+  `residue_prover._promote`. (Or state explicitly that min/max never promotes-on-one and rides the ensemble.)
+- **B.2** Its `register()` must install **both** `recheckers[KIND]` **and** `templates[KIND]` (a
+  `prop_statement_template` from the identity's fields); without the template, `faithfulness.py` leaves
+  `bound=True` and the statement is unbound.
+- **B.3** Own the fragment restriction **at the classifier**: top-level `Eq` (or conjunction of `Eq`), every
+  `min`/`max` a bare 2-arg call over variables; reject ≥3-ary, nested, non-Eq, compound-arg (the renderer
+  already admits these, so the classifier must be the gate). Record the branch bound `2^C(nvars,2)` (≤8 at
+  `MAX_VARS=3`).
+- **B.4** The min/max faithfulness leg is domain-free, so the ∃-witness vacuity control does no work here;
+  the ADR must say so rather than imply it "still gates."
+- **Terminology.** The order-split is a **sound proof-search heuristic** for the restricted class, not a
+  complete decision procedure (compound/nested args DEFER). Describe it as such in the producer admission.
 
 ## Context — the conjecturer out-reaches the fragment
 
@@ -41,17 +99,25 @@ DEMONSTRATE fast-path; faithfulness is certified by a sound backend gated by the
   different modulus is not admitted (avoids the LCM machinery). Each atom keeps the static residue-range
   guard (`0 ≤ c < m`) and the pure-poly / var-count / residue-budget guards.
 - **Faithfulness (`lean_decided`).** The pair's property leg becomes
-  `∀ vars, box → established → claim_domain → (P₁ ∧ … ∧ Pₖ)`; proved by the ZMod key
-  `∀ vars : ZMod m, (P₁ᶻ ∧ … ∧ Pₖᶻ)` (still one `decide`, finite), then the ℤ bridge splits the
-  conjunction and lifts each atom exactly as today. Coverage / ∃-witness / discrimination controls are
-  unchanged (they are about the domain, not the property's boolean shape). A **false** conjunct makes the
-  `decide` refuse ⇒ DEFER.
+  `∀ vars, box → established → claim_domain → (P₁ ∧ … ∧ Pₖ)`; proved by `refine ⟨…⟩` over the conjuncts,
+  each conjunct discharged by its **own** per-atom ZMod key (`∀ vars : ZMod m, Pᵢᶻ := by decide`, finite)
+  and the existing eq/neq ℤ-bridge. (Per-atom keys — each independently `decide`-closed over `ZMod m` — are
+  soundness-equivalent to one big conjunction key and simpler to bridge; validated against the kernel.)
+  Coverage / ∃-witness / discrimination controls are unchanged (they are about the domain, not the
+  property's boolean shape). A **false** conjunct makes *its* `decide` refuse ⇒ DEFER.
 - **Prover (`residue_law` / fast-path).** The canonical LAW is `∀ vars, box → claim_domain → (P₁∧…∧Pₖ)`;
   the proof is `refine ⟨…⟩` over the conjuncts, each discharged by the existing per-atom ZMod bridge. The
   fast-path, `theorem_src` binding (A2), axiom footprint (A4), and lean_decided-edge requirement are all
   inherited unchanged.
 
-### 2. min/max symmetric-function identities (a new order-split decision procedure)
+### 2. min/max symmetric-function identities — HELD for a follow-up increment (a new order-split heuristic)
+
+> **Review outcome: not built in this increment.** The order-split *tactic* is sound (kernel-confirmed:
+> false identities, missing-branch cases, and inequality-shaped goals all DEFER), but the family has **no
+> wired promotion path** and needs amendments B.1–B.4 (a separate min/max fast-path with DSL re-render, a
+> `templates[KIND]` pin, and classifier-owned fragment guards) plus its own code-level re-review before its
+> `minmax_identity/kernel` producer is admitted. The design below is retained as the starting point for that
+> increment.
 
 This is **not** modular — it is an algebraic identity over `min`/`max`, so it is a **separate** technique
 and a **separate faithfulness path + prover**, not a change to the ZMod code.

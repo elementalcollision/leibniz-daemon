@@ -50,6 +50,8 @@ DEFERs):
 - ``poly % m != c``                       (e.g. ``(a*a + b*b) % 4 != 3``)
 - ``poly % m == c``                       (e.g. ``(a*b*(a*a - b*b)) % 6 == 0``)
 - ``poly % m == c₁ or … or poly % m == cₖ`` (residue set, same poly and m)
+- ``A₁ and … and Aₖ``                      (ADR 0059 conjunction: eq/neq atoms sharing ONE modulus m;
+                                            mixed moduli / nested ``and`` / non-atoms DEFER)
 where ``poly`` is a pure polynomial (``+ - *``, constant ``^``, unary minus) over the
 claim's variables.
 """
@@ -82,6 +84,9 @@ MAX_RESIDUE_CELLS = 4096
 # Witness search box (proposal-side; the kernel checks the concrete instance).
 WITNESS_RANGE = 21
 MIN_VARS, MAX_VARS = 2, 3   # 1-var claims stay on the cheap Z3 probe (invariant 5)
+# ADR 0059 (A.3): cap the conjuncts so the per-atom decide work (k × m ** nvars) stays bounded even
+# though each atom already sits under the m ** nvars residue budget.
+MAX_CONJUNCTS = 8
 
 
 # --- property-skeleton classification --------------------------------------------------------
@@ -89,12 +94,18 @@ MIN_VARS, MAX_VARS = 2, 3   # 1-var claims stay on the cheap Z3 probe (invariant
 
 @dataclass(frozen=True)
 class Skeleton:
-    """A classified claim_property: `poly % m ⋈ {cs}` with op ∈ {'eq','neq','residue_set'}."""
+    """A classified claim_property.
 
-    op: str                 # 'eq' | 'neq' | 'residue_set'
-    poly_src: ast.AST       # the pure-polynomial AST (shared across disjuncts)
+    Single-atom / residue-set: `poly % m ⋈ {cs}` with op ∈ {'eq','neq','residue_set'}; `atoms` empty.
+    Conjunction (ADR 0059): op == 'conjunction', a top-level `∧` of eq/neq atoms **sharing one modulus
+    `m`**; `atoms` carries per-conjunct `(op, poly_ast, c)` and `poly_src`/`residues` are unused. The
+    proof splits with `refine ⟨…⟩` and discharges each conjunct by its own per-atom ZMod key + bridge."""
+
+    op: str                 # 'eq' | 'neq' | 'residue_set' | 'conjunction'
+    poly_src: ast.AST       # the pure-polynomial AST (shared across disjuncts); unused for 'conjunction'
     modulus: int
-    residues: tuple[int, ...]   # one value for eq/neq; the set for residue_set
+    residues: tuple[int, ...]   # one value for eq/neq; the set for residue_set; () for 'conjunction'
+    atoms: tuple[tuple[str, ast.AST, int], ...] = ()   # 'conjunction' only: per-conjunct (op, poly, c)
 
 
 def _is_pure_poly(node: ast.AST) -> bool:
@@ -170,6 +181,21 @@ def classify_property(claim_property: str) -> Optional[Skeleton]:
             return None    # residue set must share one poly and one modulus
         return Skeleton(op="residue_set", poly_src=atoms[0][1],
                         modulus=atoms[0][2], residues=tuple(x[3] for x in atoms))
+    if isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.And):
+        # ADR 0059 conjunctions (A.2). Every conjunct must be an admitted eq/neq atom (`_atom` rejects
+        # nested `And`, non-atoms, and out-of-range residues), and ALL conjuncts must share ONE modulus
+        # — mixed moduli DEFER in this increment (no LCM machinery). The single-`m` guard is what keeps
+        # the per-atom ZMod keys sound; A.4's DSL-rendered statement makes any classifier slip a DEFER.
+        atoms = [_atom(v) for v in tree.values]
+        if any(x is None for x in atoms):
+            return None
+        if not (2 <= len(atoms) <= MAX_CONJUNCTS):
+            return None    # degenerate/empty or over the conjunct cap
+        moduli = {x[2] for x in atoms}
+        if len(moduli) != 1:
+            return None    # single shared modulus only (mirror residue_set len(moduli)==1)
+        return Skeleton(op="conjunction", poly_src=atoms[0][1], modulus=atoms[0][2],
+                        residues=(), atoms=tuple((x[0], x[1], x[3]) for x in atoms))
     return None
 
 
@@ -205,6 +231,41 @@ def _or_nest(i: int, k: int, inner: str) -> str:
     return out
 
 
+def _conjunct_bullet(op: str, poly_ast: ast.AST, m: int, c: int, vs: list[str]) -> str:
+    """One `refine`-goal proof for a single conjunct `poly % m ⋈ c` (⋈ ∈ {=, ≠}), assuming the
+    claim's vars are already in context. Its OWN per-atom ZMod key (`∀ vars:ZMod m, ⋈ := by decide`)
+    is the decider: a false atom makes *its* `decide` refuse → the bullet fails → the whole `refine`
+    fails → DEFER. Names are bullet-local (`·` focuses one goal), so they never clash across atoms."""
+    poly, binder, casts = _term(poly_ast), " ".join(vs), _casts(vs, m)
+    if op == "eq":
+        return (f"  ·\n"
+                f"    have key : ∀ ({binder} : ZMod {m}), {poly} = {c} := by decide\n"
+                f"    have hk := key {casts}\n"
+                f"    have hz : (({poly} : ℤ) : ZMod {m}) = (({c} : ℤ) : ZMod {m}) := by\n"
+                f"      push_cast\n      exact hk\n"
+                f"    rw [ZMod.intCast_eq_intCast_iff'] at hz\n    simpa using hz")
+    return (f"  ·\n"
+            f"    have key : ∀ ({binder} : ZMod {m}), {poly} ≠ {c} := by decide\n"
+            f"    intro hcon\n    have hc : {poly} % {m} = {c} := hcon\n"
+            f"    apply key {casts}\n"
+            f"    have hz : (({poly} : ℤ) : ZMod {m}) = (({c} : ℤ) : ZMod {m}) := by\n"
+            f"      rw [ZMod.intCast_eq_intCast_iff']\n      simpa using hc\n"
+            f"    push_cast at hz\n    exact hz")
+
+
+def conjunction_proof(skel: Skeleton, vs: list[str], n_domain: int) -> str:
+    """Gate-owned proof of a `conjunction` skeleton (`∀ vars, box → …dom… → (P₁ ∧ … ∧ Pₖ)`):
+    intro the vars + box + `n_domain` domain antecedents (all unused by the ZMod bridge), split the
+    conjunction with `refine ⟨…⟩`, and discharge each conjunct with `_conjunct_bullet`. `n_domain` is
+    2 for the faithfulness pair's property leg (established + claim_domain) and 1 for the prover's LAW
+    (claim_domain only) — the sole difference from `property_proof`/`_law_proof`."""
+    intro_all = (" ".join(vs) + " " + " ".join("_" for _ in vs)
+                 + (" " + " ".join("_" for _ in range(n_domain)) if n_domain else ""))
+    holes = ", ".join("?_" for _ in skel.atoms)
+    bullets = "\n".join(_conjunct_bullet(op, poly, skel.modulus, c, vs) for (op, poly, c) in skel.atoms)
+    return f"by\n  intro {intro_all}\n  refine ⟨{holes}⟩\n{bullets}"
+
+
 def property_proof(skel: Skeleton, vs: list[str]) -> str:
     """A gate-owned proof of the pair's PROPERTY statement
     (`∀ vars, box → established → claim_domain → claim_property`), via the ZMod bridge.
@@ -212,6 +273,8 @@ def property_proof(skel: Skeleton, vs: list[str]) -> str:
     stronger claim) — sound: if the property is not universally true over the box, the
     key lemma's `decide` refuses → the kernel rejects → DEFER (yield loss, never
     unsoundness)."""
+    if skel.op == "conjunction":
+        return conjunction_proof(skel, vs, n_domain=2)   # established + claim_domain
     poly = _term(skel.poly_src)
     m = skel.modulus
     intro_all = " ".join(vs) + " " + " ".join(f"_h{v}" for v in vs) + " _ _"

@@ -80,6 +80,67 @@ def test_classify_rejects_out_of_range_residues(bad):
     assert ld.classify_property(bad) is None
 
 
+# --- ADR 0059 conjunctions ------------------------------------------------------------------------
+
+def test_classify_conjunction_accepts_single_modulus():
+    s = ld.classify_property("(a*a) % 4 != 3 and (b*b) % 4 != 3")
+    assert s.op == "conjunction" and s.modulus == 4 and len(s.atoms) == 2
+    assert [op for (op, _poly, _c) in s.atoms] == ["neq", "neq"]
+    # mixed ops, same poly, same modulus
+    s2 = ld.classify_property("(a*b*(a*a - b*b)) % 6 == 0 and (a*b*(a*a - b*b)) % 6 != 1")
+    assert s2.op == "conjunction" and s2.modulus == 6
+    assert [op for (op, _poly, _c) in s2.atoms] == ["eq", "neq"] and [c for (*_x, c) in s2.atoms] == [0, 1]
+    # three conjuncts
+    s3 = ld.classify_property("(a*a) % 3 == 0 and (b*b) % 3 == 1 and (a*b) % 3 != 2")
+    assert s3.op == "conjunction" and len(s3.atoms) == 3
+
+
+@pytest.mark.parametrize("bad", [
+    "(a*a) % 4 == 0 and (b*b) % 6 == 1",        # mixed moduli → DEFER (no LCM machinery)
+    "(a*a) % 4 == 0 and (a*a) % 4 == 1 and a != b",   # a non-atom conjunct
+    "(a*a) % 4 == 0 and min(a,b) % 4 == 1",     # min not residue-bridgeable
+    "(a*a) % 4 == 0 and (a / 2) % 4 == 1",      # division inside a conjunct poly
+    "((a*a) % 4 == 0 and (b*b) % 4 == 1) and (a*b) % 4 == 2",  # nested And (grouped) → inner And not an atom
+    "(a*a) % 4 == 0 and (b*b) % 4 == 4",        # out-of-range residue in a conjunct (c == m)
+    "(a*a) % 4 == 0 or (b*b) % 4 == 1 and (a*b) % 4 == 2",  # top-level is Or, mixed connective
+])
+def test_classify_conjunction_rejects(bad):
+    assert ld.classify_property(bad) is None
+
+
+def test_classify_conjunction_respects_conjunct_cap():
+    over = " and ".join(f"(a*a + b*b) % 8 != {c}" for c in range(ld.MAX_CONJUNCTS + 1))
+    assert ld.classify_property(over) is None                       # over MAX_CONJUNCTS → DEFER
+    at_cap = " and ".join(f"(a*a + b*b) % 16 != {c}" for c in range(ld.MAX_CONJUNCTS))
+    assert ld.classify_property(at_cap).op == "conjunction"         # exactly MAX_CONJUNCTS → OK
+
+
+def test_conjunction_proof_structure_splits_and_keys_each_atom():
+    s = ld.classify_property("(a*a) % 4 != 3 and (b*b) % 4 == 0")
+    body = ld.conjunction_proof(s, ["a", "b"], n_domain=2)
+    assert body.startswith("by\n  intro a b _ _ _ _")   # 2 vars + 2 box + 2 domain
+    assert "refine ⟨?_, ?_⟩" in body
+    assert body.count("by decide") == 2                 # one per-atom ZMod key
+    assert "ZMod.intCast_eq_intCast_iff'" in body
+    # LAW leg introduces one fewer domain antecedent
+    assert ld.conjunction_proof(s, ["a", "b"], n_domain=1).startswith("by\n  intro a b _ _ _\n")
+
+
+def test_applies_and_decide_certificate_accept_conjunction_with_fake_kernel():
+    conj = ("a >= 0 and b >= 0",
+            "(a*a + b*b) % 4 != 3 and (a*a + b*b) % 4 != 2",
+            "a >= 0 and b >= 0")
+    assert ld.LeanDecidedFaithfulness(kernel=FakeKernel()).applies(mkprop(*conj)) is True
+    ok, detail = ld.decide_certificate(
+        dict(zip(["claim_domain", "claim_property", "established_domain"], conj)), FakeKernel())
+    assert ok and detail["property"]["axioms"]           # the conjunction property leg built + checked
+    # a rejected property leg (false conjunct in the real kernel) → DEFER
+    ok2, _ = ld.decide_certificate(
+        dict(zip(["claim_domain", "claim_property", "established_domain"], conj)),
+        FakeKernel(reject_names=["property"]))
+    assert not ok2
+
+
 def test_is_pure_poly_bounds_exponent_by_max_pow():
     from leibniz.dsl_to_lean import _parse
     from leibniz.backends.smt_z3 import MAX_POW
