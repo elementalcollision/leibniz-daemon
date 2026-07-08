@@ -108,7 +108,7 @@ def test_classify_rejects_bad_conjunctions(bad):
 
 
 def test_classify_conjunction_respects_eq_cap():
-    over = " and ".join([f"max(a,b) + min(a,b) == a + b"] * (mm.MAX_MINMAX_EQS + 1))
+    over = " and ".join(["max(a,b) + min(a,b) == a + b"] * (mm.MAX_MINMAX_EQS + 1))
     assert mm.classify_identity(over) is None            # over MAX_MINMAX_EQS → DEFER
 
 
