@@ -307,6 +307,33 @@ def maybe_wrap_minmax(demonstrate, consensus, repl_image, *, env=None):
     return MinMaxDemonstrate(inner=demonstrate, lean=consensus.lean)
 
 
+def maybe_register_boolean_decided(faithfulness: FaithfulnessGate, repl_image: str, *, env=None) -> bool:
+    """ADR 0059 (biconditional path) — OPT-IN, DEFAULT OFF. Register the ZMod-decide same-modulus
+    boolean-combination faithfulness backend (biconditionals / `∨` of different polys / `¬` / nested
+    mixes — a generalisation of the modular fragment) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real
+    Lean REPL image is available — the SAME gate as the other backends. Fail-closed otherwise; `register`
+    installs BOTH the re-checker and the statement template. Returns True iff it registered."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return False
+    from leibniz.gates.boolean_decided import register as _register
+    _register(faithfulness, lean_repl.LeanReplBackend(image=repl_image))
+    return True
+
+
+def maybe_wrap_boolean(demonstrate, consensus, repl_image, *, env=None):
+    """ADR 0059 (biconditional path) — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the
+    boolean-combination ZMod-decide fast-path iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL
+    image is available — the SAME gate as `maybe_register_boolean_decided`. Promotes only claims carrying
+    a `boolean_modular/kernel` faithfulness edge; composes with the residue / min/max wraps (each fast-path
+    owns its disjoint fragment and falls through for the others'). Fail-closed otherwise."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return demonstrate
+    from leibniz.providers.boolean_prover import BooleanDemonstrate
+    return BooleanDemonstrate(inner=demonstrate, lean=consensus.lean)
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -333,6 +360,9 @@ def build_daemon(
     # ADR 0059 (min/max half) — OPT-IN activation of the order-split faithfulness backend (disjoint
     # fragment; same LEIBNIZ_LEAN_DECIDED gate; fail-closed otherwise). See maybe_register_minmax_decided.
     maybe_register_minmax_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    # ADR 0059 (biconditional path) — OPT-IN activation of the ZMod-decide same-modulus boolean-combo
+    # backend (biconditionals / general boolean structure; same gate; fail-closed otherwise).
+    maybe_register_boolean_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
@@ -397,6 +427,8 @@ def build_daemon(
     demonstrate = maybe_wrap_residue(                          # ADR 0058: opt-in decision-procedure fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     demonstrate = maybe_wrap_minmax(                           # ADR 0059 (min/max half): opt-in fast-path
+        demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    demonstrate = maybe_wrap_boolean(                          # ADR 0059 (biconditional path): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)

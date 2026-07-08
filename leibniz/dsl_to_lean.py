@@ -115,6 +115,15 @@ def _term(node: ast.AST) -> str:
     raise RenderError(f"unsupported syntax: {type(node).__name__}")
 
 
+def _is_bool_node(node: ast.AST) -> bool:
+    """A DSL node that renders to a Lean `Prop` (boolean), not an arithmetic term: a comparison, an
+    `and`/`or`, or a `not`. Used to distinguish a biconditional `(P) == (Q)` (boolean operands) from an
+    arithmetic equality `poly == c` (arithmetic operands)."""
+    return (isinstance(node, ast.BoolOp)
+            or (isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not))
+            or isinstance(node, ast.Compare))
+
+
 def _prop(node: ast.AST) -> str:
     """Render a BOOLEAN DSL node to a fully-parenthesised Lean `Prop`. Raises on a non-boolean node
     (mirrors smt_z3.compile_pred's 'predicate is not a boolean expression' check)."""
@@ -124,6 +133,14 @@ def _prop(node: ast.AST) -> str:
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return f"(¬ {_prop(node.operand)})"
     if isinstance(node, ast.Compare):
+        # Biconditional: a single `==` / `!=` whose operands are THEMSELVES boolean (comparisons,
+        # and/or, not) renders to `P ↔ Q` (resp. `¬ (P ↔ Q)`) — Python has no `↔`, so the daemon
+        # writes it as `(P) == (Q)`. Arithmetic equalities (`poly == c`) keep the existing rendering
+        # because their operands are terms, not booleans.
+        if (len(node.ops) == 1 and isinstance(node.ops[0], (ast.Eq, ast.NotEq))
+                and _is_bool_node(node.left) and _is_bool_node(node.comparators[0])):
+            iff = f"({_prop(node.left)} ↔ {_prop(node.comparators[0])})"
+            return iff if isinstance(node.ops[0], ast.Eq) else f"(¬ {iff})"
         terms = [node.left, *node.comparators]
         clauses = []
         for i, op in enumerate(node.ops):

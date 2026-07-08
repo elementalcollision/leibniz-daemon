@@ -49,6 +49,7 @@ FAITHFULNESS_PRODUCERS = frozenset({
     "walnut/recheck",               # the Walnut sound backend (ADR 0037 / 0038)
     "lean_decided/kernel",          # the Lean-decided faithfulness backend (ADR 0056; reviewed + activated)
     "minmax_identity/kernel",       # the order-split min/max faithfulness backend (ADR 0059; reviewed + activated)
+    "boolean_modular/kernel",       # the ZMod-decide same-modulus boolean-combo backend (ADR 0059; reviewed + activated)
 })
 
 
