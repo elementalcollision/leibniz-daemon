@@ -76,21 +76,24 @@ run_cmd do
 """
 
 
-def _join_proof(theorem_src: str, proof_src: str) -> str:
+def _join_proof(theorem_src: str, proof_src: str, preamble: str = "") -> str:
     """Assemble a complete Lean declaration from a statement header + a proof.
 
     Autoformalizers often emit theorem_src already carrying a proof body
     (``... := by sorry``). Strip any existing ``:=`` tail from the header before
     appending the intended proof, guaranteeing exactly one ``:=`` (binders use
-    ``:``; the first ``:=`` is the proof assignment in a Prop statement)."""
+    ``:``; the first ``:=`` is the proof assignment in a Prop statement).
+
+    ADR 0062: an optional operator-authored ``preamble`` (top-level defs/set_options) is prepended
+    BEFORE the declaration, so a legible multi-definition amplification law discharges as ONE source.
+    Empty for the discovery path (byte-identical, single-declaration ADR 0027 shape)."""
     head = theorem_src.rstrip()
     cut = head.find(":=")
     if cut != -1:
         head = head[:cut].rstrip()
     proof = proof_src.strip()
-    if not proof:
-        return f"{head} := by sorry"
-    return f"{head} := {proof}"
+    body = f"{head} := by sorry" if not proof else f"{head} := {proof}"
+    return f"{preamble.rstrip()}\n{body}" if preamble.strip() else body
 
 
 def _with_imports(imports, decl: str) -> str:
@@ -132,20 +135,20 @@ class LeanCliBackend:
 
     # --- LeanBackend Protocol -------------------------------------------------
     def compile_statement(self, expr: Expressio) -> bool:
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry")))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry", expr.preamble)))
         return res is not None and not res.has_errors
 
     def compile_with_error(self, expr: Expressio) -> tuple[bool, str]:
         """Compile the statement and return (ok, diagnostics). Powers the R4.2
         import-repair loop: a failed compile hands its Lean error back to the
         autoformalizer to fix the imports/statement."""
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry")))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, "by sorry", expr.preamble)))
         if res is None:
             return (False, "lean backend unavailable")
         return (not res.has_errors, res.output)
 
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src, expr.preamble)))
         return res is not None and res.kernel_ok
 
     def check_source(self, source: str) -> Optional[bool]:
@@ -166,14 +169,14 @@ class LeanCliBackend:
         hands the kernel's complaint back to the reasoner to repair. It only REPORTS;
         kernel_verified is still written solely by LeanVerifier.discharge, which
         re-checks any ok candidate before stamping it."""
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src)))
+        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src, expr.preamble)))
         if res is None:
             return (False, "lean backend unavailable")
         return (res.kernel_ok, res.output)
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:
-            res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, f"by {tac}")))
+            res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, f"by {tac}", expr.preamble)))
             if res is not None and res.kernel_ok:
                 return True
         return False

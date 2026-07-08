@@ -48,17 +48,20 @@ _NAME_RE = re.compile(r"(?:theorem|lemma)\s+([^\s({\[:]+)")
 _AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
 
 
-def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=_STD_AXIOMS) -> dict:
-    """Elaborate `<theorem_src> := <proof_src>` and run `#print axioms`. ok = it elaborates with no error AND
-    its axiom footprint contains no `sorryAx` and no axiom outside `allowed` (the standard Lean/Mathlib set).
-    A discharged law that secretly rests on `sorry` or an admitted lemma fails here even if the kernel elaborates
-    the (open) term. Read-only: mints nothing, edits no core file."""
+def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=_STD_AXIOMS,
+                  preamble: str = "") -> dict:
+    """Elaborate `<preamble> <theorem_src> := <proof_src>` and run `#print axioms`. ok = it elaborates with no
+    error AND its axiom footprint contains no `sorryAx` and no axiom outside `allowed` (the standard Lean/Mathlib
+    set). A discharged law that secretly rests on `sorry` or an admitted lemma fails here even if the kernel
+    elaborates the (open) term. ADR 0062: the operator-authored `preamble` (defs/set_options) is elaborated as
+    part of the source, so a smuggled hole/axiom there is caught too. Read-only: mints nothing, edits no core file."""
     m = _NAME_RE.search(theorem_src)
     if not m:
         return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": []}
     name = m.group(1)
     body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
-    src = f"{theorem_src} {body}\n#print axioms {name}"
+    decl = f"{theorem_src} {body}\n#print axioms {name}"
+    src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
     r = backend._run(src, tuple(imports))
     if r is None:
         return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name}
@@ -98,10 +101,13 @@ def check_ledger(path: Path) -> int:
     failures = 0
     try:
         for law in claimed:
-            expr = Expressio(theorem_src=law["theorem_src"], imports=tuple(law.get("imports", [])))
+            preamble = law.get("preamble", "")   # ADR 0062: re-verify the SAME full source the kernel saw
+            expr = Expressio(theorem_src=law["theorem_src"], imports=tuple(law.get("imports", [])),
+                             preamble=preamble)
             ok = backend.check_proof(expr, law.get("proof_src", ""))
             # H0: a claimed Q.E.D. must also have a clean axiom footprint (no sorryAx / admitted axiom).
-            ax = axiom_closure(backend, law["theorem_src"], law.get("proof_src", ""), law.get("imports", []))
+            ax = axiom_closure(backend, law["theorem_src"], law.get("proof_src", ""), law.get("imports", []),
+                               preamble=preamble)
             clean = ok and ax["ok"]
             note = f"axioms={ax['axioms']}"
             if ax.get("has_sorry"):

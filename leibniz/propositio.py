@@ -55,6 +55,14 @@ class Expressio:
 
     theorem_src: str                 # `theorem foo (...) : ... := by ...` header
     imports: tuple[str, ...] = ("Mathlib",)
+    # ADR 0062: gate/operator-authored top-level declarations (defs, set_options) prepended to the
+    # kernel source BEFORE `theorem_src := proof`, so a multi-definition amplification law (e.g. a
+    # combinatorial census) can keep a LEGIBLE `theorem_src` instead of an inlined nested-λ blob.
+    # Defaults to "" so the discovery path is byte-identical (single self-contained declaration, the
+    # ADR 0027 anti-poisoning shape). NEVER populated from proposer/LLM output — only by
+    # operator-authored amplification scripts; `axiom_closure` re-checks the WHOLE assembled source
+    # (preamble included), so a smuggled `sorry`/axiom in the preamble still fails the honesty gate.
+    preamble: str = ""
     normalized_hash: str = ""
     compiles: Optional[bool] = None  # syntactic validity is free: Lean says yes/no
     # R2 (ADR 0004): the domain over `n` the formal statement actually establishes

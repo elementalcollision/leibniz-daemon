@@ -30,13 +30,16 @@ REPL_IMAGE = "leibniz-lean-repl:v4.31.0"
 DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop", "ring", "nlinarith")
 
 
-def _join_proof(theorem_src: str, proof_src: str) -> str:
+def _join_proof(theorem_src: str, proof_src: str, preamble: str = "") -> str:
     head = theorem_src.rstrip()
     cut = head.find(":=")
     if cut != -1:
         head = head[:cut].rstrip()
     proof = proof_src.strip()
-    return f"{head} := {proof}" if proof else f"{head} := by sorry"
+    body = f"{head} := {proof}" if proof else f"{head} := by sorry"
+    # ADR 0062: prepend operator-authored top-level declarations (defs/set_options) so a legible
+    # multi-definition theorem discharges as ONE source. Empty for the discovery path (byte-identical).
+    return f"{preamble.rstrip()}\n{body}" if preamble.strip() else body
 
 
 @dataclass
@@ -156,13 +159,13 @@ class LeanReplBackend:
 
     # --- LeanBackend Protocol -------------------------------------------------
     def compile_statement(self, expr: Expressio) -> bool:
-        resp = self._run(_join_proof(expr.theorem_src, "by sorry"), expr.imports)
+        resp = self._run(_join_proof(expr.theorem_src, "by sorry", expr.preamble), expr.imports)
         if resp is None:
             return False
         return not any(m.get("severity") == "error" for m in resp.get("messages", []) or [])
 
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        return self._kernel_ok(self._run(_join_proof(expr.theorem_src, proof_src), expr.imports))
+        return self._kernel_ok(self._run(_join_proof(expr.theorem_src, proof_src, expr.preamble), expr.imports))
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).
@@ -171,7 +174,7 @@ class LeanReplBackend:
         agentic repair loop to feed the kernel's complaint back to the reasoner; it does
         NOT write kernel_verified — that stays solely with LeanVerifier.discharge, which
         re-checks any candidate this surfaces as ok before stamping it."""
-        resp = self._run(_join_proof(expr.theorem_src, proof_src), expr.imports)
+        resp = self._run(_join_proof(expr.theorem_src, proof_src, expr.preamble), expr.imports)
         if resp is None:
             return (False, "lean backend unavailable")
         msgs = resp.get("messages", []) or []
@@ -182,7 +185,7 @@ class LeanReplBackend:
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:
-            if self._kernel_ok(self._run(_join_proof(expr.theorem_src, f"by {tac}"), expr.imports)):
+            if self._kernel_ok(self._run(_join_proof(expr.theorem_src, f"by {tac}", expr.preamble), expr.imports)):
                 return True
         return False
 

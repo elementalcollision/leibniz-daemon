@@ -20,18 +20,22 @@ _NAME_RE = re.compile(r"(?:theorem|lemma)\s+([^\s({\[:]+)")
 _AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
 
 
-def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS) -> dict:
-    """Elaborate ``<theorem_src> := <proof_src>`` and run ``#print axioms``. ok = it elaborates
-    with no error AND its axiom footprint contains no ``sorryAx`` and no axiom outside
+def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS,
+                  preamble: str = "") -> dict:
+    """Elaborate ``<preamble> <theorem_src> := <proof_src>`` and run ``#print axioms``. ok = it
+    elaborates with no error AND its axiom footprint contains no ``sorryAx`` and no axiom outside
     ``allowed`` (the standard Lean/Mathlib set). A law that secretly rests on ``sorry``, on
     ``native_decide``, or on an admitted lemma fails here even if the kernel elaborates the
-    (open) term. Read-only: mints nothing, edits no core file."""
+    (open) term. ADR 0062: the WHOLE assembled source — the operator-authored ``preamble`` (defs/
+    set_options) included — is elaborated, so a smuggled hole/axiom in the preamble is caught too.
+    Read-only: mints nothing, edits no core file."""
     m = _NAME_RE.search(theorem_src)
     if not m:
         return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": []}
     name = m.group(1)
     body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
-    src = f"{theorem_src} {body}\n#print axioms {name}"
+    decl = f"{theorem_src} {body}\n#print axioms {name}"
+    src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
     r = backend._run(src, tuple(imports))
     if r is None:
         return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name}

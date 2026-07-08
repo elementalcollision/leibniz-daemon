@@ -3,16 +3,16 @@ audit-tier cycle to a promulgated LAW: a real kernel discharge of a self-contain
 ``amplified`` + ``kernel-decided`` with the source cited. Writes ``site/src/content/laws/…``.
 
 Trust boundary UNTOUCHED. ``kernel_verified`` is set ONLY by ``LeanVerifier.discharge`` (the sole
-writer), on a SINGLE self-contained ``theorem … := by decide`` — no preamble/definition surface is
-added to the discharge (respecting the ADR 0045 §10 "discharge HELD" disposition), and no
-``trust.py``/``verifiers.py``/``tests/test_invariants.py`` edit. ``axiom_closure`` independently
-confirms the footprint is ``≤ [propext]`` (plain ``decide``; no ``native_decide``/``Lean.ofReduceBool``,
-no ``sorryAx``). ``tier``/``origination``/``references`` are report-only (ADR 0050) and never gate
-promotion — a law is admitted iff it carries a real kernel ``Q.E.D.`` (invariant #7).
+writer); no ``trust.py``/``verifiers.py``/``tests/test_invariants.py`` edit. ``axiom_closure``
+independently confirms the footprint is ``≤ [propext]`` over the WHOLE assembled source (plain
+``decide``; no ``native_decide``/``Lean.ofReduceBool``, no ``sorryAx``). ``tier``/``origination``/
+``references`` are report-only (ADR 0050) and never gate promotion — a law is admitted iff it carries a
+real kernel ``Q.E.D.`` (invariant #7).
 
-The kernel-checked ``theorem_src`` is a ``:=``-free single declaration (nested-λ form, so it routes
-through the existing ``_join_proof`` unchanged); the human-legible multi-definition equivalent is
-``docs/crt/cabello_ks.lean`` (identical mathematics, byte-for-byte the same rays/bases/solver).
+ADR 0062: the legible top-level definitions (Eisenstein arithmetic, the recursive backtracking
+``solve``, the 33 rays / 14 bases — identical to ``docs/crt/cabello_ks.lean``) ride in the Expressio
+PREAMBLE, so the ``theorem_src`` is a clean one-liner. The preamble is operator-authored (never from a
+proposer) and re-checked in full by ``axiom_closure`` and the honesty gate.
 
 Usage:  PYTHONPATH=. python scripts/export_cabello_ks_law.py [--write]
 """
@@ -37,39 +37,41 @@ _OUT = _ROOT / "site" / "src" / "content" / "laws" / "cabello_ks_uncolorable.jso
 _RAYS = "[[(0, 0), (0, 0), (1, 0)], [(0, 0), (1, 0), (0, 0)], [(1, 0), (0, 0), (0, 0)], [(1, 0), (0, 1), (-1, -1)], [(1, 0), (1, 0), (1, 0)], [(-1, -1), (0, 1), (1, 0)], [(1, 0), (0, 1), (1, 1)], [(1, 0), (1, 0), (-1, 0)], [(-1, -1), (0, 1), (-1, 0)], [(1, 0), (0, -1), (-1, -1)], [(1, 0), (-1, 0), (1, 0)], [(-1, -1), (0, -1), (1, 0)], [(-1, 0), (0, 1), (-1, -1)], [(-1, 0), (1, 0), (1, 0)], [(1, 1), (0, 1), (1, 0)], [(1, 0), (1, 0), (0, 0)], [(1, 0), (-1, 0), (0, 0)], [(1, 0), (0, 1), (0, 0)], [(1, 0), (0, -1), (0, 0)], [(0, 1), (1, 0), (0, 0)], [(0, 1), (-1, 0), (0, 0)], [(1, 0), (0, 0), (1, 0)], [(1, 0), (0, 0), (-1, 0)], [(1, 0), (0, 0), (0, 1)], [(1, 0), (0, 0), (0, -1)], [(0, 1), (0, 0), (1, 0)], [(0, 1), (0, 0), (-1, 0)], [(0, 0), (1, 0), (1, 0)], [(0, 0), (1, 0), (-1, 0)], [(0, 0), (1, 0), (0, 1)], [(0, 0), (1, 0), (0, -1)], [(0, 0), (0, 1), (1, 0)], [(0, 0), (0, 1), (-1, 0)]]"
 _BASES = "[(0, 1, 2), (3, 4, 5), (6, 7, 8), (9, 10, 11), (12, 13, 14), (0, 15, 16), (0, 17, 18), (0, 19, 20), (1, 21, 22), (1, 23, 24), (1, 25, 26), (2, 27, 28), (2, 29, 30), (2, 31, 32)]"
 
-# Dependency-ordered helper definitions, each with a `:=`-free body (nested-λ, no `let`, no `:=`).
-_DEFS = [
-    ("emul", "Int × Int → Int × Int → Int × Int",
-     "fun p q => (p.1 * q.1 - p.2 * q.2, p.1 * q.2 + p.2 * q.1 - p.2 * q.2)"),
-    ("econj", "Int × Int → Int × Int", "fun p => (p.1 - p.2, -p.2)"),
-    ("eadd", "Int × Int → Int × Int → Int × Int", "fun p q => (p.1 + q.1, p.2 + q.2)"),
-    ("herm", "List (Int × Int) → List (Int × Int) → Int × Int",
-     "fun u v => (List.zipWith (fun a b => emul (econj a) b) u v).foldl eadd (0, 0)"),
-    ("orth", "List (Int × Int) → List (Int × Int) → Bool", "fun u v => herm u v == (0, 0)"),
-    ("rays", "List (List (Int × Int))", _RAYS),
-    ("ray", "Nat → List (Int × Int)", "fun i => rays.getD i []"),
-    ("orthI", "Nat → Nat → Bool", "fun i j => orth (ray i) (ray j)"),
-    ("pickable", "List Nat → List Nat → Nat → Bool",
-     "fun ones zeros v => !(zeros.contains v) && !(ones.any (fun o => orthI o v))"),
-    ("bases", "List (Nat × Nat × Nat)", _BASES),
-]
+# ADR 0062: the LEGIBLE top-level definitions go in the Expressio PREAMBLE (prepended to the kernel
+# source before `theorem_src := proof`). These are the exact definitions of docs/crt/cabello_ks.lean —
+# structurally-recursive `solve` (reduces under `decide`), Eisenstein-integer arithmetic, the 33 rays
+# and 14 bases. Because they ride in the preamble (not through `_join_proof`, which cuts at the first
+# `:=`), the `theorem_src` stays a clean one-liner.
+_PREAMBLE = f"""set_option maxHeartbeats 0
+set_option maxRecDepth 4000000
 
-# The fuel-bounded backtracking KS solver, inlined via the `Nat.rec` recursor (`@Nat.rec` is positional
-# so it carries no `:=`; the `let cnt` becomes `(fun cnt => …) expr`). `= false` ⇒ no KS assignment.
-_SOLVE_AT_BASES = (
-    "(@Nat.rec (fun _ => List (Nat × Nat × Nat) → List Nat → List Nat → Bool) "
-    "(fun _ _ _ => false) "
-    "(fun _ ih bs ones zeros => match bs with "
-    "| [] => true "
-    "| (a, b, c) :: rest => (fun cnt => "
-    "if cnt > 1 then false "
-    "else if cnt == 1 then ih rest ones (([a,b,c].filter (fun v => !ones.contains v)) ++ zeros) "
-    "else [a,b,c].any (fun v => pickable ones zeros v && "
-    "ih rest (v :: ones) (([a,b,c].filter (fun w => w != v)) ++ zeros))) "
-    "((if ones.contains a then 1 else 0) + (if ones.contains b then 1 else 0) "
-    "+ (if ones.contains c then 1 else 0))) "
-    "30) bases [] []"
-)
+abbrev Eis := Int × Int
+def emul (p q : Eis) : Eis := (p.1 * q.1 - p.2 * q.2, p.1 * q.2 + p.2 * q.1 - p.2 * q.2)
+def econj (p : Eis) : Eis := (p.1 - p.2, - p.2)
+def eadd (p q : Eis) : Eis := (p.1 + q.1, p.2 + q.2)
+def herm (u v : List Eis) : Eis := (List.zipWith (fun a b => emul (econj a) b) u v).foldl eadd (0, 0)
+def orth (u v : List Eis) : Bool := herm u v == (0, 0)
+def ray (rays : List (List Eis)) (i : Nat) : List Eis := rays.getD i []
+def orthI (rays : List (List Eis)) (i j : Nat) : Bool := orth (ray rays i) (ray rays j)
+def pickable (rays : List (List Eis)) (ones zeros : List Nat) (v : Nat) : Bool :=
+  !(zeros.contains v) && !(ones.any (fun o => orthI rays o v))
+def solve (rays : List (List Eis)) (bs : List (Nat × Nat × Nat)) (ones zeros : List Nat) (fuel : Nat) : Bool :=
+  match fuel with
+  | 0 => false
+  | Nat.succ fuel => match bs with
+    | [] => true
+    | (a, b, c) :: rest =>
+      let cnt := (if ones.contains a then 1 else 0) + (if ones.contains b then 1 else 0) + (if ones.contains c then 1 else 0)
+      if cnt > 1 then false
+      else if cnt == 1 then solve rays rest ones (([a,b,c].filter (fun v => !ones.contains v)) ++ zeros) fuel
+      else [a,b,c].any (fun v => pickable rays ones zeros v &&
+             solve rays rest (v :: ones) (([a,b,c].filter (fun w => w != v)) ++ zeros) fuel)
+def rays : List (List Eis) := {_RAYS}
+def bases : List (Nat × Nat × Nat) := {_BASES}"""
+
+# Clean, legible statement — references the preamble's `solve`, `rays`, `bases`. `= false` ⇒ the
+# backtracking search finds NO KS {0,1}-assignment. No `:=` (so `_join_proof` appends the proof intact).
+_THEOREM_SRC = "theorem cabello_uncolorable : solve rays bases [] [] 30 = false"
 
 _REFERENCES = [
     {"citation": ("Cabello, A. (2025). Simplest Kochen–Specker set. Physical Review Letters, 135, "
@@ -82,12 +84,7 @@ _REFERENCES = [
 
 
 def build_theorem_src() -> str:
-    term = _SOLVE_AT_BASES
-    for name, ty, body in reversed(_DEFS):
-        term = f"((fun ({name} : {ty}) => {term}) ({body}))"
-    assert ":=" not in term
-    return ("set_option maxHeartbeats 0 in\nset_option maxRecDepth 4000000 in\n"
-            f"theorem cabello_uncolorable : ({term}) = false")
+    return _THEOREM_SRC
 
 
 def build_propositio() -> Propositio:
@@ -99,7 +96,7 @@ def build_propositio() -> Propositio:
                            "and exactly one 1 per orthonormal basis (a valid KS coloring)"),
         domain="quantum_contextuality",
     )
-    ex = Expressio(theorem_src=build_theorem_src(), imports=())
+    ex = Expressio(theorem_src=_THEOREM_SRC, imports=(), preamble=_PREAMBLE)   # ADR 0062 legible preamble
     de = Demonstratio(proof_obligation="cabello_ks_uncolorable", proof_src="by decide")
     return Propositio(enuntiatio=en, expressio=ex, demonstratio=de)
 
@@ -115,7 +112,8 @@ def main() -> int:
     try:
         verifier = LeanVerifier(be)
         edge = verifier.discharge(ex, de)                       # THE ONLY kernel_verified writer
-        ax = axiom_closure(be, ex.theorem_src, de.proof_src, ex.imports, allowed=frozenset({"propext"}))
+        ax = axiom_closure(be, ex.theorem_src, de.proof_src, ex.imports, allowed=frozenset({"propext"}),
+                           preamble=ex.preamble)
     finally:
         be.close()
 
@@ -134,7 +132,8 @@ def main() -> int:
     print(f"\n  law id          : {payload['id']}")
     print(f"  tier/origination: {payload['tier']} / {payload['origination']}")
     print(f"  references      : {len(payload['references'])} cited")
-    print(f"  theorem_src len : {len(payload['theorem_src'])} chars (:=-free single declaration)")
+    print(f"  theorem_src     : {payload['theorem_src']}")
+    print(f"  preamble        : {len(payload['preamble'])} chars ({payload['preamble'].count(chr(10)) + 1} lines, ADR 0062)")
     if write:
         _OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         print(f"\n  WROTE {_OUT.relative_to(_ROOT)}")
