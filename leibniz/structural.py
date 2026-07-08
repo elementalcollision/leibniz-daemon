@@ -501,3 +501,104 @@ def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
         return _membership_signature(pnode, m, negate=memop)
     # a single congruence atom `P % m <relop> c` / `P1 % m == P2 % m`
     return _atom_signature(tree)
+
+
+# --- ADR 0061: coefficient-degenerate non-triviality --------------------------------------------
+# A modular claim whose every atom's polynomial reduces to a CONSTANT mod its modulus is vacuous:
+# its truth is the same for every integer assignment. `is_trivial`'s stock tactic ladder (decide /
+# omega / aesop / …) misses these in the modular fragment — it cannot see through a nonlinear term
+# like `a*b` to notice the coefficient kills it mod m — yet the reduction mod m is trivial. This
+# decides that on FORM (exact coefficient reduction in (ℤ/mℤ)[vars]), never on truth, so it flags
+# ONLY variable-independent claims and never a genuine residue fact.
+
+
+def _reduces_to_constant_mod(poly: dict, m: int) -> bool:
+    """True iff every NON-constant monomial of `poly` has coefficient ≡ 0 (mod m) — i.e. `poly`
+    is congruent to a fixed constant (its constant term) mod m for EVERY integer assignment, so
+    its residue is variable-independent. (`mono == ()` is the constant term; it is exempt.)"""
+    return all(c % m == 0 for mono, c in poly.items() if mono)
+
+
+def _atom_is_degenerate(node: ast.AST) -> Optional[bool]:
+    """For a single congruence atom (`P % m <relop> c`, `P1 % m == P2 % m`, or a membership
+    `P % m (not) in {…}`): True iff its polynomial reduces to a constant mod m (variable-independent),
+    False if it carries genuine variable dependence, None if `node` is not a recognized modular atom."""
+    if not (isinstance(node, ast.Compare) and len(node.ops) == 1):
+        return None
+    op, left, right = node.ops[0], node.left, node.comparators[0]
+    state: dict = {"vars": set()}
+    if isinstance(op, (ast.In, ast.NotIn)):                     # P % m in {…} / not in {…}
+        lm = _mod(left)
+        if lm is None or lm[1] < 2:
+            return None
+        try:
+            return _reduces_to_constant_mod(_expand(lm[0], state), lm[1])
+        except _NotPoly:
+            return None
+    if not isinstance(op, (ast.Eq, ast.NotEq)):
+        return None
+    lm, rm = _mod(left), _mod(right)
+    try:
+        if lm and rm:                                          # P1 % m == P2 % m
+            if lm[1] != rm[1]:
+                return None
+            m, poly = lm[1], _add(_expand(lm[0], state), _neg(_expand(rm[0], state)))
+        elif lm or rm:                                         # P % m <relop> c
+            (pnode, m), other = (lm, right) if lm else (rm, left)
+            c = _const_int(other)
+            if c is None:
+                return None
+            poly = _add(_expand(pnode, state), {(): -c})
+        else:
+            return None
+    except _NotPoly:
+        return None
+    return m >= 2 and _reduces_to_constant_mod(poly, m)
+
+
+def _combo_all_degenerate(node: ast.AST) -> Optional[bool]:
+    """Walk a boolean combination of congruence atoms (∧/∨/¬/↔ over modular atoms). True iff EVERY
+    leaf is a recognized modular atom whose polynomial reduces to a constant mod its modulus — then
+    the whole claim's truth is variable-independent. None if any leaf is not such an atom (cannot
+    conclude triviality → the claim keeps its content). Mirrors `_boolean_signature`'s shape."""
+    if isinstance(node, ast.BoolOp):
+        subs = [_combo_all_degenerate(v) for v in node.values]
+        return None if any(s is None for s in subs) else all(subs)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return _combo_all_degenerate(node.operand)
+    if isinstance(node, ast.Compare) and len(node.ops) == 1:
+        if (isinstance(node.ops[0], (ast.Eq, ast.NotEq))
+                and _is_bool_node(node.left) and _is_bool_node(node.comparators[0])):   # biconditional
+            sp, sq = _combo_all_degenerate(node.left), _combo_all_degenerate(node.comparators[0])
+            return None if sp is None or sq is None else (sp and sq)
+        return _atom_is_degenerate(node)
+    return None
+
+
+def is_coefficient_degenerate(predicate: Optional[str]) -> bool:
+    """True iff `predicate` is a modular claim whose truth is VARIABLE-INDEPENDENT because every
+    congruence atom's polynomial reduces to a constant modulo its modulus (all non-constant monomial
+    coefficients ≡ 0 mod m) — e.g. ``(2*a*b) % 2 == 0``, ``(3*a*b) % 3 == 0``, ``(2*a*b + 1) % 2 == 1``,
+    ``(4*a + 2*b) % 2 == 0``. Such a claim carries no mathematical content (it holds — or fails —
+    identically, independent of the variables), so the ceiling-raiser proving it is vacuous. This is
+    the non-triviality check the stock ``is_trivial`` tactic ladder misses in the modular fragment: the
+    unbounded ℤ statement is not closed by decide/omega/aesop (they cannot see through the nonlinear
+    term), but the reduction mod m is trivial.
+
+    Decides on FORM (exact coefficient reduction in (ℤ/mℤ)[vars]), never on truth — so it flags ONLY
+    variable-independent claims, never a genuine residue fact: ``a*a + b*b % 4 != 3`` (coeffs 1,1 ≢ 0
+    mod 4) and the parity fact ``a*a + a % 2 == 0`` (coeff 1) both have a non-constant residue and are
+    NOT flagged. Kill-only and stdlib; returns False on anything that is not a recognized claim built
+    entirely from constant-reducing modular atoms (fail toward keeping content)."""
+    if not predicate:
+        return False
+    try:
+        tree = ast.parse(predicate.replace("^", "**"), mode="eval").body
+    except (SyntaxError, ValueError):
+        return False
+    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
+        return False
+    try:
+        return _combo_all_degenerate(tree) is True
+    except Exception:                       # total: any surprise on adversarial input -> keep content
+        return False
