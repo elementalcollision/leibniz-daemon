@@ -334,6 +334,31 @@ def maybe_wrap_boolean(demonstrate, consensus, repl_image, *, env=None):
     return BooleanDemonstrate(inner=demonstrate, lean=consensus.lean)
 
 
+def maybe_register_mixed_modulus(faithfulness: FaithfulnessGate, repl_image: str, *, env=None) -> bool:
+    """ADR 0060 — OPT-IN, DEFAULT OFF. Register the LCM/castHom mixed-modulus faithfulness backend
+    (boolean combinations of modular atoms whose moduli differ — reduced to `ZMod(lcm)` with ring-hom
+    casts) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is available. Fail-closed
+    otherwise; `register` installs BOTH the re-checker and the template. Returns True iff it registered."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return False
+    from leibniz.gates.mixed_modulus_decided import register as _register
+    _register(faithfulness, lean_repl.LeanReplBackend(image=repl_image))
+    return True
+
+
+def maybe_wrap_mixed_modulus(demonstrate, consensus, repl_image, *, env=None):
+    """ADR 0060 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the mixed-modulus LCM/castHom
+    fast-path iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is available. Promotes only
+    claims carrying a `mixed_modular/kernel` faithfulness edge; composes with the residue / min/max /
+    boolean wraps (each owns its disjoint fragment and falls through for the others'). Fail-closed."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return demonstrate
+    from leibniz.providers.mixed_modulus_prover import MixedModulusDemonstrate
+    return MixedModulusDemonstrate(inner=demonstrate, lean=consensus.lean)
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -363,6 +388,9 @@ def build_daemon(
     # ADR 0059 (biconditional path) — OPT-IN activation of the ZMod-decide same-modulus boolean-combo
     # backend (biconditionals / general boolean structure; same gate; fail-closed otherwise).
     maybe_register_boolean_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    # ADR 0060 — OPT-IN activation of the LCM/castHom mixed-modulus backend (disjoint fragment: ≥2 moduli;
+    # same gate; fail-closed otherwise). See maybe_register_mixed_modulus.
+    maybe_register_mixed_modulus(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
@@ -429,6 +457,8 @@ def build_daemon(
     demonstrate = maybe_wrap_minmax(                           # ADR 0059 (min/max half): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     demonstrate = maybe_wrap_boolean(                          # ADR 0059 (biconditional path): opt-in fast-path
+        demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    demonstrate = maybe_wrap_mixed_modulus(                    # ADR 0060 (mixed-modulus): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)

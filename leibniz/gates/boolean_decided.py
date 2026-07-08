@@ -120,7 +120,11 @@ def _content_free(tree: ast.AST, atoms: list) -> bool:
     non-result. Genuine modular content (e.g. `A ↔ (B ∨ C)`) is non-constant and passes. ≤ 2**MAX_ATOMS
     assignments (bounded)."""
     import itertools
-    keys = sorted({(ast.dump(poly), c) for _op, poly, _m, c in atoms})
+    # Key atoms by (poly, MODULUS, residue). The modulus is in the key so a MIXED-modulus reuse
+    # (ADR 0060) keeps `poly%4==1` and `poly%2==1` as INDEPENDENT variables — a modulus-blind key would
+    # merge them and spuriously report a content-bearing law as content-free. For the single-modulus
+    # caller the modulus is constant, so the partition (and result) is unchanged.
+    keys = sorted({(ast.dump(poly), m, c) for _op, poly, m, c in atoms})
     index = {k: i for i, k in enumerate(keys)}
 
     def ev(node: ast.AST, asn: tuple) -> bool:
@@ -134,8 +138,8 @@ def _content_free(tree: ast.AST, atoms: list) -> bool:
                 and _is_bool_node(node.left) and _is_bool_node(node.comparators[0])):
             same = ev(node.left, asn) == ev(node.comparators[0], asn)
             return same if isinstance(node.ops[0], ast.Eq) else not same
-        op, poly, _m, c = _atom(node)
-        v = asn[index[(ast.dump(poly), c)]]
+        op, poly, m, c = _atom(node)
+        v = asn[index[(ast.dump(poly), m, c)]]
         return v if op == "eq" else not v
 
     truths = {ev(tree, asn) for asn in itertools.product((False, True), repeat=len(keys))}
