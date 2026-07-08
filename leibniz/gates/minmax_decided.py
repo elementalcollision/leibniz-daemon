@@ -15,10 +15,10 @@ Built to the ADR 0059 min/max amendments (B.1–B.4) the adversarial review made
   certificate statement is not byte-identical to the canonical statement rendered from the prop's own
   fields. Without the template the gate would leave the statement unbound (`faithfulness.py:144`).
 - **B.3 (fragment owned at the classifier).** `dsl_to_lean._term` renders ≥3-ary / nested / compound-arg
-  `min`/`max`, so this backend — not the renderer — owns the restriction: top-level `Eq`, every
-  `min`/`max` a **bare 2-arg call over two distinct variables**, LHS/RHS min/max-polynomials, ≥1
-  `min`/`max` present, ≤ `MAX_VARS` vars, branch count `2^#pairs ≤ MAX_MINMAX_BRANCHES`. Anything else
-  → DEFER.
+  `min`/`max`, so this backend — not the renderer — owns the restriction: top-level `Eq` **or a
+  conjunction of ≤ `MAX_MINMAX_EQS` `Eq`s** (ADR 0059 Path A), every `min`/`max` a **bare 2-arg call over
+  two distinct variables**, LHS/RHS min/max-polynomials, ≥1 `min`/`max` present, ≤ `MAX_VARS` vars, branch
+  count `2^#pairs ≤ MAX_MINMAX_BRANCHES` on the UNION of pairs. Anything else → DEFER.
 - **B.4 (domain-free ⇒ ∃-witness legs gate non-vacuity, not truth).** An identity holds independent of
   the claim's `established_domain`, so the ∃-witness legs add no power to the identity's TRUTH; they
   remain a deliberate non-vacuity gate over the non-negative witness box (identical to the modular path
@@ -69,6 +69,9 @@ KIND = "minmax-identity-faithfulness"
 # 2^#pairs branches; MAX_VARS=3 ⇒ ≤ C(3,2)=3 pairs ⇒ ≤ 8 branches. An explicit cap keeps the
 # case-split bounded even if a future MAX_VARS bump would otherwise blow it up.
 MAX_MINMAX_BRANCHES = 8
+# A conjunction of ≤ this many Eq-identities is admitted (ADR 0059 Path A); the union of their pairs
+# still obeys MAX_MINMAX_BRANCHES.
+MAX_MINMAX_EQS = 4
 # The Mathlib rewrite lemmas that resolve a min/max once its arguments' order is known.
 _LEMMAS = "max_eq_left, max_eq_right, min_eq_left, min_eq_right"
 
@@ -78,12 +81,16 @@ _LEMMAS = "max_eq_left, max_eq_right, min_eq_left, min_eq_right"
 
 @dataclass(frozen=True)
 class MinMaxSkeleton:
-    """A classified min/max identity `LHS = RHS`: the two sides' ASTs and the sorted set of variable
-    pairs `(x, y)` appearing as `min(x,y)`/`max(x,y)` — the pairs the proof splits `le_total` on."""
+    """A classified min/max identity: a single `LHS = RHS` (`n_eqs == 1`) or a conjunction of `n_eqs`
+    such equalities (ADR 0059 Path A). `pairs` is the sorted UNION of the variable pairs `(x, y)`
+    appearing as `min(x,y)`/`max(x,y)` across all conjuncts — the pairs the proof splits `le_total`
+    on. `lhs`/`rhs` are the FIRST conjunct's sides (vestigial: the proof reads only `pairs`/`n_eqs`,
+    and the statement is rendered from the DSL, not from these)."""
 
     lhs: ast.AST
     rhs: ast.AST
     pairs: tuple[tuple[str, str], ...]
+    n_eqs: int = 1
 
 
 def _mmpoly(node: ast.AST, pairs: set) -> bool:
@@ -116,24 +123,41 @@ def _mmpoly(node: ast.AST, pairs: set) -> bool:
     return False
 
 
+def _eq_sides(node: ast.AST) -> Optional[tuple[ast.AST, ast.AST]]:
+    """`(lhs, rhs)` if `node` is a single top-level `==`, else None."""
+    if (isinstance(node, ast.Compare) and len(node.ops) == 1
+            and isinstance(node.ops[0], ast.Eq) and len(node.comparators) == 1):
+        return node.left, node.comparators[0]
+    return None
+
+
 def classify_identity(claim_property: str) -> Optional[MinMaxSkeleton]:
-    """Classify `claim_property` into a supported min/max identity skeleton, or None (→ DEFER)."""
+    """Classify `claim_property` into a supported min/max identity skeleton, or None (→ DEFER). Accepts
+    a single `LHS == RHS` or a top-level conjunction of such equalities (ADR 0059 Path A); every
+    conjunct's sides must be min/max-polynomials, and the UNION of min/max pairs must be non-empty and
+    within the branch budget."""
     try:
         tree = _parse(claim_property)
     except RenderError:
         return None
-    if not (isinstance(tree, ast.Compare) and len(tree.ops) == 1
-            and isinstance(tree.ops[0], ast.Eq) and len(tree.comparators) == 1):
-        return None    # top-level must be a single `==` (B.3)
-    lhs, rhs = tree.left, tree.comparators[0]
+    if isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.And):
+        eqs = [_eq_sides(v) for v in tree.values]        # every conjunct a bare `==` (rejects nested And / ↔ / non-Eq)
+        if any(e is None for e in eqs) or not (2 <= len(eqs) <= MAX_MINMAX_EQS):
+            return None
+    else:
+        e = _eq_sides(tree)
+        if e is None:
+            return None                                  # top-level must be `==` or a conjunction of `==`
+        eqs = [e]
     pairs: set = set()
-    if not (_mmpoly(lhs, pairs) and _mmpoly(rhs, pairs)):
-        return None
+    for lhs, rhs in eqs:
+        if not (_mmpoly(lhs, pairs) and _mmpoly(rhs, pairs)):
+            return None
     if not pairs:
-        return None    # no min/max → a pure-poly identity is not this backend's job
+        return None    # no min/max anywhere → a pure-poly identity is not this backend's job
     if 2 ** len(pairs) > MAX_MINMAX_BRANCHES:
-        return None    # branch budget
-    return MinMaxSkeleton(lhs=lhs, rhs=rhs, pairs=tuple(sorted(pairs)))
+        return None    # branch budget on the UNION of pairs
+    return MinMaxSkeleton(lhs=eqs[0][0], rhs=eqs[0][1], pairs=tuple(sorted(pairs)), n_eqs=len(eqs))
 
 
 # --- gate-owned proof construction (order-split; validated against the real Lean 4.31 kernel) ------
@@ -164,12 +188,19 @@ def _order_split(pairs: tuple[tuple[str, str], ...], base: str) -> str:
 
 
 def identity_proof(skel: MinMaxSkeleton, vs: list[str], n_domain: int) -> str:
-    """Gate-owned proof of `∀ vars, box → …dom… → (LHS = RHS)`: intro the vars + box + `n_domain`
-    domain antecedents (all unused by the algebra), then the order-split. `n_domain` is 2 for the
-    faithfulness pair's property leg (established + claim_domain) and 1 for the prover's LAW."""
+    """Gate-owned proof of `∀ vars, box → …dom… → (LHS = RHS)` — or of a conjunction of such
+    equalities: intro the vars + box + `n_domain` domain antecedents (all unused by the algebra), then
+    the order-split over the UNION of pairs. For a conjunction (`n_eqs > 1`) the goal is first split by
+    `refine ⟨…⟩` and the order-split is applied to every resulting equality via `<;>` — each equality is
+    a polynomial identity once the (shared) orderings are fixed, so a false conjunct fails `ring` on
+    some branch ⇒ DEFER. `n_domain` is 2 for the faithfulness pair's property leg, 1 for the prover LAW."""
     intro_all = (" ".join(vs) + " " + " ".join("_" for _ in vs)
                  + (" " + " ".join("_" for _ in range(n_domain)) if n_domain else ""))
-    return f"by\n  intro {intro_all}\n{_order_split(skel.pairs, _hyp_base(vs))}"
+    split = _order_split(skel.pairs, _hyp_base(vs))
+    if skel.n_eqs > 1:
+        holes = ", ".join("?_" for _ in range(skel.n_eqs))
+        split = f"  refine ⟨{holes}⟩ <;>\n  ({split.strip()})"
+    return f"by\n  intro {intro_all}\n{split}"
 
 
 # --- the gate-owned decision (used identically by the backend AND the re-checker) ------------------
