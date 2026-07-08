@@ -37,7 +37,7 @@ from leibniz import dsl_to_lean as d2l
 # tests render_pred's OUTPUT, not the DSL AST. Its integer-op semantics (Int.emod/Int.ediv Euclidean,
 # real subtraction) are the audited meaning of the Lean operators, pinned below to kernel values.
 
-_TOKEN_RE = re.compile(r"Int\.emod|Int\.ediv|[A-Za-z_][A-Za-z0-9_]*|\d+|≤|≥|≠|∧|∨|¬|ℕ|ℤ|[()+\-*^<>=:]")
+_TOKEN_RE = re.compile(r"Int\.emod|Int\.ediv|[A-Za-z_][A-Za-z0-9_]*|\d+|≤|≥|≠|∧|∨|¬|↔|ℕ|ℤ|[()+\-*^<>=:]")
 
 
 class LeanParseError(AssertionError):
@@ -119,6 +119,9 @@ def eval_lean(src: str, asn: dict):
                 take()
                 vals.append(node())
             return all(vals) if op == "∧" else any(vals)
+        if op == "↔":                                          # biconditional = boolean equality
+            take()
+            return left == node()
         return left                                            # a redundantly-parenthesised value
 
     v = node()
@@ -206,6 +209,16 @@ CONFORMANCE_PREDS = [
     "n*n % 4 == 0 or n*n % 4 == 1",      # single-var
     "0 <= a - b and (a - b) % 3 == 1",   # comparison chaining + subtraction
     "(a - b)^2 % 4 == 0 or (a - b)^2 % 4 == 1",   # power of a negative-capable base
+    "(a % 2 == 0) == (b % 2 == 0)",      # biconditional (`(P) == (Q)` between booleans) → ↔
+    "(a*a % 5 == 1) == ((a % 5 == 1) or (a % 5 == 4))",   # bicond with a disjunction on one side
+    "(a % 2 == 0) != (b % 2 == 0)",      # xor: `(P) != (Q)` → ¬ (P ↔ Q)
+    "((a - b) % 3 == 0) == (a % 3 == b % 3)",   # bicond over negative-capable subtraction
+    # the renderer's ↔ branch is reachable (via claim_domain/established_domain, which are NOT
+    # classifier-gated) for non-modular-atom operands — pin those render shapes too (review #4):
+    "(a < b) == (a + b < 5)",            # ↔ of INEQUALITIES
+    "((a % 2 == 0) and (b % 2 == 0)) == (c % 2 == 0)",   # ↔ of an and-tree
+    "((a % 2 == 0) == (b % 2 == 0)) == (c % 2 == 0)",    # NESTED ↔
+    "(0 <= a - b) != (b < a)",           # ¬↔ over inequalities + subtraction
 ]
 
 

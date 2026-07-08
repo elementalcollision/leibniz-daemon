@@ -205,3 +205,37 @@ and a **separate faithfulness path + prover**, not a change to the ZMod code.
   LCM reduction), and the fast-path falls through for them — no regression.
 - Not implemented until this design clears its ≥3-lens adversarial review, and each built procedure clears
   a code-level review before its producer is admitted / activated — the same gate every prior step passed.
+
+## Follow-on increments (the two remaining frontiers, now built)
+
+Both frontiers this ADR originally deferred are now built as separate, reviewed increments:
+
+### Path A — conjunction of `Eq` min/max identities (extends `minmax_decided`)
+
+`classify_identity` also accepts a top-level conjunction of ≤ `MAX_MINMAX_EQS` `Eq` min/max identities;
+the proof splits with `refine ⟨…⟩` and order-splits each equality (over the union of pairs). Rides the
+existing `minmax_identity/kernel` producer + fast-path — no new trust surface. Kernel-confirmed.
+
+### Path B — biconditional / same-modulus boolean combinations (`boolean_decided` + `boolean_prover`)
+
+A **third** decision procedure generalising `lean_decided` from a single atom / residue-set / conjunction
+to an **arbitrary boolean combination** — `∧`, `∨`, `¬`, and **biconditionals `↔`** — of eq/neq modular
+atoms **sharing one modulus**, over nonlinear polynomials (e.g. `(a·b)%3=0 ↔ (a%3=0 ∨ b%3=0)`).
+
+- **Renderer.** A small, conformance-covered extension to the audited `dsl_to_lean._prop`: `(P) == (Q)`
+  between *boolean* operands renders to `P ↔ Q` (and `!=` to `¬(P ↔ Q)`) — Python has no `↔`. Arithmetic
+  equalities are unchanged; the differential conformance suite now evaluates `↔` over the negative grid.
+- **Proof (ZMod-decide, kernel-validated).** `have key : ∀ vars:ZMod m, Q_zmod := by decide` decides the
+  whole boolean formula; one uniform per-atom bridge `(Int.emod poly m = c) ↔ ((↑poly:ZMod m)=↑c)` (proved
+  `rw [ZMod.intCast_eq_intCast_iff']; show …%… ; omega` — the `show` converts the `Int.emod` goal to `%`
+  so `omega`, which groks `%` not raw `Int.emod`, can finish); `rw` the atoms, `push_cast`, discharge with
+  the key. A **false** formula makes the `decide` refuse ⇒ DEFER.
+- **Fragment (owned at the classifier).** Single shared modulus (mixed moduli DEFER); eq/neq atoms over
+  pure polys with `0 ≤ c < m`; `and`/`or`/`not`/`↔` structure only. Disjoint-in-practice from `lean_decided`
+  by cost order (cost 93). Producer `boolean_modular/kernel`, admitted to `FAITHFULNESS_PRODUCERS`.
+- **Kernel-confirmed:** `(a·b)%3=0 ↔ (a%3=0 ∨ b%3=0)` promulgates end-to-end (Q.E.D., is_promotable); a
+  false biconditional and a mixed-modulus claim DEFER.
+
+**Still deferred:** **nonlinear mixed-modulus** claims (`(a+b)²%4` vs `(a+b)%2`) — the emod-push across
+differing moduli / castHom reduction is not yet a robust gate-owned tactic. `omega` cleanly decides the
+*linear* mixed-modulus fragment, but that overlaps the existing Z3 probe, so it is not separately wired.
