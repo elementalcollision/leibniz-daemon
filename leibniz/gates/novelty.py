@@ -99,3 +99,42 @@ class NoveltyGate:
             cost_units=1.0,
             producer="NoveltyGate",  # ADR 0013 §2
         )
+
+    def revalidate(self, prop: Propositio) -> Optional[EdgeEvidence]:
+        """Re-run the novelty checks on the CURRENT statement/signature/claim, for a
+        decision-procedure fast-path that installed a **canonical LAW** after the FORMALIZE
+        `check` already ran on the *autoformalized* statement (ADR 0059 review #3). The
+        FORMALIZE novelty PASS was recorded against a different theorem string and hash; this
+        re-checks the promulgated form. If the canonical law is now TRIVIAL (a tactic closes it)
+        or KNOWN (exact-hash or structural-congruence match), quarantine and return a **FAIL**
+        `NOVELTY_EDGE` for the caller to record — so `is_promotable` refuses it (a required edge
+        is no longer PASS). Otherwise return None: the FORMALIZE PASS stands.
+
+        Same three mechanical parts as `check`, in the same order, no judge — only re-applied to
+        the final statement. Idempotent when the statement did not change (returns None)."""
+        if prop.expressio is None:
+            return None
+        if self.lean.is_trivial(prop.expressio):
+            prop.quarantine(FinishReason.TRIVIAL)
+            return EdgeEvidence(
+                edge=NOVELTY_EDGE, tier=TrustTier.MECHANICAL, verdict=Verdict.FAIL,
+                detail={"reason": "canonical law closed by decision procedure", "stage": "post-derive"},
+                cost_units=1.0, producer="LeanVerifier.is_trivial",  # ADR 0013 §2
+            )
+        if prop.signature is not None and self.corpus.contains_equivalent(prop.signature):
+            prop.quarantine(FinishReason.KNOWN)
+            return EdgeEvidence(
+                edge=NOVELTY_EDGE, tier=TrustTier.MECHANICAL, verdict=Verdict.FAIL,
+                detail={"reason": "canonical law: structural match in known corpus", "stage": "post-derive"},
+                cost_units=1.0, producer="CorpusBackend",  # ADR 0013 §2
+            )
+        structural_known = getattr(self.corpus, "structural_known", None)
+        en = prop.enuntiatio
+        if callable(structural_known) and en is not None and structural_known(en.claim_property):
+            prop.quarantine(FinishReason.KNOWN)
+            return EdgeEvidence(
+                edge=NOVELTY_EDGE, tier=TrustTier.MECHANICAL, verdict=Verdict.FAIL,
+                detail={"reason": "canonical law: structural congruence match", "stage": "post-derive"},
+                cost_units=1.0, producer="CorpusBackend.structural_known",  # ADR 0013 §2
+            )
+        return None

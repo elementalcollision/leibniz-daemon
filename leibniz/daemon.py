@@ -39,6 +39,7 @@ from leibniz.pipeline import (
 )
 from leibniz.propositio import Propositio
 from leibniz.selection import KFM, descriptor
+from leibniz.trust import PROOF_EDGE
 from leibniz.types import FinishReason
 
 
@@ -196,6 +197,17 @@ class Leibniz:
                 survivor = self.derive.run(survivor)        # expensive: proof draft
                 survivor = self.demonstrate.run(survivor)   # kernel check
                 report.reached_proof += 1
+
+                # ADR 0059 review #3: a decision-procedure fast-path installs a gate-rendered
+                # canonical LAW *after* FORMALIZE ran novelty on the autoformalized statement. Re-run
+                # novelty on the promulgated form so a trivial/duplicate canonical law cannot ride the
+                # stale FORMALIZE PASS. Only when a fast-path fired (its proof edge carries a
+                # `decision_procedure` tag); the ensemble path leaves the statement untouched.
+                if any(e.edge == PROOF_EDGE and (e.detail or {}).get("decision_procedure")
+                       for e in survivor.edges):
+                    reval = self.formalize.novelty.revalidate(survivor)
+                    if reval is not None:
+                        survivor.record(reval)   # FAIL NOVELTY_EDGE → is_promotable refuses
 
                 promotable = self.verification.is_promotable(survivor)
                 # R2c: even a promotable candidate is refused if its faithfulness edge

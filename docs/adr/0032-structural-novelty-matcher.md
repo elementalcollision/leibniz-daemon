@@ -247,3 +247,28 @@ already route candidate `claim_property` through it, so loose phrasings now reso
 corpus entry automatically. `corpus/known_results.json`, `corpus.py`, `gates/novelty.py`, and
 `tests/test_invariants.py` are **unchanged**; the existing `tests/test_structural_r0032.py` and all
 12 corpus signatures are byte-identical.
+
+## Addendum — boolean-combination signatures (ADR 0059 Path B review #2)
+
+The ADR 0059 biconditional path (`boolean_decided`) promulgates laws that are boolean COMBINATIONS
+of congruence atoms — `∧`, `∨`, `¬`, and biconditionals `↔` — which `congruence_signature` did not
+recognize (they fell through to `None` → always NOVEL), so a commuted / re-associated / doubly-negated
+restatement of the same boolean law could promulgate twice.
+
+`_boolean_signature` extends the matcher to these shapes, reusing the atom signature (`_atom_signature`,
+extracted verbatim) at the leaves and canonicalizing the tree over the SOUND equivalences only:
+- commutativity + associativity of `∧`/`∨`/`↔` (flatten + sort operands),
+- double-negation (`¬¬X → X`), and `¬(P%m==c) ≡ (P%m!=c)` (relop flip),
+- `¬(P↔Q) ≡ (P⊕Q)` (iff/xor tag flip).
+
+It deliberately does **NOT** apply De Morgan or distribution: those would restructure the tree, and a
+wrong collapse is a false-KNOWN (the unsoundness this module exists to avoid). The cost is a missed
+match (a duplicate in a De-Morgan'd phrasing), which is safe. Every result is a tag-prefixed tuple, so
+two genuinely different laws never share a signature (red-teamed). The single-atom / residue-set /
+membership paths and all 12 corpus signatures are **byte-identical** (`_atom_signature` returns the same
+3-tuple; a top-level result that collapses to a bare atom is unwrapped to match).
+
+Separately (ADR 0059 review #3), `NoveltyGate.revalidate` re-runs the three novelty checks on the
+CANONICAL law a decision-procedure fast-path installs *after* FORMALIZE ran `check` on the autoformalized
+statement; the daemon records its FAIL edge (→ not promotable) when the promulgated form is trivial or a
+duplicate. `validate_path` / `is_promotable` / `test_invariants` are unchanged.

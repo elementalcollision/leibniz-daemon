@@ -317,6 +317,123 @@ def _disjunction_residues(node: ast.BoolOp):
     return (pnode, mod)
 
 
+def _atom_signature(node: ast.AST, single_var: Optional[bool] = None) -> Optional[tuple]:
+    """Signature of a single congruence ATOM `P % m <relop> c` or `P1 % m == P2 % m`
+    (relop ∈ {==, !=}), or None. Returns `(relop, m, normalize(poly))`. With `single_var=None`
+    (the top-level atom path) it computes single-var from this atom's own variable count — the same
+    tuple the old `==`/`!=` tail produced (corpus backward-compat). When called from a boolean COMBO
+    the caller passes the WHOLE combo's `single_var`: a ≥2-variable combo forces the multivariate
+    (variable-name-keyed) form so a per-atom single-variable claim does not drop WHICH variable it
+    constrains — without this, `(a%3==0)∧(b%3==1)` and `(a%3==1)∧(b%3==0)` would collide (false-KNOWN)."""
+    if not (isinstance(node, ast.Compare) and len(node.ops) == 1):
+        return None
+    relop = {ast.Eq: "==", ast.NotEq: "!="}.get(type(node.ops[0]))
+    if relop is None:
+        return None
+    left, right = node.left, node.comparators[0]
+    lm, rm = _mod(left), _mod(right)
+    state = {"vars": set()}
+    try:
+        if lm and rm:                         # P1 % m == P2 % m
+            if lm[1] != rm[1]:
+                return None
+            m = lm[1]
+            poly = _add(_expand(lm[0], state), _neg(_expand(rm[0], state)))
+        elif lm or rm:                        # P % m <relop> c (the other side MUST be a constant)
+            (pnode, m), other = (lm, right) if lm else (rm, left)
+            c = _const_int(other)
+            if c is None or not (0 <= c < m):
+                return None
+            poly = _add(_expand(pnode, state), {(): -c})
+        else:
+            return None
+    except _NotPoly:
+        return None
+    if m < 2:
+        return None
+    sv = (len(state["vars"]) <= 1) if single_var is None else single_var
+    return (relop, m, _normalize(poly, m, sv))
+
+
+def _is_bool_node(node: ast.AST) -> bool:
+    """A node that denotes a boolean (a comparison, an and/or, or a not) — used to tell a
+    biconditional `(P) == (Q)` (boolean operands) from an arithmetic congruence `P % m == c`."""
+    return (isinstance(node, ast.BoolOp)
+            or (isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not))
+            or isinstance(node, ast.Compare))
+
+
+_FLIP_RELOP = {"==": "!=", "!=": "=="}
+
+
+def _boolean_signature(node: ast.AST, single_var: bool) -> Optional[tuple]:
+    """Canonical signature of a boolean COMBINATION of congruence atoms — invariant under
+    commutativity/associativity of ∧/∨/↔, double-negation, and `¬(P%m==c) ≡ (P%m!=c)`. CONSERVATIVE:
+    no De Morgan / distribution (a *missed* match is safe; a wrong collapse would be a false-KNOWN
+    that suppresses a real discovery — the unsoundness ADR 0032 exists to avoid). `single_var` is the
+    WHOLE combo's arity (computed once by the caller), threaded to every atom leaf so a multi-variable
+    combo keys atoms on their literal variable. Returns None on any unrecognized leaf → NOVEL. Every
+    result is a tag-prefixed tuple, so sibling signatures sort deterministically."""
+    if isinstance(node, ast.BoolOp):
+        tag = "and" if isinstance(node.op, ast.And) else "or"
+        parts, stack = [], list(node.values)     # flatten same-op nesting (associativity)
+        while stack:
+            v = stack.pop()
+            if isinstance(v, ast.BoolOp) and type(v.op) is type(node.op):
+                stack.extend(v.values)
+            else:
+                parts.append(v)
+        subs = [_boolean_signature(v, single_var) for v in parts]
+        if any(s is None for s in subs):
+            return None
+        # commutativity: sort the operands into a canonical order. Sort by `repr` — a total order that
+        # never raises (a univariate atom's legacy `(exp, coeff)` norm and a multivariate atom's
+        # monomial-keyed norm are not directly comparable). `repr` is faithful for these hashable
+        # tuples, so it never merges distinct operands (no false-KNOWN).
+        return (tag, tuple(sorted(subs, key=repr)))
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        inner = node.operand
+        if isinstance(inner, ast.UnaryOp) and isinstance(inner.op, ast.Not):
+            return _boolean_signature(inner.operand, single_var)   # ¬¬X → X
+        a = _atom_signature(inner, single_var)
+        if a is not None:
+            return ("atom", _FLIP_RELOP[a[0]], a[1], a[2])     # ¬(P%m==c) → (P%m!=c)
+        s = _boolean_signature(inner, single_var)
+        if s is None:
+            return None
+        if s[0] in ("iff", "xor"):
+            return ("xor" if s[0] == "iff" else "iff", s[1])   # ¬(P↔Q) → (P⊕Q), ¬(P⊕Q) → (P↔Q)
+        return ("not", s)                                       # ¬(and/or): keep the wrapper (no De Morgan)
+    if isinstance(node, ast.Compare) and len(node.ops) == 1:
+        if (isinstance(node.ops[0], (ast.Eq, ast.NotEq))
+                and _is_bool_node(node.left) and _is_bool_node(node.comparators[0])):
+            sp = _boolean_signature(node.left, single_var)     # biconditional / xor
+            sq = _boolean_signature(node.comparators[0], single_var)
+            if sp is None or sq is None:
+                return None
+            tag = "iff" if isinstance(node.ops[0], ast.Eq) else "xor"
+            return (tag, tuple(sorted((sp, sq), key=repr)))    # ↔/⊕ commutative: sort the pair (repr: see above)
+        a = _atom_signature(node, single_var)
+        return ("atom", a[0], a[1], a[2]) if a is not None else None
+    return None
+
+
+def _top_boolean_signature(tree: ast.AST) -> Optional[tuple]:
+    """`_boolean_signature`, but a top-level result that collapsed to a single atom (`('atom', …)`,
+    e.g. `not (not P)` or `not (P%m==c)`) is unwrapped to the bare `(relop, m, norm)` atom form so it
+    matches a plain congruence-atom signature (which stays 3-tuple for corpus backward-compat). Total:
+    any surprise on adversarial input returns None (→ NOVEL), never an exception — the module contract
+    is fail-toward-novel, never crash the novelty gate."""
+    try:
+        # single-var/multivar is decided ONCE on the whole combination's variable count, so a
+        # ≥2-variable combo keys its atoms on literal names (no across-variable false-KNOWN).
+        nvars = len({n.id for n in ast.walk(tree) if isinstance(n, ast.Name)})
+        s = _boolean_signature(tree, single_var=nvars <= 1)
+    except Exception:
+        return None
+    return s[1:] if s is not None and s[0] == "atom" else s
+
+
 def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
     """Canonical signature of a polynomial congruence DSL predicate, or None.
 
@@ -347,17 +464,25 @@ def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
         return None
     if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
         return None
-    # `or`-disjunction of `P % m == c` clauses -> membership canonicalization (computed residues).
+    # `or`-disjunction of `P % m == c` over ONE common P and m -> membership canonicalization
+    # (computed residues; phrasing-independent). Anything richer -> the boolean-combination signature.
     if isinstance(tree, ast.BoolOp):
         dj = _disjunction_residues(tree)
-        if dj is None:
-            return None
-        pnode, m = dj
-        if m < 2:
-            return None
-        return _membership_signature(pnode, m, negate=False)
+        if dj is not None:
+            pnode, m = dj
+            if m < 2:
+                return None
+            return _membership_signature(pnode, m, negate=False)
+        return _top_boolean_signature(tree)   # ADR 0059 review #2: `and`, or-of-different-polys, nested
+    # `not (…)` over congruence atoms -> boolean-combination signature.
+    if isinstance(tree, ast.UnaryOp) and isinstance(tree.op, ast.Not):
+        return _top_boolean_signature(tree)
     if not (isinstance(tree, ast.Compare) and len(tree.ops) == 1):
         return None
+    # biconditional `(P) == (Q)` / `(P) != (Q)` between BOOLEAN operands -> boolean-combination signature.
+    if (isinstance(tree.ops[0], (ast.Eq, ast.NotEq))
+            and _is_bool_node(tree.left) and _is_bool_node(tree.comparators[0])):
+        return _top_boolean_signature(tree)
     # set-membership `P % m in {…}` / `not in {…}` -> membership canonicalization.
     memop = {ast.In: False, ast.NotIn: True}.get(type(tree.ops[0]))
     if memop is not None:
@@ -374,29 +499,5 @@ def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
         if asserted is None or not asserted:   # non-constant element or empty literal -> NOVEL
             return None
         return _membership_signature(pnode, m, negate=memop)
-    relop = {ast.Eq: "==", ast.NotEq: "!="}.get(type(tree.ops[0]))
-    if relop is None:
-        return None
-    left, right = tree.left, tree.comparators[0]
-    lm, rm = _mod(left), _mod(right)
-    state = {"vars": set()}
-    try:
-        if lm and rm:                         # P1 % m == P2 % m
-            if lm[1] != rm[1]:
-                return None                   # different moduli -> not one congruence
-            m = lm[1]
-            poly = _add(_expand(lm[0], state), _neg(_expand(rm[0], state)))
-        elif lm or rm:                        # P % m == c  (the other side MUST be a constant)
-            (pnode, m), other = (lm, right) if lm else (rm, left)
-            c = _const_int(other)
-            if c is None or not (0 <= c < m):  # raw-poly RHS or out-of-range residue -> reject
-                return None
-            poly = _add(_expand(pnode, state), {(): -c})
-        else:
-            return None
-    except _NotPoly:
-        return None
-    if m < 2:
-        return None
-    single_var = len(state["vars"]) <= 1
-    return (relop, m, _normalize(poly, m, single_var))
+    # a single congruence atom `P % m <relop> c` / `P1 % m == P2 % m`
+    return _atom_signature(tree)
