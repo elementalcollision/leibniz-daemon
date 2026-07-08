@@ -1,0 +1,26 @@
+{
+  "id": "had94_witness1",
+  "pid": "ad226176cb0e",
+  "statement": "A complex Hadamard matrix of order 94 exists (Szöllősi 2026) — kernel-attested structural core: the Example-1 circulant quadruple (A,B,C,D, order 47, {−1,1}) satisfies A A^T+B B^T+C C^T+D D^T = 188·I with A,B symmetric (Theorem 4)",
+  "claim_type": "existence",
+  "falsifiable_claim": "a nonzero shift s∈[1,47) at which the summed periodic autocorrelations of A,B,C,D are nonzero (or ≠188 at s=0), or an asymmetry in A or B — breaking the Theorem-4 construction hypothesis",
+  "domain": "combinatorial_design_theory",
+  "theorem_src": "theorem had94_witness1 : (eq1 a1 b1 c1 d1 && symrow a1 && symrow b1) = true",
+  "preamble": "set_option maxHeartbeats 0\nset_option maxRecDepth 1000000\n\ndef rot (x : List Int) (s : Nat) : List Int := x.drop s ++ x.take s\ndef dotf (u v : List Int) : Int := (List.zipWith (fun a b => a * b) u v).foldl (fun t a => t + a) 0\ndef autocorr (x : List Int) (s : Nat) : Int := dotf x (rot x s)\n\ndef eq1 (a b c d : List Int) : Bool :=\n  (List.range 47).all (fun s => autocorr a s + autocorr b s + autocorr c s + autocorr d s == (if s == 0 then 188 else 0))\n\ndef symrow (x : List Int) : Bool := (List.range 47).all (fun k => x.getD k 0 == x.getD ((47 - k) % 47) 0)\n\ndef a1 : List Int := [1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, 1, -1, 1, -1, 1, 1, 1]\ndef b1 : List Int := [1, 1, -1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, -1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, 1, 1, 1, -1, 1, -1, 1]\ndef c1 : List Int := [1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1, -1, -1, -1, -1, -1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, -1, -1, 1, -1, 1, -1]\ndef d1 : List Int := [1, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, 1, -1, 1, -1, -1, 1, 1, -1, 1, 1, -1, -1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1]",
+  "proof_src": "by decide",
+  "imports": [],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "kernel-decided",
+  "origination": "amplified",
+  "references": [
+    {
+      "citation": "Szöllősi, F. (2026). A complex Hadamard matrix of order 94. arXiv:2603.09572.",
+      "url": "https://arxiv.org/abs/2603.09572"
+    }
+  ],
+  "$schema": "../../../.astro/collections/laws.schema.json"
+}
