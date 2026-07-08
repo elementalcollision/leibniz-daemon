@@ -173,12 +173,45 @@ def test_unrecognized_loose_shapes_return_none():
     assert sig("n % 5 in {0, k}") is None             # non-constant element
     assert sig("n % 5 in S") is None                  # RHS not a set/tuple/list literal
     assert sig("a*b % 6 in {0, 4}") is None           # multivariate membership not enumerated
-    assert sig("n%6==0 or n^2%6==0") is None          # disjuncts over different polynomials
-    assert sig("n%6==0 or n%5==0") is None            # disjuncts over different moduli
-    assert sig("n%6==0 or n%6!=4") is None            # a non-`==` disjunct
-    assert sig("n%6==0 and n%6==0") is None           # `and`, not `or`
-    assert sig("(n%6==0 or n%6==2) or n%6==4") is None  # nested BoolOp -> conservative None
-    assert sig("n % 5 in {0} or n < 3") is None       # an inequality disjunct
+    assert sig("n % 5 in {0} or n < 3") is None       # an inequality disjunct (not a congruence atom)
+    assert sig("(n % 5 in {0}) and (n % 3 == 0)") is None   # a membership atom inside an `and`
+
+
+def test_boolean_combination_shapes_recognized_soundly():
+    # ADR 0059 review #2: the boolean-combination signature (commutativity + double-negation +
+    # `¬(==)≡(!=)`) recognizes `and` / `not` / biconditional / or-of-different-polys as a general
+    # congruence-atom combination — the shapes the boolean_decided backend promulgates. Each is a
+    # SOUND, form-based signature: commuted/re-associated/doubly-negated phrasings collapse; two
+    # genuinely different laws never do.
+    for shape in ["n%6==0 or n^2%6==0",              # disjuncts over different polynomials
+                  "n%6==0 or n%6!=4",                # mixed relop
+                  "(a%3==0) and (b%3==1)",           # conjunction of different polys
+                  "(a%3==0) == (b%3==0)",            # biconditional
+                  "not (a%4==2)"]:                   # negation
+        assert sig(shape) is not None
+    # commutativity/associativity/double-negation collapse (same law -> same signature)
+    assert sig("(a%3==0) and (b%3==0)") == sig("(b%3==0) and (a%3==0)")
+    assert sig("(a%2==0) == (b%2==0)") == sig("(b%2==0) == (a%2==0)")
+    assert sig("not (not (a%2==0))") == sig("a%2==0")
+    assert sig("(a%2==0) != (b%2==0)") == sig("not ((a%2==0) == (b%2==0))")
+    # NO false-KNOWN: different laws keep different signatures
+    assert sig("(a%2==0) == (b%2==0)") != sig("(a%2==0) == (b%2==1)")
+    assert sig("(a%3==0) and (b%3==0)") != sig("(a%3==0) or (b%3==0)")
+    # ...including residues PERMUTED across variables — the ≥2-var combo keys atoms on literal names,
+    # so a per-atom single-variable claim does not drop WHICH variable it constrains (a subtle
+    # false-KNOWN if the single-var α-rename form were used inside the combo):
+    assert sig("(a%3==0) and (b%3==1)") != sig("(a%3==1) and (b%3==0)")
+    assert sig("(a%3==0) == (b%3==1)") != sig("(a%3==1) == (b%3==0)")
+    assert (sig("(a%4==1) and (b%4==2) and (c%4==3)")
+            != sig("(a%4==3) and (b%4==2) and (c%4==1)"))
+    # a mixed-arity combo (a multivariate atom beside a single-variable atom) must not crash on sort
+    assert sig("(a*b % 3 == 0) and (c % 3 == 0)") is not None
+    assert sig("(a*b % 3 == 0) and (c % 3 == 0)") == sig("(c % 3 == 0) and (a*b % 3 == 0)")
+    assert sig("(a*b % 3 == 0) and (c % 3 == 0)") != sig("(x*y % 3 == 0) and (z % 3 == 0)")
+    # an unrecognized leaf anywhere -> the whole combination is None (fails toward NOVEL)
+    assert sig("(a%3==0) and (a < b)") is None
+    # top-level single-atom signatures and single-var α-rename collapse are UNCHANGED (regression)
+    assert sig("n%3==0") == sig("k%3==0")             # one-variable claim: name-independent, as before
 
 
 def test_large_modulus_membership_fails_toward_novel():
