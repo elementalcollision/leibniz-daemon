@@ -238,12 +238,18 @@ def _conjunct_bullet(op: str, poly_ast: ast.AST, m: int, c: int, vs: list[str]) 
     fails → DEFER. Names are bullet-local (`·` focuses one goal), so they never clash across atoms."""
     poly, binder, casts = _term(poly_ast), " ".join(vs), _casts(vs, m)
     if op == "eq":
+        # Close with an explicit `have h' : poly % m = c` + full-transparency `exact h'` (mirroring the
+        # single-atom `eq` path in `property_proof`) rather than `simpa using hz` directly. The theorem
+        # statement renders the conjunct as `Int.emod poly m = c` while `hz` is in `HMod.hMod` (`%`) form;
+        # these are definitionally equal but `simpa`'s closing `exact` runs at *reducible* transparency and
+        # cannot unfold `HMod.hMod → Int.emod`, so a direct `simpa using hz` fails on every `eq` conjunct.
         return (f"  ·\n"
                 f"    have key : ∀ ({binder} : ZMod {m}), {poly} = {c} := by decide\n"
                 f"    have hk := key {casts}\n"
                 f"    have hz : (({poly} : ℤ) : ZMod {m}) = (({c} : ℤ) : ZMod {m}) := by\n"
                 f"      push_cast\n      exact hk\n"
-                f"    rw [ZMod.intCast_eq_intCast_iff'] at hz\n    simpa using hz")
+                f"    rw [ZMod.intCast_eq_intCast_iff'] at hz\n"
+                f"    have h' : {poly} % {m} = {c} := by simpa using hz\n    exact h'")
     return (f"  ·\n"
             f"    have key : ∀ ({binder} : ZMod {m}), {poly} ≠ {c} := by decide\n"
             f"    intro hcon\n    have hc : {poly} % {m} = {c} := hcon\n"

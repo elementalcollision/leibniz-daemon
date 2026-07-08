@@ -126,6 +126,22 @@ def test_conjunction_proof_structure_splits_and_keys_each_atom():
     assert ld.conjunction_proof(s, ["a", "b"], n_domain=1).startswith("by\n  intro a b _ _ _\n")
 
 
+def test_conjunction_eq_bullet_bridges_emod_via_full_transparency_exact():
+    # Regression guard for the `%`(HMod.hMod) vs `.emod`(Int.emod) transparency bug: the theorem
+    # statement renders an `eq` conjunct as `Int.emod poly m = c`, but the ZMod bridge produces the
+    # hypothesis in `%` form. A bare `simpa using hz` closes at *reducible* transparency (cannot unfold
+    # HMod → Int.emod) and DEFERS every `eq` conjunct. The fix mirrors the single-atom `eq` path:
+    # `have h' : poly % m = c := by simpa using hz` then a full-transparency `exact h'`. Because the
+    # FakeKernel cannot detect a defeq/transparency mismatch, this structural guard — not check_proof —
+    # is what pins the fix in CI; the real-kernel anchor is `test_real_kernel_end_to_end`.
+    s = ld.classify_property("(a*a) % 4 == 0 and (b*b) % 4 != 3")   # one eq conjunct + one neq
+    body = ld.conjunction_proof(s, ["a", "b"], n_domain=1)
+    eq_bullet = body.split("·")[1]                                  # the first (eq) conjunct's bullet
+    assert "have h' : (a * a) % 4 = 0" in eq_bullet                 # ascribed in `%` (HMod) form
+    assert eq_bullet.rstrip().endswith("exact h'")                  # closed at full transparency, not `simpa`
+    assert not eq_bullet.rstrip().endswith("simpa using hz")        # the buggy reducible close is gone
+
+
 def test_applies_and_decide_certificate_accept_conjunction_with_fake_kernel():
     conj = ("a >= 0 and b >= 0",
             "(a*a + b*b) % 4 != 3 and (a*a + b*b) % 4 != 2",
@@ -349,5 +365,14 @@ def test_real_kernel_end_to_end():  # pragma: no cover
         assert ld.decide_certificate(d, be)[0] is True                       # true claim → PASS
         d_false = {**d, "claim_property": "(a*a + b*b) % 4 != 2"}
         assert ld.decide_certificate(d_false, be)[0] is False                 # false claim → DEFER
+        # eq-conjunction anchor (the `%`/`.emod` transparency regression): a TRUE conjunction whose
+        # conjuncts are `eq` atoms must PASS, and a FALSE one must DEFER. Before the _conjunct_bullet
+        # fix every `eq` conjunct DEFERred on a reducible-transparency `exact`.
+        cd = "a >= 0 and b >= 0"
+        eq_conj = {"claim_domain": cd, "established_domain": cd,
+                   "claim_property": "(a*a + a) % 2 == 0 and (b*b + b) % 2 == 0"}   # both even → TRUE
+        assert ld.decide_certificate(eq_conj, be)[0] is True
+        eq_conj_false = {**eq_conj, "claim_property": "(a*b) % 2 == 0 and (a + b) % 2 == 0"}  # FALSE
+        assert ld.decide_certificate(eq_conj_false, be)[0] is False
     finally:
         be.close()
