@@ -53,7 +53,7 @@ _ORIGINATIONS = frozenset({"originated", "amplified"})
 
 def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = False,
                 tier: str = "kernel-decided", origination: str = "amplified",
-                references: Optional[list] = None) -> dict:
+                references: Optional[list] = None, novelty_attestation: Optional[dict] = None) -> dict:
     """One published law as the site's ledger shape (the Propositio triad).
 
     ADR 0050 adds two **report-only** provenance attributes — never consulted by the trust
@@ -64,7 +64,9 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
       (ADRs 0045/0048).
     - ``origination`` ∈ {originated, amplified} — a fact the daemon originated vs a re-decision of
       published work. An ``amplified`` law MUST cite its source (``references``, same discipline as
-      cite-worthy cycles); an ``originated`` law asserts a fact no cited source states.
+      cite-worthy cycles); an ``originated`` law asserts a fact no cited source states and instead
+      carries a ``novelty_attestation`` (ADR 0063 / ADR 0050 Phase 4) — the mechanical novelty-gate
+      PASS (retrieval + a decision procedure, never a judge). Also report-only.
     """
     if tier not in _TIERS:
         raise ValueError(f"tier must be one of {sorted(_TIERS)}, got {tier!r}")
@@ -93,6 +95,9 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
         "tier": tier,
         "origination": origination,
         "references": list(references or []),
+        # ADR 0063: an originated law's novelty attestation (the mechanical gate PASS) in lieu of a
+        # citation; None/absent for amplified laws (which cite `references` instead). Report-only.
+        "novelty_attestation": novelty_attestation,
     }
 
 
