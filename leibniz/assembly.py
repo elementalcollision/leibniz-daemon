@@ -274,6 +274,39 @@ def maybe_wrap_residue(demonstrate, consensus, repl_image, *, env=None):
     return ResidueDemonstrate(inner=demonstrate, lean=consensus.lean)
 
 
+def maybe_register_minmax_decided(faithfulness: FaithfulnessGate, repl_image: str, *, env=None) -> bool:
+    """ADR 0059 (min/max half) — OPT-IN, DEFAULT OFF. Register the order-split faithfulness backend
+    (the Lean kernel decides min/max symmetric-function identities — a fragment disjoint from the
+    modular one) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is available — the
+    SAME gate as `maybe_register_lean_decided`, so the whole ceiling-raiser activates together. Without
+    both, the gate stays fail-closed: no re-checker for the kind, so no PASS of it is ever accepted.
+    `register` installs BOTH the re-checker and the statement template (B.2). Returns True iff it
+    registered."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return False
+    from leibniz.gates.minmax_decided import register as _register
+    _register(faithfulness, lean_repl.LeanReplBackend(image=repl_image))
+    return True
+
+
+def maybe_wrap_minmax(demonstrate, consensus, repl_image, *, env=None):
+    """ADR 0059 (min/max half) B.1 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the min/max
+    order-split fast-path (prove an identity's canonical law and promote on the single kernel
+    verification) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is available — the
+    SAME gate as `maybe_register_minmax_decided`, so the fast-path is never on while the statement-binding
+    `minmax_decided` backend is off (closing the activation asymmetry and guaranteeing a REPL backend for
+    the promotion-time `axiom_closure`). The fast-path promotes only claims carrying a
+    `minmax_identity/kernel` faithfulness edge, and falls through to `demonstrate` otherwise. Composes with
+    the residue wrap — each fast-path handles its own disjoint fragment and falls through for the other's.
+    Without both conditions the stage is returned unchanged — fail-closed."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return demonstrate
+    from leibniz.providers.minmax_prover import MinMaxDemonstrate
+    return MinMaxDemonstrate(inner=demonstrate, lean=consensus.lean)
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -297,6 +330,9 @@ def build_daemon(
     # ADR 0056 Track A increment 2 — OPT-IN activation of the Lean-decided faithfulness backend
     # (default OFF; fail-closed otherwise). See maybe_register_lean_decided.
     maybe_register_lean_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    # ADR 0059 (min/max half) — OPT-IN activation of the order-split faithfulness backend (disjoint
+    # fragment; same LEIBNIZ_LEAN_DECIDED gate; fail-closed otherwise). See maybe_register_minmax_decided.
+    maybe_register_minmax_decided(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
@@ -359,6 +395,8 @@ def build_daemon(
     else:
         demonstrate = ConsensusDemonstrate(consensus)
     demonstrate = maybe_wrap_residue(                          # ADR 0058: opt-in decision-procedure fast-path
+        demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    demonstrate = maybe_wrap_minmax(                           # ADR 0059 (min/max half): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
