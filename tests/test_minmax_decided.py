@@ -77,12 +77,45 @@ def test_classify_accepts_minmax_identities():
     "max(a, b) < a + b",              # not an equality
     "min(a, b) != 0",                 # not an equality (NotEq)
     "a + b == b + a",                 # a pure-poly identity (no min/max) — not this backend's job
-    "max(a, b) == a and min(a, b) == b",   # top-level And, not a single Eq (this increment: single Eq)
     "(a / 2) + max(a, b) == b",       # division in a side
     "(a % 2) + max(a, b) == b",       # modulo in a side
 ])
 def test_classify_rejects_out_of_fragment(bad):
     assert mm.classify_identity(bad) is None
+
+
+# --- ADR 0059 Path A: conjunction of Eq min/max identities ----------------------------------------
+
+def test_classify_accepts_conjunction_of_eq_identities():
+    s = mm.classify_identity("max(a,b)**2 + min(a,b)**2 == a**2 + b**2 and max(a,b)*min(a,b) == a*b")
+    assert s is not None and s.n_eqs == 2 and s.pairs == (("a", "b"),)
+    # union of pairs across conjuncts
+    s2 = mm.classify_identity("max(a,b) + min(a,b) == a + b and max(b,c) + min(b,c) == b + c")
+    assert s2 is not None and s2.n_eqs == 2 and s2.pairs == (("a", "b"), ("b", "c"))
+    # a single Eq still classifies with n_eqs == 1
+    assert mm.classify_identity("max(a,b) + min(a,b) == a + b").n_eqs == 1
+
+
+@pytest.mark.parametrize("bad", [
+    "max(a,b) == a and max(a, b, c) == b",       # a ≥3-ary conjunct
+    "max(a,b) == a and (a % 2 == 0)",            # a non-min/max (modular) conjunct
+    "max(a,b) == a and min(a,b) != b",           # a NotEq conjunct (only Eq admitted)
+    "max(a,b) == a or min(a,b) == b",            # top-level Or, not And
+    "max(a,b) == a and (min(a,b) == b and min(b,c) == c)",  # nested And conjunct (not a bare Eq)
+])
+def test_classify_rejects_bad_conjunctions(bad):
+    assert mm.classify_identity(bad) is None
+
+
+def test_classify_conjunction_respects_eq_cap():
+    over = " and ".join([f"max(a,b) + min(a,b) == a + b"] * (mm.MAX_MINMAX_EQS + 1))
+    assert mm.classify_identity(over) is None            # over MAX_MINMAX_EQS → DEFER
+
+
+def test_conjunction_proof_splits_and_order_splits_each():
+    s = mm.classify_identity("max(a,b)**2 + min(a,b)**2 == a**2 + b**2 and max(a,b)*min(a,b) == a*b")
+    body = mm.identity_proof(s, ["a", "b"], n_domain=1)
+    assert "refine ⟨?_, ?_⟩ <;>" in body and body.count("rcases le_total") == 1 and body.rstrip().endswith("ring)")
 
 
 def test_classify_respects_branch_budget():
