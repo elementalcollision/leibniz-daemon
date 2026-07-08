@@ -12,5 +12,7 @@
   "kernel_verified": true,
   "consensus": 0,
   "published_at": "2026-06-21T00:00:00Z",
-  "specimen": true
+  "specimen": true,
+  "tier": "kernel-decided",
+  "origination": "amplified"
 }
