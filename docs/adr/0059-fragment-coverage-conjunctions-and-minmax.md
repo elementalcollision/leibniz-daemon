@@ -1,8 +1,10 @@
 # ADR 0059 — Fragment coverage: modular conjunctions + min/max algebraic identities
 
-**Status:** **REVIEWED — SPLIT.** Modular conjunctions: **ACCEPTED (build, with amendments A.1–A.4)** —
-implemented in this increment. min/max identities: **HELD** for a follow-up increment (amendments
-B.1–B.4) and its own code-level re-review before its producer is admitted. Widens the *covered
+**Status:** **REVIEWED — SPLIT; both families BUILT.** Modular conjunctions: **ACCEPTED (amendments
+A.1–A.4)**, shipped in PR #350. min/max identities: **BUILT (amendments B.1–B.4)** as a separate
+decision procedure (`leibniz/gates/minmax_decided.py` + `leibniz/providers/minmax_prover.py`),
+kernel-confirmed end-to-end, behind its own code-level review before the `minmax_identity/kernel`
+producer is activated. Widens the *covered
 fragment* of the ceiling-raiser (ADR 0056 faithfulness + ADR 0058 prover) from a single modular atom /
 residue-set to the two clean shapes the conjecturer (ADR 0053) actually produces beyond it:
 **conjunctions of modular atoms**, and **min/max symmetric-function identities**. Each is a coordinated
@@ -110,14 +112,44 @@ DEMONSTRATE fast-path; faithfulness is certified by a sound backend gated by the
   fast-path, `theorem_src` binding (A2), axiom footprint (A4), and lean_decided-edge requirement are all
   inherited unchanged.
 
-### 2. min/max symmetric-function identities — HELD for a follow-up increment (a new order-split heuristic)
+### 2. min/max symmetric-function identities — BUILT (a new order-split decision procedure)
 
-> **Review outcome: not built in this increment.** The order-split *tactic* is sound (kernel-confirmed:
-> false identities, missing-branch cases, and inequality-shaped goals all DEFER), but the family has **no
-> wired promotion path** and needs amendments B.1–B.4 (a separate min/max fast-path with DSL re-render, a
-> `templates[KIND]` pin, and classifier-owned fragment guards) plus its own code-level re-review before its
-> `minmax_identity/kernel` producer is admitted. The design below is retained as the starting point for that
-> increment.
+> **Built per B.1–B.4** in `leibniz/gates/minmax_decided.py` (the order-split faithfulness backend) and
+> `leibniz/providers/minmax_prover.py` (`MinMaxDemonstrate`, the separate fast-path), wired opt-in via
+> `assembly.maybe_register_minmax_decided` / `maybe_wrap_minmax` behind the same `LEIBNIZ_LEAN_DECIDED`
+> activation, producer `minmax_identity/kernel` admitted to `FAITHFULNESS_PRODUCERS`. How the amendments
+> landed:
+> - **B.1** `MinMaxDemonstrate` mirrors `ResidueDemonstrate`: gates on a `minmax_identity/kernel`
+>   faithfulness edge and **re-renders the LAW from the DSL** (`minmax_law` → `law_statement`/`render_pred`),
+>   never the autoformalizer's free text; kernel-gated, promote-on-one, axiom-closed.
+> - **B.2** `register()` installs **both** `recheckers[KIND]` and `templates[KIND]` (`prop_statement_template`).
+> - **B.3** The fragment is owned at the classifier (`classify_identity` / `_mmpoly`): top-level `Eq`, every
+>   `min`/`max` a bare 2-arg call over two distinct variables, ≥1 min/max present, branch budget
+>   `2^#pairs ≤ 8`. ≥3-ary / nested / compound-arg / non-Eq / pure-poly all DEFER (kernel-confirmed).
+> - **B.4** The identity is domain-free, so the ∃-witness legs add no power to its truth; they remain a
+>   deliberate **non-vacuity gate over the non-negative witness box** (identical to the modular path — an
+>   empty/out-of-box `claim_domain` DEFERs). A faithful identity over a negative-only or large domain is a
+>   conservative out-of-scope yield choice this increment, never an unsound outcome.
+>
+> **Scope:** this increment admits a **single top-level `Eq`** (the review's "conjunction of `Eq`" is a
+> natural, deferrable extension — it would `refine ⟨…⟩` the equalities and order-split each). The
+> order-split is a **sound proof-search heuristic** (complete for the restricted fragment; compound/nested
+> args DEFER), not a complete decision procedure. Kernel-confirmed: `max²+min² = a²+b²` and a 3-var
+> two-pair sum promulgate end-to-end; `max+min = a` (false), the absolute-value trap `max−min = a−b`, and
+> nested min/max (out of fragment) all DEFER.
+>
+> **Code-level review outcome (5 adversarial lenses + completeness critic):** no soundness, correctness,
+> or trust-boundary findings survived verification. Three LOW items were folded in: a collision-proof
+> hypothesis base (`_hyp_base`) so a claim variable literally named `h0` yields a valid proof rather than a
+> spurious DEFER; the B.4 witness-leg wording above; and a **pre-activation operator note** below.
+>
+> **⚠ Pre-activation operator note (novelty coverage).** The fragment admits an infinite family of *true
+> but textbook-trivial* symmetric identities (`max(a,b)+min(a,b)=a+b`, `max·min=a·b`, commutativity). These
+> are sound laws, but they are non-results; the only thing between them and the ledger is the
+> non-triviality + retrieval-novelty gates (which run in FORMALIZE, before any proof). **Before activating
+> `minmax_identity/kernel`, confirm the novelty corpus / non-triviality gate quarantines the canonical
+> trivial min/max identities as KNOWN** (or seed the corpus with them), so activation raises real yield,
+> not textbook noise. This is a quality gate, not a soundness one — the trust boundary is unaffected.
 
 This is **not** modular — it is an algebraic identity over `min`/`max`, so it is a **separate** technique
 and a **separate faithfulness path + prover**, not a change to the ZMod code.
