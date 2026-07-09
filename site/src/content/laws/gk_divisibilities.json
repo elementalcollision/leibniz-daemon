@@ -1,0 +1,29 @@
+{
+  "id": "gk_divisibilities",
+  "pid": "ee3b21812fe6",
+  "statement": "The Guo–Krattenthaler divisibilities (6n−1) ∣ C(12n,3n) and (6n−1) ∣ C(12n,4n) hold for every n = 1..8, and (66n−1) ∣ C(330n,88n) at n = 1 — kernel-attested instances of the all-n theorems of Guo & Krattenthaler (2014)",
+  "claim_type": "invariant",
+  "falsifiable_claim": "an n between 1 and 8 with (6n−1) ∤ C(12n,3n) or (6n−1) ∤ C(12n,4n), or 65 ∤ C(330,88)",
+  "domain": "number_theory",
+  "theorem_src": "theorem gk_divisibilities : (∀ n < 8, (6*(n+1) - 1) ∣ Nat.choose (12*(n+1)) (3*(n+1)) ∧ (6*(n+1) - 1) ∣ Nat.choose (12*(n+1)) (4*(n+1))) ∧ (65 : ℕ) ∣ Nat.choose 330 88",
+  "preamble": "set_option maxRecDepth 8000",
+  "proof_src": "by decide",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "cross-kernel",
+  "origination": "amplified",
+  "references": [
+    {
+      "citation": "Guo, V. J. W., & Krattenthaler, C. (2014). Some divisibility properties of binomial and q-binomial coefficients. Journal of Number Theory, 135, 167–184.",
+      "url": "https://arxiv.org/abs/1301.7651"
+    }
+  ],
+  "novelty_attestation": null,
+  "$schema": "../../../.astro/collections/laws.schema.json"
+}
