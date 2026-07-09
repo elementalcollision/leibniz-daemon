@@ -12,7 +12,9 @@ Two roles:
        from leibniz.calculemus_site import write_ledger
        write_ledger(calc, "/path/to/codex-calculemus/ledger/calculemus.json", generated_at=stamp)
 
-2. **`--check [ledger.json]` (honesty gate).** Re-verify every law in the ledger
+2. **`--check [ledger.json]` (honesty gate).** Every published law must carry a non-empty
+   ``published_at`` (the DATE of publication — stamped when the law is appended to the ledger,
+   normally the append-commit date); an undated law fails the check. Then re-verify every law
    against the *real* Lean kernel (via the REPL backend, which lives here, not in
    the site repo). A law claiming `kernel_verified: true` whose proof the kernel
    rejects fails the check — so the ledger can never publish a Q.E.D. the kernel
@@ -93,9 +95,21 @@ def check_ledger(path: Path) -> int:
     claimed = [law for law in laws if law.get("kernel_verified")]
     print(f"ledger {path}: {len(laws)} laws, {len(claimed)} claim kernel_verified")
 
+    # H1 (date honesty): every PUBLISHED law must carry its publication date. The producer-side law
+    # JSONs are legitimately undated (publication has not happened yet); the ledger is the record of
+    # the publish act, so an empty published_at here is a provenance defect — fail regardless of
+    # whether the kernel is available.
+    undated = [law.get("id") or law.get("statement", "?") for law in laws
+               if not str(law.get("published_at", "")).strip()]
+    if undated:
+        print(f"✗ {len(undated)} law(s) missing published_at — stamp the publication date at "
+              f"ledger-append time:", file=sys.stderr)
+        for lid in undated:
+            print(f"    - {lid}", file=sys.stderr)
+
     if not available():
-        print("Lean REPL image not available; cannot verify. (skip — non-fatal)")
-        return 0
+        print("Lean REPL image not available; cannot verify proofs. (skip — non-fatal)")
+        return 1 if undated else 0
 
     backend = LeanReplBackend()
     failures = 0
@@ -125,7 +139,9 @@ def check_ledger(path: Path) -> int:
         print(f"✗ {failures} law(s) claim a Q.E.D. the kernel rejects or that rests on sorry/an admitted axiom.",
               file=sys.stderr)
         return 1
-    print("✓ every claimed Q.E.D. is kernel-confirmed with a clean axiom footprint.")
+    if undated:
+        return 1
+    print("✓ every claimed Q.E.D. is kernel-confirmed with a clean axiom footprint, and every law is dated.")
     return 0
 
 
