@@ -1,0 +1,33 @@
+{
+  "id": "erdos707_am_witness",
+  "pid": "df9e3c454199",
+  "statement": "The Alexeev–Mixon set {1, 2, 4, 8, 13} is a Sidon set extending to no perfect difference set of order 5 or 6 — the kernel-attested finite core of the disproof of Erdős Problem 707 (the $1000 Sidon-extension conjecture)",
+  "claim_type": "invariant",
+  "falsifiable_claim": "a repeated pairwise difference in {1,2,4,8,13} (not Sidon), or the set itself a perfect difference set mod 21, or an x0 < 31 making {1,2,4,8,13,x0} a perfect difference set mod 31",
+  "domain": "additive_combinatorics",
+  "theorem_src": "theorem erdos707_am_witness : (diffsZ [1, 2, 4, 8, 13]).Nodup ∧ isPDS [1, 2, 4, 8, 13] 21 = false ∧ (∀ x0 < 31, isPDS ([1, 2, 4, 8, 13] ++ [x0]) 31 = false)",
+  "preamble": "set_option maxHeartbeats 800000\n\n/-- pairwise differences (over ℤ) of a list — a set is a Sidon set iff these are all distinct. -/\ndef diffsZ (S : List Int) : List Int :=\n  S.flatMap (fun a => S.filterMap (fun b => if a == b then none else some (b - a)))\n/-- pairwise differences mod v (as ℕ). -/\ndef diffsMod (S : List Nat) (v : Nat) : List Nat :=\n  S.flatMap (fun a => S.filterMap (fun b => if a == b then none else some ((v + b - a) % v)))\n/-- B (⊂ ℤ_v) is a perfect difference set iff it is a distinct set whose pairwise diffs mod v are all\n    distinct — equivalently Sidon mod v (valid since a PDS of order n has n(n−1) = v−1). -/\ndef isPDS (B : List Nat) (v : Nat) : Bool := (diffsMod B v).Nodup && B.Nodup",
+  "proof_src": "by decide",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "cross-kernel",
+  "origination": "amplified",
+  "references": [
+    {
+      "citation": "Alexeev, B., & Mixon, D. G. (2025). Forbidden Sidon subsets of perfect difference sets, featuring a human-assisted proof (arXiv:2510.19804). arXiv.",
+      "url": "https://arxiv.org/abs/2510.19804"
+    },
+    {
+      "citation": "Hall, M. (1947). Cyclic projective planes. Duke Mathematical Journal, 14(4), 1079–1090.",
+      "url": ""
+    }
+  ],
+  "novelty_attestation": null,
+  "$schema": "../../../.astro/collections/laws.schema.json"
+}
