@@ -1,0 +1,33 @@
+{
+  "id": "mafi_naderi_t2_embedded_prime",
+  "pid": "00b732466f8d",
+  "statement": "The integral closure of the monomial ideal M_{3,2} = (y²z², x²z², x²y²) — the Veronese cap-sum ideal of Mafi–Naderi Thm 1.6 — strictly contains M_{3,2} and gains the embedded associated prime (x,y,z) at the witness xyz, while the unmixed M_{3,2} admits no such witness (Cor 1.7; kernel-attested finite core, t = 2)",
+  "claim_type": "invariant",
+  "falsifiable_claim": "a monomial x^(a,b,c), a,b,c < 5, in M_{3,2} but outside the cap-sum ideal; or failure of the (x,y,z) colon-witness at x^(1,1,1) for the closure; or an (a,b,c) < 5 exhibiting the same embedded-prime behaviour for M_{3,2} itself",
+  "domain": "commutative_algebra",
+  "theorem_src": "theorem mafi_naderi_t2_embedded_prime : ((∀ a < 5, ∀ b < 5, ∀ c < 5, inM a b c = true → inClosure a b c = true) ∧ inClosure 1 1 2 = true ∧ inM 1 1 2 = false) ∧ (inClosure 1 1 1 = false ∧ inClosure 2 1 1 = true ∧ inClosure 1 2 1 = true ∧ inClosure 1 1 2 = true) ∧ (∀ a < 5, ∀ b < 5, ∀ c < 5, ¬ (inM a b c = false ∧ inM (a+1) b c = true ∧ inM a (b+1) c = true ∧ inM a b (c+1) = true))",
+  "preamble": "/-- closure(M_3,2) = Veronese I_(2·2; 2,2,2) = {x^u : min(a,2)+min(b,2)+min(c,2) ≥ 4}\n    (Mafi–Naderi Theorem 1.6; our integral-dependence instrument confirms this equals the true closure). -/\ndef inClosure (a b c : ℕ) : Bool := 4 ≤ min a 2 + min b 2 + min c 2\n/-- M_3,2 = (x^(0,2,2), x^(2,0,2), x^(2,2,0)). -/\ndef gens : List (ℕ × ℕ × ℕ) := [(0,2,2), (2,0,2), (2,2,0)]\ndef inM (a b c : ℕ) : Bool := gens.any (fun g => g.1 ≤ a && g.2.1 ≤ b && g.2.2 ≤ c)",
+  "proof_src": "by decide",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "kernel-decided",
+  "origination": "amplified",
+  "references": [
+    {
+      "citation": "Mafi, A., & Naderi, D. (2021). Integral closure and Hilbert series of a special monomial ideal (arXiv:2112.02921). arXiv.",
+      "url": "https://arxiv.org/abs/2112.02921"
+    },
+    {
+      "citation": "Huneke, C., & Swanson, I. (2006). Integral closure of ideals, rings, and modules (London Mathematical Society Lecture Note Series No. 336). Cambridge University Press.",
+      "url": ""
+    }
+  ],
+  "novelty_attestation": null,
+  "$schema": "../../../.astro/collections/laws.schema.json"
+}
