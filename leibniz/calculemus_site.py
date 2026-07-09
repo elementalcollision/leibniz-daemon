@@ -53,7 +53,8 @@ _ORIGINATIONS = frozenset({"originated", "amplified"})
 
 def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = False,
                 tier: str = "kernel-decided", origination: str = "amplified",
-                references: Optional[list] = None, novelty_attestation: Optional[dict] = None) -> dict:
+                references: Optional[list] = None, novelty_attestation: Optional[dict] = None,
+                figures: Optional[list] = None) -> dict:
     """One published law as the site's ledger shape (the Propositio triad).
 
     ADR 0050 adds two **report-only** provenance attributes — never consulted by the trust
@@ -98,6 +99,10 @@ def law_payload(prop: Propositio, *, published_at: str = "", specimen: bool = Fa
         # ADR 0063: an originated law's novelty attestation (the mechanical gate PASS) in lieu of a
         # citation; None/absent for amplified laws (which cite `references` instead). Report-only.
         "novelty_attestation": novelty_attestation,
+        # ADR 0064: report-only figures — each SVG generated DETERMINISTICALLY from the same
+        # artifact data the kernel checked ({svg, caption, generated_by}); a rendering of
+        # certified data, never evidence. Never consulted by the trust gates.
+        "figures": list(figures or []),
     }
 
 

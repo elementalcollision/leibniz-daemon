@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from leibniz.backends.lean_axioms import axiom_closure  # noqa: E402
 from leibniz.backends.lean_repl import LeanReplBackend, available  # noqa: E402
@@ -30,6 +31,8 @@ from leibniz.calculemus_site import law_payload  # noqa: E402
 from leibniz.propositio import Demonstratio, Enuntiatio, Expressio, Propositio  # noqa: E402
 from leibniz.types import ClaimType  # noqa: E402
 from leibniz.verifiers import LeanVerifier  # noqa: E402
+
+from figures.gen_ks_graph import ks_graph_figure  # noqa: E402
 
 _ROOT = Path(__file__).resolve().parent.parent
 _OUT = _ROOT / "site" / "src" / "content" / "laws" / "cabello_ks_uncolorable.json"
@@ -127,7 +130,8 @@ def main() -> int:
         return 1
     prop.promulgated = True                                     # amplification promotion (report-only labels below)
     payload = law_payload(prop, published_at="", specimen=False,
-                          tier="kernel-decided", origination="amplified", references=_REFERENCES)
+                          tier="kernel-decided", origination="amplified", references=_REFERENCES,
+                          figures=[ks_graph_figure()])   # ADR 0064: the orthogonality graph
     payload["$schema"] = "../../../.astro/collections/laws.schema.json"
     print(f"\n  law id          : {payload['id']}")
     print(f"  tier/origination: {payload['tier']} / {payload['origination']}")
