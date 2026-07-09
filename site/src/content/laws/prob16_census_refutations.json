@@ -1,0 +1,33 @@
+{
+  "id": "prob16_census_refutations",
+  "pid": "eee05f3d34d4",
+  "statement": "Five natural sequences — n³, n⁴, n!, Fibonacci, and the primes — are each NOT self-ordered: for each, a kernel-decided witness (m,n) has Dₙ ∤ P(m,n) (census refutations for Problem 16 of Cahen–Fontana–Frisch–Glaz)",
+  "claim_type": "existence",
+  "falsifiable_claim": "one of the five certified witnesses failing — i.e. Dₙ dividing P(m,n) at the stated (m,n) for that sequence's value prefix",
+  "domain": "number_theory",
+  "theorem_src": "theorem prob16_census_refutations : SO_cube.P 3 2 % SO_cube.D 2 ≠ 0 ∧ SO_quartic.P 4 3 % SO_quartic.D 3 ≠ 0 ∧ SO_factorial.P 3 2 % SO_factorial.D 2 ≠ 0 ∧ SO_fibonacci.P 4 3 % SO_fibonacci.D 3 ≠ 0 ∧ SO_primes.P 3 2 % SO_primes.D 2 ≠ 0",
+  "preamble": "/-\n  Problem 16 (Cahen–Fontana–Frisch–Glaz / Chabert) — self-ordered sequence census: certified\n  REFUTATIONS. A sequence is self-ordered when D_n = ∏_{k<n}(aₙ−aₖ) divides P(m,n) = ∏_{k<n}(aₘ−aₖ)\n  for all m,n; the negation is finitely witnessed by one (m,n) with D_n ∤ P(m,n), kernel-decided.\n\n  5 natural sequences refuted here: cube, quartic, factorial, fibonacci, primes.\n  (n² is NOT here — it is self-ordered to N=30; the refutable pure powers are n^k, k ≥ 3.)\n  Produced by scripts/prob16_census.py.\n-/\n\nnamespace SO_cube\n/-- Value prefix a₀..a_3 of the sequence (enough for the witness). -/\ndef a : List Int := [0, 1, 8, 27]\ndef D (n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD n 0 - a.getD k 0)) 1\ndef P (m n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD m 0 - a.getD k 0)) 1\n/-- NOT self-ordered: at (m,n)=(3,2), D_2 = 56 ∤ P(3,2). -/\ntheorem cube_not_self_ordered : P 3 2 % D 2 ≠ 0 := by decide\nend SO_cube\n\nnamespace SO_quartic\n/-- Value prefix a₀..a_4 of the sequence (enough for the witness). -/\ndef a : List Int := [0, 1, 16, 81, 256]\ndef D (n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD n 0 - a.getD k 0)) 1\ndef P (m n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD m 0 - a.getD k 0)) 1\n/-- NOT self-ordered: at (m,n)=(4,3), D_3 = 421200 ∤ P(4,3). -/\ntheorem quartic_not_self_ordered : P 4 3 % D 3 ≠ 0 := by decide\nend SO_quartic\n\nnamespace SO_factorial\n/-- Value prefix a₀..a_3 of the sequence (enough for the witness). -/\ndef a : List Int := [1, 2, 6, 24]\ndef D (n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD n 0 - a.getD k 0)) 1\ndef P (m n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD m 0 - a.getD k 0)) 1\n/-- NOT self-ordered: at (m,n)=(3,2), D_2 = 20 ∤ P(3,2). -/\ntheorem factorial_not_self_ordered : P 3 2 % D 2 ≠ 0 := by decide\nend SO_factorial\n\nnamespace SO_fibonacci\n/-- Value prefix a₀..a_4 of the sequence (enough for the witness). -/\ndef a : List Int := [1, 2, 3, 5, 8]\ndef D (n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD n 0 - a.getD k 0)) 1\ndef P (m n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD m 0 - a.getD k 0)) 1\n/-- NOT self-ordered: at (m,n)=(4,3), D_3 = 24 ∤ P(4,3). -/\ntheorem fibonacci_not_self_ordered : P 4 3 % D 3 ≠ 0 := by decide\nend SO_fibonacci\n\nnamespace SO_primes\n/-- Value prefix a₀..a_3 of the sequence (enough for the witness). -/\ndef a : List Int := [2, 3, 5, 7]\ndef D (n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD n 0 - a.getD k 0)) 1\ndef P (m n : Nat) : Int := (List.range n).foldl (fun acc k => acc * (a.getD m 0 - a.getD k 0)) 1\n/-- NOT self-ordered: at (m,n)=(3,2), D_2 = 6 ∤ P(3,2). -/\ntheorem primes_not_self_ordered : P 3 2 % D 2 ≠ 0 := by decide\nend SO_primes\n",
+  "proof_src": "by decide",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "kernel-decided",
+  "origination": "amplified",
+  "references": [
+    {
+      "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353–375). Springer.",
+      "url": ""
+    },
+    {
+      "citation": "Adam, D., Cahen, P.-J., & Fares, Y. (2010). Subsets of ℤ with simultaneous ordering. Integers, 10, 437–451.",
+      "url": ""
+    }
+  ],
+  "novelty_attestation": null,
+  "$schema": "../../../.astro/collections/laws.schema.json"
+}
