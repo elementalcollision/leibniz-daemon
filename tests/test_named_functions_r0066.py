@@ -13,8 +13,11 @@ import math
 
 import pytest
 
-from leibniz.backends.smt_z3 import MAX_TABLE_BOUND, PredicateError, Z3Backend, compile_pred
+from leibniz.backends.smt_z3 import MAX_TABLE_BOUND, PredicateError, Z3Backend, available, compile_pred
 from leibniz.dsl_to_lean import RenderError, render_pred
+
+# the core install is stdlib-only; z3 is the `verify` extra — skip cleanly where absent (CI)
+pytestmark = pytest.mark.skipif(not available(), reason="z3-solver (verify extra) not installed")
 
 BE = Z3Backend()
 BOUND = 24
