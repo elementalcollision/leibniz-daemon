@@ -94,6 +94,17 @@ def _term(node: ast.AST) -> str:
             d = _const_int(node.right)
             if not d or d <= 0:
                 raise RenderError("modulo needs a constant positive divisor")
+            # ADR 0065: `base^n % m` (CONSTANT base, BARE-variable exponent, constant modulus) — the
+            # exact shape smt_z3's ADR 0035 order-reduction admits, so lockstep is preserved: the
+            # variable exponent is renderable ONLY under a constant modulus, nowhere else. Rendered
+            # `(base : ℤ) ^ (n).toNat`: faithful under the ℤ-box (0 ≤ n ⇒ ↑n.toNat = n, so the power
+            # denotes the DSL's base**n and the Euclidean emod matches); outside the box the statement
+            # is vacuous, exactly as note 1's ℤ-with-box convention already guarantees.
+            pw = node.left
+            if (isinstance(pw, ast.BinOp) and isinstance(pw.op, ast.Pow)
+                    and _const_int(pw.left) is not None and isinstance(pw.right, ast.Name)):
+                b = _const_int(pw.left)
+                return f"({MOD_OP} (({b} : ℤ) ^ ({pw.right.id}).toNat) {d})"
             return f"({MOD_OP} {_term(node.left)} {d})"
         raise RenderError(f"bin op {type(op).__name__}")
     if isinstance(node, ast.Call):

@@ -293,7 +293,8 @@ def test_canonical_statement_is_deterministic():
 
 @pytest.mark.parametrize("bad", [
     "2 ** n == 1",        # variable exponent (ADR 0035 order case) — out of increment-1 scope
-    "2 ** n % 5 == 1",    # variable-exponent modulus — refused via the inner Pow
+    "2 ** (n+1) % 5 == 1",  # COMPOUND exponent under mod — outside the ADR 0065 shape
+    "n ** k % 5 == 1",      # variable BASE — outside the ADR 0065 shape
     "n % k == 0",         # variable divisor
     "n / k == 0",         # variable divisor
     "gcd(n, 6) == 1",     # gcd has no DSL referent (dropped from scope)
