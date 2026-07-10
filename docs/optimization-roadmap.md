@@ -777,6 +777,17 @@ discovery-frontier push.
 
 ## Remaining follow-ups
 
+- ✅ **Origination hunt on the widened fragment (2026-07-09)** — with ADR 0065 (symbolic exponents)
+  landed, a mechanical five-fragment sweep (`scripts/origination_hunt.py`, $0) screened 327
+  oracle-true candidates through the full honesty stack (route → ADR 0061 degeneracy →
+  `structural_known` → signature dedup → kernel `is_trivial` → kernel-provable LAW): **305 cheap
+  survivors, 40/44 kernel-screened GATE-NOVEL and promulgable-grade — and every one
+  textbook-derivable** (order cycles, the ab(a²−b²) family, symmetric min/max identities,
+  parity/QR characterizations). `structural_known` caught 0/327 — corpus-novelty is cheap because
+  the corpus is thin, not because the facts are new. The novelty wall stands, measured a third time
+  on a wider region; the first `originated` law stays HELD (ADR 0063). Finding:
+  `docs/results/origination-hunt-2026-07-09.md`.
+
 - **Faithfulness DSL — next increment** — ADR 0021 widened it to multi-variable +
   constant powers + constant mod/div; still DEFERred: symbolic exponents (`2^n`),
   named functions (`Nat.log`, `factorial`, `gcd`). A bounded definitional encoding
