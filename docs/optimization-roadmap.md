@@ -788,10 +788,11 @@ discovery-frontier push.
   on a wider region; the first `originated` law stays HELD (ADR 0063). Finding:
   `docs/results/origination-hunt-2026-07-09.md`.
 
-- **Faithfulness DSL — next increment** — ADR 0021 widened it to multi-variable +
-  constant powers + constant mod/div; still DEFERred: symbolic exponents (`2^n`),
-  named functions (`Nat.log`, `factorial`, `gcd`). A bounded definitional encoding
-  would bring them in.
+- ✅ **Faithfulness DSL — next increment** — DONE in two steps: **ADR 0065** (symbolic
+  exponents `base^n % m` — renderable AND kernel-decidable via the order-split procedure,
+  with the promote-on-one fast-path) and **ADR 0066** (`factorial`/`gcd` via exact bounded
+  If-table encodings in the Z3 probes; grammar updated; renderer deliberately unchanged —
+  no kernel procedure consumes them yet). `Nat.log` deferred until a use appears.
 - ✅ **Persist the frontier band** across runs (ADR 0019 follow-up) — `FrontierController.save/load`,
   wired through `build_daemon` + `run_cycles` (`.leibniz/frontier.json`), so calibration
   accumulates instead of resetting to the default band. Done.
