@@ -152,8 +152,11 @@ def test_equivalent_tri_state_over_the_box():
 
 def test_unsafe_or_unwhitelisted_calls_still_degrade_to_no_witness():
     b = _backend()
-    assert b.find_counterexample("gcd(a, b) > 0") is None            # not whitelisted
+    # ADR 0066: gcd/factorial are now WHITELISTED (bounded definitional encodings) — a bare-variable
+    # gcd claim finds its witness; the un-whitelisted / malformed shapes still degrade to no-witness.
+    assert b.find_counterexample("gcd(a, b) > 0", 8) is not None     # e.g. a = b = 1
+    assert b.find_counterexample("gcd(a + 1, b) > 0", 8) is None     # compound argument -> DEFER
     assert b.find_counterexample("math.min(a, b) < 0") is None       # attribute call -> rejected
     assert b.find_counterexample("min(a, key=b) > 0") is None        # keyword arg -> rejected
     assert b.find_counterexample("min(a) > 0") is None               # arity < 2 -> rejected
-    assert b.encodable("gcd(a, b) == 1") is False
+    assert b.encodable("gcd(a, b) == 1") is True                     # encodable under a bound

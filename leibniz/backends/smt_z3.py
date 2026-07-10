@@ -31,6 +31,7 @@ Soundness (ADR 0021 + the 0021 soundness review):
 from __future__ import annotations
 
 import ast
+import math
 from dataclasses import dataclass
 from math import gcd
 from typing import Optional
@@ -43,6 +44,7 @@ except ImportError:  # pragma: no cover
 VAR = "n"
 MAX_POW = 8       # cap constant exponents (sound expansion to repeated multiplication)
 MAX_NODES = 200   # cap predicate AST size (bounds recursion on untrusted input)
+MAX_TABLE_BOUND = 128  # ADR 0066: cap the bounded-definition tables (factorial/gcd If-chains)
 MAX_ORDER = 64    # ADR 0035 Stage A: cap the multiplicative-order If-chain length (and the box
 #   must cover a full period, so the order must also be <= the search bound — enforced per-call)
 
@@ -138,6 +140,31 @@ def _const_int(node: ast.AST) -> Optional[int]:
     return None
 
 
+def _table_arg(node: ast.AST, env: dict, bound: Optional[int], fname: str):
+    """ADR 0066: an argument a bounded-definition table can encode EXACTLY — a small non-negative
+    CONSTANT, or a BARE variable (every solver query in this module boxes variables to [0, bound],
+    the same assumption the ADR 0035 order-reduction rests on). Anything else — a compound argument
+    like ``factorial(n+1)``, a missing bound — raises PredicateError (→ DEFER), never a wrong encoding."""
+    c = _const_int(node)
+    if c is not None:
+        if c > MAX_TABLE_BOUND:
+            raise PredicateError(f"{fname}: constant argument over MAX_TABLE_BOUND")
+        return ("const", c)
+    if isinstance(node, ast.Name):
+        if bound is None or bound < 0 or bound > MAX_TABLE_BOUND:
+            raise PredicateError(f"{fname}: no usable search bound (bounded definitional encoding)")
+        return ("var", _conv(node, env, bound))
+    raise PredicateError(f"{fname} needs a bare-variable or constant argument (bounded encoding)")
+
+
+def _ite_table(v, values: list):
+    """`values[k]` selected by ``v == k`` — exact for v ∈ [0, len(values)-1] (the boxed range)."""
+    out = z3.IntVal(values[-1])
+    for k in range(len(values) - 2, -1, -1):
+        out = z3.If(v == k, z3.IntVal(values[k]), out)
+    return out
+
+
 def _conv(node: ast.AST, env: dict, bound: Optional[int] = None):
     """Compile an AST node to a Z3 expression over the integer variables in `env`
     (created on demand — multi-variable). Only soundly-encodable constructs are
@@ -206,8 +233,27 @@ def _conv(node: ast.AST, env: dict, bound: Optional[int] = None):
         # name, so the `ast.Call` allowance opens no eval/import surface.
         if (not isinstance(node.func, ast.Name) or node.keywords
                 or any(isinstance(a, ast.Starred) for a in node.args)):
-            raise PredicateError("only bare min()/max() calls are allowed")
+            raise PredicateError("only whitelisted bare calls are allowed (min/max/factorial/gcd)")
         name = node.func.id
+        # ADR 0066: factorial / gcd via bounded definitional encodings — EXACT over the box for
+        # bare-variable/constant arguments (see _table_arg), else DEFER. DSL semantics are Python's
+        # math.factorial / math.gcd on the boxed non-negative range.
+        if name == "factorial" and len(node.args) == 1:
+            kind, val = _table_arg(node.args[0], env, bound, "factorial")
+            if kind == "const":
+                return z3.IntVal(math.factorial(val))
+            return _ite_table(val, [math.factorial(k) for k in range(bound + 1)])
+        if name == "gcd" and len(node.args) == 2:
+            (k0, v0), (k1, v1) = (_table_arg(a, env, bound, "gcd") for a in node.args)
+            if k0 == "const" and k1 == "const":
+                return z3.IntVal(math.gcd(v0, v1))
+            if k0 == "const" or k1 == "const":
+                c, var = (v0, v1) if k0 == "const" else (v1, v0)
+                return _ite_table(var, [math.gcd(k, c) for k in range(bound + 1)])
+            out = _ite_table(v1, [math.gcd(bound, k) for k in range(bound + 1)])
+            for j in range(bound - 1, -1, -1):
+                out = z3.If(v0 == j, _ite_table(v1, [math.gcd(j, k) for k in range(bound + 1)]), out)
+            return out
         if name in ("min", "max") and len(node.args) >= 2:
             args = [_conv(a, env, bound) for a in node.args]
             pick = ((lambda x, y: z3.If(x < y, x, y)) if name == "min"
