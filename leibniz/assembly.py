@@ -256,6 +256,33 @@ def maybe_register_lean_decided(faithfulness: FaithfulnessGate, repl_image: str,
     return True
 
 
+def maybe_register_power_mod(faithfulness: FaithfulnessGate, repl_image: str, *, env=None) -> bool:
+    """ADR 0065 — OPT-IN, DEFAULT OFF. Register the order-split symbolic-exponent faithfulness backend
+    (`base^n % m` claims, decided over the multiplicative-order period) iff `LEIBNIZ_LEAN_DECIDED` is
+    set **and** a real Lean REPL image is available. Fail-closed otherwise; `register` installs BOTH
+    the re-checker and the template. Returns True iff it registered."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return False
+    from leibniz.gates.power_mod_decided import register as _register
+    _register(faithfulness, lean_repl.LeanReplBackend(image=repl_image))
+    return True
+
+
+def maybe_wrap_power_mod(demonstrate, lean, repl_image, *, env=None):
+    """ADR 0065 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the power-mod decision-procedure
+    fast-path (prove a symbolic-exponent claim's canonical law by the order split and promote on the
+    single kernel verification) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is
+    available — the same gate as `maybe_register_power_mod`, so the fast-path is never on while its
+    statement-binding faithfulness backend is off (it additionally promotes only claims carrying a
+    `power_mod/kernel` faithfulness edge). Returns the (possibly wrapped) stage."""
+    env = env if env is not None else os.environ
+    if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
+        return demonstrate
+    from leibniz.providers.power_mod_prover import PowerModDemonstrate
+    return PowerModDemonstrate(inner=demonstrate, lean=lean)
+
+
 def maybe_wrap_residue(demonstrate, consensus, repl_image, *, env=None):
     """ADR 0058 increment 2 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the residue
     decision-procedure fast-path (prove a modular-polynomial claim's canonical law by the ZMod bridge

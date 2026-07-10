@@ -51,6 +51,7 @@ FAITHFULNESS_PRODUCERS = frozenset({
     "minmax_identity/kernel",       # the order-split min/max faithfulness backend (ADR 0059; reviewed + activated)
     "boolean_modular/kernel",       # the ZMod-decide same-modulus boolean-combo backend (ADR 0059; reviewed + activated)
     "mixed_modular/kernel",         # the LCM/castHom mixed-modulus backend (ADR 0060; reviewed + activated)
+    "power_mod/kernel",             # the order-split symbolic-exponent backend (ADR 0065; reviewed + activated)
 })
 
 
