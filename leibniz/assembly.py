@@ -26,7 +26,7 @@ from leibniz.corpus import CorpusBackend, self_ledger_entries
 from leibniz.cost import CostBudget
 from leibniz.daemon import Leibniz
 from leibniz.discovery import (
-    _DEFAULT_FRONTIER,
+    _DEFAULT_FRONTIER_STATE,
     _DEFAULT_NOTEBOOK,
     DiscoveryNotebook,
     FrontierController,
@@ -494,7 +494,10 @@ def build_daemon(
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
-    _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_PATH") or str(_DEFAULT_FRONTIER)
+    # ADR 0019 band persistence: its OWN path + env var. LEIBNIZ_FRONTIER_PATH steers ONLY
+    # Leonardo's seed corpus (leibniz/leonardo.py); pointing the band at the seed file zeroed
+    # discovery seeds and risked clobbering versioned data (fixed 2026-07-09).
+    _frontier_path = os.environ.get("LEIBNIZ_FRONTIER_STATE") or str(_DEFAULT_FRONTIER_STATE)
     # ADR 0023 (lever 1): persist + accumulate near-misses, and raise weaken throughput
     # so the weaken-and-retry loop keeps grinding the UNPROVEN frontier toward a proof.
     _notebook_path = os.environ.get("LEIBNIZ_NOTEBOOK_PATH") or str(_DEFAULT_NOTEBOOK)

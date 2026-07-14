@@ -42,6 +42,10 @@ from leibniz.types import FinishReason
 # runs, so weaken-and-retry keeps grinding the same UNPROVEN frontier toward a proof.
 _DEFAULT_FRONTIER = Path(__file__).resolve().parent.parent / ".leibniz" / "frontier.json"
 _DEFAULT_NOTEBOOK = Path(__file__).resolve().parent.parent / ".leibniz" / "notebook.json"
+# The frontier BAND persistence (ADR 0019) — distinct from Leonardo's SEED corpus
+# (corpus/frontier.json): the two files share a name but not a schema, and writing one over
+# the other zeroes discovery seeds / clobbers versioned data (observed live 2026-07-09).
+_DEFAULT_FRONTIER_STATE = Path(__file__).resolve().parent.parent / ".leibniz" / "frontier.json"
 # ADR 0034 Stage 1: curated novel-yet-elementary FLAVOUR anchors (checked in, operator-editable).
 _DEFAULT_EXEMPLARS = Path(__file__).resolve().parent.parent / "corpus" / "novelty_exemplars.json"
 _FAMILY_CAP = 64  # bound the persisted family histogram so it can't grow without limit
@@ -380,6 +384,16 @@ class FrontierController:
 
     def save(self, path: Union[str, Path]) -> None:
         p = Path(path)
+        # Refuse to overwrite a file that is clearly NOT band state (e.g. Leonardo's seed corpus,
+        # a dict of domain -> seed lists): a mis-pointed path must fail loudly, never silently
+        # destroy versioned data. Band state is a dict carrying "target"; missing/corrupt files
+        # are fine to (over)write (the cold-start contract of `load`).
+        try:
+            existing = json.loads(p.read_text())
+        except (OSError, ValueError):
+            existing = None
+        if isinstance(existing, dict) and "target" not in existing:
+            raise ValueError(f"refusing to overwrite non-band file with frontier state: {p}")
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(self.to_dict()))
 
