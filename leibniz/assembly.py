@@ -269,7 +269,7 @@ def maybe_register_power_mod(faithfulness: FaithfulnessGate, repl_image: str, *,
     return True
 
 
-def maybe_wrap_power_mod(demonstrate, lean, repl_image, *, env=None):
+def maybe_wrap_power_mod(demonstrate, consensus, repl_image, *, env=None):
     """ADR 0065 — OPT-IN, DEFAULT OFF. Wrap the DEMONSTRATE stage with the power-mod decision-procedure
     fast-path (prove a symbolic-exponent claim's canonical law by the order split and promote on the
     single kernel verification) iff `LEIBNIZ_LEAN_DECIDED` is set **and** a real Lean REPL image is
@@ -280,7 +280,7 @@ def maybe_wrap_power_mod(demonstrate, lean, repl_image, *, env=None):
     if not (env.get("LEIBNIZ_LEAN_DECIDED") and lean_repl.available(repl_image)):
         return demonstrate
     from leibniz.providers.power_mod_prover import PowerModDemonstrate
-    return PowerModDemonstrate(inner=demonstrate, lean=lean)
+    return PowerModDemonstrate(inner=demonstrate, lean=consensus.lean)
 
 
 def maybe_wrap_residue(demonstrate, consensus, repl_image, *, env=None):
@@ -418,6 +418,9 @@ def build_daemon(
     # ADR 0060 — OPT-IN activation of the LCM/castHom mixed-modulus backend (disjoint fragment: ≥2 moduli;
     # same gate; fail-closed otherwise). See maybe_register_mixed_modulus.
     maybe_register_mixed_modulus(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    # ADR 0065 — OPT-IN activation of the order-split symbolic-exponent backend (base^n % m;
+    # same gate; fail-closed otherwise). See maybe_register_power_mod.
+    maybe_register_power_mod(faithfulness, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
 
     # ADR 0014: one cost meter, wired into every provider so real token usage is
     # priced and the daemon's USD cap reflects actual spend (not a flat estimate).
@@ -486,6 +489,8 @@ def build_daemon(
     demonstrate = maybe_wrap_boolean(                          # ADR 0059 (biconditional path): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     demonstrate = maybe_wrap_mixed_modulus(                    # ADR 0060 (mixed-modulus): opt-in fast-path
+        demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
+    demonstrate = maybe_wrap_power_mod(                        # ADR 0065 (symbolic exponent): opt-in fast-path
         demonstrate, consensus, cfg.lean_repl_image or lean_repl.REPL_IMAGE)
     policy = TrustPolicy()
     forge = LeonardoForgeAdapter(max_seeds=frontier_limit, max_analogies=analogy_limit)
