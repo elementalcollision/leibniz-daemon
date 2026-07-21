@@ -463,3 +463,60 @@ def test_load_novelty_exemplars_is_defensive_against_malformed_payloads(tmp_path
         f = tmp_path / "ex.json"
         f.write_text(payload)
         assert load_novelty_exemplars(f) == [], payload
+
+
+# === ADR 0069 (Phase β): dry-ground retirement (the mirror of genre_kill) ====
+
+
+def _dry(claim_property: str, stmt: str = "old news", reason=FinishReason.KNOWN) -> Propositio:
+    p = Propositio(enuntiatio=Enuntiatio(statement=stmt, claim_type=ClaimType.INVARIANT,
+                                         falsifiable_claim="x", claim_property=claim_property))
+    p.finish_reason = reason
+    return p
+
+
+def test_dry_kill_fires_after_threshold_known_or_trivial():
+    nb = DiscoveryNotebook(capacity=12, dry_threshold=3)
+    nb.record(_dry("(n^2) % 5 == 0", reason=FinishReason.KNOWN))
+    nb.record(_dry("(n^4) % 5 == 0", reason=FinishReason.TRIVIAL))
+    assert nb.dry_kill == []                                   # below threshold
+    # REFUTED is proposer noise, not dryness — it must NOT count
+    nb.record(_dry("(n^6) % 5 == 0", reason=FinishReason.REFUTED))
+    assert nb.dry_kill == []
+    nb.record(_dry("(n^4 + n^2) % 5 == 0", reason=FinishReason.KNOWN))
+    assert nb.dry_kill == ["== modular claims modulo 5"]
+
+
+def test_dry_kill_never_fires_on_a_family_that_proves():
+    nb = DiscoveryNotebook(capacity=12, dry_threshold=2)
+    nb.record(_proven("(n^2) % 2 == 0"))                       # the family has produced a law
+    nb.record(_dry("(n^4) % 2 == 0"))
+    nb.record(_dry("(n^6) % 2 == 0"))
+    assert nb.dry_kill == []                                   # productive ground is not dry
+
+
+def test_dry_kill_rehabilitated_by_a_later_proof():
+    nb = DiscoveryNotebook(capacity=12, dry_threshold=2)
+    nb.record(_dry("(n^2) % 7 == 0"))
+    nb.record(_dry("(n^4) % 7 == 0"))
+    assert nb.dry_kill == ["== modular claims modulo 7"]
+    nb.record(_proven("(n^6 + n^2) % 7 == 0"))                 # the ground produced after all
+    assert nb.dry_kill == []
+    assert "==|7" not in nb._dry_counts                        # dry evidence reset with the proof
+
+
+def test_dry_kill_is_bounded_and_persisted():
+    nb = DiscoveryNotebook(capacity=50, dry_threshold=1, genre_capacity=2)
+    for m in (2, 3, 5, 7):                                     # four dry families, cap is 2
+        nb.record(_dry(f"(n^2) % {m} == 0"))
+    assert len(nb.dry_kill) == 2
+    back = DiscoveryNotebook.from_dict(nb.to_dict(), capacity=50)
+    assert back.dry_kill == nb.dry_kill and back._dry_counts == nb._dry_counts
+
+
+def test_dry_kill_steering_line_and_defensive_from_dict():
+    nb = DiscoveryNotebook(capacity=12, dry_threshold=1)
+    nb.record(_dry("(n^3) % 4 == 0"))
+    assert "DRY GROUND" in nb.steering() and "modulo 4" in nb.steering()
+    forged = DiscoveryNotebook.from_dict({"dry_kill": "not-a-list", "dry_counts": {"k": "x"}})
+    assert forged.dry_kill == [] and forged._dry_counts == {}

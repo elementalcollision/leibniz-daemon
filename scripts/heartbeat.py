@@ -1,10 +1,14 @@
 """ADR 0068 Phase α — the heartbeat: one autonomous, capped, journaled beat of the daemon.
 
 One invocation = one beat: PREFLIGHT (Docker/OrbStack up — restarting it if down, the failure observed
-twice in live operation — Lean image present, Z3 importable) → N capped ``circadian_cycle()`` turns →
-a JSONL RUN JOURNAL entry (funnel, dispositions, ADR 0067 CROSS_STATS delta, duration, anomalies) →
-a regenerated REVIEW QUEUE of promulgated-but-held laws → ANOMALY alarms (cross-solver disagreement,
-errored cycles, leaked containers, preflight degradation) to a log + a best-effort macOS notification.
+twice in live operation — Lean image present, Z3 importable) → N capped cycles through the FULL
+steering loop (ADR 0069 Phase β: ``run_cycles`` — domain rotation, KFM recombination, near-miss
+weakening, frontier-band retune, notebook persistence — not the bare fresh-survey
+``circadian_cycle``) → a JSONL RUN JOURNAL entry (funnel, dispositions, ADR 0067 CROSS_STATS delta,
+steering state, duration, anomalies) → a regenerated REVIEW QUEUE of promulgated-but-held laws →
+an optional arXiv AMPLIFICATION-TARGET sweep (``LEIBNIZ_ARXIV_FEED=1``; failure is a journal note,
+never an abort) → ANOMALY alarms (cross-solver disagreement, errored cycles, leaked containers,
+preflight degradation) to a log + a best-effort macOS notification.
 
 Autonomy posture (the whole point of Phase α): the daemon may explore and promulgate on its own —
 **nothing publishes itself**. Promulgations land in the Codex and the review queue; publication stays
@@ -103,10 +107,11 @@ def lean_containers() -> int:
     return sum(1 for line in out.splitlines() if any(k in line.lower() for k in ("lean", "leibniz", "repl", "mathlib")))
 
 
-def wait_containers_drained(timeout_s: int = 60, poll_s: int = 5) -> int:
+def wait_containers_drained(timeout_s: int = 240, poll_s: int = 10) -> int:
     """Final image-filtered container count, giving ``--rm`` REPL containers time to self-drain.
-    (Validation beat 2026-07-21: sampling immediately after the last cycle races the drain and
-    false-alarms; the container was gone seconds later.)"""
+    The grace must EXCEED lean_repl's per-call timeout (180s): a container abandoned mid-proof
+    legitimately lives until its own teardown horizon (two validation beats 2026-07-21 false-
+    alarmed at 0s and 60s grace; the container was gone shortly after each time)."""
     n = lean_containers()
     deadline = time.monotonic() + timeout_s
     while n > 0 and time.monotonic() < deadline:
@@ -116,7 +121,11 @@ def wait_containers_drained(timeout_s: int = 60, poll_s: int = 5) -> int:
 
 
 def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
-    """Turn ``cycles`` capped circadian cycles; return the journal entry (pure data)."""
+    """Turn ``cycles`` capped cycles through the FULL steering loop and return the journal
+    entry (pure data). ADR 0069: this calls ``run_cycles`` — which recombines from the KFM
+    archive, weakens recent near-misses, rotates domains, retunes + persists the frontier
+    band, and persists the notebook — where Phase α's bare ``circadian_cycle`` loop took a
+    fresh survey every time and threw the steering state away."""
     os.environ.setdefault("LEIBNIZ_LEAN_DECIDED", "1")          # beats run the activated pipeline
     os.environ.setdefault("LEIBNIZ_DAILY_USD_CAP", "5")         # never uncapped on a schedule
     from leibniz.assembly import build_daemon
@@ -129,17 +138,26 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
                    "usd_cap": os.environ.get("LEIBNIZ_DAILY_USD_CAP")}
     t0 = time.monotonic()
     daemon = build_daemon(frontier_limit=frontier_limit, analogy_limit=analogy_limit)
-    for i in range(cycles):
-        try:
-            r = daemon.circadian_cycle()
+    try:
+        # run_cycles enforces the cost cap before each cycle and may return fewer reports
+        # than requested; the journal records cycles_requested vs what actually turned.
+        for r in daemon.run_cycles(cycles):
             entry["cycles"].append({"seeds": r.seeds, "conjectured": r.conjectured,
                                     "reached_proof": r.reached_proof, "promulgated": r.promulgated,
                                     "by_reason": dict(r.by_reason)})
-        except Exception as e:                                   # a broken cycle is an anomaly, not a crash
-            entry["cycles"].append({"error": f"{type(e).__name__}: {e}"})
-            entry["anomalies"].append(f"cycle {i + 1} errored: {type(e).__name__}: {str(e)[:200]}")
+    except Exception as e:                                       # a broken run is an anomaly, not a crash
+        entry["cycles"].append({"error": f"{type(e).__name__}: {e}"})
+        entry["anomalies"].append(f"beat errored mid-run: {type(e).__name__}: {str(e)[:200]}")
     entry["duration_s"] = round(time.monotonic() - t0, 1)
     entry["cross_stats_delta"] = {k: CROSS_STATS[k] - cross_before[k] for k in CROSS_STATS}
+    # ADR 0069 observability: the morning journal shows WHERE the frontier moved to.
+    nb, fr = getattr(daemon, "notebook", None), getattr(daemon, "frontier", None)
+    entry["steering"] = {
+        "genre_kill": list(nb.genre_kill) if nb else [],
+        "dry_kill": list(nb.dry_kill) if nb else [],
+        "too_hard": len(nb.too_hard) if nb else 0,
+        "band_target": fr.target if fr else None,
+    }
     return entry
 
 
@@ -234,13 +252,24 @@ def main() -> int:
     containers = wait_containers_drained()
     anomalies = detect_anomalies(entry, containers)
     entry["anomalies"] = anomalies
+    if os.environ.get("LEIBNIZ_ARXIV_FEED") == "1":              # ADR 0069: amplification-target sweep
+        try:
+            from leibniz.arxiv_feed import run_feed
+            entry["arxiv_feed"] = run_feed(home)
+        except Exception as e:                                   # arXiv down at 02:30 is a note, not a page
+            entry["arxiv_feed"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     write_journal(entry, home)
     write_review_queue(os.environ.get("LEIBNIZ_RUNTIME_DB") or (_REPO / ".leibniz" / "memory.db"), home)
     if anomalies:
         alarm(anomalies, home)
     promulgated = sum(c.get("promulgated", 0) for c in entry["cycles"] if isinstance(c, dict))
+    feed = entry.get("arxiv_feed")
+    feed_note = (f", feed={feed.get('queued', '?')} queued of {feed.get('fetched', '?')}"
+                 if isinstance(feed, dict) and "error" not in feed
+                 else ", feed=ERROR" if feed else "")
     print(f"[heartbeat] beat complete: {len(entry['cycles'])} cycle(s), {promulgated} promulgated (held), "
-          f"cross={entry['cross_stats_delta']}, anomalies={len(anomalies)}, {entry['duration_s']}s")
+          f"cross={entry['cross_stats_delta']}, steering={entry.get('steering')}{feed_note}, "
+          f"anomalies={len(anomalies)}, {entry['duration_s']}s")
     return 3 if anomalies else 0
 
 
