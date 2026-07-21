@@ -12,6 +12,7 @@ verify = [
     "z3-solver>=4.13",
     "lean-dojo>=2.0",
 ]
+cvc5 = ["cvc5>=1.3"]        # ADR 0067: cross-solver probe attestation (opt-in)
 # Proposal-role models. Confined to drafting; never adjudicate.
 propose = [
     "anthropic>=0.40",

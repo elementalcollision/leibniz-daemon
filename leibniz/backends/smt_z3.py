@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import ast
 import math
+import os
 from dataclasses import dataclass
 from math import gcd
 from typing import Optional
@@ -294,6 +295,40 @@ def compile_pred(src: str, env=None, bound: Optional[int] = None):
     return result
 
 
+# --- ADR 0067: cvc5 cross-solver attestation (opt-in; kill-only) -----------------------------------
+# Every probe's load-bearing verdict is an `unsat` (a `sat` self-validates via its model). With
+# LEIBNIZ_CVC5_CROSSCHECK set and the `cvc5` extra installed, each conclusive unsat is re-decided by
+# cvc5 on the EXACT SMT-LIB2 script Z3 solved. Agreement is counted; a DISAGREEMENT (cvc5 says sat)
+# means one of the solvers is wrong about this query, so the verdict DEGRADES to 'unknown' — which
+# every consumer treats as inconclusive (a lost refutation / a lost PASS: yield loss, never
+# unsoundness). cvc5-unknown/unavailable keeps the Z3 verdict (attempted, not established).
+CROSS_STATS = {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0}
+
+
+def _cross_check_unsat(solver) -> str:
+    """Return the (possibly degraded) status for a Z3-`unsat` solver state."""
+    if not os.environ.get("LEIBNIZ_CVC5_CROSSCHECK"):
+        return "unsat"
+    from leibniz.backends.smt_cvc5 import Cvc5CrossCheck, available as _cvc5_available
+    if not _cvc5_available():
+        return "unsat"
+    try:
+        verdict = Cvc5CrossCheck().redecide(solver.to_smt2())
+    except Exception:
+        return "unsat"                       # a cross-check must never break a probe
+    CROSS_STATS["checked"] += 1
+    if verdict == "unsat":
+        CROSS_STATS["agree"] += 1
+        return "unsat"
+    if verdict == "sat":
+        CROSS_STATS["disagree"] += 1
+        print("!! ADR 0067 CROSS-SOLVER DISAGREEMENT: z3=unsat, cvc5=sat — degrading to unknown "
+              "(one solver is wrong about this query; investigate)", flush=True)
+        return "unknown"
+    CROSS_STATS["cvc5_unknown"] += 1         # unknown/None: attempted, not established
+    return "unsat"
+
+
 @dataclass
 class Z3Backend:
     """Z3-backed SMTBackend. Only kills; never promotes."""
@@ -333,7 +368,7 @@ class Z3Backend:
             m = solver.model()
             return ("sat", {name: (m[v].as_long() if m[v] is not None else 0) for name, v in env.items()})
         if res == z3.unsat:
-            return ("unsat", None)
+            return (_cross_check_unsat(solver), None)   # ADR 0067: opt-in cvc5 attestation (kill-only)
         return ("unknown", None)
 
     def encodable(self, pred: str) -> bool:
