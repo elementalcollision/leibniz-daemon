@@ -114,6 +114,10 @@ _AVOID = frozenset({
     FinishReason.GAMED, FinishReason.UNFAITHFUL, FinishReason.MALFORMED,
 })
 
+# ADR 0069 (Phase β): the DRYNESS signals — the novelty/triviality wall the origination hunts
+# kept hitting. REFUTED/GAMED/MALFORMED are proposer noise, not evidence about the ground.
+_DRY = frozenset({FinishReason.KNOWN, FinishReason.TRIVIAL})
+
 _QUANTIFIERS = ("forall", "∀", "exists", "∃")
 _IMPLIES = ("->", "→", "↔", "<->")
 _OPERATORS = ("+", "*", "^", "<=", "≤", ">=", "≥", "<", ">", "%", "/", "∑", "∏", "∫")
@@ -189,6 +193,12 @@ class DiscoveryNotebook:
     genre_capacity: int = 6      # bound the kill list (ADR 0034 §9: <=6)
     genre_threshold: int = 3     # proven instances of a family before it is declared exhausted
     _family_counts: dict = field(default_factory=dict)
+    # ADR 0069 (Phase β): dry-ground retirement — the mirror of genre_kill. `dry_kill` names
+    # families that keep finishing KNOWN/TRIVIAL and have NEVER proven here: mined-out or
+    # textbook-saturated ground to leave. A later proof in the family rehabilitates it.
+    dry_kill: list[str] = field(default_factory=list)
+    dry_threshold: int = 4       # KNOWN/TRIVIAL outcomes before a never-proven family is dry
+    _dry_counts: dict = field(default_factory=dict)
 
     @staticmethod
     def _push(bucket: list[str], item: str, cap: int) -> None:
@@ -220,6 +230,8 @@ class DiscoveryNotebook:
             self._push(self.too_hard, stmt, self.capacity)
         elif r in _AVOID:
             self._push(self.avoid, stmt, self.capacity)
+            if r in _DRY:  # ADR 0069: KNOWN/TRIVIAL are evidence the GROUND is dry
+                self._note_dry_family(prop)
 
     def _note_family(self, prop: Propositio) -> None:
         """Count this PROVEN claim's coarse family; once a family is clearly exhausted
@@ -230,6 +242,10 @@ class DiscoveryNotebook:
         if fam is None:
             return
         key, descriptor = fam
+        # ADR 0069: a proof rehabilitates dry ground — the family produces after all.
+        if descriptor in self.dry_kill:
+            self.dry_kill.remove(descriptor)
+        self._dry_counts.pop(key, None)
         self._family_counts[key] = self._family_counts.get(key, 0) + 1
         if len(self._family_counts) > _FAMILY_CAP:  # evict the lowest-count family
             self._family_counts.pop(min(self._family_counts, key=self._family_counts.get), None)
@@ -237,6 +253,25 @@ class DiscoveryNotebook:
                 and descriptor not in self.genre_kill
                 and len(self.genre_kill) < self.genre_capacity):
             self.genre_kill.append(descriptor)
+
+    def _note_dry_family(self, prop: Propositio) -> None:
+        """ADR 0069: count KNOWN/TRIVIAL outcomes per coarse family; once a family hits the
+        threshold with not one proof ever recorded here, declare it dry ground. Same bounded-
+        list discipline as genre_kill; proposal-side steering only — it changes the prompt,
+        never a verdict."""
+        cp = prop.enuntiatio.claim_property if prop.enuntiatio else None
+        fam = _family(cp)
+        if fam is None:
+            return
+        key, descriptor = fam
+        self._dry_counts[key] = self._dry_counts.get(key, 0) + 1
+        if len(self._dry_counts) > _FAMILY_CAP:  # evict the lowest-count family
+            self._dry_counts.pop(min(self._dry_counts, key=self._dry_counts.get), None)
+        if (self._dry_counts[key] >= self.dry_threshold
+                and self._family_counts.get(key, 0) == 0   # a family that proves is not dry
+                and descriptor not in self.dry_kill
+                and len(self.dry_kill) < self.genre_capacity):
+            self.dry_kill.append(descriptor)
 
     def steering(self) -> str:
         """A compact instruction block for the CONJECTURE prompt. Empty until there
@@ -256,6 +291,10 @@ class DiscoveryNotebook:
             lines.append("EXHAUSTED FAMILIES — you have already proved many of these; STOP "
                          "proposing this KIND and switch to a structurally different claim: "
                          + "; ".join(self.genre_kill))
+        if self.dry_kill:  # ADR 0069: dry-ground retirement (families that never prove here)
+            lines.append("DRY GROUND — claims of these kinds keep coming back already-known "
+                         "or trivial and have never produced a law here; leave them for "
+                         "structurally different territory: " + "; ".join(self.dry_kill))
         if self.too_hard:
             lines.append("Recently TOO HARD to prove (propose something in reach, or a "
                          "weaker cousin): " + "; ".join(self.too_hard[-3:]))
@@ -267,7 +306,8 @@ class DiscoveryNotebook:
         # exemplars are NOT persisted — they are reloaded from the curated corpus file each run.
         return {"proven": list(self.proven), "too_hard": list(self.too_hard),
                 "avoid": list(self.avoid), "genre_kill": list(self.genre_kill),
-                "family_counts": dict(self._family_counts)}
+                "family_counts": dict(self._family_counts),
+                "dry_kill": list(self.dry_kill), "dry_counts": dict(self._dry_counts)}
 
     @classmethod
     def from_dict(cls, d: dict, capacity: int = 6) -> "DiscoveryNotebook":
@@ -288,6 +328,18 @@ class DiscoveryNotebook:
             for k, v in list(fc.items())[:_FAMILY_CAP]:
                 try:
                     nb._family_counts[str(k)] = int(v)
+                except (TypeError, ValueError):
+                    continue
+        # ADR 0069: restore dry-ground state with the same defenses as the genre state.
+        dk = d.get("dry_kill")
+        for desc in (dk if isinstance(dk, list) else [])[:nb.genre_capacity]:
+            if str(desc) not in nb.dry_kill:
+                nb.dry_kill.append(str(desc))
+        dc = d.get("dry_counts")
+        if isinstance(dc, dict):
+            for k, v in list(dc.items())[:_FAMILY_CAP]:
+                try:
+                    nb._dry_counts[str(k)] = int(v)
                 except (TypeError, ValueError):
                     continue
         return nb

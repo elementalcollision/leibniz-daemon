@@ -117,3 +117,111 @@ def test_main_clean_and_anomalous_paths(tmp_path, monkeypatch):
     assert heartbeat.main() == 3
     last = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
     assert any("DISAGREEMENT" in a for a in last["anomalies"])
+
+
+# === ADR 0069 (Phase β): the beat turns the FULL steering loop =================
+
+import types  # noqa: E402
+
+
+def _stub_assembly(monkeypatch, daemon):
+    """Install a fake leibniz.assembly so beat() runs core-only in CI (no providers/z3)."""
+    mod = types.ModuleType("leibniz.assembly")
+    mod.build_daemon = lambda frontier_limit, analogy_limit: daemon
+    monkeypatch.setitem(sys.modules, "leibniz.assembly", mod)
+
+
+def _report(**kw):
+    d = {"seeds": 2, "conjectured": 2, "reached_proof": 1, "promulgated": 0, "by_reason": {}}
+    d.update(kw)
+    return types.SimpleNamespace(**d)
+
+
+def test_beat_uses_run_cycles_and_journals_steering(monkeypatch):
+    calls = {}
+
+    class _Daemon:
+        notebook = types.SimpleNamespace(genre_kill=["== modular claims modulo 2"],
+                                         dry_kill=["== modular claims modulo 5"],
+                                         too_hard=["a", "b"])
+        frontier = types.SimpleNamespace(target=0.41)
+
+        def run_cycles(self, n):
+            calls["n"] = n
+            return [_report(), _report(promulgated=1, by_reason={"promulgated": 1})]
+
+        def circadian_cycle(self):  # the Phase α path must NOT be taken any more
+            raise AssertionError("beat must turn run_cycles, not bare circadian_cycle")
+
+    _stub_assembly(monkeypatch, _Daemon())
+    entry = heartbeat.beat(cycles=2)
+    assert calls["n"] == 2
+    assert [c["promulgated"] for c in entry["cycles"]] == [0, 1]
+    assert entry["steering"]["dry_kill"] == ["== modular claims modulo 5"]
+    assert entry["steering"]["genre_kill"] == ["== modular claims modulo 2"]
+    assert entry["steering"]["too_hard"] == 2
+    assert entry["steering"]["band_target"] == 0.41
+    assert entry["anomalies"] == []
+
+
+def test_beat_captures_a_mid_run_crash_as_anomaly(monkeypatch):
+    class _Daemon:
+        notebook = None
+        frontier = None
+
+        def run_cycles(self, n):
+            raise RuntimeError("kernel wedged")
+
+    _stub_assembly(monkeypatch, _Daemon())
+    entry = heartbeat.beat(cycles=2)
+    assert any("kernel wedged" in a for a in entry["anomalies"])
+    assert entry["cycles"] and "error" in entry["cycles"][0]
+    assert entry["steering"] == {"genre_kill": [], "dry_kill": [], "too_hard": 0,
+                                 "band_target": None}
+
+
+def test_main_runs_feed_only_when_enabled(tmp_path, monkeypatch):
+    db = tmp_path / "mem.db"
+    _seed_db(db)
+    monkeypatch.setenv("LEIBNIZ_HEARTBEAT_HOME", str(tmp_path))
+    monkeypatch.setenv("LEIBNIZ_RUNTIME_DB", str(db))
+    monkeypatch.setattr(heartbeat, "preflight", lambda: ([], []))
+    monkeypatch.setattr(heartbeat, "lean_containers", lambda: 0)
+    good = {"ts": "t", "cycles": [], "anomalies": [],
+            "cross_stats_delta": {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0},
+            "duration_s": 0.1}
+    monkeypatch.setattr(heartbeat, "beat", lambda cycles: dict(good))
+    monkeypatch.delenv("LEIBNIZ_ARXIV_FEED", raising=False)
+    assert heartbeat.main() == 0
+    entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
+    assert "arxiv_feed" not in entry                            # off by default
+    monkeypatch.setenv("LEIBNIZ_ARXIV_FEED", "1")
+    feed_mod = types.ModuleType("leibniz.arxiv_feed")
+    feed_mod.run_feed = lambda home: {"fetched": 7, "queued": 2}
+    monkeypatch.setitem(sys.modules, "leibniz.arxiv_feed", feed_mod)
+    assert heartbeat.main() == 0
+    entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
+    assert entry["arxiv_feed"] == {"fetched": 7, "queued": 2}
+
+
+def test_main_feed_failure_is_a_note_not_an_abort(tmp_path, monkeypatch):
+    db = tmp_path / "mem.db"
+    _seed_db(db)
+    monkeypatch.setenv("LEIBNIZ_HEARTBEAT_HOME", str(tmp_path))
+    monkeypatch.setenv("LEIBNIZ_RUNTIME_DB", str(db))
+    monkeypatch.setenv("LEIBNIZ_ARXIV_FEED", "1")
+    monkeypatch.setattr(heartbeat, "preflight", lambda: ([], []))
+    monkeypatch.setattr(heartbeat, "lean_containers", lambda: 0)
+    monkeypatch.setattr(heartbeat, "beat", lambda cycles: {
+        "ts": "t", "cycles": [], "anomalies": [],
+        "cross_stats_delta": {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0},
+        "duration_s": 0.1})
+    feed_mod = types.ModuleType("leibniz.arxiv_feed")
+
+    def _boom(home):
+        raise OSError("arxiv unreachable")
+    feed_mod.run_feed = _boom
+    monkeypatch.setitem(sys.modules, "leibniz.arxiv_feed", feed_mod)
+    assert heartbeat.main() == 0                                # a feed failure never pages
+    entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
+    assert "arxiv unreachable" in entry["arxiv_feed"]["error"]
