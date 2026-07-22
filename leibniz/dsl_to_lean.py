@@ -41,7 +41,7 @@ from __future__ import annotations
 import ast
 from typing import Optional
 
-from leibniz.backends.smt_z3 import MAX_NODES, MAX_POW
+from leibniz.backends.smt_z3 import MAX_NODES, MAX_POW, MAX_TABLE_BOUND
 
 # The two load-bearing operator choices (pinned by the conformance suite). Euclidean, to match Z3.
 MOD_OP = "Int.emod"   # DSL `a % d`  (d>0)  — non-negative remainder, NOT Lean's truncating `%`
@@ -61,6 +61,20 @@ def _const_int(node: ast.AST) -> Optional[int]:
     if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
         return node.value
     return None
+
+
+def _nat_arg(node: ast.AST, fname: str) -> str:
+    """ADR 0070: a named-function argument the kernel templates can decide — a bare VARIABLE
+    (rendered ``(x).toNat``, exact on the box) or a small non-negative CONSTANT (the ℕ literal).
+    Mirrors ``smt_z3._table_arg`` exactly; a compound argument (``factorial(n+1)``) refuses."""
+    c = _const_int(node)
+    if c is not None:
+        if c > MAX_TABLE_BOUND:
+            raise RenderError(f"{fname}: constant argument over MAX_TABLE_BOUND")
+        return str(c)
+    if isinstance(node, ast.Name):
+        return f"(({node.id}).toNat)"
+    raise RenderError(f"{fname} needs a bare-variable or constant argument")
 
 
 def _term(node: ast.AST) -> str:
@@ -110,13 +124,23 @@ def _term(node: ast.AST) -> str:
     if isinstance(node, ast.Call):
         if (not isinstance(node.func, ast.Name) or node.keywords
                 or any(isinstance(a, ast.Starred) for a in node.args)):
-            raise RenderError("only bare min()/max() calls are allowed")
+            raise RenderError("only bare min()/max()/factorial()/gcd() calls are allowed")
         name = node.func.id
         if name in ("min", "max") and len(node.args) >= 2:
             out = _term(node.args[0])
             for a in node.args[1:]:
                 out = f"({name} {out} {_term(a)})"
             return out
+        # ADR 0070: factorial/gcd — EXACTLY the smt_z3 ADR 0066 table fragment (bare-variable or
+        # small-constant arguments; anything else refuses → DEFER, preserving renderer↔Z3 lockstep).
+        # Rendered through ℕ and cast back into the ℤ box: on the box a variable argument denotes
+        # the DSL's value (0 ≤ x ⇒ ↑x.toNat = x); outside it the statement is vacuous — note 1's
+        # ℤ-with-box convention, the same argument as ADR 0065's `(base : ℤ) ^ (n).toNat`.
+        if name == "factorial" and len(node.args) == 1:
+            return f"((Nat.factorial {_nat_arg(node.args[0], name)} : ℕ) : ℤ)"
+        if name == "gcd" and len(node.args) == 2:
+            a, b = (_nat_arg(x, name) for x in node.args)
+            return f"((Nat.gcd {a} {b} : ℕ) : ℤ)"
         raise RenderError(f"unsupported call: {name}/{len(node.args)}")
     if isinstance(node, ast.Name):
         return node.id
