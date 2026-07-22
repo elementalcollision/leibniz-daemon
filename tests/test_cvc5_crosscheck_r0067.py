@@ -87,3 +87,60 @@ def test_redecide_roundtrips_a_real_script():
     s2.add(n >= 3, n <= 5)
     assert smt_cvc5.Cvc5CrossCheck().redecide(s2.to_smt2()) == "sat"
     assert smt_cvc5.Cvc5CrossCheck().redecide("(this is not smt2") is None       # parse surprise → None
+
+
+# === ADR 0071 (Phase γ leg 2): the Z3-unknown second opinion =======================================
+
+def _unsat_solver():
+    """A real solver whose script cvc5 conclusively decides unsat (stands in for a Z3-unknown
+    state; to_smt2 serializes the assertions regardless of any prior check outcome)."""
+    import z3
+    s = z3.Solver()
+    n = z3.Int("n")
+    s.add(n >= 0, n <= 10, n % 2 == 0, n % 2 == 1)
+    return s
+
+
+def test_second_opinion_gated_off_by_default(monkeypatch):
+    from leibniz.backends.smt_z3 import _second_opinion_unknown
+    monkeypatch.delenv("LEIBNIZ_CVC5_CROSSCHECK", raising=False)
+    called = []
+    monkeypatch.setattr(smt_cvc5.Cvc5CrossCheck, "redecide",
+                        lambda self, smt2: called.append(1) or "unsat")
+    assert _second_opinion_unknown(_unsat_solver()) == "unknown"
+    assert not called                                     # cvc5 never consulted when gated off
+
+
+def test_second_opinion_rescues_real_unsat(crosscheck_on):
+    from leibniz.backends.smt_z3 import _second_opinion_unknown
+    before = dict(CROSS_STATS)
+    assert _second_opinion_unknown(_unsat_solver()) == "unsat"   # real cvc5 decides the script
+    assert _delta(before)["unknown_rescued"] == 1
+
+
+def test_second_opinion_adopts_nothing_but_unsat(crosscheck_on, monkeypatch):
+    from leibniz.backends.smt_z3 import _second_opinion_unknown
+    for verdict in ("sat", "unknown", None):              # sat carries no re-verifiable witness
+        monkeypatch.setattr(smt_cvc5.Cvc5CrossCheck, "redecide", lambda self, smt2, v=verdict: v)
+        before = dict(CROSS_STATS)
+        assert _second_opinion_unknown(_unsat_solver()) == "unknown"
+        assert _delta(before)["unknown_kept"] == 1 and _delta(before)["unknown_rescued"] == 0
+
+
+def test_second_opinion_failure_keeps_unknown(crosscheck_on, monkeypatch):
+    from leibniz.backends.smt_z3 import _second_opinion_unknown
+
+    def boom(self, smt2):
+        raise RuntimeError("cvc5 exploded")
+    monkeypatch.setattr(smt_cvc5.Cvc5CrossCheck, "redecide", boom)
+    assert _second_opinion_unknown(_unsat_solver()) == "unknown"  # never breaks a probe
+
+
+def test_decide_routes_z3_unknown_through_the_second_opinion(crosscheck_on, monkeypatch):
+    import z3
+    monkeypatch.setattr(z3.Solver, "check", lambda self, *a: z3.unknown)  # force the unknown tail
+    monkeypatch.setattr(smt_cvc5.Cvc5CrossCheck, "redecide", lambda self, smt2: "unsat")
+    before = dict(CROSS_STATS)
+    # a probe Z3 alone could not conclude now concludes: decide_unsat's conclusive True
+    assert Z3Backend().decide_unsat(["n % 2 == 0 and n % 2 == 1"], 20) is True
+    assert _delta(before)["unknown_rescued"] == 1
