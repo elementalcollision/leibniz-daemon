@@ -297,7 +297,10 @@ def test_canonical_statement_is_deterministic():
     "n ** k % 5 == 1",      # variable BASE — outside the ADR 0065 shape
     "n % k == 0",         # variable divisor
     "n / k == 0",         # variable divisor
-    "gcd(n, 6) == 1",     # gcd has no DSL referent (dropped from scope)
+    "gcd(n + 1, 6) == 1",  # COMPOUND argument — outside the ADR 0070 bare-var/const table fragment
+    "gcd(factorial(n), 6) == 1",  # nested call argument — outside the fragment
+    "factorial(n, 2) == 1",       # wrong arity
+    "factorial(200) % 7 == 0",    # constant argument over MAX_TABLE_BOUND
     "foo(n) == 0",        # unknown call
     "Nat.min(a, b) == 0", # attribute call
     "n + 1",              # bare term, not a boolean predicate
