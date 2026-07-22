@@ -302,7 +302,33 @@ def compile_pred(src: str, env=None, bound: Optional[int] = None):
 # means one of the solvers is wrong about this query, so the verdict DEGRADES to 'unknown' — which
 # every consumer treats as inconclusive (a lost refutation / a lost PASS: yield loss, never
 # unsoundness). cvc5-unknown/unavailable keeps the Z3 verdict (attempted, not established).
-CROSS_STATS = {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0}
+CROSS_STATS = {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0,
+               "unknown_rescued": 0, "unknown_kept": 0}
+
+
+def _second_opinion_unknown(solver) -> str:
+    """ADR 0071 (Phase γ leg 2): when Z3 returns UNKNOWN, ask cvc5 to re-decide the EXACT SMT-LIB2
+    script. Only an **unsat** rescue is adopted — the pipeline's useful direction (`decide_unsat`'s
+    conclusive True unblocks probes that treat unknown as inconclusive). A cvc5 *sat* here carries no
+    re-verifiable witness (models are off), so it is counted but NOT adopted: sat stays `unknown`,
+    and refutation witnesses remain Z3's job. Trust class unchanged — a mechanical solver's
+    kill/probe verdict, same tier as Z3's own unsat, never a promotion (the kernel alone promotes).
+    Same activation as ADR 0067 (`LEIBNIZ_CVC5_CROSSCHECK` + the cvc5 extra); any failure keeps
+    `unknown` (a second opinion must never break a probe)."""
+    if not os.environ.get("LEIBNIZ_CVC5_CROSSCHECK"):
+        return "unknown"
+    try:
+        from leibniz.backends.smt_cvc5 import Cvc5CrossCheck, available as _cvc5_available
+        if not _cvc5_available():
+            return "unknown"
+        verdict = Cvc5CrossCheck().redecide(solver.to_smt2())
+    except Exception:
+        return "unknown"
+    if verdict == "unsat":
+        CROSS_STATS["unknown_rescued"] += 1
+        return "unsat"
+    CROSS_STATS["unknown_kept"] += 1         # sat/unknown/None: attempted, not adopted
+    return "unknown"
 
 
 def _cross_check_unsat(solver) -> str:
@@ -369,7 +395,7 @@ class Z3Backend:
             return ("sat", {name: (m[v].as_long() if m[v] is not None else 0) for name, v in env.items()})
         if res == z3.unsat:
             return (_cross_check_unsat(solver), None)   # ADR 0067: opt-in cvc5 attestation (kill-only)
-        return ("unknown", None)
+        return (_second_opinion_unknown(solver), None)  # ADR 0071: opt-in cvc5 unknown-rescue (unsat only)
 
     def encodable(self, pred: str) -> bool:
         """True iff `pred` compiles to a boolean in the sound DSL — so a None search
