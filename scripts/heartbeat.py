@@ -267,6 +267,14 @@ def main() -> int:
             entry["arxiv_feed"] = run_feed(home)
         except Exception as e:                                   # arXiv down at 02:30 is a note, not a page
             entry["arxiv_feed"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
+    if os.environ.get("LEIBNIZ_NEWTON_EXCHANGE") == "1":         # ADR 0072: Newton folio exchange (outbound)
+        try:
+            from leibniz.newton_exchange import export_new
+            entry["newton_exchange"] = export_new(
+                os.environ.get("LEIBNIZ_RUNTIME_DB") or (_REPO / ".leibniz" / "memory.db"),
+                os.environ.get("LEIBNIZ_NEWTON_EXCHANGE_DIR") or None)
+        except Exception as e:                                   # a failed export is a note, not a page
+            entry["newton_exchange"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     write_journal(entry, home)
     write_review_queue(os.environ.get("LEIBNIZ_RUNTIME_DB") or (_REPO / ".leibniz" / "memory.db"), home)
     if anomalies:
