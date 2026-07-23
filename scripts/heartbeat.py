@@ -148,6 +148,15 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
     except Exception as e:                                       # a broken run is an anomaly, not a crash
         entry["cycles"].append({"error": f"{type(e).__name__}: {e}"})
         entry["anomalies"].append(f"beat errored mid-run: {type(e).__name__}: {str(e)[:200]}")
+    try:
+        # Tear down the daemon's REPL backends NOW: their containers hold this process's stdin
+        # pipes and cannot exit while we wait — the 1→2→3 "leak" of the 2026-07-23 soak was the
+        # per-procedure backends (six since ADR 0070) draining only at process exit, AFTER the
+        # count. With this, a nonzero post-beat count is a genuine anomaly again.
+        from leibniz.backends import lean_repl
+        entry["backends_closed"] = lean_repl.close_all()
+    except Exception:  # pragma: no cover
+        pass
     entry["duration_s"] = round(time.monotonic() - t0, 1)
     entry["cross_stats_delta"] = {k: CROSS_STATS[k] - cross_before[k] for k in CROSS_STATS}
     # ADR 0069 observability: the morning journal shows WHERE the frontier moved to.

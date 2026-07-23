@@ -112,3 +112,29 @@ def test_swallowed_bad_import_fails_closed_and_is_not_cached():
         )
         assert backend.compile_statement(expr) is False
         assert backend._envs == {}
+
+
+# === close_all — batch teardown (2026-07-23 soak fix); CI-safe, no container needed ================
+
+def test_close_all_terminates_registered_backends(monkeypatch):
+    from leibniz.backends import lean_repl
+
+    class _StubProc:
+        def __init__(self):
+            self.terminated = False
+            self.stdin = self.stdout = None
+
+        def terminate(self):
+            self.terminated = True
+
+    monkeypatch.setattr(lean_repl, "_LIVE", [])            # isolate the registry for this test
+    monkeypatch.setattr(lean_repl.subprocess, "Popen", lambda *a, **k: _StubProc())
+    a, b = lean_repl.LeanReplBackend(), lean_repl.LeanReplBackend()
+    pa, pb = a._start(), b._start()                        # spawn (stub) → registers both
+    assert len(lean_repl._LIVE) == 2
+    assert lean_repl.close_all() == 2                      # both closed, containers terminated
+    assert pa.terminated and pb.terminated
+    assert a._proc is None and b._proc is None and lean_repl._LIVE == []
+    assert lean_repl.close_all() == 0                      # idempotent: nothing left to close
+    c = lean_repl.LeanReplBackend()                        # a backend that never started a container
+    assert c._proc is None and lean_repl.close_all() == 0  # is not counted (and not crashed on)

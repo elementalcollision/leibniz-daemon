@@ -19,6 +19,7 @@ import atexit
 import json
 import subprocess
 import threading
+import weakref
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -42,6 +43,28 @@ def _join_proof(theorem_src: str, proof_src: str, preamble: str = "") -> str:
     return f"{preamble.rstrip()}\n{body}" if preamble.strip() else body
 
 
+# Live backends that have actually started a container (weakrefs — the registry must never keep a
+# backend alive). The daemon builds one backend per decision procedure and tears none of them down;
+# their containers hold THIS process's stdin pipes, so they cannot exit until the process does. A
+# batch runner (the heartbeat) calls `close_all()` when its cycles are done — the 2026-07-23 soak
+# showed the post-beat container count growing with the procedure count (1→2→3), every one a
+# false leak alarm that self-resolved at process exit.
+_LIVE: list = []
+
+
+def close_all() -> int:
+    """Close every live REPL backend in this process (terminating their containers). Idempotent —
+    `close()` is a no-op on an already-closed backend. Returns the number actually closed."""
+    n = 0
+    for ref in _LIVE:
+        be = ref()
+        if be is not None and be._proc is not None:
+            be.close()
+            n += 1
+    _LIVE.clear()
+    return n
+
+
 @dataclass
 class LeanReplBackend:
     image: str = REPL_IMAGE
@@ -62,6 +85,7 @@ class LeanReplBackend:
                 stderr=subprocess.DEVNULL, text=True, bufsize=1,
             )
             atexit.register(self.close)
+            _LIVE.append(weakref.ref(self))          # registry for close_all (batch teardown)
         except FileNotFoundError:
             self._proc = None
         return self._proc
@@ -192,6 +216,15 @@ class LeanReplBackend:
     # --- lifecycle ------------------------------------------------------------
     def close(self) -> None:
         if self._proc is not None:
+            try:
+                # EOF first: the REPL runs as container PID 1, which IGNORES the proxied SIGTERM
+                # (kernel default for PID 1) — observed 2026-07-23: terminate() alone left the
+                # container running until this Python process exited and its pipe fd closed.
+                # Closing OUR write end delivers EOF; the REPL exits on its own; `--rm` reaps.
+                if self._proc.stdin is not None:
+                    self._proc.stdin.close()
+            except Exception:
+                pass
             try:
                 self._proc.terminate()
             except Exception:

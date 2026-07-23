@@ -162,6 +162,7 @@ def test_beat_uses_run_cycles_and_journals_steering(monkeypatch):
     assert entry["steering"]["too_hard"] == 2
     assert entry["steering"]["band_target"] == 0.41
     assert entry["anomalies"] == []
+    assert entry["backends_closed"] == 0               # stub daemon spawned no real REPL backends
 
 
 def test_beat_captures_a_mid_run_crash_as_anomaly(monkeypatch):
