@@ -1,0 +1,57 @@
+{
+  "id": "minmax_factorization_pair",
+  "pid": "5cad1e53eb1d",
+  "statement": "For non-negative integers, the product of max and min recovers a·b, and the difference of their squares factors as (max − min)(a + b)",
+  "claim_type": "invariant",
+  "falsifiable_claim": "Exhibiting non-negative integers a, b where (max(a,b) - min(a,b)) * (a + b) differs from max(a,b)^2 - min(a,b)^2, or where max(a,b)*min(a,b) != a*b.",
+  "domain": "analysis_of_algorithms",
+  "theorem_src": "theorem minmax_law_1d72941c6314 : ∀ (a b : ℤ), (0 ≤ a) → (0 ≤ b) → ((a ≥ 0) ∧ (b ≥ 0)) → (((((max a b) - (min a b)) * (a + b)) = (((max a b) ^ (2 : ℕ)) - ((min a b) ^ (2 : ℕ)))) ∧ (((max a b) * (min a b)) = (a * b)))",
+  "preamble": "",
+  "proof_src": "by\n  intro a b _ _ _\n  refine ⟨?_, ?_⟩ <;>\n  (rcases le_total a b with h0 | h0 <;>\n    simp only [max_eq_left, max_eq_right, min_eq_left, min_eq_right, h0] <;>\n    ring)",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "kernel-decided",
+  "origination": "originated",
+  "references": [],
+  "novelty_attestation": {
+    "verdict": "novel",
+    "producer": "NoveltyGate",
+    "method": "retrieval + decision procedure (invariant #4); no judge",
+    "checks_passed": [
+      "coefficient_degenerate",
+      "is_trivial",
+      "contains_equivalent",
+      "structural_known"
+    ],
+    "neighbors": [
+      [
+        "add_self_mod_two",
+        0.2
+      ],
+      [
+        "cube_minus_self_div_six",
+        0.2
+      ],
+      [
+        "cube_residue_mod_six",
+        0.2
+      ],
+      [
+        "even_pair_div_eight",
+        0.2
+      ],
+      [
+        "fermat_little_11",
+        0.2
+      ]
+    ],
+    "caveat": "Novel per the daemon's mechanical novelty gate and its known-results corpus — the daemon's own conjecture, not a re-decision of any cited source. NOT a claim of absolute mathematical novelty; a false-NOVEL (a textbook fact absent from the corpus) is possible and is the accepted error direction (ADR 0032)."
+  },
+  "figures": []
+}
