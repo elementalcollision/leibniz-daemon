@@ -1,0 +1,57 @@
+{
+  "id": "two_squares_mod4_obstruction",
+  "pid": "dab2022069c9",
+  "statement": "The sum of two squares is never congruent to 3 modulo 4",
+  "claim_type": "invariant",
+  "falsifiable_claim": "Some non-negative integers a, b with (a^2 + b^2) % 4 == 3, i.e. a sum of two squares congruent to 3 mod 4.",
+  "domain": "analysis_of_algorithms",
+  "theorem_src": "theorem residue_law_8a475b40329d : ∀ (a b : ℤ), (0 ≤ a) → (0 ≤ b) → ((a ≥ 0) ∧ (b ≥ 0)) → ((Int.emod ((a ^ (2 : ℕ)) + (b ^ (2 : ℕ))) 4) ≠ 3)",
+  "preamble": "",
+  "proof_src": "by\n  have key : ∀ (a b : ZMod 4), ((a ^ (2 : ℕ)) + (b ^ (2 : ℕ))) ≠ 3 := by decide\n  intro a b _ha _hb _ h\n  have h' : ((a ^ (2 : ℕ)) + (b ^ (2 : ℕ))) % 4 = 3 := h\n  apply key ((a : ℤ) : ZMod 4) ((b : ℤ) : ZMod 4)\n  have hz : ((((a ^ (2 : ℕ)) + (b ^ (2 : ℕ))) : ℤ) : ZMod 4) = ((3 : ℤ) : ZMod 4) := by\n    rw [ZMod.intCast_eq_intCast_iff']\n    simpa using h'\n  push_cast at hz\n  exact hz",
+  "imports": [
+    "Mathlib.Tactic"
+  ],
+  "qed": "Q.E.D.",
+  "kernel_verified": true,
+  "consensus": 0,
+  "published_at": "",
+  "specimen": false,
+  "tier": "kernel-decided",
+  "origination": "originated",
+  "references": [],
+  "novelty_attestation": {
+    "verdict": "novel",
+    "producer": "NoveltyGate",
+    "method": "retrieval + decision procedure (invariant #4); no judge",
+    "checks_passed": [
+      "coefficient_degenerate",
+      "is_trivial",
+      "contains_equivalent",
+      "structural_known"
+    ],
+    "neighbors": [
+      [
+        "add_self_mod_two",
+        0.2
+      ],
+      [
+        "cube_minus_self_div_six",
+        0.2
+      ],
+      [
+        "cube_residue_mod_six",
+        0.2
+      ],
+      [
+        "even_pair_div_eight",
+        0.2
+      ],
+      [
+        "fermat_little_11",
+        0.2
+      ]
+    ],
+    "caveat": "Novel per the daemon's mechanical novelty gate and its known-results corpus — the daemon's own conjecture, not a re-decision of any cited source. NOT a claim of absolute mathematical novelty; a false-NOVEL (a textbook fact absent from the corpus) is possible and is the accepted error direction (ADR 0032)."
+  },
+  "figures": []
+}
