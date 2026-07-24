@@ -128,6 +128,13 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
     fresh survey every time and threw the steering state away."""
     os.environ.setdefault("LEIBNIZ_LEAN_DECIDED", "1")          # beats run the activated pipeline
     os.environ.setdefault("LEIBNIZ_DAILY_USD_CAP", "5")         # never uncapped on a schedule
+    # The notebook is the ONLY daemon state whose path was never pinned: discovery.py defaults it
+    # relative to the PACKAGE, which for a nightly beat is the throwaway sync worktree — so the
+    # ADR 0034/0069 steering memory (proven/too_hard/genre_kill/dry_kill) accumulated beside the
+    # runner instead of in the canonical .leibniz/, disjoint from the band and the ledger that DO
+    # resolve canonically, and one `git clean -xfd` from gone. Pinned here rather than in the
+    # launchd bootstrap so it takes effect on the next origin/main sync, with no reinstall.
+    os.environ.setdefault("LEIBNIZ_NOTEBOOK_PATH", str(_home() / "notebook.json"))
     from leibniz.assembly import build_daemon
     from leibniz.backends.smt_z3 import CROSS_STATS
     from leibniz.env import load_env
