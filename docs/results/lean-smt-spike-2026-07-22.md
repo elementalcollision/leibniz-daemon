@@ -1,7 +1,10 @@
 # Spike — lean-smt as a kernel-gated prover leg (Phase γ, leg 3)
 
 - Date: 2026-07-22
-- Status: **investigated; image build deferred** (recommendation below)
+- Status: **CLOSED — do not build.** The deferral below was resolved on 2026-07-24 against the
+  journal counters this document proposed as the gate; see
+  [`gamma3b-verdict-2026-07-24.md`](./gamma3b-verdict-2026-07-24.md). cvc5 rescued 0 of 21
+  Z3-unknowns *on-population*, and the UNPROVEN tail turned out never to reach a prover at all.
 - Context: the autonomy plan's Phase γ queued "the lean-smt spike (a kernel-gated `smt` prover,
   and optionally in the `is_trivial` ladder, which would honestly tighten non-triviality)".
 
