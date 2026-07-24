@@ -44,3 +44,14 @@ markers = [
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+
+# PIN THE RULE SET EXPLICITLY. CI installs `ruff>=0.6` unpinned and runs a BLOCKING
+# `ruff check .`, so the repo's lint contract used to be whatever the installed ruff
+# happened to default to. ruff 0.16.0 widened that default (BLE001, RUF059, … ) and
+# turned every PR red — 938 errors on a docs-only branch — for rules this repo never
+# opted into. These four are ruff's historical default (pycodestyle errors + pyflakes),
+# the set the tree has always been clean against; `select` REPLACES the default, so the
+# gate is now reproducible under any future ruff. Widening the set is a deliberate
+# cleanup with its own PR, never a silent consequence of a dependency release.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
