@@ -58,7 +58,20 @@ def coverage_probe(smt, bound: int = 64):
             # makes the conjunction non-empty, so the property is genuinely checked.
             # A gap, a falsified property, OR an undecided/timed-out search (None) all
             # DEFER; a PASS never rests on a None that meant "could not check".
-            covered = decide([f"({en.claim_domain})", f"not ({expr.established_domain})"], bound)
+            # ADR 0075: the COVERAGE leg asserts a UNIVERSALLY QUANTIFIED implication
+            # (claim_domain -> established_domain). A bounded search cannot establish it:
+            # measured, `a % 4 == 1 and a > 60` against `a % 16 == 13` is "unsat" over
+            # [0,64] — the domain's only in-box point is a=61, which satisfies the narrower
+            # established_domain — while the honest counterexample a=65 sits just outside.
+            # That let a FALSE claim take the PASS branch of this probe. Decide it WITHOUT a
+            # box when the backend can; `sat` (a real gap) and `None` (undecided, or an
+            # encoding that is only exact inside the box) both DEFER. The property leg below
+            # stays bounded on purpose: it is a pre-proof sanity check, and the kernel — not
+            # this probe — is what establishes the claim.
+            decide_unbounded = getattr(be, "decide_unsat_unbounded", None)
+            coverage_args = [f"({en.claim_domain})", f"not ({expr.established_domain})"]
+            covered = (decide_unbounded(coverage_args) if decide_unbounded is not None
+                       else decide(coverage_args, bound))
             if covered is not True:
                 return None
             property_holds = decide(

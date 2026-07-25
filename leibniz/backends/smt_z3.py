@@ -362,7 +362,8 @@ class Z3Backend:
     default_bound: int = 64
     timeout_ms: int = 3000
 
-    def _decide(self, preds: list[str], bound: int) -> tuple[str, Optional[dict]]:
+    def _decide(self, preds: list[str], bound: int, *,
+                unbounded: bool = False) -> tuple[str, Optional[dict]]:
         """Decide the conjunction of `preds` over the bounded box. Returns a status —
         'sat' (with model), 'unsat', 'unknown', or 'error' — so callers can tell a
         conclusive result from an undecided/un-encodable one. Any failure (un-encodable
@@ -374,7 +375,13 @@ class Z3Backend:
         try:
             # thread the search bound so the ADR 0035 order-reduction only fires when the box
             # covers a full period (ord <= bound) — else it DEFERs (exact-or-DEFER).
-            exprs = [compile_pred(p, env, bound) for p in preds]
+            # ADR 0075: an UNBOUNDED query compiles with bound=None, which makes every
+            # encoding that is only exact INSIDE the box refuse itself (the ADR 0066
+            # factorial/gcd If-tables and the ADR 0035 order-reduction all require a usable
+            # bound) -> PredicateError -> 'error' -> the caller DEFERs. Fail-closed by
+            # construction: an unbounded verdict is only ever returned for encodings that
+            # are exact over all of the non-negative integers.
+            exprs = [compile_pred(p, env, None if unbounded else bound) for p in preds]
         except (PredicateError, RecursionError, z3.Z3Exception):
             # z3 raises a Z3Exception at CONSTRUCTION time for a non-boolean term fed to
             # And/Or/Not (e.g. "not n", "n and n>0"); treat it as un-encodable, never a
@@ -384,7 +391,11 @@ class Z3Backend:
             solver = z3.Solver()
             solver.set("timeout", self.timeout_ms)
             for v in env.values():
-                solver.add(v >= 0, v <= bound)
+                # Non-negativity is part of the DSL's Z-with-box semantics and is kept in
+                # both modes; only the UPPER box is dropped for an unbounded query.
+                solver.add(v >= 0)
+                if not unbounded:
+                    solver.add(v <= bound)
             for e in exprs:
                 solver.add(e)
             res = solver.check()
@@ -396,6 +407,24 @@ class Z3Backend:
         if res == z3.unsat:
             return (_cross_check_unsat(solver), None)   # ADR 0067: opt-in cvc5 attestation (kill-only)
         return (_second_opinion_unknown(solver), None)  # ADR 0071: opt-in cvc5 unknown-rescue (unsat only)
+
+    def decide_unsat_unbounded(self, preds: list[str]) -> Optional[bool]:
+        """Tri-state UNSAT over ALL non-negative integers — no upper box (ADR 0075).
+
+        True iff the conjunction is conclusively unsatisfiable for every non-negative
+        assignment, False iff a genuine counterexample exists, None iff undecided or not
+        soundly encodable without a box. Used for the faithfulness probe's COVERAGE leg,
+        which asserts a universally quantified implication (claim_domain implies
+        established_domain) that a bounded search cannot establish: measured, the box
+        [0,64] reports 'unsat' for a domain whose only in-box point happens to satisfy the
+        narrower established_domain, while the honest counterexample sits just outside it.
+        """
+        status, _ = self._decide(preds, self.default_bound, unbounded=True)
+        if status == "unsat":
+            return True
+        if status == "sat":
+            return False
+        return None
 
     def encodable(self, pred: str) -> bool:
         """True iff `pred` compiles to a boolean in the sound DSL — so a None search
