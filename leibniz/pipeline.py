@@ -122,6 +122,22 @@ class Formalize:
 
         return prop
 
+    #: Sound-backend names whose promotion path RE-RENDERS the promoted law from
+    #: ``(claim_domain, claim_property)`` and discards the autoformalizer's statement
+    #: (each has a ``maybe_wrap_*`` fast-path gated on the SAME activation as its
+    #: ``maybe_register_*``, so registering the backend wires the prover). That
+    #: re-rendering is the whole soundness argument for ADR 0074, so the allowlist is
+    #: explicit and operator-visible rather than inferred from ``applies()`` — which is
+    #: strictly broader, and in particular also true of ``walnut`` (no such prover).
+    _RERENDERING_BACKENDS = frozenset({
+        "lean-decided",          # ADR 0056 / 0058 -> residue_prover
+        "minmax-decided",        # ADR 0059        -> minmax_prover
+        "boolean-decided",       # ADR 0059        -> boolean_prover
+        "mixed-modulus-decided",  # ADR 0060        -> mixed_modulus_prover
+        "power-mod-decided",     # ADR 0065        -> power_mod_prover
+        "factgcd-decided",       # ADR 0070        -> factgcd_prover
+    })
+
     def _derive_established_domain(self, prop: Propositio) -> None:
         """ADR 0074: for a claim a registered DECIDED-fragment backend owns, set
         ``established_domain := claim_domain`` — mechanically derived, not LLM-authored.
@@ -136,10 +152,12 @@ class Formalize:
         8 of 12 recent tail candidates died this way, and 25-29 of 54 DEFERred rows are
         decidable by procedures already shipped.
 
-        Why it is sound. It fires ONLY when some registered sound backend ``applies`` to
-        the canonicalized contract — i.e. a decided fragment whose ``*Demonstrate``
-        fast-path RE-RENDERS the promoted law from ``(claim_domain, claim_property)`` and
-        discards the autoformalizer's statement (ADR 0058 A2). For such a claim the
+        Why it is sound. It fires ONLY when a backend on the ``_RERENDERING_BACKENDS``
+        allowlist ``applies`` to the canonicalized contract — a decided fragment whose
+        ``*Demonstrate`` fast-path RE-RENDERS the promoted law from
+        ``(claim_domain, claim_property)`` and discards the autoformalizer's statement
+        (ADR 0058 A2). ``applies()`` alone would be strictly broader — ``walnut`` is also a
+        registered sound backend and has no such prover — hence the explicit list. For such a claim the
         promoted theorem establishes the property on the whole of ``claim_domain`` BY
         CONSTRUCTION, so ``established_domain = claim_domain`` is not an assertion about an
         unseen statement — it is a fact about the statement that will be proved. Nothing is
@@ -155,29 +173,45 @@ class Formalize:
         en, expr = prop.enuntiatio, prop.expressio
         if expr is None or not (en.claim_domain and en.claim_property and expr.established_domain):
             return  # prose-only / OPEN_FORM contract: nothing to derive
+        # LLM-authored fields are not guaranteed to be str (`_parse_expressio` passes JSON
+        # through), so type-check BEFORE any str operation -- a non-str must DEFER, not raise.
+        if not all(type(v) is str for v in (en.claim_domain, en.claim_property,
+                                            expr.established_domain)):
+            return
         if not str.__ne__(expr.established_domain, en.claim_domain):
-            return  # already canonical
-        backends = getattr(self.faithfulness, "sound_backends", ())
-        if not backends:
-            return  # no decided fragment registered (fail-closed default)
-        # Does a decided-fragment backend own this claim once the contract is canonical?
-        # `applies` is pure DSL classification -- no kernel, no cost.
-        probe = replace(prop, expressio=replace(expr, established_domain=en.claim_domain))
-        try:
-            if not any(b.applies(probe) for b in backends):
-                return
-        except Exception:
-            return  # a classifier surprise must never break the pipeline
-        # The domain must be CONCLUSIVELY non-empty; `None` (unknown) fails closed.
+            return  # already canonical: skip the probe + the Z3 call entirely
+        # Cheap structural guards FIRST (invariant 5): a missing SMT backend makes the whole
+        # method a no-op, so discover that before paying for any classifier render below.
         backend = getattr(self.smt, "backend", None)
         decide = getattr(backend, "decide_unsat", None)
         if decide is None:
             return
+        # Only fragments whose promotion path RE-RENDERS the law from (claim_domain,
+        # claim_property) may be canonicalized -- that re-rendering is the entire soundness
+        # argument (ADR 0058 A2). An explicit allowlist, in the idiom of trust.py's
+        # FAITHFULNESS_PRODUCERS, because `applies()` alone is strictly broader: the `walnut`
+        # sound backend also applies to claims and has NO re-rendering prover, so deriving for
+        # it would assert coverage of a statement nothing re-renders.
+        # (No separate "none registered" early return: an empty allowlist match makes the
+        # `any()` below False, so the fail-closed default is already exact. A guard no test
+        # can distinguish is dead code, not defence.)
+        candidates = [b for b in getattr(self.faithfulness, "sound_backends", ())
+                      if getattr(b, "name", None) in self._RERENDERING_BACKENDS]
+        # Ask about the CANONICALIZED contract -- the defective established_domain is exactly
+        # what makes some classifiers decline. Pure DSL classification: no kernel, no cost.
+        probe = replace(prop, expressio=replace(expr, established_domain=en.claim_domain))
         try:
-            if decide([en.claim_domain]) is not False:
-                return  # unsat (empty) or unknown -> refuse
+            if not any(b.applies(probe) for b in candidates):
+                return
+        except Exception:
+            return  # a classifier surprise here must not add a NEW failure mode
+        # The domain must be CONCLUSIVELY non-empty; `None` (unknown) fails closed.
+        try:
+            conclusive = decide([en.claim_domain])
         except Exception:
             return
+        if conclusive is not False:
+            return  # unsat (empty domain -> a laundered vacuous PASS) or unknown -> refuse
         expr.established_domain = en.claim_domain
 
     def _steer_contract(self, prop: Propositio) -> None:

@@ -26,8 +26,10 @@ class _Backend:
 
     def __init__(self, verdict=False):
         self.verdict = verdict
+        self.calls = 0
 
     def decide_unsat(self, preds, bound=0):
+        self.calls += 1
         return self.verdict
 
 
@@ -37,15 +39,23 @@ class _Smt:
 
 
 class _Gate:
-    def __init__(self, applies=True, boom=False):
+    """A fake sound backend. `name` defaults to a REAL allowlisted name; `applies` INSPECTS the
+    prop it is handed (like every real classifier) so that the probe-canonicalization line in
+    _derive_established_domain is actually under test."""
+
+    def __init__(self, applies=True, boom=False, name="lean-decided"):
         self.sound_backends = (self,) if applies is not None else ()
         self._applies, self._boom = applies, boom
-        self.name = "fake-decided"
+        self.name = name
+        self.seen = []
 
     def applies(self, prop):
         if self._boom:
             raise RuntimeError("classifier surprise")
-        return self._applies
+        self.seen.append(prop.expressio.established_domain)
+        # A real classifier declines the DEFECTIVE contract and accepts the canonical one --
+        # which is exactly why the method probes with a canonicalized copy.
+        return self._applies and prop.expressio.established_domain == prop.enuntiatio.claim_domain
 
 
 def _formalize(gate, backend=None):
@@ -68,10 +78,13 @@ def test_derives_when_a_decided_backend_owns_the_claim():
     assert p.enuntiatio.claim_domain == BOX               # domain NEVER widened
 
 
-def test_noop_when_already_canonical():
+def test_noop_when_already_canonical_costs_nothing():
     p = _prop(ed=BOX)
-    _formalize(_Gate(applies=True))._derive_established_domain(p)
+    gate, backend = _Gate(applies=True), _Backend()
+    Formalize(provider=None, lean=None, smt=_Smt(backend), novelty=None,
+              faithfulness=gate)._derive_established_domain(p)
     assert p.expressio.established_domain == BOX
+    assert backend.calls == 0 and gate.seen == []      # short-circuit: no Z3, no classifier render
 
 
 def test_fail_closed_without_a_registered_decided_backend():
@@ -95,16 +108,54 @@ def test_fail_closed_on_empty_or_undecided_claim_domain(verdict):
     assert p.expressio.established_domain == CP
 
 
-def test_fail_closed_without_a_usable_smt_backend():
+def test_fail_closed_without_a_usable_smt_backend_before_any_classifier_render():
+    # Distinct from the raising-backend case below: here decide_unsat is ABSENT. It must be
+    # detected BEFORE the classifier probe (invariant 5, cheap-first), so `seen` stays empty.
     for smt in (_Smt(None), _Smt(object())):                # no backend / no decide_unsat
-        p = _prop()
-        f = Formalize(provider=None, lean=None, smt=smt, novelty=None,
-                      faithfulness=_Gate(applies=True))
-        f._derive_established_domain(p)
+        p, gate = _prop(), _Gate(applies=True)
+        Formalize(provider=None, lean=None, smt=smt, novelty=None,
+                  faithfulness=gate)._derive_established_domain(p)
         assert p.expressio.established_domain == CP
+        assert gate.seen == []                              # never paid for a render
 
 
-def test_a_raising_classifier_never_breaks_the_pipeline():
+def test_fail_closed_when_decide_unsat_itself_raises():
+    class _Boom(_Backend):
+        def decide_unsat(self, preds, bound=0):
+            raise RuntimeError("z3 exploded")
+    p = _prop()
+    _formalize(_Gate(applies=True), _Boom())._derive_established_domain(p)
+    assert p.expressio.established_domain == CP
+
+
+def test_only_rerendering_backends_may_canonicalize():
+    """THE soundness guard: `walnut` is a registered sound backend whose claims are NOT
+    re-rendered by any prover, so the ADR 0058 A2 argument does not cover it."""
+    p = _prop()
+    _formalize(_Gate(applies=True, name="walnut"))._derive_established_domain(p)
+    assert p.expressio.established_domain == CP           # NOT canonicalized
+    p2 = _prop()
+    _formalize(_Gate(applies=True, name="factgcd-decided"))._derive_established_domain(p2)
+    assert p2.expressio.established_domain == BOX         # an allowlisted one does
+
+
+def test_a_non_str_contract_field_defers_instead_of_raising():
+    # `_parse_expressio` passes LLM JSON through, so these fields are not guaranteed to be str.
+    for bad in ([], 3, {"a": 1}):
+        p = _prop()
+        p.expressio.established_domain = bad
+        _formalize(_Gate(applies=True))._derive_established_domain(p)   # must not raise
+        assert p.expressio.established_domain == bad
+        p2 = _prop()
+        p2.enuntiatio.claim_domain = bad
+        _formalize(_Gate(applies=True))._derive_established_domain(p2)
+        assert p2.expressio.established_domain == CP
+
+
+def test_a_raising_classifier_adds_no_new_failure_mode_here():
+    # NB: this pins THIS METHOD only. FaithfulnessGate.check calls the same applies() with no
+    # try/except on the very next line of Formalize.run, so a raising classifier still breaks
+    # the candidate -- it just is not THIS change that introduces it.
     p = _prop()
     _formalize(_Gate(applies=True, boom=True))._derive_established_domain(p)
     assert p.expressio.established_domain == CP           # swallowed, contract untouched
