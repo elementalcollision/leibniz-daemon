@@ -15,7 +15,7 @@ and by DEMONSTRATE running the faithfulness gate before sealing.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Optional
 
 from leibniz.adapters import LeonardoAdapter, ProviderAdapter
@@ -109,6 +109,11 @@ class Formalize:
         # honest gate can CERTIFY rather than DEFER. Proposal-side only — it rewrites
         # a proposal the SAME gate (next line) then re-decides; it never weakens it.
         self._steer_contract(prop)
+        # ADR 0074: DERIVE established_domain for decided-fragment claims instead of
+        # trusting the autoformalizer's free text. Runs after _steer_contract (which only
+        # repairs UN-ENCODABLE fields) and before the gate, so prop's fields, the
+        # certificate's data and the gate's statement template all render the same bytes.
+        self._derive_established_domain(prop)
 
         faith = self.faithfulness.check(prop)
         prop.record(faith)
@@ -116,6 +121,64 @@ class Formalize:
             return None  # GAMED / UNFAITHFUL / DEFER -- do not pay for proof
 
         return prop
+
+    def _derive_established_domain(self, prop: Propositio) -> None:
+        """ADR 0074: for a claim a registered DECIDED-fragment backend owns, set
+        ``established_domain := claim_domain`` — mechanically derived, not LLM-authored.
+
+        Why this is needed. ``established_domain`` is free text the autoformalizer writes
+        ("the DSL predicate the formal statement ACTUALLY establishes the property on").
+        When it folds the claim property into that field, the faithfulness pair's COVERAGE
+        leg becomes the theorem itself, the kernel refuses it, and the candidate DEFERs
+        before any proof compute. ADR 0022's ``_steer_contract`` cannot help: its repair
+        trigger is ``not encodable(pred)`` — a SYNTAX test — and a property-restating
+        ``established_domain`` is perfectly encodable DSL. Measured on the live ledger:
+        8 of 12 recent tail candidates died this way, and 25-29 of 54 DEFERred rows are
+        decidable by procedures already shipped.
+
+        Why it is sound. It fires ONLY when some registered sound backend ``applies`` to
+        the canonicalized contract — i.e. a decided fragment whose ``*Demonstrate``
+        fast-path RE-RENDERS the promoted law from ``(claim_domain, claim_property)`` and
+        discards the autoformalizer's statement (ADR 0058 A2). For such a claim the
+        promoted theorem establishes the property on the whole of ``claim_domain`` BY
+        CONSTRUCTION, so ``established_domain = claim_domain`` is not an assertion about an
+        unseen statement — it is a fact about the statement that will be proved. Nothing is
+        certified here: the gate then decides the whole pair with the kernel, and a FALSE
+        claim still fails its property leg and is refused (pinned by test).
+
+        What it deliberately does NOT do: it never touches ``claim_property`` (so no
+        property can be weakened), never widens ``claim_domain``, and refuses unless the
+        domain is CONCLUSIVELY satisfiable — an empty domain would launder a vacuous PASS.
+        Fail-closed everywhere: any missing backend, unknown verdict, or render failure
+        leaves the contract untouched and the candidate DEFERs honestly, exactly as today.
+        """
+        en, expr = prop.enuntiatio, prop.expressio
+        if expr is None or not (en.claim_domain and en.claim_property and expr.established_domain):
+            return  # prose-only / OPEN_FORM contract: nothing to derive
+        if not str.__ne__(expr.established_domain, en.claim_domain):
+            return  # already canonical
+        backends = getattr(self.faithfulness, "sound_backends", ())
+        if not backends:
+            return  # no decided fragment registered (fail-closed default)
+        # Does a decided-fragment backend own this claim once the contract is canonical?
+        # `applies` is pure DSL classification -- no kernel, no cost.
+        probe = replace(prop, expressio=replace(expr, established_domain=en.claim_domain))
+        try:
+            if not any(b.applies(probe) for b in backends):
+                return
+        except Exception:
+            return  # a classifier surprise must never break the pipeline
+        # The domain must be CONCLUSIVELY non-empty; `None` (unknown) fails closed.
+        backend = getattr(self.smt, "backend", None)
+        decide = getattr(backend, "decide_unsat", None)
+        if decide is None:
+            return
+        try:
+            if decide([en.claim_domain]) is not False:
+                return  # unsat (empty) or unknown -> refuse
+        except Exception:
+            return
+        expr.established_domain = en.claim_domain
 
     def _steer_contract(self, prop: Propositio) -> None:
         """ADR 0022: bounded, mechanical repair of the structured faithfulness
