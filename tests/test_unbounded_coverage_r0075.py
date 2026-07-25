@@ -41,10 +41,59 @@ def test_the_box_hides_the_gap_that_the_unbounded_query_finds():
     assert be.decide_unsat_unbounded(args) is False     # unbounded: the real counterexample
 
 
-def test_probe_refuses_the_box_unrepresentative_claim():
+def test_probe_refuses_the_box_unrepresentative_claim_via_the_COVERAGE_leg():
     smt = SMTVerifier(backend=Z3Backend())
     probe = default_probes(smt)[ClaimType.INVARIANT]
     assert probe(_prop(EXPLOIT_CD, EXPLOIT_CP, EXPLOIT_ED)) is None      # DEFER, was True
+
+
+def test_probe_refuses_the_SAME_claim_through_the_PROPERTY_leg():
+    """The first draft of ADR 0075 unbounded only the coverage leg. With established_domain
+    == claim_domain — the honest shape, and the one ADR 0074 DERIVES — coverage passes
+    trivially as `cd and not cd` and the identical false claim walked through the still
+    bounded property leg to a MECHANICAL PASS. Both legs must be unbounded."""
+    smt = SMTVerifier(backend=Z3Backend())
+    probe = default_probes(smt)[ClaimType.INVARIANT]
+    assert probe(_prop(EXPLOIT_CD, EXPLOIT_CP, EXPLOIT_CD)) is None
+    # and the bounded query really would have passed it (the defect, pinned)
+    be = Z3Backend()
+    args = [f"({EXPLOIT_CD})", f"({EXPLOIT_CD})", f"not ({EXPLOIT_CP})"]
+    assert be.decide_unsat(args, 64) is True                  # box: no counterexample
+    assert be.decide_unsat_unbounded(args) is False           # truth: (61, 65)
+
+
+def test_probe_defers_when_the_backend_cannot_decide_unbounded():
+    """Fail CLOSED: a backend without the unbounded decider must DEFER, never silently fall
+    back to the bounded query the exploit defeats."""
+
+    class _BoundedOnly:
+        def encodable(self, pred):
+            return True
+
+        def decide_unsat(self, preds, bound=0):
+            return True                                        # would have PASSed everything
+
+        def find_gaming_witness(self, **kw):
+            return None
+    smt = SMTVerifier(backend=_BoundedOnly())
+    probe = default_probes(smt)[ClaimType.INVARIANT]
+    assert probe(_prop(EXPLOIT_CD, EXPLOIT_CP, EXPLOIT_CD)) is None
+
+
+def test_byte_identical_domains_cover_without_a_solver_call():
+    """ed == cd covers by construction. Deciding it instead would needlessly DEFER every
+    ADR 0035/0066 domain, whose encodings are exact only inside the box."""
+
+    class _CountingZ3(Z3Backend):
+        calls = 0
+
+        def decide_unsat_unbounded(self, preds):
+            type(self).calls += 1
+            return super().decide_unsat_unbounded(preds)
+    be = _CountingZ3()
+    probe = default_probes(SMTVerifier(backend=be))[ClaimType.INVARIANT]
+    probe(_prop("n >= 0", "n + 1 > n", "n >= 0"))
+    assert _CountingZ3.calls == 1                              # property leg only
 
 
 @pytest.mark.parametrize("cd,cp", [

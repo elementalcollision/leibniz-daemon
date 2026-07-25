@@ -41,32 +41,63 @@ the upper box is dropped from the solver, `v >= 0` is kept (non-negativity is pa
 That last detail is what makes it safe rather than merely broader. **Every encoding that is exact
 only inside the box refuses itself when the bound is `None`** — the ADR 0066 factorial/gcd
 If-tables (`_table_arg`) and the ADR 0035 order reduction all require a usable bound and raise
-`PredicateError`, which surfaces as `None`. So an unbounded verdict is only ever returned for
-encodings that are exact over the whole domain. Verified for `factorial(n) % 5 == 0`,
-`gcd(6, n) == 1` and `2**n % 7 == 1`, each of which returns `None`.
+`PredicateError`, surfacing as `None`. An unbounded verdict is therefore only ever returned for
+encodings exact over the whole domain. Verified for `factorial(n) % 5 == 0`, `gcd(6, n) == 1`
+and `2**n % 7 == 1`.
 
-The probe's **coverage** leg now uses it when the backend offers it. Both `False` (a genuine gap)
-and `None` (undecided, or not soundly encodable without a box) **refuse** — the probe DEFERs, as
-it already did for every inconclusive result.
+**Both** probe legs now use it. `False` (a genuine gap / a real counterexample) and `None`
+(undecided, or not soundly encodable unbounded) both refuse — the probe DEFERs, as it already did
+for every inconclusive result. A backend without the unbounded decider **DEFERs**; it never falls
+back to the bounded query.
 
-The **property** leg deliberately stays bounded. It is a pre-proof sanity check, not the thing
-that establishes the claim: the kernel is. Making it unbounded would buy little — Z3 returns
-`unknown` on exactly this nonlinear fragment (measured) — and would cost real yield.
+Coverage additionally short-circuits when `established_domain` is **byte-identical** to
+`claim_domain`: it covers by construction, so no solver is consulted. Without this, every ADR
+0035/0066 domain would DEFER unconditionally at the coverage leg even on the canonical contract,
+killing fragments those ADRs exist to decide.
+
+### The first draft fixed only the coverage leg — and that was not enough
+
+Adversarial review demonstrated the identical exploit walking through the **property** leg
+instead. With `established_domain == claim_domain` — the honest shape, and the one ADR 0074 now
+*derives* — coverage passes trivially as `cd ∧ ¬cd`, handing the whole decision to the still
+bounded property query, which is vacuously satisfied because the domain's only in-box point
+`(61,61)` satisfies the claim. The probe returned a MECHANICAL PASS on a false claim. One leg
+fixed, the identical hole one line below.
+
+Two justifications the first draft gave for leaving that leg bounded were **empirically false**,
+and are recorded here so the error is not inherited:
+
+- *"Z3 returns unknown on exactly this nonlinear fragment."* It does not. On this predicate it
+  returns **sat with the witness `(61, 65)`**. The `unknown` measurement came from a *different*
+  predicate and was over-generalised.
+- *"It would cost real yield."* Measured over the honest corpus: **zero** loss.
+
+A third argument — *"a passing claim's theorem must still clear the kernel"* — was also
+overstated and is withdrawn. The probe certifies the DSL triple while the kernel proves
+`expressio.theorem_src`, a separately authored Lean string; nothing binds them on this path. The
+probe's PASS is the last mechanical word on statement-vs-claim here, which is the argument for
+fixing the leg rather than deferring to a backstop that does not exist yet.
 
 ## Consequences
 
-**Yield: measured zero loss.** Across all 93 ledger rows carrying a DSL contract, the bounded and
-unbounded coverage verdicts agree exactly. That is structural, not luck: for a canonical contract
-(`established_domain == claim_domain`, which ADR 0074 now derives for decided fragments) the query
-is `cd ∧ ¬cd` — unsat instantly for any domain. What changes is precisely the case the fix targets:
-an `established_domain` genuinely narrower than the claim, which *should* refuse.
+**Yield.** On the canonical contract (`established_domain == claim_domain`, which ADR 0074 derives
+for decided fragments) coverage is free and the property leg is *stronger* than before — some
+claims the bounded query timed out on are now decided, so the probe certifies more, not less, on
+better evidence. Measured on the honest corpus: no case lost.
 
-**What this does not fix.** The property leg remains a bounded search, so a claim that is false
-only outside `[0, 64]` can still take the probe's PASS branch — with `established_domain` honestly
-equal to `claim_domain`. That is not the same defect: coverage now guarantees the statement is
-held accountable to the *whole* claimed domain, so a passing claim is one whose own theorem the
-kernel must then prove over that domain — and a false theorem is rejected there. The probe was
-never the thing that establishes truth.
+**A real, deliberate refusal.** Claims whose *property* uses an ADR 0035/0066 encoding
+(`factorial`, `gcd`, `base^n % m`) can no longer be certified by this probe at all: those
+encodings are exact only inside the box, so the unbounded query refuses them. Those fragments have
+kernel decision procedures which run **before** the probe in the gate's cost-ordered dispatch, so
+they are decided where they should be — by the kernel, not by a bounded solver search. This is a
+narrowing of the probe's reach and is intended.
 
-**Load-dependence** is unchanged in kind: an unbounded query that exceeds Z3's 3-second wall-clock
-budget returns `None` and refuses, so a busy machine yields less, never more.
+**Load-dependence** is unchanged in kind: a query exceeding Z3's 3-second wall-clock budget
+returns `None` and refuses, so a busy machine yields less, never more.
+
+## Review
+
+Reviewed adversarially before merge (soundness, yield/regression, bypass). The soundness angle
+found the property-leg hole above and refuted two of this ADR's own claims; both are corrected
+here rather than quietly dropped. The review also caught the fail-open fallback for backends
+lacking the unbounded decider, and the unconditional DEFER of ADR 0035/0066 domains — both fixed.
