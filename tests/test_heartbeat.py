@@ -226,3 +226,37 @@ def test_main_feed_failure_is_a_note_not_an_abort(tmp_path, monkeypatch):
     assert heartbeat.main() == 0                                # a feed failure never pages
     entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
     assert "arxiv unreachable" in entry["arxiv_feed"]["error"]
+
+
+def test_beat_pins_the_notebook_to_the_canonical_home(monkeypatch, tmp_path):
+    """ADR 0073: the notebook must resolve under LEIBNIZ_HEARTBEAT_HOME, not beside the throwaway
+    sync worktree (where it was disjoint from the band + ledger and one `git clean` from gone)."""
+    monkeypatch.setenv("LEIBNIZ_HEARTBEAT_HOME", str(tmp_path))
+    monkeypatch.delenv("LEIBNIZ_NOTEBOOK_PATH", raising=False)
+
+    class _Daemon:
+        notebook = None
+        frontier = None
+
+        def run_cycles(self, n):
+            return []
+
+    _stub_assembly(monkeypatch, _Daemon())
+    heartbeat.beat(cycles=1)
+    assert heartbeat.os.environ["LEIBNIZ_NOTEBOOK_PATH"] == str(tmp_path / "notebook.json")
+
+
+def test_beat_does_not_override_an_explicit_notebook_path(monkeypatch, tmp_path):
+    monkeypatch.setenv("LEIBNIZ_HEARTBEAT_HOME", str(tmp_path))
+    monkeypatch.setenv("LEIBNIZ_NOTEBOOK_PATH", "/custom/nb.json")
+
+    class _Daemon:
+        notebook = None
+        frontier = None
+
+        def run_cycles(self, n):
+            return []
+
+    _stub_assembly(monkeypatch, _Daemon())
+    heartbeat.beat(cycles=1)
+    assert heartbeat.os.environ["LEIBNIZ_NOTEBOOK_PATH"] == "/custom/nb.json"  # setdefault, not clobber

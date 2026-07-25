@@ -28,6 +28,7 @@ Pieces:
 """
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -51,6 +52,71 @@ _DEFAULT_EXEMPLARS = Path(__file__).resolve().parent.parent / "corpus" / "novelt
 _FAMILY_CAP = 64  # bound the persisted family histogram so it can't grow without limit
 
 
+def _combo_moduli(sig: object) -> tuple[int, ...]:
+    """Every modulus appearing in a boolean-combination signature's atoms (`('atom', relop, m,
+    monomials)`, arbitrarily nested). Sorted + deduped, so `and`-combinations of mod-5 atoms all
+    key alike regardless of which polynomials they involve."""
+    out: set[int] = set()
+
+    def walk(node: object) -> None:
+        if isinstance(node, tuple):
+            if len(node) >= 3 and node[0] == "atom" and isinstance(node[2], int):
+                out.add(node[2])
+            for child in node:
+                walk(child)
+
+    walk(sig)
+    return tuple(sorted(out))
+
+
+def _top_relop(tree: ast.AST) -> str:
+    """The claim's TOP-level connective/relation — the coarse half of a shape family key."""
+    if isinstance(tree, ast.BoolOp):
+        return "and" if isinstance(tree.op, ast.And) else "or"
+    if isinstance(tree, ast.UnaryOp) and isinstance(tree.op, ast.Not):
+        return "not"
+    if isinstance(tree, ast.Compare) and len(tree.ops) == 1:
+        return {ast.Eq: "==", ast.NotEq: "!="}.get(type(tree.ops[0]), "ineq")
+    return "?"
+
+
+def _shape_family(claim_property: str | None) -> tuple[str, str] | None:
+    """ADR 0073: a coarse family for the NAMED-FUNCTION genres (min/max, factorial, gcd) that
+    `congruence_signature` returns None for. Same design tension as ADR 0034's modular key —
+    coarse enough to fire across different polynomials, fine enough that a structurally different
+    claim survives — so the key is (genre × top-level relation × modulus set), with the polynomial
+    dropped. A claim with no named function yields NO family (unchanged behaviour): "polynomial
+    inequalities" is far too broad a genre to retire on three proofs.
+
+    Proposal-side only, like everything else here: it changes the conjecturer's prompt, never a
+    verdict."""
+    if not claim_property:
+        return None
+    try:
+        tree = ast.parse(claim_property.replace("^", "**"), mode="eval").body
+    except (SyntaxError, ValueError):
+        return None
+    calls = {n.func.id for n in ast.walk(tree)
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    if calls & {"min", "max"}:
+        kind, human = "minmax", "min/max"
+    elif "factorial" in calls:
+        kind, human = "factorial", "factorial"
+    elif "gcd" in calls:
+        kind, human = "gcd", "gcd"
+    else:
+        return None
+    moduli = tuple(sorted({n.right.value for n in ast.walk(tree)
+                           if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Mod)
+                           and isinstance(n.right, ast.Constant)
+                           and isinstance(n.right.value, int) and not isinstance(n.right.value, bool)}))
+    relop = _top_relop(tree)
+    if moduli:
+        ms = ",".join(str(m) for m in moduli)
+        return f"{kind}%{ms}|{relop}", f"{relop} claims about {human} modulo {ms}"
+    return f"{kind}|{relop}", f"{relop} claims about {human}"
+
+
 def _family(claim_property: str | None) -> tuple[str, str] | None:
     """A COARSE family key + human descriptor for a claim, from its congruence signature: the
     relop KIND and the modulus, with the polynomial DROPPED. This is the genre-hop unit — e.g.
@@ -66,10 +132,27 @@ def _family(claim_property: str | None) -> tuple[str, str] | None:
     shapes; this one fires on the real cluster. It only ever STEERS — the conjecturer may still
     propose a killed family, and the gates + kernel still decide."""
     sig = congruence_signature(claim_property) if claim_property else None
-    if sig is None:
+    # Layer 1 — a plain congruence atom: the ORIGINAL key, byte-identical (persisted
+    # `family_counts` keys like "==|3" keep working across the upgrade).
+    if sig is not None and len(sig) >= 2 and isinstance(sig[1], int):
+        relop, m = sig[0], sig[1]
+        return f"{relop}|{m}", f"{relop} modular claims modulo {m}"
+    # Layer 2 (ADR 0073) — a boolean COMBINATION of congruence atoms. `sig[1]` here is the nested
+    # atom tuple, not a modulus; the original code interpolated it straight into the key, minting a
+    # unique family per POLYNOMIAL (measured: 9 of 85 live ledger rows, one of them a proved law).
+    # Such keys can never group across polynomials, so genre-kill was inert on them and the bounded
+    # `_family_counts` histogram filled with singletons. Key on the connective + the modulus SET.
+    if sig is not None:
+        moduli = _combo_moduli(sig)
+        if moduli:
+            ms = ",".join(str(m) for m in moduli)
+            return f"{sig[0]}|{ms}", f"{sig[0]}-combinations of modular claims modulo {ms}"
         return None
-    relop, m = sig[0], sig[1]
-    return f"{relop}|{m}", f"{relop} modular claims modulo {m}"
+    # Layer 3 (ADR 0073) — NON-modular shapes, which congruence_signature deliberately ignores
+    # (it is a novelty-gate component and stays untouched). Without this the daemon's min/max,
+    # factorial and gcd genres record no family at all, so genre-kill can never retire them:
+    # measured 27 of 85 live rows keyless, including three PROVED min/max laws.
+    return _shape_family(claim_property)
 
 
 def load_novelty_exemplars(path: Union[str, Path, None] = None) -> list[str]:

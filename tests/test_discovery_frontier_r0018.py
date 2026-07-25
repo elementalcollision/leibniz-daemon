@@ -374,8 +374,13 @@ def test_family_key_is_coarse_relop_and_modulus():
     assert _family("(n^2) % 2 in {0}")[0] != a[0]
     # different modulus -> different family
     assert _family("(n^2) % 3 == 0")[0] != a[0]
-    # outside the DSL -> no family (no kill)
-    assert _family("gcd(n, n+1) == 1") is None
+    # outside every recognized genre -> no family (no kill). ADR 0073 DELIBERATELY moved
+    # `gcd(n, n+1) == 1` out of this case: named-function claims (min/max, factorial, gcd) now key
+    # to their own coarse genre so genre-kill can retire them. The invariant this line pins —
+    # an unrecognized shape must never mint a family — is preserved with a shape that is still
+    # unrecognized (a bare polynomial inequality: too broad a genre to retire on three proofs).
+    assert _family("n^2 + 1 > n") is None
+    assert _family("gcd(n, n+1) == 1")[0] == "gcd|=="        # ADR 0073: now a genre, was None
     assert _family(None) is None
 
 
@@ -520,3 +525,66 @@ def test_dry_kill_steering_line_and_defensive_from_dict():
     assert "DRY GROUND" in nb.steering() and "modulo 4" in nb.steering()
     forged = DiscoveryNotebook.from_dict({"dry_kill": "not-a-list", "dry_counts": {"k": "x"}})
     assert forged.dry_kill == [] and forged._dry_counts == {}
+
+
+# === ADR 0073: family-key widening (non-modular genres + the combo-key fix) ==
+
+from leibniz.discovery import _combo_moduli, _shape_family  # noqa: E402
+
+
+def test_layer1_modular_keys_are_byte_identical():
+    # the ADR 0034 keys are persisted in notebooks on disk — they must not move
+    assert _family("(n^2) % 2 == 0") == ("==|2", "== modular claims modulo 2")
+    assert _family("(n^4 + n^2) % 2 == 0")[0] == "==|2"      # polynomial still dropped
+    assert _family("(n^2) % 3 == 0")[0] == "==|3"
+    assert _family("(n^2) % 2 in {0}")[0] != "==|2"          # residue-SET stays a distinct genre
+
+
+def test_combo_signatures_key_on_the_modulus_set_not_the_polynomial():
+    # BEFORE ADR 0073 these interpolated the whole nested atom tuple, minting one family per
+    # polynomial (inert genre-kill + a bounded histogram full of singletons).
+    a = _family("(n^2 + n + 1) % 5 != 0 and (n^2 + n + 1) % 5 != 4")
+    b = _family("(n^3 + 2) % 5 != 1 and (n^3 + 2) % 5 != 2")
+    assert a is not None and b is not None
+    assert a[0] == b[0] == "and|5"                            # different polynomials, ONE family
+    assert "atom" not in a[0] and "(" not in a[0]             # no polynomial leaks into the key
+    assert a[1] == "and-combinations of modular claims modulo 5"
+    assert _combo_moduli(("and", (("atom", "!=", 5, ()), ("atom", "==", 3, ())))) == (3, 5)
+    assert _combo_moduli(("==", 7, ())) == ()                 # a plain atom carries no combo moduli
+
+
+def test_minmax_factorial_gcd_genres_are_keyed():
+    # the three PROMULGATED min/max laws were previously keyless — genre-kill could never retire them
+    live = "max(a,b)^2 - min(a,b)^2 == (max(a,b) - min(a,b)) * (a + b)"
+    assert _family(live) == ("minmax|==", "== claims about min/max")
+    assert _family("max(a,b) * min(a,b) == a*b")[0] == "minmax|=="        # same genre
+    assert _family("min(a,b) <= max(a,b)")[0] == "minmax|ineq"            # different relation
+    assert _family("factorial(a) * factorial(b) <= factorial(a + b)")[0] == "factorial|ineq"
+    assert _family("factorial(n) % 5 != 3") == ("factorial%5|!=",
+                                                "!= claims about factorial modulo 5")
+    assert _family("gcd(6, n) == 1 or gcd(6, n) == 2")[0] == "gcd|or"
+
+
+def test_shape_family_refuses_the_unbounded_genres():
+    # a claim with no named function and no congruence keys to NOTHING: "polynomial inequality"
+    # is far too broad a genre to retire on three proofs (the ADR 0034 coarseness tension)
+    assert _shape_family("n^2 + 1 > n") is None
+    assert _shape_family("a * b >= 0") is None
+    assert _family("n^2 + 1 > n") is None
+    assert _shape_family("") is None and _shape_family(None) is None
+    assert _shape_family("this is not (valid python") is None             # never raises
+
+
+def test_widened_families_drive_genre_kill_and_dry_kill():
+    nb = DiscoveryNotebook(capacity=12, genre_threshold=3)
+    for cp in ("max(a,b) * min(a,b) == a*b",
+               "max(a,b)^2 - min(a,b)^2 == (max(a,b) - min(a,b)) * (a + b)"):
+        nb.record(_proven(cp))
+    assert nb.genre_kill == []                                # below threshold
+    nb.record(_proven("max(a,b) + min(a,b) == a + b"))        # third PROVEN min/max identity
+    assert nb.genre_kill == ["== claims about min/max"]       # the genre now retires
+    assert "EXHAUSTED FAMILIES" in nb.steering()
+    dry = DiscoveryNotebook(capacity=12, dry_threshold=2)
+    dry.record(_dry("gcd(4, n) == 1"))
+    dry.record(_dry("gcd(4, n) == 2"))
+    assert dry.dry_kill == ["== claims about gcd"]            # dry ground works on the new keys too
