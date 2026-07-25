@@ -30,88 +30,75 @@ the *property-weakening* check on an already-attempted repair.) The measured `de
 
 ## Decision
 
-`Formalize._derive_established_domain`, run after `_steer_contract` and before the gate: for a
-claim a **registered decided-fragment backend owns**, set `established_domain := claim_domain` —
-mechanically derived rather than model-authored.
+`FaithfulnessGate._retry_with_derived_domain`, invoked **inside the sound-backend dispatch loop**
+when a backend DEFERs: re-ask *that same backend* with `established_domain := claim_domain`, and
+commit the derived contract to the Propositio **only** if the retry earns a PASS that the gate's
+own `_accept_certificate` accepts — re-checked by the gate's re-checker *and* byte-bound to its
+statement template. Otherwise the field is restored byte-exactly.
 
-### Why this is sound
+### Why it must live in the loop — a rejected design, and why
 
-It fires only when a backend on an explicit **`_RERENDERING_BACKENDS` allowlist** `applies()` to
-the canonicalized contract — a fragment whose `*Demonstrate` fast-path **re-renders the promoted
-law from `(claim_domain, claim_property)` and discards the autoformalizer's statement**
-(ADR 0058 A2). For such a claim the promoted theorem establishes the property on the whole of
-`claim_domain` *by construction*. So `established_domain = claim_domain` is not an assertion about
-an unseen statement — it is a fact about the statement that will actually be proved.
+The first draft derived the field in `Formalize.run`, before the gate. **Adversarial review
+demonstrated that version was unsound**, end-to-end against the real kernel: a FALSE claim reached
+`kernel_verified` + `Q.E.D.` + `TrustPolicy.validate_path` ACCEPT.
 
-The allowlist is explicit, in the idiom of `trust.py`'s `FAITHFULNESS_PRODUCERS`, because
-`applies()` **alone is strictly broader and the soundness argument does not cover it**: `walnut`
-is also a registered `SoundFaithfulnessBackend` (cost_rank 50, ahead of `lean-decided`'s 90), it
-`applies()` to claims the decided backends decline, and it has **no re-rendering prover**.
-Deriving for a Walnut-owned claim would assert coverage of a statement nothing re-renders. This
-hole was found by adversarial review of the first draft, which shipped the bare `applies()` test;
-a test now pins the distinction.
+The flaw: `applies()` is DSL *routing*, not a verdict. When a re-rendering backend applied and
+then DEFERred, the mutation survived into paths where **nothing re-renders the statement**, and
+`established_domain` is the one field tying the gate to the Lean statement. Two independent checks
+went vacuous by construction:
 
-Nothing is certified here. The gate then decides the entire pair with the kernel, exactly as
-before. A **false** claim still fails its property leg and is refused — pinned by a live-kernel
-test: with the identical derivation applied, `(a^2+a*b+b^2) % 9 != 6` and `(a^2+b^2) % 4 != 3`
-certify via `lean_decided/kernel`, while `((4*a+1)*(4*b+3)) % 8 == 3` is **DEFERred**.
+- the coverage leg became `decide_unsat([D, ¬D])` — UNSAT for **every** claim, so it could never
+  fail;
+- the ADR 0004 gaming spine's target became `¬D ∧ D ∧ ¬P` — empty, so the spine was **disarmed**.
 
-Placement matters and is forced: the gate's statement-binding template renders the canonical
-statement from **prop's own fields**, and the certificate must match it byte-for-byte. A backend
-that canonicalized internally would fail that binding. The derivation therefore belongs on the
-prop, before the gate, where prop, certificate and template all render the same bytes.
+`ClaimProbe` then passed the claim on a bounded `[0,64]` search over a domain the box
+misrepresents, and DEMONSTRATE proved the autoformalizer's own, never-bound `theorem_src`.
 
-### What it deliberately does not do
+The in-loop design closes all three: the spine has **already run** on the original contract above
+the loop; the probe and the OPEN_FORM judge are reached only *after* rollback; and the derived
+value is never visible to any consumer unless the backend that justifies it earned an accepted
+certificate with it. `_accept_certificate` is extracted verbatim so there is exactly one place a
+certificate becomes a PASS — the retry cannot drift from the normal path.
 
-- Never touches `claim_property` — no property can be weakened.
-- Never widens `claim_domain`.
-- Refuses unless `claim_domain` is **conclusively** satisfiable (`decide_unsat` returning `False`);
-  unsat would launder a vacuous PASS, and `None` (unknown) fails closed.
-- Refuses when no decided backend is registered, when none owns the claim, when the SMT backend
-  is absent, and on any classifier exception. Every failure path leaves the contract untouched and
-  the candidate DEFERs exactly as it does today.
+### Guards (each mutation-tested: removing it turns the suite red)
 
-## Consequence recorded: the ADR 0004 gaming spine goes vacuous on these candidates
+- Only backends on `_RERENDERING_BACKENDS` — an explicit allowlist in the idiom of `trust.py`'s
+  `FAITHFULNESS_PRODUCERS`, because `walnut` is also a registered sound backend and has **no**
+  re-rendering prover.
+- Only on DEFER. A PASS whose certificate the gate *rejected* gets no second chance.
+- Never when already canonical (no wasted kernel call, no Z3 call).
+- Only when `claim_domain` is **conclusively** satisfiable; unsat would launder a vacuous PASS and
+  `None` (unknown) fails closed.
+- Non-`str` contract fields DEFER instead of raising (`_parse_expressio` passes LLM JSON through).
+- Byte-exact rollback on DEFER, FAIL, failed re-check, failed statement binding, or any exception.
 
-With `established_domain = claim_domain = D`, the gate's independent gaming probe searches
-`not(D) AND D AND not(P)` — unsatisfiable for **any** D and P. Every candidate this touches
-therefore loses its adversarial gaming leg and rests entirely on the MECHANICAL backend leg (the
-kernel deciding the full pair). This is arguably correct under A2 — with no ed/cd mismatch there
-is nothing for the spine to find — but it is a real reduction in independent checks and is
-recorded here rather than left implicit. It is *bounded* by the allowlist: only re-rendering
-fragments are affected.
+`claim_property` and `claim_domain` are never touched, so no property can be weakened and no
+domain widened.
 
-## Residual gap (pre-existing, now more frequently reached)
+## Scope note: a PRE-EXISTING probe weakness, not introduced here
 
-If the gate PASSes via a decided backend but the fast-path does **not** promote (e.g. the kernel
-rejects the re-rendered law), the candidate falls through to the LLM ensemble, which proves the
-autoformalizer's own `theorem_src` — a statement the certificate did not bind. This gap exists
-today for every decided-backend PASS; this ADR does not create it, but it does make it reachable
-more often. Closing it properly means rendering `Expressio` from the contract for these fragments
-(making FORMALIZE mechanical), which is a larger change and deliberately not bundled here.
+The review's exploit claim (`(a*a+b*b) % 16 == 2` over `a,b > 60, ≡ 1 mod 4` — false at
+`(61,65)`, but the only in-box point `(61,61)` satisfies it) is passed by `ClaimProbe` on
+**`origin/main` too**, verified directly. With this change the derived contract is rolled back and
+the gate behaves identically to main on that claim. The bounded probe's blindness to
+box-unrepresentative domains is real and worth its own increment; it is **out of scope** here and
+is not made worse.
 
 ## Consequences
 
 Expected: a large fraction of the DEFERred ledger becomes reachable by procedures already shipped,
-with no new prover reach — the γ3b conclusion inverted into yield. The `steering` block and
-`reached_proof` counts in the nightly journal will show it directly.
+with no new prover reach — the γ3b conclusion inverted into yield. Cost: one extra backend
+`check()` (four kernel calls) on the DEFER population of allowlisted fragments only. The
+`established_domain_derived` flag rides on the edge detail as ledger provenance.
 
-**The flake, now diagnosed.** During validation the derivation once silently no-op'd in a run that
-would not reproduce. Adversarial review supplied the mechanism: `decide_unsat` -> `_decide` sets
-`solver.set("timeout", 3000)` — a **wall-clock** budget — so under machine load Z3 returns
-`unknown`, `decide_unsat` returns `None`, and the conclusive-satisfiability guard fails closed.
-(The validation run in question coincided with 40+ Lean containers from parallel review agents
-saturating the host.) The derivation is therefore **load-dependent**: it is never wrong, but it
-silently yields less on a busy machine. Accepted for now — the direction is fail-closed and the
-cost is one candidate — and worth revisiting if journal `reached_proof` counts look load-correlated.
+**Load-dependence.** `decide_unsat` uses a 3-second *wall-clock* Z3 budget, so on a busy machine
+it returns `None` and the satisfiability guard fails closed — the derivation silently yields less
+under load. Never wrong; noted for the journal.
 
 ## Review
 
-Reviewed adversarially before merge (four independent attack angles: trust soundness, proposer
-bypass, regression surface, code review + test quality). The review found and this change fixes:
-the `walnut` soundness hole above; a `str.__ne__` crash on a non-`str` LLM-authored field (these
-come from `_parse_expressio` JSON and are not guaranteed to be strings — it now type-checks and
-DEFERs); guard ordering that paid for six classifier renders before free structural checks; and
-four **vacuous tests**. Every guard is now mutation-tested by hand — removing it turns the suite
-red — except one that was found genuinely redundant (`any([])` is already `False`) and was deleted
-rather than given a decorative test.
+Reviewed adversarially before merge (trust soundness, proposer bypass, regression surface, code
+review + test quality). The soundness angle returned **DO_NOT_SHIP / critical** on the first
+draft, with the end-to-end demonstration above; that draft was discarded rather than patched, and
+this design is the reviewer's. Review also fixed: a `str.__ne__` crash on non-`str` fields, guard
+ordering, and four vacuous tests. Every guard is now mutation-tested by hand.

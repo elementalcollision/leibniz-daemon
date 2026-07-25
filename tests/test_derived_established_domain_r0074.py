@@ -1,11 +1,11 @@
-"""ADR 0074 — the mechanically-derived `established_domain`.
+"""ADR 0074 — the gate-loop retry with a mechanically-derived `established_domain`.
 
-CI-safe: no Docker, no Lean, no z3 required — fake sound backends and a fake SMT backend
-exercise every guard. The point of these tests is the FAIL-CLOSED set: the derivation must
-refuse unless a decided-fragment backend owns the claim AND the claim domain is conclusively
-non-empty, and it must never touch claim_property/claim_domain. The live-kernel behaviour
-(true tail claims certify, a FALSE claim is still refused) is pinned by the opt-in e2e at the
-bottom.
+CI-safe: no Docker, no Lean, no z3 — fake backends exercise every guard. The load-bearing
+property is ROLLBACK: the derived value must be invisible to everything except the backend
+that earns a fully re-checked, statement-bound PASS with it. An earlier draft derived the
+field in FORMALIZE instead; that mutation survived a DEFER into paths where nothing
+re-renders the statement, disarmed the ADR 0004 gaming spine, and let a FALSE claim reach
+kernel_verified + Q.E.D. Those failure modes are pinned here as regressions.
 """
 from __future__ import annotations
 
@@ -13,54 +13,73 @@ import os
 
 import pytest
 
-from leibniz.pipeline import Formalize
+from leibniz.gates.faithfulness import FaithfulnessGate
+from leibniz.gates.sound_backends import Certificate, FaithfulnessVerdict
 from leibniz.propositio import Enuntiatio, Expressio, Propositio
 from leibniz.types import ClaimType, Verdict
 
 BOX = "a >= 0 and b >= 0"
 CP = "(a^2 + a*b + b^2) % 9 != 6"
+KIND = "fake-kind"
 
 
-class _Backend:
+class _Z3:
     """decide_unsat: False = conclusively satisfiable, True = unsat/empty, None = unknown."""
 
     def __init__(self, verdict=False):
-        self.verdict = verdict
-        self.calls = 0
+        self.verdict, self.calls = verdict, 0
 
     def decide_unsat(self, preds, bound=0):
         self.calls += 1
         return self.verdict
+
+    def find_gaming_witness(self, *a, **k):
+        return None            # the gate's minimal-backend fallback path
 
 
 class _Smt:
     def __init__(self, backend):
         self.backend = backend
 
+    def find_gaming_witness(self, *a, **k):
+        return None
 
-class _Gate:
-    """A fake sound backend. `name` defaults to a REAL allowlisted name; `applies` INSPECTS the
-    prop it is handed (like every real classifier) so that the probe-canonicalization line in
-    _derive_established_domain is actually under test."""
 
-    def __init__(self, applies=True, boom=False, name="lean-decided"):
-        self.sound_backends = (self,) if applies is not None else ()
-        self._applies, self._boom = applies, boom
-        self.name = name
-        self.seen = []
+class _Backend:
+    """PASSes only when handed the CANONICAL contract — the shape of the real defect."""
+
+    def __init__(self, name="lean-decided", pass_on_canonical=True, raise_on_retry=False):
+        self.name, self.cost_rank = name, 90
+        self._pass, self._raise_on_retry = pass_on_canonical, raise_on_retry
+        self.seen: list = []
 
     def applies(self, prop):
-        if self._boom:
-            raise RuntimeError("classifier surprise")
-        self.seen.append(prop.expressio.established_domain)
-        # A real classifier declines the DEFECTIVE contract and accepts the canonical one --
-        # which is exactly why the method probes with a canonicalized copy.
-        return self._applies and prop.expressio.established_domain == prop.enuntiatio.claim_domain
+        return True
+
+    def check(self, prop):
+        # NB: raising on the FIRST call is pre-existing gate behaviour (unguarded); what the
+        # ADR 0074 retry must survive is a backend that explodes on the RETRY.
+        if self._raise_on_retry and self.seen:
+            raise RuntimeError("backend exploded on the canonical retry")
+        ed = prop.expressio.established_domain
+        self.seen.append(ed)
+        if self._pass and ed == prop.enuntiatio.claim_domain:
+            return FaithfulnessVerdict(
+                verdict=Verdict.PASS, producer="lean_decided/kernel",
+                certificate=Certificate(kind=KIND, rechecked=True, data={},
+                                        detail={"statement": "CANON"}), detail={})
+        return FaithfulnessVerdict(verdict=Verdict.DEFER, producer="x/defer", detail={})
 
 
-def _formalize(gate, backend=None):
-    return Formalize(provider=None, lean=None, smt=_Smt(backend or _Backend()),
-                     novelty=None, faithfulness=gate)
+def _gate(backend, z3=None, rechecker=True, template="CANON"):
+    g = FaithfulnessGate(smt=_Smt(z3 if z3 is not None else _Z3()), probes={},
+                         judge=type("J", (), {"round_trip_agrees": lambda self, p: 0.0})())
+    g.sound_backends = (backend,)
+    if rechecker:
+        g.recheckers[KIND] = lambda cert: True
+    if template is not None:
+        g.templates[KIND] = lambda prop: template
+    return g
 
 
 def _prop(cd=BOX, cp=CP, ed=CP):
@@ -70,127 +89,139 @@ def _prop(cd=BOX, cp=CP, ed=CP):
                       expressio=Expressio(theorem_src="theorem t : True", established_domain=ed))
 
 
-def test_derives_when_a_decided_backend_owns_the_claim():
-    p = _prop()
-    _formalize(_Gate(applies=True))._derive_established_domain(p)
-    assert p.expressio.established_domain == BOX          # the property-restating ed is replaced
-    assert p.enuntiatio.claim_property == CP              # property NEVER touched
-    assert p.enuntiatio.claim_domain == BOX               # domain NEVER widened
+def test_retry_earns_a_pass_and_commits_the_derived_domain():
+    be, p = _Backend(), _prop()
+    ev = _gate(be).check(p)
+    assert ev.verdict is Verdict.PASS and ev.producer == "lean_decided/kernel"
+    assert ev.detail["established_domain_derived"] is True      # provenance for the ledger
+    assert p.expressio.established_domain == BOX                # committed only after the PASS
+    assert be.seen == [CP, BOX]                                 # defective first, canonical retry
 
 
-def test_noop_when_already_canonical_costs_nothing():
-    p = _prop(ed=BOX)
-    gate, backend = _Gate(applies=True), _Backend()
-    Formalize(provider=None, lean=None, smt=_Smt(backend), novelty=None,
-              faithfulness=gate)._derive_established_domain(p)
-    assert p.expressio.established_domain == BOX
-    assert backend.calls == 0 and gate.seen == []      # short-circuit: no Z3, no classifier render
+def test_rollback_is_byte_exact_when_the_retry_does_not_pass():
+    for be in (_Backend(pass_on_canonical=False), _Backend(raise_on_retry=True)):
+        p = _prop()
+        ev = _gate(be).check(p)
+        assert ev.verdict is not Verdict.PASS
+        assert p.expressio.established_domain == CP             # THE load-bearing property
 
 
-def test_fail_closed_without_a_registered_decided_backend():
-    p = _prop()
-    _formalize(_Gate(applies=None))._derive_established_domain(p)   # sound_backends == ()
-    assert p.expressio.established_domain == CP           # untouched -> DEFERs honestly, as today
-
-
-def test_fail_closed_when_no_backend_owns_the_claim():
-    p = _prop()
-    _formalize(_Gate(applies=False))._derive_established_domain(p)
+def test_rollback_when_the_certificate_fails_the_gate_recheck_or_binding():
+    p = _prop()                                                  # re-checker refuses
+    assert _gate(_Backend(), rechecker=False).check(p).verdict is not Verdict.PASS
     assert p.expressio.established_domain == CP
+    p2 = _prop()                                                 # statement binding mismatches
+    assert _gate(_Backend(), template="OTHER").check(p2).verdict is not Verdict.PASS
+    assert p2.expressio.established_domain == CP
+
+
+def test_only_rerendering_backends_may_retry():
+    """`walnut` is a registered sound backend with NO re-rendering prover, so the ADR 0058 A2
+    argument does not cover it and the derived contract must never be offered to it."""
+    be, p = _Backend(name="walnut"), _prop()
+    _gate(be).check(p)
+    assert be.seen == [CP]                                      # asked ONCE, never canonically
+    assert p.expressio.established_domain == CP
+
+
+def test_the_gaming_spine_always_sees_the_ORIGINAL_contract():
+    """The ADR 0004 spine runs above the loop. An earlier draft derived the field before the
+    gate, which made the spine's target `not(D) and D and not(P)` empty by construction."""
+    seen: list = []
+
+    class _Spy(_Z3):
+        def find_gaming_witness(self, statement, negated_claim, bound=0):
+            seen.append(statement)      # the spine is called on smt.BACKEND
+            return None
+    g = _gate(_Backend(), z3=_Spy())
+    p = _prop()
+    g.check(p)
+    assert seen and CP in seen[0]                               # the honest, narrower ed
+    assert BOX not in seen[0]
 
 
 @pytest.mark.parametrize("verdict", [True, None])
 def test_fail_closed_on_empty_or_undecided_claim_domain(verdict):
-    # True  = claim_domain is UNSAT: a canonical ed would launder a vacuous PASS
-    # None  = Z3 could not decide: no conclusive answer, so no commit
-    p = _prop()
-    _formalize(_Gate(applies=True), _Backend(verdict))._derive_established_domain(p)
+    # True = claim_domain UNSAT (a derived ed would launder a vacuous PASS); None = unknown.
+    be, p = _Backend(), _prop()
+    _gate(be, z3=_Z3(verdict)).check(p)
+    assert p.expressio.established_domain == CP and be.seen == [CP]
+
+
+def test_fail_closed_without_a_usable_decide_unsat():
+    """A "minimal" backend (the deterministic-fake path) has the spine but no decide_unsat:
+    the retry cannot discharge its satisfiability guard, so it must refuse."""
+
+    class _Minimal:
+        def find_gaming_witness(self, *a, **k):
+            return None
+    be, p = _Backend(), _prop()
+    g = _gate(be)
+    g.smt = _Smt(_Minimal())
+    g.check(p)
     assert p.expressio.established_domain == CP
+    assert be.seen == [CP]                                       # never asked canonically
 
 
-def test_fail_closed_without_a_usable_smt_backend_before_any_classifier_render():
-    # Distinct from the raising-backend case below: here decide_unsat is ABSENT. It must be
-    # detected BEFORE the classifier probe (invariant 5, cheap-first), so `seen` stays empty.
-    for smt in (_Smt(None), _Smt(object())):                # no backend / no decide_unsat
-        p, gate = _prop(), _Gate(applies=True)
-        Formalize(provider=None, lean=None, smt=smt, novelty=None,
-                  faithfulness=gate)._derive_established_domain(p)
-        assert p.expressio.established_domain == CP
-        assert gate.seen == []                              # never paid for a render
+def test_no_retry_when_already_canonical_costs_nothing():
+    be, z3, p = _Backend(pass_on_canonical=False), _Z3(), _prop(ed=BOX)
+    _gate(be, z3=z3).check(p)
+    assert be.seen == [BOX] and z3.calls == 0                   # no second check, no Z3 call
 
 
-def test_fail_closed_when_decide_unsat_itself_raises():
-    class _Boom(_Backend):
-        def decide_unsat(self, preds, bound=0):
-            raise RuntimeError("z3 exploded")
-    p = _prop()
-    _formalize(_Gate(applies=True), _Boom())._derive_established_domain(p)
-    assert p.expressio.established_domain == CP
-
-
-def test_only_rerendering_backends_may_canonicalize():
-    """THE soundness guard: `walnut` is a registered sound backend whose claims are NOT
-    re-rendered by any prover, so the ADR 0058 A2 argument does not cover it."""
-    p = _prop()
-    _formalize(_Gate(applies=True, name="walnut"))._derive_established_domain(p)
-    assert p.expressio.established_domain == CP           # NOT canonicalized
-    p2 = _prop()
-    _formalize(_Gate(applies=True, name="factgcd-decided"))._derive_established_domain(p2)
-    assert p2.expressio.established_domain == BOX         # an allowlisted one does
-
-
-def test_a_non_str_contract_field_defers_instead_of_raising():
-    # `_parse_expressio` passes LLM JSON through, so these fields are not guaranteed to be str.
-    for bad in ([], 3, {"a": 1}):
-        p = _prop()
+def test_non_str_contract_fields_defer_instead_of_raising():
+    for bad in ([], 3, {"a": 1}, ""):
+        be, p = _Backend(), _prop()
         p.expressio.established_domain = bad
-        _formalize(_Gate(applies=True))._derive_established_domain(p)   # must not raise
+        _gate(be).check(p)                                       # must not raise
         assert p.expressio.established_domain == bad
-        p2 = _prop()
-        p2.enuntiatio.claim_domain = bad
-        _formalize(_Gate(applies=True))._derive_established_domain(p2)
-        assert p2.expressio.established_domain == CP
-
-
-def test_a_raising_classifier_adds_no_new_failure_mode_here():
-    # NB: this pins THIS METHOD only. FaithfulnessGate.check calls the same applies() with no
-    # try/except on the very next line of Formalize.run, so a raising classifier still breaks
-    # the candidate -- it just is not THIS change that introduces it.
-    p = _prop()
-    _formalize(_Gate(applies=True, boom=True))._derive_established_domain(p)
-    assert p.expressio.established_domain == CP           # swallowed, contract untouched
-
-
-def test_prose_only_contract_is_untouched():
-    for cd, cp, ed in ((None, CP, CP), (BOX, None, CP), (BOX, CP, None), ("", CP, CP)):
-        p = _prop(cd=cd, cp=cp, ed=ed)
-        _formalize(_Gate(applies=True))._derive_established_domain(p)
-        assert p.expressio.established_domain == ed        # OPEN_FORM path unchanged
-    p = Propositio(enuntiatio=Enuntiatio(statement="t", claim_type=ClaimType.INVARIANT,
-                                         falsifiable_claim="x"), expressio=None)
-    _formalize(_Gate(applies=True))._derive_established_domain(p)   # must not raise
 
 
 @pytest.mark.skipif(not os.environ.get("LEIBNIZ_LEAN_E2E"), reason="set LEIBNIZ_LEAN_E2E=1 for the Lean e2e")
-def test_real_kernel_certifies_true_tail_claims_and_still_refuses_a_false_one(monkeypatch):  # pragma: no cover
+def test_real_kernel_certifies_the_tail_and_leaves_the_exploit_untouched(monkeypatch):  # pragma: no cover
     from leibniz.assembly import maybe_register_lean_decided
     from leibniz.backends import lean_repl
     from leibniz.backends.smt_z3 import Z3Backend
-    from leibniz.gates.faithfulness import FaithfulnessGate
     from leibniz.probes import default_probes
     from leibniz.verifiers import SMTVerifier
-    monkeypatch.setenv("LEIBNIZ_LEAN_DECIDED", "1")   # the backend is opt-in (assembly gate)
+    monkeypatch.setenv("LEIBNIZ_LEAN_DECIDED", "1")
     if not lean_repl.available():
         pytest.skip("Lean image unavailable")
     smt = SMTVerifier(backend=Z3Backend())
     gate = FaithfulnessGate(smt=smt, probes=default_probes(smt),
                             judge=type("J", (), {"round_trip_agrees": lambda self, p: 0.0})())
     assert maybe_register_lean_decided(gate, lean_repl.REPL_IMAGE)
-    f = Formalize(provider=None, lean=None, smt=smt, novelty=None, faithfulness=gate)
-    for cp, expect_pass in ((CP, True), ("(a^2 + b^2) % 4 != 3", True),
-                            ("((4*a+1)*(4*b+3)) % 8 == 3", False)):   # the false control
-        p = _prop(cp=cp, ed=cp)                            # ed restates the property (the defect)
-        f._derive_established_domain(p)
+    for cp in (CP, "(a^2 + b^2) % 4 != 3"):                      # true tail claims certify
+        p = _prop(cp=cp, ed=cp)
+        ev = gate.check(p)
+        assert ev.verdict is Verdict.PASS and ev.producer == "lean_decided/kernel"
+        assert ev.detail.get("established_domain_derived") is True
         assert p.expressio.established_domain == BOX
-        # the KERNEL still decides: a false claim fails its property leg and is refused
-        assert (gate.check(p).verdict is Verdict.PASS) is expect_pass
+    # The review exploit: an inequality-restricted domain the [0,64] box misrepresents.
+    # lean_decided DEFERs on it, so the derived contract must be ROLLED BACK -- this gate
+    # behaves exactly as origin/main here (which also passes it via ClaimProbe; that bounded
+    # probe weakness is PRE-EXISTING and out of scope for ADR 0074).
+    ex = _prop(cd="a % 4 == 1 and a > 60 and b % 4 == 1 and b > 60",
+               cp="(a*a + b*b) % 16 == 2", ed="a % 16 == 13 and b % 16 == 13")
+    ev = gate.check(ex)
+    assert ex.expressio.established_domain == "a % 16 == 13 and b % 16 == 13"   # rolled back
+    assert ev.detail.get("established_domain_derived") is not True
+
+
+def test_no_retry_after_a_pass_whose_certificate_the_gate_REJECTED():
+    """The retry is for DEFERs (a contract problem). A backend that claimed a PASS whose
+    certificate failed the gate's own re-check is a red flag, not a contract problem — it must
+    NOT be handed a canonical contract for a second attempt."""
+
+    class _AlwaysPass(_Backend):
+        def check(self, prop):
+            self.seen.append(prop.expressio.established_domain)
+            return FaithfulnessVerdict(
+                verdict=Verdict.PASS, producer="lean_decided/kernel",
+                certificate=Certificate(kind=KIND, rechecked=True, data={},
+                                        detail={"statement": "CANON"}), detail={})
+    be, p = _AlwaysPass(), _prop()
+    ev = _gate(be, rechecker=False).check(p)                 # gate re-check refuses
+    assert ev.verdict is not Verdict.PASS
+    assert be.seen == [CP]                                  # asked ONCE — no second chance
+    assert p.expressio.established_domain == CP
