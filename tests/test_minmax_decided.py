@@ -225,7 +225,13 @@ def test_gate_refuses_tampered_certificate_statement():
             vv.certificate.detail["statement"] = "theorem evil : True"
         return vv
     gate.sound_backends[-1].check = tampered
-    assert gate.check(p).verdict is not Verdict.PASS      # binding refuses → falls through
+    # The tampered certificate is REFUSED (statement binding fails, so the backend's PASS is
+    # downgraded to fall-through). What certifies afterwards is not this test's business: since
+    # ADR 0075 the honest Z3 ClaimProbe decides both its legs UNBOUNDED, and it can legitimately
+    # certify this identity on its own. Assert the refusal itself — whatever the final verdict,
+    # it is NOT this backend's producer. (Same adjustment as the power_mod / factgcd suites.)
+    ev = gate.check(p)
+    assert ev.producer != "minmax_identity/kernel"
 
 
 # --- make_rechecker -------------------------------------------------------------------------------

@@ -58,13 +58,31 @@ def coverage_probe(smt, bound: int = 64):
             # makes the conjunction non-empty, so the property is genuinely checked.
             # A gap, a falsified property, OR an undecided/timed-out search (None) all
             # DEFER; a PASS never rests on a None that meant "could not check".
-            covered = decide([f"({en.claim_domain})", f"not ({expr.established_domain})"], bound)
-            if covered is not True:
-                return None
-            property_holds = decide(
-                [f"({expr.established_domain})", f"({en.claim_domain})", f"not ({en.claim_property})"],
-                bound,
-            )
+            # ADR 0075: BOTH legs assert UNIVERSALLY QUANTIFIED facts, so neither can be
+            # established by a search confined to [0, bound]. Measured on the live backend
+            # with cd = `a % 4 == 1 and a > 60 and b % 4 == 1 and b > 60`:
+            #   * coverage vs ed = `a % 16 == 13 and ...` -> bounded "unsat" (the domain's
+            #     ONLY in-box point a=61 satisfies ed) while a=65 is a real gap;
+            #   * property with ed == cd            -> bounded "unsat" (that same lone point
+            #     satisfies the claim) while (61,65) refutes it.
+            # Both let a FALSE claim take this probe's MECHANICAL PASS branch. Neither leg
+            # may be decided in the box.
+            decide_unbounded = getattr(be, "decide_unsat_unbounded", None)
+            if decide_unbounded is None:
+                return None  # no sound decider -> DEFER (never fall back to the bounded query)
+
+            # Coverage: an established_domain BYTE-IDENTICAL to claim_domain covers it by
+            # construction — decided without a solver, so the ADR 0035/0066 domains (whose
+            # encodings are exact only inside the box and therefore refuse an unbounded
+            # query) are not needlessly DEFERred on the common canonical contract.
+            if str.__ne__(str(expr.established_domain), str(en.claim_domain)):
+                covered = decide_unbounded(
+                    [f"({en.claim_domain})", f"not ({expr.established_domain})"])
+                if covered is not True:
+                    return None
+
+            property_holds = decide_unbounded(
+                [f"({expr.established_domain})", f"({en.claim_domain})", f"not ({en.claim_property})"])
             return True if property_holds is True else None
         # Fallback for minimal backends (test doubles without decide_unsat): legacy gap check.
         gap = be.find_gaming_witness(
