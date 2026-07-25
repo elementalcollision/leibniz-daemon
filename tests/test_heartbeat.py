@@ -138,6 +138,12 @@ def _report(**kw):
 
 
 def test_beat_uses_run_cycles_and_journals_steering(monkeypatch):
+    # Isolate the process-global REPL registry: close_all() legitimately closes backends spawned
+    # by EARLIER tests in the same process, so without this the count is whatever the rest of the
+    # suite happened to leave open (measured: 25 in a full run) and the assertion below is
+    # order-dependent. Isolating it makes the assertion mean what it says.
+    from leibniz.backends import lean_repl
+    monkeypatch.setattr(lean_repl, "_LIVE", [])
     calls = {}
 
     class _Daemon:
