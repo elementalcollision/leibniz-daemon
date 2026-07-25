@@ -134,3 +134,28 @@ def test_non_negativity_is_kept_in_the_unbounded_mode():
     be = Z3Backend()
     assert be.decide_unsat_unbounded(["n < 0"]) is True          # negatives are excluded
     assert be.decide_unsat_unbounded(["n > 1000000"]) is False   # but nothing above the box is
+
+
+# --- ADR 0075 amendment: the vacuous-domain hole ---------------------------------------------
+
+# claim_domain is EMPTY (a square is never 2 mod 4), so BOTH legs are vacuously unsat.
+VACUOUS_CD = "a >= 0 and b >= 0 and (a*a) % 4 == 2"
+VACUOUS_CP = "(a*a + b*b) % 4 == 3"          # false in general; irrelevant over an empty domain
+
+
+def test_an_empty_claim_domain_cannot_buy_a_mechanical_pass():
+    be = Z3Backend()
+    # the domain really is empty, and both legs really are vacuously satisfied
+    assert be.decide_unsat_unbounded([f"({VACUOUS_CD})"]) is True
+    assert be.decide_unsat_unbounded([f"({VACUOUS_CD})", f"({VACUOUS_CD})",
+                                      f"not ({VACUOUS_CP})"]) is True
+    smt = SMTVerifier(backend=be)
+    probe = default_probes(smt)[ClaimType.INVARIANT]
+    assert probe(_prop(VACUOUS_CD, VACUOUS_CP, VACUOUS_CD)) is None      # DEFER, was True
+
+
+def test_the_vacuity_guard_does_not_refuse_honest_domains():
+    smt = SMTVerifier(backend=Z3Backend())
+    probe = default_probes(smt)[ClaimType.INVARIANT]
+    assert probe(_prop("n >= 0", "n + 1 > n", "n >= 0")) is True
+    assert probe(_prop("a >= 0 and b >= 0", "a + b >= 0", "a >= 0 and b >= 0")) is True
