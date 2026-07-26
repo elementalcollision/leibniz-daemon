@@ -71,6 +71,16 @@ def coverage_probe(smt, bound: int = 64):
             if decide_unbounded is None:
                 return None  # no sound decider -> DEFER (never fall back to the bounded query)
 
+            # ADR 0075 amendment: the claim_domain must be CONCLUSIVELY NON-EMPTY. Over an
+            # empty domain BOTH legs below are vacuously unsat, so the probe hands out a
+            # MECHANICAL faithfulness PASS for any property whatsoever -- including a false
+            # one. Demonstrated live: claim_domain `a >= 0 and b >= 0 and (a*a) % 4 == 2` is
+            # empty (a square is never 2 mod 4), yet `(a*a + b*b) % 4 == 3` PASSed. This is
+            # the guard the gate and the contract-steerer already apply in the same words
+            # ("would be a laundered PASS"); it was missing from the probe itself.
+            if decide_unbounded([f"({en.claim_domain})"]) is not False:
+                return None  # unsat (empty) or undecided -> refuse
+
             # Coverage: an established_domain BYTE-IDENTICAL to claim_domain covers it by
             # construction — decided without a solver, so the ADR 0035/0066 domains (whose
             # encodings are exact only inside the box and therefore refuse an unbounded
