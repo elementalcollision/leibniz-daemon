@@ -27,6 +27,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
+from leibniz.backends.lean_cli import _join_proof
+from leibniz.calculemus_site import _NAME_RE
 from leibniz.dsl_to_lean import RenderError, free_vars
 
 #: Default exchange dir — a NEUTRAL location beside Newton's own filesystem seams
@@ -85,7 +87,10 @@ def law_folio(row: dict) -> tuple[str, str] | None:
     born = row.get("born")
     when = (datetime.fromtimestamp(float(born), tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             if born else "")
-    thm_name = str(row["theorem_src"]).split(":", 1)[0].replace("theorem", "").strip()
+    # The theorem NAME, not everything before the first colon: for `theorem foo (n : Nat) : ...`
+    # a naive split cuts at the BINDER colon and yields "foo (n". Reuse the site's own regex.
+    _m = _NAME_RE.search(str(row["theorem_src"]))
+    thm_name = _m.group(1) if _m else f"leibniz_{pid[:12]}"
     front = f"""---
 propositio_id: leibniz_{pid[:12]}
 title: "A kernel-verified law of the Leibniz daemon: {thm_name}"
@@ -120,8 +125,7 @@ leibniz:
 ## Expressio (Lean 4.31 — kernel-verified in the Leibniz pipeline)
 
 ```lean
-{str(row['theorem_src']).strip()} :=
-{str(row.get('proof_src') or '').strip()}
+{_join_proof(str(row["theorem_src"]), str(row.get("proof_src") or ""))}
 ```
 
 ## Auditio mechanica
