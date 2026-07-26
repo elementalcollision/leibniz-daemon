@@ -125,7 +125,9 @@ def test_applies_multivar_mixed_in_budget():
     be = mm.MixedModulusFaithfulness(kernel=FakeKernel())
     assert be.applies(mkprop(*MIXED)) is True
     assert be.applies(mkprop("a>=0 and b>=0", "((a*b)%3==0)==((a%3==0) or (b%3==0))", "a>=0 and b>=0")) is False  # single mod
-    assert be.applies(mkprop("n >= 0", "(n**2 % 6 == 1) == (n % 2 == 1)", "n >= 0")) is False                     # 1-var
+    # ADR 0076: 1-var is now in-fragment; pin the arity guard with 4 vars instead.
+    assert be.applies(mkprop("a >= 0 and b >= 0 and c >= 0 and d >= 0",
+                             "(a*b*c*d % 6 == 1) == (a % 2 == 1)", "a >= 0 and b >= 0 and c >= 0 and d >= 0")) is False
 
 
 def test_decide_certificate_pass_and_defer():

@@ -96,7 +96,8 @@ def test_falls_through_when_kernel_rejects_or_unclean():
 @pytest.mark.parametrize("cd,cp", [
     ("a >= 0 and b >= 0", "((a*b) % 3 == 0) == ((a % 3 == 0) or (b % 3 == 0))"),   # single modulus → the OTHER path
     ("a >= 0 and b >= 0", "(a % 100 == 0) == (a % 99 == 0)"),                       # lcm too large
-    ("n >= 0", "(n**2 % 6 == 1) == (n % 2 == 1)"),                                  # single variable
+    # ADR 0076 lowered MIN_VARS to 1, so the old 1-var example is now IN fragment; 4 vars is out.
+    ("a >= 0 and b >= 0 and c >= 0 and d >= 0", "(a*b*c*d % 6 == 1) == (a % 2 == 1)"),                                  # single variable
     (None, "((a+b)**2 % 4 == 1) == ((a+b) % 2 == 1)"),                              # no claim_domain
 ])
 def test_falls_through_outside_fragment(cd, cp):

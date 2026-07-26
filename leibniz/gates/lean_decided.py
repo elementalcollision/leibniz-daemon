@@ -83,7 +83,11 @@ IMPORTS = ("Mathlib.Tactic",)
 MAX_RESIDUE_CELLS = 4096
 # Witness search box (proposal-side; the kernel checks the concrete instance).
 WITNESS_RANGE = 21
-MIN_VARS, MAX_VARS = 2, 3   # 1-var claims stay on the cheap Z3 probe (invariant 5)
+MIN_VARS, MAX_VARS = 1, 3   # ADR 0076: 1-var claims are IN. The original "cheap Z3 handles
+#                             them" premise is false for the modular fragment — Z3 returns
+#                             unknown on e.g. (n^4) % 16 in {0,1} — and since ADR 0075 the probe
+#                             needs BOTH legs decidable UNBOUNDED, so those claims had no path
+#                             at all. 18 of 23 promulgated laws are single-variable.
 # ADR 0059 (A.3): cap the conjuncts so the per-atom decide work (k × m ** nvars) stays bounded even
 # though each atom already sits under the m ** nvars residue budget.
 MAX_CONJUNCTS = 8

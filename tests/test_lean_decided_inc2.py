@@ -180,7 +180,9 @@ def test_applies_only_multivar_modular_in_budget():
     be = ld.LeanDecidedFaithfulness(kernel=FakeKernel())
     assert be.applies(mkprop(*TWO_VAR)) is True
     # 1-var stays on the cheap Z3 probe (invariant 5)
-    assert be.applies(mkprop("n >= 0", "(n*n) % 4 == 0 or (n*n) % 4 == 1", "n >= 0")) is False
+    # ADR 0076 lowered MIN_VARS to 1, so a 1-var claim is now INSIDE. The guard this line
+    # pins — arity outside [MIN_VARS, MAX_VARS] abstains — is kept with a 4-var claim.
+    assert be.applies(mkprop("a >= 0 and b >= 0 and c >= 0 and d >= 0", "(a*b*c*d) % 4 == 0 or (a*b*c*d) % 4 == 1", "a >= 0 and b >= 0 and c >= 0 and d >= 0")) is False
     # min/max not bridgeable
     assert be.applies(mkprop("a >= 0 and b >= 0", "min(a,b) % 3 == 0", "a >= 0 and b >= 0")) is False
     # non-modular property

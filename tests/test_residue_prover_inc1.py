@@ -36,7 +36,8 @@ def test_generates_canonical_theorem_and_zmod_proof(cp):
 
 
 @pytest.mark.parametrize("bad_domain,bad_prop", [
-    ("n >= 0", "(n*n) % 4 == 0 or (n*n) % 4 == 1"),   # single variable → below MIN_VARS
+    # ADR 0076 lowered MIN_VARS to 1, so the old 1-var example is now IN fragment; 4 vars is out.
+    ("a >= 0 and b >= 0 and c >= 0 and d >= 0", "(a*b*c*d) % 4 == 0 or (a*b*c*d) % 4 == 1"),   # single variable → below MIN_VARS
     (D, "min(a, b) % 3 == 0"),                          # min/max not ZMod-bridgeable
     (D, "(a / 2) % 4 == 1"),                            # division in the poly
     (D, "a*a >= a"),                                    # non-modular
