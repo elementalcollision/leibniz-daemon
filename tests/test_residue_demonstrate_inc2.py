@@ -129,7 +129,8 @@ def test_falls_through_when_axioms_unclean():
 
 @pytest.mark.parametrize("cd,cp", [
     ("a >= 0 and b >= 0", "min(a, b) % 3 == 0"),      # out of fragment
-    ("n >= 0", "(n*n) % 4 == 0 or (n*n) % 4 == 1"),   # single variable
+    # ADR 0076 lowered MIN_VARS to 1, so the old 1-var example is now IN fragment; 4 vars is out.
+    ("a >= 0 and b >= 0 and c >= 0 and d >= 0", "(a*b*c*d) % 4 == 0 or (a*b*c*d) % 4 == 1"),   # single variable
     (None, "((a*b)^2 + a*b) % 6 == 0"),               # no claim_domain
 ])
 def test_falls_through_outside_fragment(cd, cp):
