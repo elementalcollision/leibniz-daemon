@@ -111,3 +111,29 @@ def test_heartbeat_runs_exchange_only_when_enabled(tmp_path, monkeypatch):
     entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
     assert entry["newton_exchange"] == {"exported": 1, "refused": 0, "total": 1}
     assert (tmp_path / "exchange" / "leibniz_dab2022069c9.md").exists()
+
+
+# --- export defects found by the ADR-0074/0075 design review -------------------------------
+
+_SORRY_ROW = dict(
+    _ROW, theorem_src="theorem n_pow_four_mod_eight (n : Nat) : ((2*n)^2) % 4 = 0 := by sorry",
+    proof_src="by\n  decide", claim_property="((2*n)^2) % 4 == 0")
+
+
+def test_theorem_name_is_the_name_not_everything_before_the_first_colon():
+    """`split(':')` cut at the BINDER colon, so a folio for `theorem foo (n : Nat) : ...` was
+    titled `foo (n`. Every exported folio with a binder was affected."""
+    _, text = nx.law_folio(_SORRY_ROW)
+    title = next(line for line in text.splitlines() if line.startswith("title:"))
+    assert title.endswith("n_pow_four_mod_eight\"")
+    assert "(n" not in title
+
+
+def test_an_existing_proof_tail_is_stripped_before_appending_the_real_proof():
+    """Autoformalizers emit `theorem_src` already carrying `:= by sorry`. Appending the real
+    proof produced TWO `:=` — an uncompilable folio, i.e. every folio we have shipped."""
+    _, text = nx.law_folio(_SORRY_ROW)
+    lean = text.split("```lean")[1].split("```")[0]
+    assert lean.count(":=") == 1
+    assert "sorry" not in lean
+    assert "by\n  decide" in lean
