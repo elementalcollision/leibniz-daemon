@@ -37,9 +37,13 @@ def test_self_ledger_loads_only_promulgated(tmp_path):
     _seed_db(db)
     entries = self_ledger_entries(db)
     hashes = {e.formal_hash for e in entries}
-    assert hashes == {"hashA"}                      # promulgated only; unproven excluded
-    e = entries[0]
-    assert e.name.startswith("ledger:") and e.formal_hash == "hashA"
+    # ADR 0077: a row may now emit TWO keys (its stored hash plus a freshly recomputed one) so
+    # it stays matchable across normalizer changes. The invariant this test pins is unchanged:
+    # only PROMULGATED rows seed the corpus, and the unproven row's hash never appears.
+    assert "hashA" in hashes                        # promulgated row present
+    assert "hashB" not in hashes                    # unproven row still excluded
+    assert all(e.name.startswith("ledger:") for e in entries)
+    assert any(e.formal_hash == "hashA" for e in entries)
 
 
 def test_self_ledger_failsafe():

@@ -135,13 +135,33 @@ def self_ledger_entries(db_path: Optional[str]) -> list[CorpusEntry]:
         return []
     finally:
         con.close()
+    from leibniz.verifiers import normalize_statement
     out: list[CorpusEntry] = []
     for theorem_src, formal_hash, claim_type, claim_property in rows:
         parts = (theorem_src or "").split()
         name = parts[1] if len(parts) > 1 else (theorem_src or "law")
-        out.append(CorpusEntry(
-            name=f"ledger:{name}", claim_type=claim_type or "invariant",
-            subject="daemon_ledger", relation="promulgated",
-            formal_hash=formal_hash, claim_property=claim_property,
-        ))
+        # A ledger row's stored hash was produced by whichever normalizer was live when it was
+        # promulgated. `pipeline._normalized_hash` prefers the backend's ELABORATOR-canonical
+        # hash and falls back to the TEXTUAL one -- and the production REPL backend has no
+        # `normalize_statement`, so the scheme silently changed when the daemon moved from the
+        # CLI backend to the REPL. Measured on the live ledger: 18 of 25 promulgated laws carry
+        # a legacy elaborator hash that no candidate computed today can ever equal, so ADR 0052
+        # self-dedup was dead for exactly the daemon's OLDEST laws -- the HANDOFF section 6 gap
+        # this function exists to close, quietly re-opened by a backend swap.
+        #
+        # Emit BOTH keys whenever they differ, so a row is matchable under either scheme and
+        # stays matchable across any future normalizer change. Safe by this function's own
+        # soundness argument: the novelty gate is KILL-ONLY, so extra knowns can only prevent a
+        # rediscovery, never cause an unsound promulgation.
+        hashes = [formal_hash]
+        if theorem_src:
+            recomputed = normalize_statement(theorem_src)
+            if recomputed and recomputed != formal_hash:
+                hashes.append(recomputed)
+        for h in hashes:
+            out.append(CorpusEntry(
+                name=f"ledger:{name}", claim_type=claim_type or "invariant",
+                subject="daemon_ledger", relation="promulgated",
+                formal_hash=h, claim_property=claim_property,
+            ))
     return out
