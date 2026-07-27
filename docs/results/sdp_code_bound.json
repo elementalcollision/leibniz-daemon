@@ -3,7 +3,7 @@
   "cells": 3,
   "verified": 3,
   "reproduced_known": 3,
-  "kernel_verified": 2,
+  "kernel_verified": 3,
   "below_known_count": 0,
   "bogus_cert_kernel_result": false,
   "sound": true,
@@ -57,7 +57,7 @@
       "reproduces_known": true,
       "matches_or_beats_known": true,
       "status": "verified",
-      "kernel": false
+      "kernel": true
     }
   ],
   "reading": "Pre-validates the code-SDP -> dual -> rational-cert -> kernel chain (the #212/#214 gates used synthetic matrices / theta of cycles as a proxy; this uses REAL binary-code confusability-graph SDPs). EXPECTED: the SDP (Lov\u00e1sz theta) bound equals the existing Delsarte LP bound on these tiny highly-symmetric cells -- no improvement is claimed or expected here. GREEN => the full chain (untrusted SCS solve -> exact rational rounding -> kernel-checked integer PSD certificate -> floor -> matches known A(n,d)) is mechanically sound end-to-end on real code SDPs, clearing the way for the Terwilliger three-point build where an actual improvement over LP would be sought."

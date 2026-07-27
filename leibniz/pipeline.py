@@ -326,4 +326,10 @@ def _signature(prop: Propositio) -> ClaimSignature:
         subject=en.statement.split()[0].lower() if en.statement else "unknown",
         relation=en.claim_type.value,
         formal_hash=prop.expressio.normalized_hash,
+        # The textual hash is pure string work (no kernel), so carrying it is free and makes
+        # the candidate recognisable against ledger rows written under either scheme.
+        alt_hashes=tuple(
+            h for h in (normalize_statement(prop.expressio.theorem_src),)
+            if h and h != prop.expressio.normalized_hash
+        ),
     )

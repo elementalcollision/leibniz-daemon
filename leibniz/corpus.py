@@ -76,7 +76,13 @@ class CorpusBackend:
     def contains_equivalent(self, sig: ClaimSignature) -> bool:
         # A structural identity match. Empty/absent hash never matches (a candidate
         # we couldn't normalize is treated as novel, not silently KNOWN).
-        return bool(sig.formal_hash) and sig.formal_hash in self._by_hash
+        # ADR 0078: also try the candidate's alternate-scheme hashes, so a law stored under a
+        # different normalizer is still recognised. Kill-only, so more keys can only prevent a
+        # rediscovery; each key is still an exact structural identity, never a fuzzy match.
+        for h in (sig.formal_hash, *getattr(sig, "alt_hashes", ())):
+            if h and h in self._by_hash:
+                return True
+        return False
 
     def structural_known(self, claim_property: Optional[str]) -> Optional[str]:
         """ADR 0032: the name of a curated known whose polynomial congruence is structurally
