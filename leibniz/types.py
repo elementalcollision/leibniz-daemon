@@ -100,6 +100,12 @@ class ClaimSignature:
     relation: str                 # canonical relation, e.g. "lower_bound"
     formal_hash: str              # hash of the normalized Lean statement
     properties: tuple[str, ...] = field(default_factory=tuple)
+    # ADR 0078: the SAME statement hashes differently under different normalizers (the
+    # elaborator-canonical scheme vs the textual fallback), and which one the pipeline uses
+    # depends on the wired Lean backend. A candidate therefore carries every hash it could
+    # legitimately be KNOWN under, so dedup does not silently die on a backend swap. Advisory
+    # and kill-only: extra keys can only make a claim look KNOWN (quarantine), never promote.
+    alt_hashes: tuple[str, ...] = field(default_factory=tuple)
 
 
 @dataclass
