@@ -88,9 +88,13 @@ def test_revalidate_fails_a_structural_duplicate_canonical_law():
 
 
 def test_fail_revalidation_makes_is_promotable_false():
-    # the canonical-law FAIL novelty edge overrides the FORMALIZE PASS at is_promotable time
+    # the canonical-law FAIL novelty edge overrides the FORMALIZE PASS at is_promotable time.
+    # NB the faithfulness producer here is incidental to what this test checks, and it must be a
+    # NON-re-rendering one: ADR 0079 requires a re-rendering certificate's theorem_src to be the
+    # canonical law, and this fixture's statement deliberately is not (that pairing is exactly
+    # the gap ADR 0079 closes, so using it here would test the binding, not revalidation).
     prop = mkprop()
-    prop.record(EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="boolean_modular/kernel"))
+    prop.record(EdgeEvidence(FAITHFULNESS_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="ClaimProbe"))
     prop.record(EdgeEvidence(NOVELTY_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer="NoveltyGate"))
     prop.record(EdgeEvidence(PROOF_EDGE, TrustTier.MECHANICAL, Verdict.PASS, producer=KERNEL_PRODUCER,
                              detail={"decision_procedure": "boolean-modular-zmod", "consensus": 1}))

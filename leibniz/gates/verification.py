@@ -32,6 +32,43 @@ from leibniz.trust import (
 )
 
 
+#: ADR 0079 — faithfulness producers whose fragment RE-RENDERS the promoted law from
+#: ``(claim_domain, claim_property)``. For these, and only these, a canonical statement is
+#: computable, so promotion can require the proved statement to BE that statement. Each entry
+#: names the module whose ``*_law`` generator and ``_law_name`` the fast-path itself uses, so
+#: the binding is checked against exactly what the prover would have produced.
+_CANONICAL_BY_PRODUCER = {
+    "lean_decided/kernel":     ("leibniz.providers.residue_prover", "residue_law"),
+    "minmax_identity/kernel":  ("leibniz.providers.minmax_prover", "minmax_law"),
+    "boolean_modular/kernel":  ("leibniz.providers.boolean_prover", "boolean_law"),
+    "mixed_modular/kernel":    ("leibniz.providers.mixed_modulus_prover", "mixed_modulus_law"),
+    "power_mod/kernel":        ("leibniz.providers.power_mod_prover", "power_law"),
+    "factgcd/kernel":          ("leibniz.providers.factgcd_prover", "factgcd_law"),
+}
+
+
+def _canonical_theorem_src(producer: str, prop: Propositio):
+    """The statement the re-rendering fast-path for ``producer`` would have proved, or None
+    when it is not computable (no such producer, no contract, or the generator abstains)."""
+    entry = _CANONICAL_BY_PRODUCER.get(producer)
+    en = prop.enuntiatio
+    expr = getattr(prop, "expressio", None)
+    if entry is None or expr is None or en is None:
+        return None
+    cd, cp = en.claim_domain, en.claim_property
+    if not (type(cd) is str and type(cp) is str and cd and cp):
+        return None
+    module, fn_name = entry
+    try:
+        import importlib
+        mod = importlib.import_module(module)
+        gen = getattr(mod, fn_name)
+        out = gen(mod._law_name(cd, cp), cd, cp)
+    except Exception:
+        return None
+    return out[0] if out else None
+
+
 @dataclass
 class VerificationGate:
     policy: TrustPolicy
@@ -42,6 +79,24 @@ class VerificationGate:
         present = {e.edge for e in prop.edges}
         if not required.issubset(present):
             return False
+        # ADR 0079: when a RE-RENDERING fragment certified faithfulness, the certificate binds
+        # a canonical statement derived from (claim_domain, claim_property) — but DEMONSTRATE
+        # may still have fallen through to the ensemble, which proves the autoformalizer's own
+        # `theorem_src`. Nothing otherwise ties the proved statement to the certified one, so a
+        # kernel-valid proof of a DIFFERENT theorem could be promulgated under that certificate.
+        # Require them to be the same bytes. REFUSE-ONLY: this can reject a promotion, never
+        # create one, so it cannot manufacture a law (the failure mode that made the
+        # FORMALIZE-time render unsound). Uncomputable canonical form -> no constraint, so
+        # fragments without a generator and prose-only claims are untouched.
+        for e in prop.edges:
+            if e.edge != FAITHFULNESS_EDGE or e.verdict is not Verdict.PASS:
+                continue
+            canonical = _canonical_theorem_src(e.producer, prop)
+            if canonical is None:
+                continue
+            proved = getattr(prop.expressio, "theorem_src", None)
+            if type(proved) is not str or str.__ne__(proved, canonical):
+                return False
         try:
             self.policy.validate_path(
                 [e for e in prop.edges if e.edge in required]
