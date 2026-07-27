@@ -16,6 +16,7 @@ assembly falls back to the CLI backend. It does NOT write kernel_verified —
 from __future__ import annotations
 
 import atexit
+import hashlib
 import json
 import subprocess
 import threading
@@ -23,6 +24,11 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Optional
 
+from leibniz.backends.lean_cli import (
+    _CANON_DEF as _CLI_CANON_DEF,
+    _CANON_RUN as _CLI_CANON_RUN,
+    _NAME_RE as _CLI_NAME_RE,
+)
 from leibniz.propositio import Expressio
 
 REPL_IMAGE = "leibniz-lean-repl:v4.31.0"
@@ -212,6 +218,40 @@ class LeanReplBackend:
             if self._kernel_ok(self._run(_join_proof(expr.theorem_src, f"by {tac}", expr.preamble), expr.imports)):
                 return True
         return False
+
+    def normalize_statement(self, expr: Expressio) -> Optional[str]:
+        """ADR 0078 — the elaborator-canonical statement hash, over the REPL.
+
+        Byte-compatible with ``LeanCliBackend.normalize_statement``: same rename to a fixed
+        private name, same dropped proof body, same ``leibnizCanon`` traversal, same
+        sha256[:16]. Without this the REPL backend had NO normalizer, so
+        ``pipeline._normalized_hash`` silently fell back to the TEXTUAL hash whenever the
+        daemon ran on the REPL — which is every production run. That made the novelty key
+        depend on which Lean backend happened to be wired, and alpha-renamed statements of the
+        same theorem (``n_pow4_mod5`` vs ``n_fourth_mod_five``) stopped colliding.
+
+        Returns None on anything unexpected, so the caller keeps its textual fallback.
+        """
+        m = _CLI_NAME_RE.match(expr.theorem_src or "")
+        if not m:
+            return None
+        head = (expr.theorem_src[: m.start(3)] + "__leibniz_candidate__"
+                + expr.theorem_src[m.end(3):])
+        head = head.split(":=")[0].rstrip()
+        decl = "\n".join([_CLI_CANON_DEF, f"{head} := sorry", _CLI_CANON_RUN])
+        # `import Lean` must ride in the REPL's import-keyed env, not the command body.
+        res = self._run(decl, tuple(expr.imports or ()) + ("Lean",))
+        if not isinstance(res, dict):
+            return None
+        for msg in res.get("messages", []) or []:
+            if str(msg.get("severity", "")).lower() == "error":
+                return None
+        for msg in res.get("messages", []) or []:
+            for line in str(msg.get("data", "")).splitlines():
+                if line.startswith("LEIBNIZ_CANON:"):
+                    canon = line[len("LEIBNIZ_CANON:"):]
+                    return hashlib.sha256(canon.encode()).hexdigest()[:16]
+        return None
 
     # --- lifecycle ------------------------------------------------------------
     def close(self) -> None:
