@@ -1,6 +1,6 @@
 # ADR 0079 — A re-rendering certificate binds the statement that gets promulgated
 
-- Status: proposed (adversarial review pending)
+- Status: accepted
 - Date: 2026-07-25
 - Depends on: ADR 0058 (the A2 re-rendering argument), ADR 0074 (which documented this gap)
 
@@ -49,3 +49,24 @@ promulgation counts are where it will show.
 
 One existing test paired a re-rendering producer with an unrelated `theorem_src`; its subject is
 novelty revalidation, so its producer was incidental and is now a non-re-rendering one.
+
+## Review
+
+Adversarially reviewed before merge (refuse-only verification, yield, code review). Findings, all
+fixed here:
+
+- **A silently unbound fragment.** The table mapped `mixed_modular/kernel` to
+  `mixed_modulus_law`; the generator is `mixed_law`. `getattr` raised, the blanket
+  `except Exception` swallowed it, the canonical form came back `None` — "no constraint" — and
+  mixed-modulus claims were left exactly as exposed as before, with nothing failing. My own test
+  file would never have caught it: every assertion used the default `lean_decided/kernel`.
+- **The blanket except was the mechanism**, not an accident. It now distinguishes a *structural*
+  failure (a table that no longer resolves — a bug) from a generator's legitimate abstention, and
+  `test_every_table_entry_resolves` fails loudly on the former. Reintroducing the typo now turns
+  two tests red.
+- **Order.** The binding moved to *after* `validate_path`, so untrusted contract strings are never
+  rendered on a path the trust policy is about to reject. Verdict-neutral.
+- **Refuse-only confirmed independently**: a differential harness over 302,400 constructed
+  candidates (every tier × verdict × producer × edge-subset × theorem_src shape) found **0
+  False→True flips** against `origin/main`, with the typo both present and patched. Cost ~26 ms
+  one-time import, ~129 µs per call.

@@ -41,7 +41,7 @@ _CANONICAL_BY_PRODUCER = {
     "lean_decided/kernel":     ("leibniz.providers.residue_prover", "residue_law"),
     "minmax_identity/kernel":  ("leibniz.providers.minmax_prover", "minmax_law"),
     "boolean_modular/kernel":  ("leibniz.providers.boolean_prover", "boolean_law"),
-    "mixed_modular/kernel":    ("leibniz.providers.mixed_modulus_prover", "mixed_modulus_law"),
+    "mixed_modular/kernel":    ("leibniz.providers.mixed_modulus_prover", "mixed_law"),
     "power_mod/kernel":        ("leibniz.providers.power_mod_prover", "power_law"),
     "factgcd/kernel":          ("leibniz.providers.factgcd_prover", "factgcd_law"),
 }
@@ -62,10 +62,18 @@ def _canonical_theorem_src(producer: str, prop: Propositio):
     try:
         import importlib
         mod = importlib.import_module(module)
-        gen = getattr(mod, fn_name)
-        out = gen(mod._law_name(cd, cp), cd, cp)
-    except Exception:
+        gen, name_fn = getattr(mod, fn_name), getattr(mod, "_law_name")
+    except (ImportError, AttributeError):
+        # STRUCTURAL: the table no longer matches the providers. That is a bug, not an
+        # abstention — a silently unbound fragment leaves this gap wide open, which is exactly
+        # how a `mixed_modulus_law` typo survived review. `test_every_table_entry_resolves`
+        # fails loudly on it; here we still degrade to "no constraint" so a stripped deployment
+        # cannot brick promotion.
         return None
+    try:
+        out = gen(name_fn(cd, cp), cd, cp)
+    except Exception:
+        return None  # the generator legitimately abstains (out-of-fragment, render error)
     return out[0] if out else None
 
 
@@ -78,6 +86,12 @@ class VerificationGate:
         required = {PROOF_EDGE, FAITHFULNESS_EDGE, NOVELTY_EDGE}
         present = {e.edge for e in prop.edges}
         if not required.issubset(present):
+            return False
+        try:
+            self.policy.validate_path(
+                [e for e in prop.edges if e.edge in required]
+            )
+        except TrustViolation:
             return False
         # ADR 0079: when a RE-RENDERING fragment certified faithfulness, the certificate binds
         # a canonical statement derived from (claim_domain, claim_property) — but DEMONSTRATE
@@ -97,12 +111,6 @@ class VerificationGate:
             proved = getattr(prop.expressio, "theorem_src", None)
             if type(proved) is not str or str.__ne__(proved, canonical):
                 return False
-        try:
-            self.policy.validate_path(
-                [e for e in prop.edges if e.edge in required]
-            )
-        except TrustViolation:
-            return False
         return all(
             e.verdict is Verdict.PASS
             for e in prop.edges
