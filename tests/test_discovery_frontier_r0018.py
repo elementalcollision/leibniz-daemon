@@ -588,3 +588,54 @@ def test_widened_families_drive_genre_kill_and_dry_kill():
     dry.record(_dry("gcd(4, n) == 1"))
     dry.record(_dry("gcd(4, n) == 2"))
     assert dry.dry_kill == ["== claims about gcd"]            # dry ground works on the new keys too
+
+
+# === ADR 0080: escape a bound the controller is saturated against =============
+
+def _fc(target, recent, **kw):
+    fc = FrontierController(target=target, **kw)
+    fc._recent = list(recent)
+    return fc
+
+
+def test_saturated_at_the_floor_escapes_after_pin_limit():
+    """THE live bug: rate 0.25 vs aim 0.35 means "go easier" every night, the target clamps to
+    the floor, and homing is a permanent no-op. The original escape needs rate == 0.0 exactly,
+    which never happens once the daemon produces anything, so the band pinned at 0.15 for three
+    nights and the daemon proposed only its easiest genre."""
+    fc = _fc(0.15, [False, False, False, True, False, False, True, False])
+    assert fc.success_rate() == 0.25 and fc.target == 0.15
+    fc.update()
+    fc.update()
+    assert fc.target == 0.15 and fc._pinned == 2       # a transient touch is not a pin
+    fc.update()
+    assert fc.target > 0.5 and fc._pinned == 0         # escaped to the opposite half
+
+
+def test_saturated_at_the_ceiling_escapes_too():
+    fc = _fc(0.85, [True] * 8)                          # rate 1.0 > aim -> wants harder, clamped
+    for _ in range(3):
+        fc.update()
+    assert fc.target < 0.5
+
+
+def test_a_bound_touched_while_correcting_INWARD_is_not_a_pin():
+    """At the floor but succeeding too often -> homing legitimately pulls the target UP. That is
+    the controller working, not saturation, so it must not be counted toward an escape."""
+    fc = _fc(0.15, [True] * 8)                          # rate 1.0, err < 0 -> wants harder
+    fc.update()
+    assert fc._pinned == 0 and fc.target > 0.15
+
+
+def test_the_zero_rate_escape_is_unchanged():
+    fc = _fc(0.15, [False] * 8)
+    fc.update()                                          # immediate, no dwell required
+    assert fc.target > 0.5
+
+
+def test_pin_state_persists_across_runs_and_tolerates_old_files():
+    fc = _fc(0.15, [False, False, False, True, False, False, True, False])
+    fc.update()
+    back = FrontierController.from_dict(fc.to_dict())
+    assert back._pinned == fc._pinned == 1
+    assert FrontierController.from_dict({"target": 0.4})._pinned == 0   # pre-ADR-0080 state
