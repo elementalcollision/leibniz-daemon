@@ -52,6 +52,20 @@ _DEFAULT_EXEMPLARS = Path(__file__).resolve().parent.parent / "corpus" / "novelt
 _FAMILY_CAP = 64  # bound the persisted family histogram so it can't grow without limit
 
 
+def _coarsen_key(key: str) -> str:
+    """ADR 0081: fold a persisted PRE-coarsening family key onto its modulus-free form, so the
+    histogram the daemon has already accumulated keeps counting instead of starting over
+    (`"==|3"` -> `"=="`, `"and|5,9"` -> `"and"`, `"factorial%5|!="` -> `"factorial%|!="`)."""
+    if "%" in key:                                  # a named-function shape key
+        kind, _, rest = key.partition("%")
+        relop = rest.split("|", 1)[1] if "|" in rest else rest
+        return f"{kind}%|{relop}"
+    head, sep, tail = key.partition("|")
+    if sep and all(c.isdigit() or c == "," for c in tail):
+        return head                                 # a congruence / combination key
+    return key
+
+
 def _combo_moduli(sig: object) -> tuple[int, ...]:
     """Every modulus appearing in a boolean-combination signature's atoms (`('atom', relop, m,
     monomials)`, arbitrarily nested). Sorted + deduped, so `and`-combinations of mod-5 atoms all
@@ -112,8 +126,7 @@ def _shape_family(claim_property: str | None) -> tuple[str, str] | None:
                            and isinstance(n.right.value, int) and not isinstance(n.right.value, bool)}))
     relop = _top_relop(tree)
     if moduli:
-        ms = ",".join(str(m) for m in moduli)
-        return f"{kind}%{ms}|{relop}", f"{relop} claims about {human} modulo {ms}"
+        return f"{kind}%|{relop}", f"{relop} claims about {human} modulo something"
     return f"{kind}|{relop}", f"{relop} claims about {human}"
 
 
@@ -135,18 +148,16 @@ def _family(claim_property: str | None) -> tuple[str, str] | None:
     # Layer 1 — a plain congruence atom: the ORIGINAL key, byte-identical (persisted
     # `family_counts` keys like "==|3" keep working across the upgrade).
     if sig is not None and len(sig) >= 2 and isinstance(sig[1], int):
-        relop, m = sig[0], sig[1]
-        return f"{relop}|{m}", f"{relop} modular claims modulo {m}"
+        relop = sig[0]
+        return relop, f"{relop} modular claims (any modulus)"
     # Layer 2 (ADR 0073) — a boolean COMBINATION of congruence atoms. `sig[1]` here is the nested
     # atom tuple, not a modulus; the original code interpolated it straight into the key, minting a
     # unique family per POLYNOMIAL (measured: 9 of 85 live ledger rows, one of them a proved law).
     # Such keys can never group across polynomials, so genre-kill was inert on them and the bounded
     # `_family_counts` histogram filled with singletons. Key on the connective + the modulus SET.
     if sig is not None:
-        moduli = _combo_moduli(sig)
-        if moduli:
-            ms = ",".join(str(m) for m in moduli)
-            return f"{sig[0]}|{ms}", f"{sig[0]}-combinations of modular claims modulo {ms}"
+        if _combo_moduli(sig):
+            return sig[0], f"{sig[0]}-combinations of modular claims (any modulus)"
         return None
     # Layer 3 (ADR 0073) — NON-modular shapes, which congruence_signature deliberately ignores
     # (it is a novelty-gate component and stays untouched). Without this the daemon's min/max,
@@ -409,8 +420,9 @@ class DiscoveryNotebook:
         fc = d.get("family_counts")
         if isinstance(fc, dict):
             for k, v in list(fc.items())[:_FAMILY_CAP]:
-                try:
-                    nb._family_counts[str(k)] = int(v)
+                try:                                    # ADR 0081: fold onto the coarse key
+                    key = _coarsen_key(str(k))
+                    nb._family_counts[key] = nb._family_counts.get(key, 0) + int(v)
                 except (TypeError, ValueError):
                     continue
         # ADR 0069: restore dry-ground state with the same defenses as the genre state.
@@ -421,8 +433,9 @@ class DiscoveryNotebook:
         dc = d.get("dry_counts")
         if isinstance(dc, dict):
             for k, v in list(dc.items())[:_FAMILY_CAP]:
-                try:
-                    nb._dry_counts[str(k)] = int(v)
+                try:                                    # ADR 0081: fold onto the coarse key
+                    key = _coarsen_key(str(k))
+                    nb._dry_counts[key] = nb._dry_counts.get(key, 0) + int(v)
                 except (TypeError, ValueError):
                     continue
         return nb
