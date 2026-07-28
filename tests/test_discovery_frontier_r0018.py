@@ -372,8 +372,10 @@ def test_family_key_is_coarse_relop_and_modulus():
     assert a is not None and a[0] == b[0]
     # a residue-SET characterization is a DISTINCT family (relop differs), so it survives a == kill
     assert _family("(n^2) % 2 in {0}")[0] != a[0]
-    # different modulus -> different family
-    assert _family("(n^2) % 3 == 0")[0] != a[0]
+    # ADR 0081 DELIBERATELY reverses ADR 0034 here: the modulus is no longer part of the key,
+    # because a daemon proving the same construction at eleven different moduli is mining one
+    # seam. Same relop => SAME family now, whatever the modulus.
+    assert _family("(n^2) % 3 == 0")[0] == a[0]
     # outside every recognized genre -> no family (no kill). ADR 0073 DELIBERATELY moved
     # `gcd(n, n+1) == 1` out of this case: named-function claims (min/max, factorial, gcd) now key
     # to their own coarse genre so genre-kill can retire them. The invariant this line pins —
@@ -398,13 +400,15 @@ def test_genre_kill_fires_after_threshold_proven_only():
     assert nb.genre_kill == []
     # the third PROVEN one trips the kill
     nb.record(_proven("(n^4 + n^2) % 2 == 0"))
-    assert nb.genre_kill == ["== modular claims modulo 2"]
+    assert nb.genre_kill == ["== modular claims (any modulus)"]
 
 
 def test_genre_kill_is_bounded():
+    # ADR 0081: distinct RELOPS make distinct families (the modulus no longer does).
     nb = DiscoveryNotebook(capacity=50, genre_threshold=1, genre_capacity=2)
-    for m in (2, 3, 5, 7):                       # four distinct families, cap is 2
-        nb.record(_proven(f"(n^2) % {m} == 0"))
+    for cp in ("(n^2) % 2 == 0", "(n^2) % 3 != 1", "(n^2) % 5 in {0, 1}",
+               "(n^2) % 7 == 0 and (n^2) % 7 != 3"):     # 4 relop-families, cap is 2
+        nb.record(_proven(cp))
     assert len(nb.genre_kill) == 2
 
 
@@ -414,7 +418,7 @@ def test_steering_surfaces_exemplars_and_genre_kill():
     nb.record(_proven("(n^2) % 2 == 0"))        # trips a kill at threshold 1
     s = nb.steering()
     assert "FLAVOUR" in s and "squares are 0 or 1 mod 4" in s
-    assert "EXHAUSTED FAMILIES" in s and "modulo 2" in s
+    assert "EXHAUSTED FAMILIES" in s and "any modulus" in s
 
 
 def test_exemplars_are_not_persisted_but_genre_state_is():
@@ -489,7 +493,7 @@ def test_dry_kill_fires_after_threshold_known_or_trivial():
     nb.record(_dry("(n^6) % 5 == 0", reason=FinishReason.REFUTED))
     assert nb.dry_kill == []
     nb.record(_dry("(n^4 + n^2) % 5 == 0", reason=FinishReason.KNOWN))
-    assert nb.dry_kill == ["== modular claims modulo 5"]
+    assert nb.dry_kill == ["== modular claims (any modulus)"]
 
 
 def test_dry_kill_never_fires_on_a_family_that_proves():
@@ -504,16 +508,18 @@ def test_dry_kill_rehabilitated_by_a_later_proof():
     nb = DiscoveryNotebook(capacity=12, dry_threshold=2)
     nb.record(_dry("(n^2) % 7 == 0"))
     nb.record(_dry("(n^4) % 7 == 0"))
-    assert nb.dry_kill == ["== modular claims modulo 7"]
+    assert nb.dry_kill == ["== modular claims (any modulus)"]
     nb.record(_proven("(n^6 + n^2) % 7 == 0"))                 # the ground produced after all
     assert nb.dry_kill == []
-    assert "==|7" not in nb._dry_counts                        # dry evidence reset with the proof
+    assert "==" not in nb._dry_counts                          # dry evidence reset with the proof
 
 
 def test_dry_kill_is_bounded_and_persisted():
+    # ADR 0081: the modulus no longer distinguishes families, so vary the RELOP to get four.
     nb = DiscoveryNotebook(capacity=50, dry_threshold=1, genre_capacity=2)
-    for m in (2, 3, 5, 7):                                     # four dry families, cap is 2
-        nb.record(_dry(f"(n^2) % {m} == 0"))
+    for cp in ("(n^2) % 2 == 0", "(n^2) % 3 != 1", "(n^2) % 5 in {0, 1}",
+               "(n^2) % 7 == 0 and (n^2) % 7 != 3"):           # four dry families, cap is 2
+        nb.record(_dry(cp))
     assert len(nb.dry_kill) == 2
     back = DiscoveryNotebook.from_dict(nb.to_dict(), capacity=50)
     assert back.dry_kill == nb.dry_kill and back._dry_counts == nb._dry_counts
@@ -522,7 +528,7 @@ def test_dry_kill_is_bounded_and_persisted():
 def test_dry_kill_steering_line_and_defensive_from_dict():
     nb = DiscoveryNotebook(capacity=12, dry_threshold=1)
     nb.record(_dry("(n^3) % 4 == 0"))
-    assert "DRY GROUND" in nb.steering() and "modulo 4" in nb.steering()
+    assert "DRY GROUND" in nb.steering() and "any modulus" in nb.steering()
     forged = DiscoveryNotebook.from_dict({"dry_kill": "not-a-list", "dry_counts": {"k": "x"}})
     assert forged.dry_kill == [] and forged._dry_counts == {}
 
@@ -534,10 +540,10 @@ from leibniz.discovery import _combo_moduli, _shape_family  # noqa: E402
 
 def test_layer1_modular_keys_are_byte_identical():
     # the ADR 0034 keys are persisted in notebooks on disk — they must not move
-    assert _family("(n^2) % 2 == 0") == ("==|2", "== modular claims modulo 2")
-    assert _family("(n^4 + n^2) % 2 == 0")[0] == "==|2"      # polynomial still dropped
-    assert _family("(n^2) % 3 == 0")[0] == "==|3"
-    assert _family("(n^2) % 2 in {0}")[0] != "==|2"          # residue-SET stays a distinct genre
+    assert _family("(n^2) % 2 == 0") == ("==", "== modular claims (any modulus)")
+    assert _family("(n^4 + n^2) % 2 == 0")[0] == "=="        # polynomial still dropped
+    assert _family("(n^2) % 3 == 0")[0] == "=="              # ADR 0081: modulus dropped too
+    assert _family("(n^2) % 2 in {0}")[0] != "=="            # residue-SET stays a distinct genre
 
 
 def test_combo_signatures_key_on_the_modulus_set_not_the_polynomial():
@@ -546,9 +552,9 @@ def test_combo_signatures_key_on_the_modulus_set_not_the_polynomial():
     a = _family("(n^2 + n + 1) % 5 != 0 and (n^2 + n + 1) % 5 != 4")
     b = _family("(n^3 + 2) % 5 != 1 and (n^3 + 2) % 5 != 2")
     assert a is not None and b is not None
-    assert a[0] == b[0] == "and|5"                            # different polynomials, ONE family
+    assert a[0] == b[0] == "and"                              # different polys AND moduli, ONE family
     assert "atom" not in a[0] and "(" not in a[0]             # no polynomial leaks into the key
-    assert a[1] == "and-combinations of modular claims modulo 5"
+    assert a[1] == "and-combinations of modular claims (any modulus)"
     assert _combo_moduli(("and", (("atom", "!=", 5, ()), ("atom", "==", 3, ())))) == (3, 5)
     assert _combo_moduli(("==", 7, ())) == ()                 # a plain atom carries no combo moduli
 
@@ -560,8 +566,8 @@ def test_minmax_factorial_gcd_genres_are_keyed():
     assert _family("max(a,b) * min(a,b) == a*b")[0] == "minmax|=="        # same genre
     assert _family("min(a,b) <= max(a,b)")[0] == "minmax|ineq"            # different relation
     assert _family("factorial(a) * factorial(b) <= factorial(a + b)")[0] == "factorial|ineq"
-    assert _family("factorial(n) % 5 != 3") == ("factorial%5|!=",
-                                                "!= claims about factorial modulo 5")
+    assert _family("factorial(n) % 5 != 3") == ("factorial%|!=",
+                                                "!= claims about factorial modulo something")
     assert _family("gcd(6, n) == 1 or gcd(6, n) == 2")[0] == "gcd|or"
 
 
@@ -586,7 +592,7 @@ def test_widened_families_drive_genre_kill_and_dry_kill():
     assert "EXHAUSTED FAMILIES" in nb.steering()
     dry = DiscoveryNotebook(capacity=12, dry_threshold=2)
     dry.record(_dry("gcd(4, n) == 1"))
-    dry.record(_dry("gcd(4, n) == 2"))
+    dry.record(_dry("gcd(6, n) == 2"))          # ADR 0081: same family despite the constant
     assert dry.dry_kill == ["== claims about gcd"]            # dry ground works on the new keys too
 
 
