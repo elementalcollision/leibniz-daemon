@@ -462,8 +462,10 @@ class FrontierController:
     gain: float = 0.30            # proportional gain on the rate error
     floor: float = 0.15
     ceil: float = 0.85
+    pin_limit: int = 3            # consecutive SATURATED updates before re-exploring
     _recent: list[bool] = field(default_factory=list)
     _jumps: int = 0
+    _pinned: int = 0              # consecutive updates saturated against a bound
 
     def record(self, proved: bool) -> None:
         self._recent.append(bool(proved))
@@ -484,15 +486,28 @@ class FrontierController:
         # was overshot. Jump to the opposite half, nudged by a deterministic offset that
         # varies per jump so successive sweeps probe different alignments and a narrow
         # window is eventually straddled (no permanent pin, no limit cycle).
-        if rate == 0.0 and (at_floor or at_ceil):
+        err = self.aim - rate
+        # SATURATION: at a bound while the correction still points OUTWARD — the controller
+        # wants a band it cannot reach, so homing is a no-op and the target never moves again.
+        # Observed live: rate 0.25 against aim 0.35 held the target on the floor (0.15) for
+        # three consecutive nights, so the daemon proposed only its easiest genre while the
+        # controller reported itself satisfied. The original escape fires at `rate == 0.0`
+        # exactly, which never happens once the daemon is producing anything at all.
+        saturated = (at_floor and err > 0) or (at_ceil and err < 0)
+        self._pinned = self._pinned + 1 if saturated else 0
+        # Re-exploration: nothing proving at a bound (immediate), or persistently pinned
+        # against one (after `pin_limit` updates — a transient touch is not a pin). Jump to the
+        # opposite half, nudged by a deterministic offset that varies per jump so successive
+        # sweeps probe different alignments and a narrow window is eventually straddled.
+        if (rate == 0.0 and (at_floor or at_ceil)) or self._pinned >= self.pin_limit:
             self._jumps += 1
             base = 0.65 if at_floor else 0.35
             jitter = (0.0, 0.08, -0.08, 0.04, -0.04)[self._jumps % 5]
             self.target = round(min(self.ceil, max(self.floor, base + jitter)), 3)
             self._recent.clear()
+            self._pinned = 0
             return
         # Proportional homing: rate below aim (too hard) -> easier; above -> harder.
-        err = self.aim - rate
         if abs(err) > 0.05:
             self.target = round(min(self.ceil, max(self.floor, self.target - self.gain * err)), 3)
 
@@ -505,7 +520,8 @@ class FrontierController:
     # --- persistence (ADR 0019 follow-up): carry the learned band across runs -----
     def to_dict(self) -> dict:
         """The learned STATE only (not the tunable aim/gain/bounds)."""
-        return {"target": self.target, "recent": list(self._recent), "jumps": self._jumps}
+        return {"target": self.target, "recent": list(self._recent), "jumps": self._jumps,
+                "pinned": self._pinned}
 
     @classmethod
     def from_dict(cls, d: dict) -> "FrontierController":
@@ -515,6 +531,7 @@ class FrontierController:
         rec = d.get("recent")
         fc._recent = [bool(x) for x in (rec if isinstance(rec, list) else [])][-fc.window:]
         fc._jumps = int(d.get("jumps", 0))
+        fc._pinned = int(d.get("pinned", 0))   # absent in pre-ADR-0080 state -> 0
         return fc
 
     def save(self, path: Union[str, Path]) -> None:
