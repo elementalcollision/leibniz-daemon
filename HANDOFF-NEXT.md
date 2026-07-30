@@ -76,13 +76,56 @@ vacuously (it asserts ≥ 11 tests collected).
 
 ---
 
-## 3. Current state (as of 2026‑07‑06, late)
+## 3. Current state (as of 2026‑07‑28)
 
-- **Post‑R6 optimization phase.** The rung climb R1→R6 is substantially complete (real Lean
-  4.31 kernel via Docker; faithfulness + Z3; novelty retrieval; proposal models + ADR 0029
-  repair panel; KFM / MAP‑Elites archive; the *Calculemus* reading‑room + operator publish
-  gate). Binding constraint is **novelty/discovery yield**, not prover reach or the trust
-  boundary. Live plan: `docs/optimization-roadmap.md`.
+- **The daemon runs itself.** A launchd LaunchAgent turns a capped, journaled **beat** nightly at
+  02:30 (ADR 0068): preflight → N steered cycles → JSONL journal → regenerated review queue →
+  anomaly alarms. Each beat hard‑syncs a worktree to `origin/main`, so unattended runs execute
+  only operator‑merged code. **Nothing publishes itself** — promulgations land in
+  `.leibniz/review_queue.md` and wait for the ADR 0033 operator act. State lives in the canonical
+  `.leibniz/`: `journal.jsonl`, `review_queue.md`, `amplification_queue.md`, `alarms.log`,
+  `notebook.json`, `frontier.json`, `memory.db`.
+- **The four‑phase autonomy plan is complete.** α heartbeat (ADR 0068) · β moving frontier —
+  steered beats, dry‑ground retirement, arXiv amplification feed (ADR 0069, 0073) · γ reach —
+  factorial/gcd kernel procedure, cvc5 second opinion, lean‑smt **verdict: do not build** (ADR
+  0070, 0071, and `docs/results/gamma3b-verdict-2026-07-24.md`) · δ dialogue — Newton folio
+  exchange, repointed from Leonardo (ADR 0072).
+- **Live output.** 28 laws held in the review queue; 27 published on codexcalculemus.com,
+  including the first two **originated** laws (the daemon's own conjectures, not amplifications).
+  18 folios exported to Newton. Beats are green three nights running; ~2 promulgations/night.
+- **A defect sweep found more than the planned work did.** Of the 17 changes merged 2026‑07‑24→28,
+  eight were defects surfaced by looking rather than planned features, and six of those were a
+  discipline applied correctly in one place and missed in the one beside it. The load‑bearing ones:
+  - **ADR 0074** — `established_domain` is autoformalizer free text; when it restated the claim
+    property the faithfulness pair's coverage leg became the theorem itself and the candidate
+    DEFERred *before any proof compute*. 25–29 of 54 dead rows were decidable by shipped
+    procedures. Now derived inside the gate loop with byte‑exact rollback.
+  - **ADR 0075 (+ amendment)** — both probe legs are universally quantified but were decided
+    inside the `[0,64]` box. A false claim over a box‑unrepresentative domain took a MECHANICAL
+    PASS; so did any claim over an *empty* domain. Both legs now decide unbounded, and a vacuous
+    `claim_domain` is refused.
+  - **ADR 0077/0078** — the novelty hash scheme depended on which Lean backend was wired, so ADR
+    0052 self‑dedup was dead for 18 of 26 laws. The REPL backend now has a normalizer, and a
+    candidate carries every scheme it could be known under. 26/26.
+  - **ADR 0079** — a re‑rendering certificate now binds the statement that actually gets
+    promulgated (refuse‑only).
+  - **ADR 0080/0081** — two controllers converging happily on a bad equilibrium: the frontier band
+    saturated against its floor for three nights (the escape only fired at `rate == 0.0`), and the
+    family key was fine enough that 14 congruences spread over 11 families and genre‑kill could
+    never fire.
+- **Adversarial review is the thing that worked.** Every one of the trust‑surface defects was found
+  by a skeptic agent with a kernel, never by re‑reading. One was caught *after* the change had been
+  declared safe; one hid inside a fail‑open `except` whose failure mode was indistinguishable from
+  success. **Run review on the trust surface before claiming a change is sound, not after.**
+- **Post‑R6 optimization phase.** Binding constraint remains **novelty/discovery yield**, not prover
+  reach or the trust boundary. Live plan: `docs/optimization-roadmap.md`.
+- **Watch next, in the journal rather than the alarms:** whether genre‑kill fires now that ADR 0081
+  coarsened the key (`==` and `!=` sit one proof from the threshold); whether the band escapes 0.15
+  on night two or three under ADR 0080; and `unknown_rescued` (still 0/21 — the evidence gate that
+  keeps lean‑smt deferred). Both new mechanisms make the funnel look *worse* before better.
+
+### Prior state (through 2026‑07‑06) — cycle history
+
 - **Ledger now runs to Cycle 34.** The most recent session shipped **Cycles 28–34** (all
   merged to `main`; trust boundary byte‑identical throughout; every kernel theorem
   `#print axioms`‑clean — `[propext]` at most, never `sorryAx`):
