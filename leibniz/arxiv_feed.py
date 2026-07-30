@@ -54,6 +54,7 @@ _SIGNALS: tuple[tuple[re.Pattern, int, str], ...] = tuple(
         (r"\b(smallest|minimal|minimum) (?:number|size|order|counterexample)\b", 1, "extremal bound"),
     ])
 QUEUE_THRESHOLD = 3   # queue when the summed evidence reaches this
+_SUMMARY_CAP = 1500   # ADR 0084: retain enough abstract for parameter extraction, bounded
 _SEEN_CAP = 4000      # bound seen_arxiv.json
 
 
@@ -136,6 +137,7 @@ def update_queue(entries: list[dict], home: Path) -> dict:
         score, labels = finite_core_score(e.get("title", ""), e.get("summary", ""))
         if score >= QUEUE_THRESHOLD:
             queued.append({"id": e["id"], "title": e.get("title", ""), "link": e.get("link", ""),
+                           "summary": (e.get("summary") or "")[:_SUMMARY_CAP],
                            "published": e.get("published", ""), "categories": e.get("categories", []),
                            "score": score, "signals": labels,
                            "queued_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
@@ -175,6 +177,51 @@ def _render_md(jsonl_path: Path, md_path: Path, top: int = 30) -> None:
     md_path.write_text("\n".join(lines) + "\n")
 
 
+#: ADR 0084 — the finite-core PARAMETER shapes, drawn from the daemon's own eleven amplifications:
+#: an srg tuple (Belousova-Makhnev-Tokbaeva), an explicit order (complex Hadamard 94), a basis
+#: count (Cabello KS 14), a projective-plane parameter (double blocking 3q-1), a small bound.
+#: Deterministic and LLM-free, exactly like `finite_core_score`.
+_PARAM_PATTERNS: tuple = tuple((re.compile(p, re.IGNORECASE), kind) for p, kind in [
+    (r"\bsrg\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", "srg_parameters"),
+    (r"\bstrongly regular graph[^.]{0,40}?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", "srg_parameters"),
+    (r"\border\s+(?:at most\s+)?(\d{1,5})\b", "order"),
+    (r"\b(\d{1,4})\s+bases\b", "basis_count"),
+    (r"\bPG\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)", "projective_space"),
+    (r"\bGF\s*\(\s*(\d+)\s*\)", "finite_field"),
+    (r"\b(\d{1,4})\s*[x×]\s*(\d{1,4})\b", "matrix_shape"),
+    (r"\b(?:smallest|minimal|minimum)[^.]{0,30}?\b(\d{1,6})\b", "extremal_value"),
+])
+
+
+def extract_core_parameters(title: str, summary: str = "") -> list[dict]:
+    """ADR 0084 — the STATED finite-core parameters of a paper, with the span each came from.
+
+    Deterministic regex over the paper's own words; no LLM, no inference, no arithmetic. Every
+    extraction carries the verbatim `span` it was read from, so a parameter that is not literally
+    present cannot appear — the anti-fabrication discipline `seeds.py` already applies to FLOOR
+    values (`proof_of_use`: "a reference tying the value to the source span"), applied here.
+
+    This reports what the paper SAYS. It verifies nothing, and it is not evidence of anything: a
+    parameter tuple is a hint about where a finite core might be, for a proposer to aim at. The
+    gates and the kernel still decide every conjecture that results.
+    """
+    text = f"{title}\n{summary}"
+    out: list[dict] = []
+    seen: set = set()
+    for pat, kind in _PARAM_PATTERNS:
+        for m in pat.finditer(text):
+            values = [int(g) for g in m.groups() if g and g.isdigit()]
+            key = (kind, tuple(values))
+            if not values or key in seen:
+                continue
+            seen.add(key)
+            span = " ".join(m.group(0).split())
+            # Anti-fabrication: the span must be literally present in the source text.
+            if span and span in " ".join(text.split()):
+                out.append({"kind": kind, "values": values, "span": span})
+    return out
+
+
 def queued_targets(home: Path, cap: int = 6) -> list:
     """ADR 0083 — the highest-scoring queued papers as VALIDATED **TARGET** seeds.
 
@@ -203,10 +250,12 @@ def queued_targets(home: Path, cap: int = 6) -> list:
     rows.sort(key=lambda r: (-int(r.get("score", 0)), r.get("queued_at", "")), reverse=False)
     out = []
     for r in rows[:max(0, cap)]:
+        params = extract_core_parameters(r["title"], r.get("summary", ""))
         out.append(Seed(
             kind=SeedKind.TARGET,
             payload={"title": r["title"], "link": r.get("link", ""),
-                     "signals": r.get("signals", [])},
+                     "signals": r.get("signals", []),
+                     "core_parameters": params},
             provenance=SeedProvenance(source_id=r["id"], url=r.get("link", ""),
                                       fetched_at=r.get("queued_at", ""),
                                       extraction_method="arxiv_feed/finite_core_score"),

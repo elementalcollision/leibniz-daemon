@@ -37,7 +37,13 @@ def seed_steering(seeds, *, cap: int = 6) -> str:
     for s in admissible_targets(seeds):
         title = (s.payload.get("title") or "").strip()
         if title:
-            lines.append(f"- research target [{s.provenance.source_id}]: {title}")
+            # ADR 0084: show the STATED finite-core parameters when the feed extracted any — a
+            # proposer aims much better at "srg(1666,105,0,21)" than at a bare title. Still an
+            # untrusted hint: the block's own header says the gates decide.
+            params = s.payload.get("core_parameters") or []
+            shown = "; ".join(f"{p['kind']}={tuple(p['values'])}" for p in params[:3])
+            suffix = f"  [stated: {shown}]" if shown else ""
+            lines.append(f"- research target [{s.provenance.source_id}]: {title}{suffix}")
         if len(lines) >= cap:
             break
     if not lines:
