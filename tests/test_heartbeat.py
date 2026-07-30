@@ -266,3 +266,67 @@ def test_beat_does_not_override_an_explicit_notebook_path(monkeypatch, tmp_path)
     _stub_assembly(monkeypatch, _Daemon())
     heartbeat.beat(cycles=1)
     assert heartbeat.os.environ["LEIBNIZ_NOTEBOOK_PATH"] == "/custom/nb.json"  # setdefault, not clobber
+
+
+# === ADR 0082: drift detection — the daemon converging on a bad equilibrium ==
+
+def _journal(tmp_path, bands):
+    p = tmp_path / "journal.jsonl"
+    with p.open("w") as f:
+        for b in bands:
+            f.write(json.dumps({"ts": "t", "steering": {"band_target": b, "genre_kill": [],
+                                                        "too_hard": 0}}) + "\n")
+    return {"steering": {"band_target": bands[-1], "genre_kill": [], "too_hard": 0}}
+
+
+def test_a_band_that_never_moves_is_flagged(tmp_path):
+    entry = _journal(tmp_path, [0.15, 0.15, 0.15, 0.15])
+    msgs = heartbeat.detect_equilibria(entry, tmp_path)
+    assert any("pinned" in m for m in msgs)
+
+
+def test_a_band_that_is_moving_is_not_flagged(tmp_path):
+    # the live case after ADR 0080 fired: 0.15 -> 0.57 -> homing back down
+    entry = _journal(tmp_path, [0.15, 0.15, 0.57, 0.502])
+    assert not any("pinned" in m for m in heartbeat.detect_equilibria(entry, tmp_path))
+
+
+def test_a_saturated_notebook_with_no_genre_retired_is_flagged(tmp_path):
+    entry = _journal(tmp_path, [0.3, 0.4, 0.5, 0.6])
+    entry["steering"]["too_hard"] = 12
+    assert any("too_hard at capacity" in m for m in heartbeat.detect_equilibria(entry, tmp_path))
+    entry["steering"]["genre_kill"] = ["== modular claims (any modulus)"]
+    assert not any("too_hard" in m for m in heartbeat.detect_equilibria(entry, tmp_path))
+
+
+def test_output_and_feed_backlogs_are_surfaced(tmp_path):
+    entry = _journal(tmp_path, [0.3, 0.4, 0.5, 0.6])
+    (tmp_path / "review_queue.md").write_text("\n".join(f"- `x{i}` law" for i in range(31)))
+    (tmp_path / "amplification_queue.jsonl").write_text("\n".join(["{}"] * 6))
+    entry["arxiv_feed"] = {"fetched": 80, "queued": 1}
+    msgs = heartbeat.detect_equilibria(entry, tmp_path)
+    assert any("held for the operator" in m for m in msgs)
+    assert any("unconsumed" in m for m in msgs)
+
+
+def test_drift_never_changes_the_exit_code_on_its_own(tmp_path, monkeypatch):
+    db = tmp_path / "mem.db"
+    _seed_db(db)
+    monkeypatch.setenv("LEIBNIZ_HEARTBEAT_HOME", str(tmp_path))
+    monkeypatch.setenv("LEIBNIZ_RUNTIME_DB", str(db))
+    monkeypatch.setattr(heartbeat, "preflight", lambda: ([], []))
+    monkeypatch.setattr(heartbeat, "lean_containers", lambda: 0)
+    monkeypatch.setattr(heartbeat, "detect_equilibria", lambda e, h=None, look_back=3: ["drifting"])
+    monkeypatch.setattr(heartbeat, "beat", lambda cycles: {
+        "ts": "t", "cycles": [], "anomalies": [],
+        "cross_stats_delta": {"checked": 0, "agree": 0, "cvc5_unknown": 0, "disagree": 0},
+        "duration_s": 0.1})
+    monkeypatch.setattr(heartbeat.subprocess, "run", lambda *a, **k: None)
+    assert heartbeat.main() == 0                       # drift alone is advisory, not rc=3
+    entry = json.loads((tmp_path / "journal.jsonl").read_text().splitlines()[-1])
+    assert entry["equilibria"] == ["drifting"]
+    assert "DRIFT: drifting" in (tmp_path / "alarms.log").read_text()
+
+
+def test_a_missing_journal_degrades_silently(tmp_path):
+    assert heartbeat.detect_equilibria({"steering": {}}, tmp_path) == []

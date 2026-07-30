@@ -177,6 +177,60 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
     return entry
 
 
+def detect_equilibria(entry: dict, home: Path | None = None, look_back: int = 3) -> list[str]:
+    """ADR 0082 — DRIFT signals: the daemon converging happily on a bad equilibrium.
+
+    `detect_anomalies` catches things that BROKE. It cannot see a run where nothing broke and
+    the daemon simply stopped exploring — which is what happened on 2026-07-26..28: the frontier
+    band sat on its floor for three nights and the family histogram was too fine to ever retire a
+    genre, while every beat exited 0 with no alarm. Both controllers were working exactly as
+    written, toward a worse and worse place.
+
+    These read the JOURNAL'S HISTORY, not one beat, so they see trends a single run cannot.
+    Advisory: they are reported alongside anomalies and never change an exit code by themselves.
+    """
+    out: list[str] = []
+    home = home or _home()
+    try:
+        rows = [json.loads(x) for x in (home / "journal.jsonl").read_text().splitlines() if x.strip()]
+    except (OSError, ValueError):
+        return out
+    hist = ([r for r in rows if r.get("steering")] + [entry])[-(look_back + 1):]
+    if len(hist) > look_back:
+        bands = [r.get("steering", {}).get("band_target") for r in hist]
+        bands = [b for b in bands if isinstance(b, (int, float))]
+        # A band that has not moved AT ALL across the window is either converged or pinned; at a
+        # BOUND it is pinned, which is the case ADR 0080 exists to break.
+        if len(bands) > look_back and len(set(bands)) == 1:
+            out.append(f"frontier band unchanged at {bands[0]} for {len(bands)} beats — "
+                       f"pinned? (ADR 0080 escapes a saturated bound after 3 updates)")
+    # Genre concentration: promulgations piling into ONE family means the steering key is too
+    # fine to notice (ADR 0081) or genre-kill is not firing.
+    st = entry.get("steering") or {}
+    if not st.get("genre_kill") and (st.get("too_hard") or 0) >= 12:
+        out.append(f"notebook too_hard at capacity ({st['too_hard']}) with no genre retired — "
+                   "the weakening loop may be recycling the same near-misses")
+    # The review queue growing without ever draining is an OUTPUT bottleneck, not a defect —
+    # but it is invisible unless something says it.
+    try:
+        held = sum(1 for ln in (home / "review_queue.md").read_text().splitlines()
+                   if ln.startswith("- "))
+        if held >= 30:
+            out.append(f"{held} laws held for the operator — publication is the throughput limit")
+    except OSError:
+        pass
+    # The amplification queue filling while nothing consumes it (ADR 0069 -> D1).
+    feed = entry.get("arxiv_feed") or {}
+    if isinstance(feed, dict) and feed.get("queued"):
+        try:
+            total = sum(1 for _ in (home / "amplification_queue.jsonl").open())
+            if total >= 5:
+                out.append(f"{total} amplification targets queued and unconsumed")
+        except OSError:
+            pass
+    return out
+
+
 def detect_anomalies(entry: dict, containers_after: int) -> list[str]:
     """Kill-only anomaly scan of a journal entry — anything here is loud, nothing is fatal upstream."""
     out = list(entry.get("anomalies", []))
@@ -268,6 +322,9 @@ def main() -> int:
     containers = wait_containers_drained()
     anomalies = detect_anomalies(entry, containers)
     entry["anomalies"] = anomalies
+    # ADR 0082: advisory drift signals, journaled and alarmed but never an exit code on their own
+    # — a daemon that has stopped exploring is not a daemon that has broken.
+    entry["equilibria"] = detect_equilibria(entry, home)
     if os.environ.get("LEIBNIZ_ARXIV_FEED") == "1":              # ADR 0069: amplification-target sweep
         try:
             from leibniz.arxiv_feed import run_feed
@@ -284,8 +341,8 @@ def main() -> int:
             entry["newton_exchange"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     write_journal(entry, home)
     write_review_queue(os.environ.get("LEIBNIZ_RUNTIME_DB") or (_REPO / ".leibniz" / "memory.db"), home)
-    if anomalies:
-        alarm(anomalies, home)
+    if anomalies or entry["equilibria"]:
+        alarm(anomalies + [f"DRIFT: {m}" for m in entry["equilibria"]], home)
     promulgated = sum(c.get("promulgated", 0) for c in entry["cycles"] if isinstance(c, dict))
     feed = entry.get("arxiv_feed")
     feed_note = (f", feed={feed.get('queued', '?')} queued of {feed.get('fetched', '?')}"
