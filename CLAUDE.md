@@ -69,3 +69,11 @@ tests/test_invariants.py · demo.py · HANDOFF.md
   yield), where the binding constraint is **novelty**, not prover reach or the trust boundary.
   The live work plan is **`docs/optimization-roadmap.md`**; `HANDOFF.md` holds the rung tickets
   and exit tests (kept as regressions). Do not trust this bullet for fine status — read those.
+- The daemon now **runs itself**: a nightly launchd beat (ADR 0068) turns capped, journaled cycles
+  against `origin/main` and files promulgations into `.leibniz/review_queue.md`. Publication is
+  still the operator's ADR 0033 act — nothing publishes itself. The four-phase autonomy plan
+  (heartbeat / moving frontier / reach / Newton exchange) is complete: ADRs 0068-0081.
+- **Adversarial review is a standing gate on the trust surface, not a judgment call.** Every
+  trust-edge defect found in the 2026-07-24→28 sweep came from a skeptic agent with a kernel, never
+  from re-reading; one surfaced *after* the change was declared safe. Before claiming a change to
+  the gates, the probe, the promotion path or the hash/identity keys is sound, have it attacked.
