@@ -414,6 +414,21 @@ def maybe_wrap_mixed_modulus(demonstrate, consensus, repl_image, *, env=None):
     return MixedModulusDemonstrate(inner=demonstrate, lean=consensus.lean)
 
 
+def _amplification_targets() -> list:
+    """The queued arXiv amplification targets, or [] when the feed is off / the queue is absent.
+    Never raises: a malformed queue must not stop the daemon being built."""
+    if os.environ.get("LEIBNIZ_ARXIV_FEED") != "1":
+        return []
+    try:
+        from pathlib import Path as _P
+
+        from leibniz.arxiv_feed import queued_targets
+        home = os.environ.get("LEIBNIZ_HEARTBEAT_HOME")
+        return queued_targets(_P(home) if home else _P(__file__).resolve().parent.parent / ".leibniz")
+    except Exception:
+        return []
+
+
 def build_daemon(
     *, frontier_limit: int = 2, analogy_limit: int = 1, config: InstanceConfig | None = None
 ) -> Leibniz:
@@ -575,6 +590,10 @@ def build_daemon(
         cost_budget=cost_budget,  # ADR 0011 cap, ADR 0014 metered by real usage
         # ADR 0018: outcome-conditioned conjecture; ADR 0023: resumed from + persisted
         # to disk so near-misses accumulate across runs for weaken-and-retry.
+        # ADR 0083: VALIDATED TARGET seeds from the nightly amplification queue, behind the SAME
+        # switch as the feed that fills it. Proposal-side only — they enter the conjecture prompt
+        # as untrusted hints (leibniz/seed_intake.py) and gate nothing. Absent queue -> ().
+        seed_targets=tuple(_amplification_targets()),
         notebook=_notebook,
         notebook_path=_notebook_path,
         pattern_miner=_miner,           # ADR 0034 Stage 2 (None unless LEIBNIZ_PATTERN_MINE>0)

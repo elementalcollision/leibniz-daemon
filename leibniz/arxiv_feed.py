@@ -175,6 +175,47 @@ def _render_md(jsonl_path: Path, md_path: Path, top: int = 30) -> None:
     md_path.write_text("\n".join(lines) + "\n")
 
 
+def queued_targets(home: Path, cap: int = 6) -> list:
+    """ADR 0083 — the highest-scoring queued papers as VALIDATED **TARGET** seeds.
+
+    A TARGET seed only ever steers a PROPOSER (`seed_intake.seed_steering`); it gates nothing and
+    decides nothing, and the block it produces tells the conjecturer so in as many words. That is
+    what makes VALIDATED defensible for an untrusted abstract: validation here is about
+    PROVENANCE — the record carries a real arXiv id, a link, and the finite-core signals that
+    queued it — not about the paper's claim being true. Nothing downstream trusts it: the
+    faithfulness, novelty and proof gates decide every conjecture it may inspire, exactly as if
+    the daemon had thought of it unaided.
+
+    Newest-and-highest-scoring first, capped, so a growing queue cannot flood the prompt.
+    """
+    from leibniz.seeds import Seed, SeedKind, SeedProvenance, SeedStatus
+    rows: list[dict] = []
+    try:
+        for line in (Path(home) / "amplification_queue.jsonl").read_text().splitlines():
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(r, dict) and r.get("id") and r.get("title"):
+                rows.append(r)
+    except OSError:
+        return []
+    rows.sort(key=lambda r: (-int(r.get("score", 0)), r.get("queued_at", "")), reverse=False)
+    out = []
+    for r in rows[:max(0, cap)]:
+        out.append(Seed(
+            kind=SeedKind.TARGET,
+            payload={"title": r["title"], "link": r.get("link", ""),
+                     "signals": r.get("signals", [])},
+            provenance=SeedProvenance(source_id=r["id"], url=r.get("link", ""),
+                                      fetched_at=r.get("queued_at", ""),
+                                      extraction_method="arxiv_feed/finite_core_score"),
+            proof_of_use=r.get("link") or r["id"],   # traceable back to the source span
+            status=SeedStatus.VALIDATED,
+        ))
+    return out
+
+
 def run_feed(home: Path) -> dict:
     """One sweep: fetch → score → queue. The heartbeat's entry point."""
     return update_queue(fetch_recent(), home)

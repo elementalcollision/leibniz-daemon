@@ -21,6 +21,7 @@ from typing import Optional
 from leibniz.adapters import RuntimeAdapter
 from leibniz.budget import TrustBudget
 from leibniz.cost import CostBudget
+from leibniz.seed_intake import seed_steering
 from leibniz.discovery import (
     DiscoveryNotebook,
     FrontierController,
@@ -77,6 +78,9 @@ class Leibniz:
     cost_budget: Optional[CostBudget] = None
     # ADR 0018 (discovery frontier): proposal-side steering. Both optional — when
     # absent the loop behaves exactly as before (cold start / deterministic fakes).
+    # ADR 0083: VALIDATED TARGET seeds from the amplification queue. PROPOSAL-SIDE ONLY — they
+    # enter the conjecture prompt as untrusted hints and gate nothing (leibniz/seed_intake.py).
+    seed_targets: tuple = ()
     notebook: Optional[DiscoveryNotebook] = None       # outcome-conditioned conjecture
     notebook_path: Optional[str] = None                # ADR 0023: persist near-misses across runs
     frontier: Optional[FrontierController] = None       # adaptive difficulty band
@@ -185,7 +189,8 @@ class Leibniz:
                 # ADR 0018 M1/M2: condition the conjecture on ledger lessons + the target
                 # difficulty band (a no-op until the notebook/frontier have learned).
                 origin = self._seed_origin(seed)  # ADR 0034 §5: provenance for the kill condition
-                prop = self.conjecture.run(steer(seed, self.notebook, self.frontier))
+                prop = self.conjecture.run(steer(seed, self.notebook, self.frontier,
+                                                 seed_steering(self.seed_targets)))
                 prop.seed_origin = origin
                 report.conjectured += 1
 
