@@ -600,13 +600,15 @@ def weakening_seeds(statements: list[str], k: int = 2) -> list[str]:
     ]
 
 
-def steer(seed: str, notebook: DiscoveryNotebook | None, frontier: FrontierController | None) -> str:
+def steer(seed: str, notebook: DiscoveryNotebook | None, frontier: FrontierController | None,
+          extra: str = "") -> str:
     """Compose the conjecture context: the raw seed plus any ledger lessons and the
     target difficulty band. Returns the seed unchanged when there is nothing to add
     (cold start), so behaviour is identical until the daemon has learned something."""
     parts = [p for p in (
         notebook.steering() if notebook else "",
         frontier.band() if frontier else "",
+        extra or "",
     ) if p]
     if not parts:
         return seed
