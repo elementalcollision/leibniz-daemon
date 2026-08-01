@@ -272,6 +272,31 @@ def write_review_queue(db_path: str | Path, home: Path | None = None) -> Path:
         con.close()
     except Exception:
         rows = []
+    # ADR 0087: flag a held law whose claim is STRUCTURALLY contained in another held law —
+    # same domain, and its conjuncts a proper subset of the other's (leibniz.structural.subsumes,
+    # pure syntax, no solver). Observed live: the daemon promulgated a law whose first conjunct it
+    # already held. ADVISORY — nothing is dropped or reordered; the operator decides. Rows written
+    # before claim_domain was persisted (ADR 0086) carry no domain and are simply never flagged.
+    flags: dict = {}
+    try:
+        from leibniz.structural import subsumes
+        # SEPARATE, guarded query: `claim_domain` only exists after the ADR 0086 migration, and a
+        # missing column must cost an ANNOTATION, never the queue itself. Folding it into the
+        # query above emptied the whole review queue on a pre-migration database — the operator's
+        # primary artifact, blanked by an optional feature.
+        con2 = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        contracts = con2.execute(
+            "SELECT pid, claim_property, claim_domain FROM memory "
+            "WHERE lower(finish_reason) = 'promulgated' AND kernel_verified = 1 "
+            "AND claim_property IS NOT NULL AND claim_domain IS NOT NULL").fetchall()
+        con2.close()
+        for pid, cp, cd in contracts:
+            for other_pid, other_cp, other_cd in contracts:
+                if other_pid != pid and subsumes(other_cd, other_cp, cd, cp):
+                    flags[pid] = other_pid
+                    break
+    except Exception:
+        flags = {}
     lines = ["# Review queue — promulgated, held for the operator (ADR 0033)", "",
              f"_Regenerated {_now()} by the heartbeat. Publication is YOUR act; nothing here_",
              "_publishes itself. Newest first._", ""]
@@ -283,7 +308,8 @@ def write_review_queue(db_path: str | Path, home: Path | None = None) -> Path:
         except (TypeError, ValueError):
             when = "?"
         head = " ".join(str(thm or "").split())[:100]
-        lines.append(f"- `{pid[:8]}` · {when} · `{head}`")
+        note = f"  ⟵ contained in `{flags[pid][:8]}` (ADR 0087 — advisory)" if pid in flags else ""
+        lines.append(f"- `{pid[:8]}` · {when} · `{head}`{note}")
     p = home / "review_queue.md"
     p.write_text("\n".join(lines) + "\n")
     return p

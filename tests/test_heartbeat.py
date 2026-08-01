@@ -330,3 +330,51 @@ def test_drift_never_changes_the_exit_code_on_its_own(tmp_path, monkeypatch):
 
 def test_a_missing_journal_degrades_silently(tmp_path):
     assert heartbeat.detect_equilibria({"steering": {}}, tmp_path) == []
+
+
+# === ADR 0087: subsumption annotations in the review queue ===================
+
+_BOX = "a >= 0 and b >= 0"
+_HELD_CP = ("(max(a,b) - min(a,b)) * (a + b) == max(a,b)^2 - min(a,b)^2 "
+            "and max(a,b) * min(a,b) == a*b")
+_WEAK_CP = "max(a,b)^2 - min(a,b)^2 == (max(a,b) - min(a,b)) * (a + b)"
+
+
+def _contract_db(path, *, with_domain=True):
+    """A ledger holding the real live pair: a law and a weaker one contained in it."""
+    con = sqlite3.connect(path)
+    cols = ("pid TEXT PRIMARY KEY, born REAL, theorem_src TEXT, claim_property TEXT, "
+            "finish_reason TEXT, kernel_verified INTEGER"
+            + (", claim_domain TEXT" if with_domain else ""))
+    con.execute(f"CREATE TABLE memory ({cols})")
+    rows = [("held0001", 1.0, "theorem held : True", _HELD_CP, "promulgated", 1),
+            ("weak0001", 2.0, "theorem weak : True", _WEAK_CP, "promulgated", 1)]
+    if with_domain:
+        con.executemany("INSERT INTO memory VALUES (?,?,?,?,?,?,?)",
+                        [r + (_BOX,) for r in rows])
+    else:
+        con.executemany("INSERT INTO memory VALUES (?,?,?,?,?,?)", rows)
+    con.commit()
+    con.close()
+    return str(path)
+
+
+def test_a_contained_law_is_flagged_not_dropped(tmp_path):
+    db = _contract_db(tmp_path / "m.db")
+    text = heartbeat.write_review_queue(db, tmp_path).read_text()
+    assert text.count("- `") == 2                    # BOTH laws still listed — advisory only
+    assert "contained in `held0001`" in text         # the weaker one is flagged
+    # match on the ENTRY, not the annotation: the weak line mentions `held0001` inside its flag
+    weak_line = next(ln for ln in text.splitlines() if ln.startswith("- `weak0001`"))
+    held_line = next(ln for ln in text.splitlines() if ln.startswith("- `held0001`"))
+    assert "contained in" in weak_line and "contained in" not in held_line   # asymmetric
+
+
+def test_a_pre_migration_database_still_gets_its_queue(tmp_path):
+    """THE regression this nearly shipped: folding claim_domain into the main query made a
+    pre-ADR-0086 database throw, the existing `except` swallowed it, and the operator's entire
+    review queue came back EMPTY. A missing column must cost an annotation, never the queue."""
+    db = _contract_db(tmp_path / "old.db", with_domain=False)
+    text = heartbeat.write_review_queue(db, tmp_path).read_text()
+    assert text.count("- `") == 2                    # queue intact
+    assert "contained in" not in text                # simply no annotations
