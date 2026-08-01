@@ -57,7 +57,8 @@ CREATE TABLE IF NOT EXISTS memory (
     statement TEXT, claim_type TEXT, falsifiable_claim TEXT, domain TEXT,
     theorem_src TEXT, normalized_hash TEXT,
     kernel_verified INTEGER, qed TEXT, proof_src TEXT,
-    finish_reason TEXT, parents TEXT, instance TEXT, claim_property TEXT, seed_origin TEXT
+    finish_reason TEXT, parents TEXT, instance TEXT, claim_property TEXT, seed_origin TEXT,
+    claim_domain TEXT
 )
 """
 
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS memory (
 _COLUMNS = (
     "pid", "born", "ts", "statement", "claim_type", "falsifiable_claim", "domain",
     "theorem_src", "normalized_hash", "kernel_verified", "qed", "proof_src",
-    "finish_reason", "parents", "instance", "claim_property", "seed_origin",
+    "finish_reason", "parents", "instance", "claim_property", "seed_origin", "claim_domain",
 )
 
 
@@ -109,6 +110,10 @@ class PersistentRuntime:
                 self._conn.execute("ALTER TABLE memory ADD COLUMN proof_src TEXT")
             if "instance" not in have:  # ADR 0033: per-instance provenance on a pre-existing DB
                 self._conn.execute("ALTER TABLE memory ADD COLUMN instance TEXT")
+            if "claim_domain" not in have:  # ADR 0086: the OTHER half of the DSL contract —
+                # without it nothing downstream can tell WHERE a stored law applies, which made
+                # a structural comparison between two held laws impossible.
+                self._conn.execute("ALTER TABLE memory ADD COLUMN claim_domain TEXT")
             if "claim_property" not in have:  # ADR 0034 Stage 0: persist the canonical DSL
                 # predicate so promulgations are natively measurable by novelty_metrics
                 # (pre-Stage-0 rows stay NULL — reported honestly as no-property-stored).
@@ -154,6 +159,7 @@ class PersistentRuntime:
             self.instance,  # ADR 0033: stamp the writing instance (provenance)
             en.claim_property,  # ADR 0034 Stage 0: the canonical DSL predicate (or None)
             prop.seed_origin,  # ADR 0034 Stage 2: seed provenance (mined|weaken|kfm|survey|None)
+            en.claim_domain,  # ADR 0086: WHERE the claim applies (the other half of the contract)
         )
         cols = ", ".join(_COLUMNS)
         marks = ", ".join("?" for _ in _COLUMNS)

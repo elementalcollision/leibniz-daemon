@@ -602,3 +602,69 @@ def is_coefficient_degenerate(predicate: Optional[str]) -> bool:
         return _combo_all_degenerate(tree) is True
     except Exception:                       # total: any surprise on adversarial input -> keep content
         return False
+
+
+# --- ADR 0086: structural subsumption between two HELD laws ----------------------------------
+
+def _conjuncts(predicate: str) -> Optional[frozenset]:
+    """The top-level `and` conjuncts of a DSL predicate, normalised to canonical text.
+
+    `(A) and (B) and (C)` -> {A, B, C}; a non-conjunction is its own single conjunct. None when
+    the predicate does not parse. Whitespace and redundant parens are normalised via `ast.unparse`
+    so `A and B` and `(B) and ( A )` yield the same set."""
+    try:
+        tree = ast.parse(predicate.replace("^", "**"), mode="eval").body
+    except (SyntaxError, ValueError, AttributeError):
+        return None
+    parts = tree.values if isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.And) else [tree]
+    try:
+        return frozenset(_canon_conjunct(x) for x in parts)
+    except Exception:
+        return None
+
+
+def _canon_conjunct(node: ast.AST) -> str:
+    """Canonical text for one conjunct, with COMMUTATIVE comparisons normalised.
+
+    `==` and `!=` are symmetric, and the daemon writes them either way round — the observed
+    redundant law spelled its conjunct `max^2 - min^2 == (max - min) * (a + b)` while the law
+    already held spelled the same fact `(max - min) * (a + b) == max^2 - min^2`. Without this the
+    check misses the exact case it exists for. Operands are sorted, so both spellings agree."""
+    if (isinstance(node, ast.Compare) and len(node.ops) == 1
+            and isinstance(node.ops[0], (ast.Eq, ast.NotEq))):
+        op = "==" if isinstance(node.ops[0], ast.Eq) else "!="
+        sides = sorted(ast.unparse(x) for x in (node.left, node.comparators[0]))
+        return f"{sides[0]} {op} {sides[1]}"
+    return ast.unparse(node)
+
+
+def subsumes(held_domain: Optional[str], held_property: Optional[str],
+             cand_domain: Optional[str], cand_property: Optional[str]) -> bool:
+    """True iff a law held on `held_domain` makes the candidate REDUNDANT, structurally.
+
+    Deliberately syntactic. An earlier attempt asked an SMT solver whether the held property
+    IMPLIES the candidate's — which is vacuous between theorems: every held law is true on its
+    domain, so `not(candidate)` is unsatisfiable on its own and the premise contributes nothing.
+    Measured: that test flagged 10 of 29 held laws, including the strongest one, on the strength
+    of nothing.
+
+    The sound structural notion, and the one that catches the case actually observed (the daemon
+    promulgated `max^2 - min^2 = ...` while holding a law whose FIRST CONJUNCT is exactly that):
+
+      * the domains are IDENTICAL — same text, so the held law applies exactly where the
+        candidate claims; nothing is assumed about domains that were never compared; and
+      * the candidate's conjunct set is a SUBSET of the held law's — every part of the candidate
+        is already a part of the held law, so it asserts strictly less.
+
+    A candidate with a conjunct the held law lacks is NOT subsumed, however similar. Equal
+    conjunct sets are subsumption only in the trivial sense and are excluded: that is
+    `contains_equivalent`'s job.
+    """
+    if not (held_domain and held_property and cand_domain and cand_property):
+        return False
+    if str.__ne__(" ".join(str(held_domain).split()), " ".join(str(cand_domain).split())):
+        return False
+    held, cand = _conjuncts(str(held_property)), _conjuncts(str(cand_property))
+    if held is None or cand is None or held == cand:
+        return False
+    return cand < held
