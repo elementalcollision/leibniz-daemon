@@ -77,7 +77,7 @@ BOUNDARY = [
     (CD3, "max(a, min(b,c)) == a", "nested min/max"),
     (CD3, "max(a, b, c) == a", ">=3-ary min/max"),
     (CD, "max(a + 1, b) == a", "compound (non-variable) min/max arg"),
-    (CD, "((a+b) % 8 == 0) == ((a+b) % 9 == 0)", "mixed LCM 72 over MAX_LCM"),
+    (CD, "((a+b) % 1000 == 0) == ((a+b) % 999 == 0)", "mixed LCM 999000 over MAX_LCM"),
     (CD, "(a*a + b*b) % 4 == 5", "out-of-range residue (c >= m)"),
     (CD, "max(a,b) < a + b", "min/max inequality (not Eq)"),
 ]

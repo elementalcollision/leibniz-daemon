@@ -22,7 +22,8 @@ Fragment (owned at the classifier — the renderer is more permissive):
 - **≥ 2 distinct moduli** (a single-modulus claim is `boolean_decided`'s job — disjoint by construction);
 - every atom `poly % mⱼ == cⱼ` / `!= cⱼ` with `poly` a pure polynomial and `0 ≤ cⱼ < mⱼ` (reuses
   `lean_decided._atom`); `and`/`or`/`not`/`↔` structure only; ≥1 modular content (non-triviality guard);
-- `MIN_VARS ≤ nvars ≤ MAX_VARS`, `M ** nvars ≤ MAX_RESIDUE_CELLS`, `≤ MAX_ATOMS` atoms.
+- `MIN_VARS ≤ nvars ≤ MAX_VARS`, `M ** nvars ≤ MIXED_MAX_CELLS`, `≤ MIXED_MAX_ATOMS` atoms
+  (ADR 0088: this fragment's own budgets, not the shared boolean/single-modulus ones).
 
 **Fail-closed by default.** Nothing registers this in the assembly. Activation is an OPERATOR action
 (`register`, gated in `assembly.maybe_register_mixed_modulus` behind the same `LEIBNIZ_LEAN_DECIDED` REPL
@@ -47,7 +48,8 @@ from leibniz.dsl_to_lean import (
     faithfulness_pair,
     free_vars,
 )
-from leibniz.gates.boolean_decided import MAX_ATOMS, _content_free, _walk_bool
+from leibniz.gates.boolean_decided import MAX_ATOMS as _ENUM_ATOM_CAP
+from leibniz.gates.boolean_decided import _content_free, _walk_bool
 from leibniz.gates.lean_decided import (
     IMPORTS,
     MAX_RESIDUE_CELLS,
@@ -64,9 +66,49 @@ from leibniz.propositio import Propositio
 from leibniz.types import Verdict
 
 KIND = "mixed-modulus-faithfulness"
-# Cap the LCM so the castHom `by decide` divisibility proofs and the `ZMod M` decide stay cheap; the
-# `M ** nvars ≤ MAX_RESIDUE_CELLS` budget is the binding one, this is a belt-and-suspenders ceiling.
-MAX_LCM = 64
+# ADR 0088 — this fragment's OWN budgets. They are deliberately NOT the shared `MAX_ATOMS`
+# (boolean_decided) / `MAX_RESIDUE_CELLS` (lean_decided) constants: those are tested against
+# `modulus ** nvars` by the single-modulus and boolean classifiers too, so raising them in place to
+# admit a 1-variable claim at M=10080 would silently also admit 2-var claims at M≈142 and 3-var at
+# M≈27 for procedures whose cost was never measured there. Widening is per-fragment.
+#
+# Every one of these bounds a `decide` over a FINITE `ZMod` — compute budget, never soundness. A
+# false formula still makes the decide refuse ⇒ the kernel rejects ⇒ DEFER, at any cap.
+MAX_LCM = 20160        # measured on live Lean 4.31: M=10080 closes in 16s, M=100800 in 47s, OOM
+                       # before M=262080. 20160 admits arXiv 2607.19029 (10080) and Klein (15120)
+                       # with an order of magnitude of headroom under the measured ceiling.
+MIXED_MAX_CELLS = 20160    # this fragment's `M ** nvars` budget, ONE VARIABLE ONLY — see `_cell_budget`
+MIXED_MAX_ATOMS = 72       # a covering system with lcm M and min modulus m has at most
+                           # #{d : d | M, d ≥ m} congruences — 66 for (10080, 7), which arXiv
+                           # 2607.19029 §7 exactly attains. 72 is that bound with margin.
+
+
+def _cell_budget(nvars: int) -> int:
+    """The `M ** nvars` budget. The ADR 0088 widening applies at ONE variable and nowhere else.
+
+    Adversarial review caught this: ADR 0088 argues the SHARED `MAX_RESIDUE_CELLS` must not be
+    raised because 20160 "would silently also admit 2-var claims at M≈142 and 3-var at M≈27 —
+    cells nobody measured" — and then a flat `MIXED_MAX_CELLS` did exactly that INSIDE this
+    fragment (2-var went M ≤ 64 → M ≤ 141, 3-var M ≤ 16 → M ≤ 27). Every row of the ADR's
+    evidence table, and every covering system that motivated it, is single-variable. So the
+    widened budget is scoped to where it was measured; multi-variable claims keep the shared,
+    long-tested 4096. Raising THAT wants its own measurements, not a side effect of this one.
+    """
+    return MIXED_MAX_CELLS if nvars == 1 else MAX_RESIDUE_CELLS
+# ADR 0088 — options for the `key` decide, scoped to the TACTIC (`set_option … in`), so the
+# gate-owned proof stays self-contained: no file-level preamble, nothing for a caller to forget.
+# All three are load-bearing and were each found by a kernel run, not by reasoning:
+#   maxRecDepth              — without it `decide` dies at M≈120 with "maximum recursion depth".
+#                              This, not compute, is the wall the old MAX_LCM = 64 sat behind.
+#   synthInstance.maxSize    — without them a 66-atom disjunction fails to synthesize `Decidable`
+#   synthInstance.maxHeartbeats  (instance synthesis, not compute — a 32-atom proxy never hits this).
+# `decide +kernel` reduces in the kernel instead of the elaborator: 6.8s vs 37.5s at M=10080.
+_DECIDE_OPTS = (
+    "set_option maxRecDepth 1000000 in",
+    "set_option synthInstance.maxSize 4000 in",
+    "set_option synthInstance.maxHeartbeats 4000000 in",
+)
+
 # The ring-hom-distribution lemmas that push a `ZMod.castHom` through a polynomial to its int-cast leaves.
 _MAP_LEMMAS = ("map_add, map_sub, map_mul, map_pow, map_intCast, map_neg, map_ofNat, map_one, map_zero")
 
@@ -95,12 +137,12 @@ def classify_mixed(claim_property: str) -> Optional[MixedSkeleton]:
         return None
     if len(moduli) < 2:
         return None                                      # single modulus is boolean_decided's fragment
-    if not atoms or len(atoms) > MAX_ATOMS:
+    if not atoms or len(atoms) > MIXED_MAX_ATOMS:
         return None
     M = math.lcm(*moduli)
     if M > MAX_LCM:
         return None
-    if _content_free(tree, atoms):                       # a propositional tautology carries no content
+    if _mixed_content_free(tree, atoms):                 # a propositional tautology carries no content
         return None
     # distinct (poly, mⱼ, cⱼ) for the bridges — one bridge rewrites all occurrences of its atom
     seen: dict = {}
@@ -139,6 +181,39 @@ def _zmod_prop_mixed(node: ast.AST, M: int) -> str:
     raise RenderError("not a classified mixed node")     # unreachable after classify_mixed
 
 
+def _mixed_content_free(tree: ast.AST, atoms: list) -> bool:
+    """Non-triviality for this fragment, WITHOUT `boolean_decided._content_free`'s 2**n enumeration.
+
+    That helper decides content-freeness exactly by trying every truth assignment — 256 at the
+    boolean fragment's `MAX_ATOMS = 8`, and 2**72 once ADR 0088 raises this fragment's atom cap to
+    72. Raising the cap without this branch does not merely slow the classifier down, it HANGS it,
+    which is strictly worse than a DEFER: the daemon's cycle stops instead of moving on.
+
+    Two branches:
+      - `<= _ENUM_ATOM_CAP` atoms → delegate, so every claim that classified before ADR 0088
+        classifies identically after it;
+      - more → admit ONLY a flat disjunction of modular atoms, the covering-system shape, where
+        non-triviality is exact and O(n): such a formula is false when every atom is false and
+        true when any single atom holds, so it is CONSTANT iff some atom occurs both as `==` and
+        as `!=` (a literal `p ∨ ¬p`). Any other large shape returns True — content-free ⇒ REJECT
+        ⇒ DEFER — which is the fail-closed direction: an unrecognised big formula is refused, not
+        waved through on an unchecked guard.
+    """
+    if len(atoms) <= _ENUM_ATOM_CAP:
+        return _content_free(tree, atoms)
+    if not (isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.Or)):
+        return True
+    pos: set = set()
+    neg: set = set()
+    for node in tree.values:
+        parsed = _atom(node) if isinstance(node, ast.Compare) else None
+        if parsed is None:
+            return True                                  # not a bare modular atom → refuse
+        op, poly, mj, c = parsed
+        (pos if op == "eq" else neg).add((ast.dump(poly), mj, c))
+    return bool(pos & neg)
+
+
 def _hyp_base(vs: list[str]) -> str:
     base = "hm"
     while any(re.fullmatch(base + r"\d+", v) for v in vs):
@@ -166,7 +241,9 @@ def mixed_proof(skel: MixedSkeleton, vs: list[str], n_domain: int) -> str:
     lines = ["by", f"  intro {intro_all}"]
     if skel.has_neq:
         lines.append("  simp only [ne_eq]")             # `≠` → `¬ =` so the eq-bridges reach the `=`
-    lines.append(f"  have key : ∀ ({binder} : ZMod {M}), {_zmod_prop_mixed(skel.tree, M)} := by decide")
+    lines.append(f"  have key : ∀ ({binder} : ZMod {M}), {_zmod_prop_mixed(skel.tree, M)} := by")
+    lines += [f"    {opt}" for opt in _DECIDE_OPTS]
+    lines.append("    decide +kernel")
     for i, (poly, mj, c) in enumerate(skel.atoms):
         lines.append(_bridge(f"{base}{i}", _term(poly), mj, c))
     lines.append("  rw [" + ", ".join(f"{base}{i}" for i in range(len(skel.atoms))) + "]")
@@ -200,7 +277,7 @@ def decide_certificate(data: object, kernel) -> tuple[bool, dict]:
     skel = classify_mixed(cp)
     if skel is None:
         return False, {"reason": "claim_property outside the mixed-modulus fragment"}
-    if skel.M ** len(vs) > MAX_RESIDUE_CELLS:
+    if skel.M ** len(vs) > _cell_budget(len(vs)):
         return False, {"reason": "residue budget exceeded"}
 
     w_claim = find_witness([cd], vs)
@@ -265,7 +342,7 @@ class MixedModulusFaithfulness:
         if not (MIN_VARS <= len(vs) <= MAX_VARS):
             return False
         skel = classify_mixed(en.claim_property)
-        return skel is not None and skel.M ** len(vs) <= MAX_RESIDUE_CELLS
+        return skel is not None and skel.M ** len(vs) <= _cell_budget(len(vs))
 
     def check(self, prop: Propositio) -> FaithfulnessVerdict:
         en, ex = prop.enuntiatio, prop.expressio

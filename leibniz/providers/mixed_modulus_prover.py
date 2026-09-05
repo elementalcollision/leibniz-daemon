@@ -21,8 +21,8 @@ from typing import Optional
 
 from leibniz.backends.lean_axioms import axiom_closure
 from leibniz.dsl_to_lean import RenderError, free_vars
-from leibniz.gates.lean_decided import MAX_RESIDUE_CELLS, MAX_VARS, MIN_VARS
-from leibniz.gates.mixed_modulus_decided import classify_mixed, mixed_proof
+from leibniz.gates.lean_decided import MAX_VARS, MIN_VARS
+from leibniz.gates.mixed_modulus_decided import _cell_budget, classify_mixed, mixed_proof
 from leibniz.propositio import Demonstratio
 from leibniz.providers.residue_prover import law_statement    # the DSL law renderer (classifier-agnostic)
 from leibniz.trust import FAITHFULNESS_EDGE
@@ -43,7 +43,7 @@ def mixed_law(name: str, claim_domain: str, claim_property: str) -> Optional[tup
         if skel is None:
             return None
         vs = free_vars(claim_domain, claim_property)
-        if not (MIN_VARS <= len(vs) <= MAX_VARS) or skel.M ** len(vs) > MAX_RESIDUE_CELLS:
+        if not (MIN_VARS <= len(vs) <= MAX_VARS) or skel.M ** len(vs) > _cell_budget(len(vs)):
             return None
         theorem_src = f"theorem {name} : {law_statement(claim_domain, claim_property, vs)}"
         return theorem_src, mixed_proof(skel, vs, n_domain=1)

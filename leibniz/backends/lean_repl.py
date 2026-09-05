@@ -83,7 +83,17 @@ class LeanReplBackend:
     # --- process + protocol ---------------------------------------------------
     def _start(self) -> Optional[subprocess.Popen]:
         if self._proc is not None:
-            return self._proc
+            if self._proc.poll() is None:
+                return self._proc
+            # The REPL DIED rather than answered. `_send`'s timeout path tears the process down,
+            # but the EOF/BrokenPipe paths do not — so without this liveness check the corpse is
+            # handed back forever: every later check reads EOF, returns None, and DEFERs, silently,
+            # for the life of the backend. One aborting candidate would cost an entire unattended
+            # cycle with no error in the journal. Reachable since ADR 0088: a near-miss `decide`
+            # over a large `ZMod` can overflow the kernel stack and abort the process (exit 134);
+            # at the old MAX_LCM = 64 it could not. Drop the corpse and respawn — `close()` also
+            # clears the env cache, whose ids belong to the dead process.
+            self.close()
         try:
             self._proc = subprocess.Popen(
                 ["docker", "run", "-i", "--rm", self.image],

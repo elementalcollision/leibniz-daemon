@@ -41,6 +41,8 @@ class _FakeProc:
         self.stdin = _Stdin()
         self.stdout = stdout
         self.terminated = False
+    def poll(self):
+        return None                # a live process; these tests exercise hang/EOF, not death
     def terminate(self):
         self.terminated = True
         rel = getattr(self.stdout, "_released", None)
