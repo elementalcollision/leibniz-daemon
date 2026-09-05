@@ -48,6 +48,9 @@ class _FakeProc:
         self.stdin = _RecordingStdin()
         self.stdout = _LineStdout([json.dumps(r) + "\n" for r in responses])
 
+    def poll(self):
+        return None                # a live process; these tests exercise swallowed responses
+
     def terminate(self):
         pass
 

@@ -42,6 +42,9 @@ template, decides — exactly as for the single-modulus procedures.
   `lean_decided._atom`); `and`/`or`/`not`/`↔` structure only; the non-triviality guard (`_content_free`,
   reused from `boolean_decided`) rejects propositional tautologies.
 - `MIN_VARS ≤ nvars ≤ MAX_VARS`, `M ≤ MAX_LCM`, `M ** nvars ≤ MAX_RESIDUE_CELLS`, `≤ MAX_ATOMS` atoms.
+  **(Superseded by ADR 0088:** the budgets are now this fragment's own — `MAX_LCM = 20160`,
+  `_cell_budget(nvars)` (widened at one variable only), `MIXED_MAX_ATOMS`. The shared
+  `MAX_RESIDUE_CELLS` / `MAX_ATOMS` still bound the single-modulus and boolean fragments.**)
 
 ## Realization
 
