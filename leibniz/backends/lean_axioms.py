@@ -18,6 +18,19 @@ STD_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
 
 _NAME_RE = re.compile(r"(?:theorem|lemma)\s+([^\s({\[:]+)")
 _AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
+#: ADR 0089 — positive evidence that `#print axioms` actually REPORTED on our theorem. Lean emits
+#: one of two forms, and the second matches no axiom list at all:
+#:     'foo' depends on axioms: [propext, Classical.choice, Quot.sound]
+#:     'foo' does not depend on any axioms
+#: Requiring a non-empty `axioms` list would therefore false-DEFER every axiom-free proof (verified
+#: against live Lean 4.31: `theorem t : 1 + 1 = 2 := rfl` prints the second form). Both forms count.
+#: The name may be reported FULLY QUALIFIED while `_NAME_RE` reads the short one out of the source
+#: (this repo's own recorded output has both: 'SO_cube.cube_not_self_ordered' and 'steiner_s8_225_s9_289').
+#: An ADR 0062 preamble that opens a namespace so the statement can use short names would otherwise
+#: turn a clean footprint into a silent DEFER, so an optional qualifier is allowed.
+def _report_re(name: str):
+    return re.compile(r"'(?:[^']*\.)?" + re.escape(name)
+                      + r"'\s*(?:depends on axioms:|does not depend on any axioms)")
 
 
 def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS,
@@ -31,22 +44,45 @@ def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=ST
     Read-only: mints nothing, edits no core file."""
     m = _NAME_RE.search(theorem_src)
     if not m:
-        return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": []}
+        return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": [],
+                "saw_axiom_report": False}
     name = m.group(1)
     body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
     decl = f"{theorem_src} {body}\n#print axioms {name}"
     src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
     r = backend._run(src, tuple(imports))
     if r is None:
-        return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name}
+        return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name,
+                "saw_axiom_report": False}
     msgs = r.get("messages", []) or []
     errors = [(mm.get("data") or "") for mm in msgs if mm.get("severity") == "error"]
+    # ADR 0089 review — read the footprint ONLY from the report about our own theorem. An
+    # ADR 0062 preamble may carry its own `#print axioms` (16 of the docs/crt/*.lean artifacts do,
+    # and `steiner`/`double_blocking` ride in as whole-artifact preambles), so a name-blind scan
+    # could hand back the preamble's list for our theorem — including for an axiom-free one.
+    rep = _report_re(name)
     axioms: list = []
+    saw_report = False
     for mm in msgs:
-        am = _AXIOMS_RE.search(mm.get("data") or "")
-        if am:
-            axioms = [a.strip() for a in am.group(1).split(",") if a.strip()]
-    has_sorry = "sorryAx" in axioms or any("sorry" in e.lower() for e in errors)
+        data = mm.get("data") or ""
+        if not rep.search(data):
+            continue
+        saw_report = True
+        am = _AXIOMS_RE.search(data)
+        axioms = [a.strip() for a in am.group(1).split(",") if a.strip()] if am else []
+    # Scan EVERY message, not just errors: Lean reports `declaration uses 'sorry'` as a WARNING,
+    # so an error-only scan was weaker here than `_kernel_ok` (which scans all of them) — an
+    # asymmetry that let this check be the laxer of the two it is meant to reinforce.
+    has_sorry = "sorryAx" in axioms or any("sorry" in (mm.get("data") or "").lower() for mm in msgs)
     extra = [a for a in axioms if a not in allowed]
-    return {"ok": bool(not errors and not has_sorry and not extra), "axioms": axioms,
+    # ADR 0089 — this function exists to READ the axiom footprint, so it must not pass without
+    # having seen one. Before this check `ok` was `not errors and not has_sorry and not extra`,
+    # all three of which a response with NO messages satisfies vacuously: a REPL answering
+    # `{"messages": []}` returned ok=True for a FALSE theorem proved `by sorry`, and since
+    # `decide_certificate` gates every leg on this, that is the whole faithfulness certificate.
+    # `#print axioms` always reports on success, so no report means something went wrong.
+    # The report must name OUR theorem, so a report about some other declaration (e.g. one the
+    # operator-authored preamble elaborated, ADR 0062) cannot stand in for it.
+    ok = bool(not errors and not has_sorry and not extra and saw_report)
+    return {"ok": ok, "axioms": axioms, "saw_axiom_report": saw_report,
             "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name}

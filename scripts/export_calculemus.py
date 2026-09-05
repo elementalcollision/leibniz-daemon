@@ -34,6 +34,8 @@ import re
 import sys
 from pathlib import Path
 
+from leibniz.backends.lean_axioms import STD_AXIOMS, axiom_closure  # noqa: F401
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 _REPO = Path(__file__).resolve().parent.parent
@@ -45,40 +47,15 @@ _DEFAULT_LEDGER = Path(
 # H0 axiom-closure gate: a discharged/Q.E.D. law may depend only on the standard Lean/Mathlib axioms — never on
 # `sorryAx` and never on a project-admitted axiom (an F2b-style scaffold), which would mean the "proof" is not a
 # proof. `#print axioms <name>` reports the footprint; we assert it is a subset of the standard set.
-_STD_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
+_STD_AXIOMS = STD_AXIOMS
 _NAME_RE = re.compile(r"(?:theorem|lemma)\s+([^\s({\[:]+)")
-_AXIOMS_RE = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
 
-
-def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=_STD_AXIOMS,
-                  preamble: str = "") -> dict:
-    """Elaborate `<preamble> <theorem_src> := <proof_src>` and run `#print axioms`. ok = it elaborates with no
-    error AND its axiom footprint contains no `sorryAx` and no axiom outside `allowed` (the standard Lean/Mathlib
-    set). A discharged law that secretly rests on `sorry` or an admitted lemma fails here even if the kernel
-    elaborates the (open) term. ADR 0062: the operator-authored `preamble` (defs/set_options) is elaborated as
-    part of the source, so a smuggled hole/axiom there is caught too. Read-only: mints nothing, edits no core file."""
-    m = _NAME_RE.search(theorem_src)
-    if not m:
-        return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": []}
-    name = m.group(1)
-    body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
-    decl = f"{theorem_src} {body}\n#print axioms {name}"
-    src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
-    r = backend._run(src, tuple(imports))
-    if r is None:
-        return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name}
-    msgs = r.get("messages", []) or []
-    errors = [(mm.get("data") or "") for mm in msgs if mm.get("severity") == "error"]
-    axioms: list = []
-    for mm in msgs:
-        am = _AXIOMS_RE.search(mm.get("data") or "")
-        if am:
-            axioms = [a.strip() for a in am.group(1).split(",") if a.strip()]
-    has_sorry = "sorryAx" in axioms or any("sorry" in e.lower() for e in errors)
-    extra = [a for a in axioms if a not in allowed]
-    return {"ok": bool(not errors and not has_sorry and not extra), "axioms": axioms,
-            "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name}
-
+# ADR 0089: this module used to carry its OWN copy of `axiom_closure`. `leibniz.backends.lean_axioms`
+# exists precisely so the faithfulness-time and publish-time checks are "the SAME code ... not two
+# drifting copies" (its own docstring) — and they had drifted: the library copy was hardened to
+# require a `#print axioms` report about the theorem, while this one, which is `check_ledger`'s H0
+# gate for the ADR 0033 publish act, still printed VERIFIED for a false theorem proved `by sorry`
+# against a silent REPL. Re-exported rather than re-implemented so it cannot drift again.
 
 def check_ledger(path: Path) -> int:
     path = Path(path)
