@@ -11,6 +11,8 @@ from __future__ import annotations
 import itertools
 import math
 
+import z3
+
 import pytest
 
 from leibniz.backends.smt_z3 import MAX_TABLE_BOUND, PredicateError, Z3Backend, available, compile_pred
@@ -87,8 +89,46 @@ def test_gcd_var_var_semantics_on_the_full_table():
     assert got is not None and math.gcd(14, got["b"]) == 7
 
 
-def test_renderer_lockstep_is_subset_not_equal():
-    # no kernel procedure consumes factorial/gcd yet → the renderer must keep REFUSING them
-    for src in ("factorial(n) == 6", "gcd(a, b) == 1"):
-        with pytest.raises(RenderError):
+#: Admitted / refused on BOTH sides. `dsl_to_lean`'s header states the invariant this pins: the
+#: renderer "admits *exactly* the Z3-admitted grammar and no more".
+_LOCKSTEP_IN = ("factorial(n) == 6", "gcd(a, b) == 1", "gcd(n, 6) == 1", "factorial(6) == 720",
+                "gcd(12, 18) == 6", "factorial(n) + gcd(a, b) == 7")
+_LOCKSTEP_OUT = ("factorial(n + 1) == 6",          # compound argument
+                 "factorial(factorial(n)) == 6",   # nested call
+                 "gcd(a) == 1", "gcd(a, b, c) == 1",  # wrong arity
+                 "gcd(a*a, b) == 1",               # compound argument
+                 f"gcd(n, {MAX_TABLE_BOUND + 1}) == 1")   # constant over the table bound
+
+
+def test_renderer_and_z3_admit_the_same_named_function_fragment():
+    """ADR 0070 put the renderer in LOCKSTEP with smt_z3's ADR 0066 table fragment.
+
+    This test previously asserted the opposite — "no kernel procedure consumes factorial/gcd yet
+    → the renderer must keep REFUSING them" — and went stale the moment ADR 0070 landed the
+    factgcd kernel procedure. That ADR records replacing the conformance suite's `gcd(n, 6) == 1`
+    refusal pin, but this sibling pin was missed, so the suite has carried a red test asserting a
+    superseded design ever since.
+
+    Pinning lockstep is strictly stronger than the refusal it replaces: it catches the renderer
+    drifting in EITHER direction, and admitting more than Z3 is the dangerous one — a claim the
+    cheap Z3 refutation never saw would reach the kernel."""
+    env_vars = ("n", "a", "b", "c")
+
+    def z3_admits(src: str) -> bool:
+        try:
+            compile_pred(src, {v: z3.Int(v) for v in env_vars}, 16)
+            return True
+        except Exception:
+            return False
+
+    def renderer_admits(src: str) -> bool:
+        try:
             render_pred(src)
+            return True
+        except RenderError:
+            return False
+
+    for src in _LOCKSTEP_IN:
+        assert z3_admits(src) and renderer_admits(src), f"should be admitted by both: {src}"
+    for src in _LOCKSTEP_OUT:
+        assert not z3_admits(src) and not renderer_admits(src), f"should be refused by both: {src}"

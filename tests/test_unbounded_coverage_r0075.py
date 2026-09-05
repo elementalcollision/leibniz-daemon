@@ -80,9 +80,8 @@ def test_probe_defers_when_the_backend_cannot_decide_unbounded():
     assert probe(_prop(EXPLOIT_CD, EXPLOIT_CP, EXPLOIT_CD)) is None
 
 
-def test_byte_identical_domains_cover_without_a_solver_call():
-    """ed == cd covers by construction. Deciding it instead would needlessly DEFER every
-    ADR 0035/0066 domain, whose encodings are exact only inside the box."""
+def _count_unbounded_calls(cd, cp, ed):
+    """Unbounded solver decisions made by the INVARIANT probe on one contract."""
 
     class _CountingZ3(Z3Backend):
         calls = 0
@@ -92,8 +91,27 @@ def test_byte_identical_domains_cover_without_a_solver_call():
             return super().decide_unsat_unbounded(preds)
     be = _CountingZ3()
     probe = default_probes(SMTVerifier(backend=be))[ClaimType.INVARIANT]
-    probe(_prop("n >= 0", "n + 1 > n", "n >= 0"))
-    assert _CountingZ3.calls == 1                              # property leg only
+    verdict = probe(_prop(cd, cp, ed))
+    return _CountingZ3.calls, verdict
+
+
+def test_byte_identical_domains_cover_without_a_solver_call():
+    """ed == cd covers by construction. Deciding it instead would needlessly DEFER every
+    ADR 0035/0066 domain, whose encodings are exact only inside the box.
+
+    The assertion is DIFFERENTIAL, which is the property actually being claimed: the
+    byte-identical shortcut must cost exactly ONE FEWER unbounded decision than a textually
+    different established_domain. It used to assert the absolute count `== 1`, which went stale
+    when the ADR 0075 AMENDMENT (refuse a vacuous claim_domain) added a non-emptiness decision to
+    the same probe without updating this sibling test — a red suite ever since. An absolute count
+    pins the leg being tested AND every unrelated leg anyone later adds; the difference pins only
+    the shortcut."""
+    same, v_same = _count_unbounded_calls("n >= 0", "n + 1 > n", "n >= 0")
+    diff, v_diff = _count_unbounded_calls("n >= 0", "n + 1 > n", "n >= 0 and n >= 0")
+    assert v_same is True and v_diff is True                   # both certify; only the cost differs
+    assert diff - same == 1, "the byte-identical shortcut must skip exactly the coverage leg"
+    # documents today's absolute split: non-emptiness + property (+ coverage when ed differs)
+    assert (same, diff) == (2, 3)
 
 
 @pytest.mark.parametrize("cd,cp", [
