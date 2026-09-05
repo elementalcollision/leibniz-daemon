@@ -34,8 +34,14 @@ class _FakeBackend:
         if self._error:
             msgs.append({"severity": "error", "data": self._error})
         if self._axioms is not None:
-            # `#print axioms foo` renders as: "'foo' depends on axioms: [a, b, c]"
-            msgs.append({"severity": "info", "data": f"'x' depends on axioms: [{', '.join(self._axioms)}]"})
+            # `#print axioms foo` renders as: "'foo' depends on axioms: [a, b, c]" — with the REAL
+            # declaration name, which every other fake backend in this suite derives from the source.
+            # Hardcoding 'x' made this double lie about which declaration was reported on, and ADR
+            # 0089 (the report must name OUR theorem) turned that into a spurious BROKEN verdict.
+            import re as _re
+            m = _re.search(r"#print axioms (\S+)", src)
+            name = m.group(1) if m else "x"
+            msgs.append({"severity": "info", "data": f"'{name}' depends on axioms: [{', '.join(self._axioms)}]"})
         return {"messages": msgs}
 
 

@@ -226,12 +226,11 @@ def test_fail_closed_without_registration():
 @pytest.mark.skipif(not os.environ.get("LEIBNIZ_LEAN_E2E"), reason="set LEIBNIZ_LEAN_E2E=1 for the Lean e2e")
 def test_real_kernel_certifies_true_and_defers_false():  # pragma: no cover
     from leibniz.backends.lean_repl import LeanReplBackend, available
-    from leibniz.verifiers import LeanVerifier
     if not available():
         pytest.skip("Lean image unavailable")
     be = LeanReplBackend(timeout_s=150)
     try:
-        kernel = LeanVerifier(be)
+        kernel = be                      # decide_certificate wants the BACKEND's check_proof
         assert bd.decide_certificate(dict(zip(["claim_domain", "claim_property", "established_domain"], BICOND)), kernel)[0]
         false_b = ("a >= 0 and b >= 0", "((a*b) % 3 == 0) == (a % 3 == 0)", "a >= 0 and b >= 0")
         assert not bd.decide_certificate(dict(zip(["claim_domain", "claim_property", "established_domain"], false_b)), kernel)[0]

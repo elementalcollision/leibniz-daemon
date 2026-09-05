@@ -199,19 +199,79 @@ def _mixed_content_free(tree: ast.AST, atoms: list) -> bool:
         ⇒ DEFER — which is the fail-closed direction: an unrecognised big formula is refused, not
         waved through on an unchecked guard.
     """
+    # ADR 0089 review — the full-residue-block check is O(k) and sound at ANY size, so it runs
+    # FIRST and at every atom count. Scoping it to the >8 branch (as this first landed) left the
+    # ADR's own example family classifying at 3-8 atoms: `(n%2==0) ∨ (n%2==1) ∨ (n%3==0)` went
+    # straight through, and `boolean_decided` refuses that same shape on one modulus — the mixed
+    # gate was laxer than its sibling on the pathology it had just been hardened against.
+    flat = _flat_atoms(tree)
+    if flat and _padded_covering(flat):
+        return True
     if len(atoms) <= _ENUM_ATOM_CAP:
         return _content_free(tree, atoms)
-    if not (isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.Or)):
-        return True
+    if not flat:
+        return True                                      # large non-flat shape → refuse
     pos: set = set()
     neg: set = set()
+    for op, poly, mj, c in flat:
+        (pos if op == "eq" else neg).add((ast.dump(poly), mj, c))
+    return bool(pos & neg)                               # a literal `p ∨ ¬p`
+
+
+def _flat_atoms(tree: ast.AST) -> list:
+    """The `(op, poly, m, c)` atoms of a FLAT disjunction, or [] if the tree is not one.
+    (CPython does not flatten `(A ∨ B) ∨ C`, so a parenthesis-grouped disjunction reads as
+    non-flat here and takes the conservative path.)"""
+    if not (isinstance(tree, ast.BoolOp) and isinstance(tree.op, ast.Or)):
+        return []
+    out: list = []
     for node in tree.values:
         parsed = _atom(node) if isinstance(node, ast.Compare) else None
         if parsed is None:
-            return True                                  # not a bare modular atom → refuse
-        op, poly, mj, c = parsed
-        (pos if op == "eq" else neg).add((ast.dump(poly), mj, c))
-    return bool(pos & neg)
+            return []
+        out.append(parsed)
+    return out
+
+
+def _padded_covering(flat: list) -> bool:
+    """ADR 0089 — True when a flat disjunction is content-free BY CONSTRUCTION: some modulus
+    appears with ALL of its residues, i.e. the formula literally restates "every integer has some
+    residue mod m". `(n%4==0) ∨ (n%4==1) ∨ (n%4==2) ∨ (n%4==3) ∨ …` is such a claim padded out
+    with filler; it is TRUE, so the kernel accepts it, and it would promulgate as a law carrying
+    no content. Propositionally it is not constant — the atoms are independent boolean variables —
+    so neither `_content_free` nor the `pos & neg` check above sees anything wrong with it.
+
+    THE CRITERION IS NOT REDUNDANCY. ADR 0089 first specified "reject when a proper subset already
+    covers ℤ", computed by a coverage-count array. Testing that against the system it exists to
+    admit refuted it: arXiv 2607.19029 §7 — the published, distinct, minimum-modulus-7, lcm-10080
+    covering system this whole line of work is aimed at — contains a REDUNDANT congruence. Drop
+    `233 (mod 1120)` and the remaining 65 still cover ℤ, still have distinct moduli, minimum
+    modulus 7 and lcm 10080 (verified exhaustively). That is not an error in the paper: its
+    theorem is that the minimal LCM is 10080, not that the witness is irredundant. But it means
+    redundancy does not imply absence of content, and the redundancy criterion would have rejected
+    the target.
+
+    A full residue block cannot occur in a DISTINCT covering system at all — no modulus repeats —
+    so this criterion cannot fire on one, which is exactly the property the redundancy test lacked.
+
+    Scope, deliberately narrow: only all-`==` atoms over the SAME bare variable, the
+    covering-system shape. Anything else keeps the propositional verdict; coverage is not the
+    right question there and guessing at it would be a new way to be wrong. O(k), no arithmetic
+    over ℤ/M at all.
+    """
+    # Only the `==` atoms matter, and the rest of the disjunction is irrelevant: if the eq atoms
+    # alone contain a complete residue system mod m the whole formula is a tautology over ℤ no
+    # matter what else is OR'd in. Requiring EVERY atom to be `==` (as this first landed) made the
+    # guard evadable by appending one unrelated `!=` atom.
+    eqs = [(p, mj, c) for op, p, mj, c in flat if op == "eq"]
+    if not eqs:
+        return False
+    if len({ast.dump(p) for p, _m, _c in eqs}) != 1 or not all(isinstance(p, ast.Name) for p, _m, _c in eqs):
+        return False                                     # compound polys or >1 variable → not ours
+    residues: dict = {}
+    for _p, mj, c in eqs:
+        residues.setdefault(mj, set()).add(c % mj)
+    return any(len(rs) == mj for mj, rs in residues.items())
 
 
 def _hyp_base(vs: list[str]) -> str:
