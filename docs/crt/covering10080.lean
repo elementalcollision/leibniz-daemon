@@ -30,6 +30,60 @@ NOTE  The paper's exhibited system contains a REDUNDANT congruence: dropping 233
       That is not an error -- the paper's theorem is about the minimal lcm, not an irredundant
       witness -- but it refuted an earlier non-triviality criterion (see ADR 0089) and is recorded
       here so the next reader does not rediscover it as a defect.
+PROVENANCE OF THIS EFFORT -- how a solved 2017 cipher puzzle led here.
+
+  A survey of unsolved ciphers put Rivest's LCS35 time-lock cryptogram forward as a candidate
+  target (Schmeh, 2017). It was REJECTED: LCS35 was solved in 2019, it is a compute job rather
+  than a theorem, and the genuinely open question underneath it -- whether repeated squaring is
+  inherently sequential -- is the unproven assumption under every verifiable delay function
+  (Rivest et al., 1996; Boneh et al., 2018) and is not in reach of any decidable fragment.
+  What survived that rejection was a SHAPE: a fresh paper with a stated finite core in the
+  modular-order or gcd families. Zhang and Zhang (2026) is that paper, and this file is its
+  construction half, decided by the Lean kernel (de Moura & Ullrich, 2021; mathlib Community, 2020).
+
+REFERENCES (APA 7th)
+
+  Boneh, D., Bonneau, J., Bunz, B., & Fisch, B. (2018). Verifiable delay functions. In
+      H. Shacham & A. Boldyreva (Eds.), Advances in cryptology - CRYPTO 2018 (pp. 757-788).
+      Springer. https://doi.org/10.1007/978-3-319-96884-1_25
+      [Bunz is spelled with u-umlaut in the original.]
+
+  de Moura, L., & Ullrich, S. (2021). The Lean 4 theorem prover and programming language. In
+      A. Platzer & G. Sutcliffe (Eds.), Automated deduction - CADE 28 (pp. 625-635). Springer.
+      https://doi.org/10.1007/978-3-030-79876-5_37
+
+  Gurobi Optimization, LLC. (2026). Gurobi optimizer reference manual (Version 13.0.1)
+      [Computer software]. https://www.gurobi.com
+
+  Klein, J. (2026). On a conjecture of Krukenberg and a problem of Dalton and Trifonov.
+      Integers, 26, Article A38. https://doi.org/10.5281/zenodo.19402698
+
+  The mathlib Community. (2020). The Lean mathematical library. In Proceedings of the 9th ACM
+      SIGPLAN International Conference on Certified Programs and Proofs (pp. 367-381).
+      Association for Computing Machinery. https://doi.org/10.1145/3372885.3373824
+
+  Rivest, R. L. (1999). Description of the LCS35 time capsule crypto-puzzle [Unpublished
+      manuscript]. MIT Laboratory for Computer Science.
+      https://people.csail.mit.edu/rivest/pubs/Riv99b.lcs35-puzzle-description.txt
+      [Institution editorially supplied: the document carries no imprint line. NOT "MIT CSAIL",
+       which did not exist until 2003 despite the people.csail.mit.edu host.]
+
+  Rivest, R. L., Shamir, A., & Wagner, D. A. (1996). Time-lock puzzles and timed-release crypto
+      (Report No. MIT/LCS/TR-684). MIT Laboratory for Computer Science.
+      https://hdl.handle.net/1721.1/149822
+      [The deposited document carries no printed series designation; MIT DSpace records it as a
+       Technical Report while Rivest's own BibTeX writes "Technical memo". APA's neutral
+       "Report No." takes no side.]
+
+  Schmeh, K. (2017, February 15). The top 50 unsolved encrypted messages: 48. Ron Rivest's
+      timelock cryptogram. Klausis Krypto Kolumne. https://scienceblogs.de/klausis-krypto-
+      kolumne/2017/02/15/the-top-50-unsolved-encrypted-messages-48-ron-rivests-timelock-cryptogram/
+
+  Zhang, S., & Zhang, J. (2026). A distinct covering system with minimum modulus 7 and minimal
+      least common multiple 10080 (arXiv:2607.19029). arXiv. https://arxiv.org/abs/2607.19029
+      [Author order is from the typeset PDF byline and the end-matter contact blocks, which agree.
+       arXiv's listing page and the PDF Info dictionary give the reverse order; both derive from
+       the submitter's metadata record, not from the document.]
 -/
 import Mathlib
 

@@ -75,8 +75,14 @@ KIND = "mixed-modulus-faithfulness"
 # Every one of these bounds a `decide` over a FINITE `ZMod` — compute budget, never soundness. A
 # false formula still makes the decide refuse ⇒ the kernel rejects ⇒ DEFER, at any cap.
 MAX_LCM = 20160        # measured on live Lean 4.31: M=10080 closes in 16s, M=100800 in 47s, OOM
-                       # before M=262080. 20160 admits arXiv 2607.19029 (10080) and Klein (15120)
-                       # with an order of magnitude of headroom under the measured ceiling.
+                       # before M=262080. 20160 admits arXiv 2607.19029 (10080) and Klein's
+                       # earlier min-modulus-7 system (lcm 15120, conjectured minimal until
+                       # Zhang & Zhang refuted it) with an order of magnitude of headroom under
+                       # the measured ceiling. Adversarial review flagged "Klein (15120)" here as
+                       # an unverified assertion; it is confirmed by the source paper's own text
+                       # and reference [14] -- Klein, J. (2026), "On a conjecture of Krukenberg
+                       # and a problem of Dalton and Trifonov", Integers, 26, Article A38,
+                       # https://doi.org/10.5281/zenodo.19402698.
 MIXED_MAX_CELLS = 20160    # this fragment's `M ** nvars` budget, ONE VARIABLE ONLY — see `_cell_budget`
 MIXED_MAX_ATOMS = 72       # a covering system with lcm M and min modulus m has at most
                            # #{d : d | M, d ≥ m} congruences — 66 for (10080, 7), which arXiv

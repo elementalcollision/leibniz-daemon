@@ -57,9 +57,27 @@ SYSTEM = [
 ]
 
 _REFERENCES = [
-    {"citation": ("Zhang, S. & Zhang, J. (2026). A Distinct Covering System with Minimum Modulus 7 "
-                  "and Minimal Least Common Multiple 10080. arXiv:2607.19029."),
+    # The amplified source.
+    {"citation": ("Zhang, S., & Zhang, J. (2026). A distinct covering system with minimum modulus 7 "
+                  "and minimal least common multiple 10080 (arXiv:2607.19029). arXiv."),
      "url": "https://arxiv.org/abs/2607.19029"},
+    # The record it improves: Klein's min-modulus-7 system had lcm 15120, conjectured minimal.
+    {"citation": ("Klein, J. (2026). On a conjecture of Krukenberg and a problem of Dalton and "
+                  "Trifonov. Integers, 26, Article A38."),
+     "url": "https://doi.org/10.5281/zenodo.19402698"},
+    # The mechanical checker that decided this law.
+    {"citation": ("de Moura, L., & Ullrich, S. (2021). The Lean 4 theorem prover and programming "
+                  "language. In A. Platzer & G. Sutcliffe (Eds.), Automated deduction - CADE 28 "
+                  "(pp. 625-635). Springer."),
+     "url": "https://doi.org/10.1007/978-3-030-79876-5_37"},
+    {"citation": ("The mathlib Community. (2020). The Lean mathematical library. In Proceedings of "
+                  "the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs "
+                  "(pp. 367-381). Association for Computing Machinery."),
+     "url": "https://doi.org/10.1145/3372885.3373824"},
+    # Cited because this law's statement explicitly EXCLUDES the half that rests on it.
+    {"citation": ("Gurobi Optimization, LLC. (2026). Gurobi optimizer reference manual "
+                  "(Version 13.0.1) [Computer software]."),
+     "url": "https://www.gurobi.com"},
 ]
 
 
