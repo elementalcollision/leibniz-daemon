@@ -38,12 +38,24 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import sys
 from math import prod
 from pathlib import Path
+
+# Pin THIS checkout's `leibniz` ahead of the editable install, exactly as
+# scripts/export_calculemus.py:39 does. Without it a bare `python3 scripts/...` resolves
+# `import leibniz` to whatever the editable install points at -- here, a DIFFERENT checkout,
+# 39 ADRs behind, with no leibniz.backends.lean_axioms at all. Any record this script wrote
+# without this line was produced against code that is not the code in this tree.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 _ROOT = Path(__file__).resolve().parent.parent
 OUT = _ROOT / "docs" / "results" / "counterexample_domain.json"
 _AX = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
+# ADR 0090: `set_option maxRecDepth` on every `decide` cert. NAbs9 hit "maximum recursion
+# depth has been reached", which makes Lean stamp the declaration with `sorryAx` rather than
+# fail loudly -- and the old fail-open scan then published it as GREEN. Raising a budget
+# cannot break a proof that already closes, so it is applied uniformly, not just where it bit.
 _STD = {"propext", "Classical.choice", "Quot.sound"}
 
 # --- APA references, shared across families -----------------------------------------------------------------
@@ -117,14 +129,16 @@ def certify_self_ordered(params: dict) -> dict:
         mm, n = witness
         thm = f"{ns}.not_self_ordered"
         lean = hdr + (f"/-- ¬ self-ordered: at (m,n)=({mm},{n}), D_{n} ∤ P_{{{mm},{n}}}. -/\n"
-                      f"theorem not_self_ordered : P {mm} {n} % D {n} ≠ 0 := by decide\n"
+                      f"theorem not_self_ordered : P {mm} {n} % D {n} ≠ 0 := by\n"
+                f"  set_option maxRecDepth 10000 in\n  decide\n"
                       f"end {ns}\n")
         return {"verdict": "not-self-ordered", "witness": [mm, n],
                 "kernel": {"lean": lean, "imports": ["Mathlib.Algebra.BigOperators.Intervals", "Mathlib.Tactic"],
                            "check": "decide", "theorem": thm}}
     thm = f"{ns}.self_ordered_lt{N}"
     lean = hdr + (f"/-- self-ordered up to bound {N} (a base family). -/\n"
-                  f"theorem self_ordered_lt{N} : ∀ n < {N}, ∀ m < {N}, P m n % D n = 0 := by decide\n"
+                  f"theorem self_ordered_lt{N} : ∀ n < {N}, ∀ m < {N}, P m n % D n = 0 := by\n"
+            f"  set_option maxRecDepth 10000 in\n  decide\n"
                   f"end {ns}\n")
     return {"verdict": f"self-ordered (bound {N})", "witness": None,
             "kernel": {"lean": lean, "imports": ["Mathlib.Algebra.BigOperators.Intervals", "Mathlib.Tactic"],
@@ -155,12 +169,16 @@ def certify_n_absorbing(params: dict) -> dict:
             f"abbrev isNAbs (r : ℕ) : Prop :=\n"
             f"  ∀ x : Fin (r+1) → ZMod {m}, (∏ i, x i) = 0 → ∃ j, (∏ i ∈ Finset.univ.erase j, x i) = 0\n"
             f"/-- absorbingNumber (⊥ : ZMod {m}) = {k}: ⊥ is {k}-absorbing but not {k - 1}-absorbing. -/\n"
-            f"theorem absorbing_number_bot : isNAbs {k} ∧ ¬ isNAbs {k - 1} := by decide\n"
+            f"theorem absorbing_number_bot : isNAbs {k} ∧ ¬ isNAbs {k - 1} := by\n"
+            f"  set_option maxRecDepth 10000 in\n  decide\n"
             f"end {ns}\n")
     return {"verdict": f"absorbingNumber(⊥ : ℤ/{m}) = {k}", "witness": {"absorbing_number": k},
             "kernel": {"lean": lean,
-                       "imports": ["Mathlib.Data.ZMod.Basic", "Mathlib.Algebra.BigOperators.Basic",
-                                   "Mathlib.Tactic"],
+                       # `Mathlib.Algebra.BigOperators.Basic` was listed here and does NOT exist in
+                       # the pinned Mathlib (no .olean in leibniz-lean:v4.31.0). The env build failed,
+                       # the REPL answered None, and the old fail-open scan below recorded ok=True --
+                       # so this cert published as kernel-checked without ever being elaborated.
+                       "imports": ["Mathlib.Data.ZMod.Basic", "Mathlib.Tactic"],
                        "check": "decide", "theorem": f"{ns}.absorbing_number_bot"}}
 
 
@@ -253,6 +271,7 @@ def main() -> int:
     # kernel leg: elaborate each emitted Lean cert + confirm the axiom footprint is standard/empty.
     kernel = {"status": "not run", "checked": []}
     try:
+        from leibniz.backends.lean_axioms import axiom_report
         from leibniz.backends.lean_repl import LeanReplBackend, available
         if not available():
             kernel = {"status": "unavailable (Lean REPL)"}
@@ -267,26 +286,38 @@ def main() -> int:
                         continue   # Tier-2 attestations are checked by lake build, not the REPL `decide` leg
                     src = k["lean"] + f"\n#print axioms {k['theorem']}\n"
                     r = bk._run(src, tuple(k["imports"]))
-                    msgs = (r or {}).get("messages", []) or []
-                    errs = [m for m in msgs if m.get("severity") == "error"]
-                    ax = set()
-                    for m in msgs:
-                        am = _AX.search(m.get("data") or "")
-                        if am:
-                            ax |= {a.strip() for a in am.group(1).split(",") if a.strip()}
-                    ok = (not errs) and ax <= _STD
+                    # ADR 0090: the SHARED hardened analysis, not a fourth open-coded scan. The
+                    # previous inline block computed `ok = (not errs) and ax <= _STD` over
+                    # `(r or {})`, so a dead REPL (r is None) and an empty message list both
+                    # satisfied it vacuously -- ok=True with axioms=[] for a cert that never
+                    # elaborated. `axiom_report` additionally requires a `#print axioms` report
+                    # NAMING this declaration, which is what an unanswered probe cannot produce.
+                    rep = axiom_report(r, k["theorem"])
+                    unanswered = r is None
+                    ok = bool(rep["ok"])
                     rows.append({"family": c["family"], "params": c["params"], "theorem": k["theorem"],
-                                 "errors": len(errs), "axioms": sorted(ax), "ok": ok})
-                    print(f"    kernel {k['theorem']:<40} {'OK' if ok else 'FAIL'}  axioms={sorted(ax) or '∅'}")
+                                 "errors": len(rep.get("errors") or []), "axioms": rep["axioms"],
+                                 "ok": ok, "unanswered": unanswered,
+                                 "saw_axiom_report": rep["saw_axiom_report"]})
+                    mark = "UNANSWERED" if unanswered else ("OK" if ok else "FAIL")
+                    print(f"    kernel {k['theorem']:<40} {mark}  axioms={rep['axioms'] or '∅'}")
             finally:
                 bk.close()
-            kernel = {"status": "checked", "checked": rows, "all_ok": all(r["ok"] for r in rows)}
+            unanswered = [r for r in rows if r.get("unanswered")]
+            kernel = {"status": ("checked" if not unanswered
+                                 else f"partial ({len(unanswered)}/{len(rows)} unanswered by the REPL)"),
+                      "checked": rows, "all_ok": bool(rows) and all(r["ok"] for r in rows),
+                      "n_unanswered": len(unanswered)}
     except Exception as ex:  # pragma: no cover
         kernel = {"status": f"unavailable ({type(ex).__name__}: {ex})"}
         print(f"  kernel: {kernel['status']}")
 
+    # An UNANSWERED probe is not a refutation: we learned nothing, so the honest colour is AMBER.
+    # RED is reserved for a cert the kernel actually rejected or whose footprint is non-standard.
+    _st = str(kernel.get("status"))
     gate = ("GREEN" if kernel.get("all_ok") else
-            "AMBER(kernel-unavailable)" if "unavailable" in str(kernel.get("status")) else "RED")
+            "AMBER(kernel-unavailable)" if "unavailable" in _st else
+            "AMBER(kernel-partial)" if kernel.get("n_unanswered") else "RED")
     out = {"gate": gate, "tier": "audit", "ev": "AMPLIFICATION",
            "families": {f: FAMILIES[f]["tier"] for f in FAMILIES},
            "n_tier1": sum(1 for c in certs if c["tier"] == 1), "n_tier2": sum(1 for c in certs if c["tier"] == 2),
