@@ -52,7 +52,12 @@ def test_self_ordered_family_refutes_and_certifies():
     m = _load()
     cube = m.certify({"family": "self_ordered", "params": {"seq": "cube", "bound": 6}})
     assert cube["verdict"] == "not-self-ordered" and cube["witness"] == [3, 2]   # D_2 ∤ P_{3,2}
-    assert "≠ 0 := by decide" in cube["kernel"]["lean"]
+    # ADR 0090: pin the SHAPE, not the exact tactic line. The certs now carry
+    # `set_option maxRecDepth` because NAbs9 hit the recursion wall, and Lean answers that by
+    # stamping the declaration with `sorryAx` rather than failing loudly.
+    lean = cube["kernel"]["lean"]
+    assert "≠ 0 := by" in lean and "decide" in lean
+    assert "set_option maxRecDepth" in lean
     tri = m.certify({"family": "self_ordered", "params": {"seq": "triangular", "bound": 6}})
     assert tri["verdict"].startswith("self-ordered") and tri["witness"] is None
 
@@ -90,21 +95,27 @@ def test_real_kernel_elaborates_all_emitted_certs():
     from leibniz.backends.lean_repl import LeanReplBackend, available
     if not available():
         pytest.skip("Lean REPL image unavailable")
+    from leibniz.backends.lean_axioms import axiom_report
     bk = LeanReplBackend(timeout_s=500)
-    std = {"propext", "Classical.choice", "Quot.sound"}
+    checked = 0
     try:
         for obj in m.registry():
             k = m.certify(obj).get("kernel")
             if not k or k.get("check") != "decide":     # Tier-2 attestations use lake build, not the REPL
                 continue
             r = bk._run(k["lean"] + f"\n#print axioms {k['theorem']}\n", tuple(k["imports"]))
-            msgs = (r or {}).get("messages", []) or []
-            assert not [x for x in msgs if x.get("severity") == "error"], (obj, msgs[:1])
-            ax = set()
-            for x in msgs:
-                am = m._AX.search(x.get("data") or "")
-                if am:
-                    ax |= {a.strip() for a in am.group(1).split(",") if a.strip()}
-            assert ax <= std, (obj, ax)
+            # ADR 0090: the SHARED hardened analysis. This test used to open-code the same
+            # `(r or {})` scan the script did, so it passed vacuously against a dead REPL -- the
+            # exact failure it exists to catch. It agreed with the script by construction,
+            # including when both were wrong.
+            rep = axiom_report(r, k["theorem"])
+            assert rep["ok"], (obj, k["theorem"], rep.get("errors"), rep["axioms"],
+                               f"saw_axiom_report={rep['saw_axiom_report']}")
+            checked += 1
     finally:
         bk.close()
+    # An empty loop must be a FAILURE, not a pass. Without this, dropping every cert -- or every
+    # cert silently failing to elaborate -- reads as green.
+    assert checked == len([o for o in m.registry()
+                           if (m.certify(o).get("kernel") or {}).get("check") == "decide"])
+    assert checked >= 8, f"expected at least 8 decide-certs, checked {checked}"

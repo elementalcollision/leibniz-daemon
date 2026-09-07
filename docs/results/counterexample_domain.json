@@ -8,7 +8,7 @@
     "n_absorbing": 1,
     "pipeline_ring": 2
   },
-  "n_tier1": 7,
+  "n_tier1": 9,
   "n_tier2": 4,
   "certificates": [
     {
@@ -53,6 +53,108 @@
         {
           "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
           "url": ""
+        },
+        {
+          "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv.",
+          "url": "https://arxiv.org/abs/2602.01782"
+        }
+      ]
+    },
+    {
+      "family": "monomial_normal",
+      "tier": 1,
+      "params": {
+        "a": 7,
+        "b": 3,
+        "c": 2
+      },
+      "verdict": "not-normal",
+      "witness": [
+        6,
+        2,
+        1
+      ],
+      "detail": {
+        "L": 42,
+        "weights": [
+          6,
+          14,
+          21
+        ]
+      },
+      "kernel": {
+        "lean": "namespace Prob41_7_3_2\n/-- L-cleared weighted degree wrt (7,3,2); L = lcm = 42, weights = (6,14,21). -/\ndef wt (a b c : \u2115) : \u2115 := 6*a + 14*b + 21*c\n/-- x^u \u2208 I\u00b2 collapses to \u2203 v \u2264 u with 42 \u2264 wt v \u2264 wt u \u2212 42. Here wt u = 85. -/\ndef inI2 : Bool :=\n  (List.range 7).any fun a => (List.range 3).any fun b => (List.range 2).any fun c =>\n    42 \u2264 wt a b c && wt a b c \u2264 43\n/-- (7,3,2) is NOT normal: x^(6, 2, 1) \u2208 closure(I\u00b2) (wt=85 \u2265 84) but \u2209 I\u00b2. -/\ntheorem triple_7_3_2_not_normal : 84 \u2264 wt 6 2 1 \u2227 inI2 = false := by decide\nend Prob41_7_3_2\n",
+        "imports": [
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "Prob41_7_3_2.triple_7_3_2_not_normal"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Huneke, C., & Swanson, I. (2006). Integral closure of ideals, rings, and modules (LMS Lecture Note Series No. 336). Cambridge University Press.",
+          "url": ""
+        },
+        {
+          "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
+          "url": ""
+        },
+        {
+          "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv.",
+          "url": "https://arxiv.org/abs/2602.01782"
+        }
+      ]
+    },
+    {
+      "family": "monomial_normal",
+      "tier": 1,
+      "params": {
+        "a": 3,
+        "b": 4,
+        "c": 5
+      },
+      "verdict": "not-normal",
+      "witness": [
+        2,
+        3,
+        3
+      ],
+      "detail": {
+        "L": 60,
+        "weights": [
+          20,
+          15,
+          12
+        ]
+      },
+      "kernel": {
+        "lean": "namespace Prob41_3_4_5\n/-- L-cleared weighted degree wrt (3,4,5); L = lcm = 60, weights = (20,15,12). -/\ndef wt (a b c : \u2115) : \u2115 := 20*a + 15*b + 12*c\n/-- x^u \u2208 I\u00b2 collapses to \u2203 v \u2264 u with 60 \u2264 wt v \u2264 wt u \u2212 60. Here wt u = 121. -/\ndef inI2 : Bool :=\n  (List.range 3).any fun a => (List.range 4).any fun b => (List.range 4).any fun c =>\n    60 \u2264 wt a b c && wt a b c \u2264 61\n/-- (3,4,5) is NOT normal: x^(2, 3, 3) \u2208 closure(I\u00b2) (wt=121 \u2265 120) but \u2209 I\u00b2. -/\ntheorem triple_3_4_5_not_normal : 120 \u2264 wt 2 3 3 \u2227 inI2 = false := by decide\nend Prob41_3_4_5\n",
+        "imports": [
+          "Mathlib.Tactic"
+        ],
+        "check": "decide",
+        "theorem": "Prob41_3_4_5.triple_3_4_5_not_normal"
+      },
+      "references": [
+        {
+          "citation": "Cahen, P.-J., Fontana, M., Frisch, S., & Glaz, S. (2014). Open problems in commutative ring theory. In M. Fontana, S. Frisch, & S. Glaz (Eds.), Commutative algebra (pp. 353\u2013375). Springer.",
+          "url": ""
+        },
+        {
+          "citation": "Huneke, C., & Swanson, I. (2006). Integral closure of ideals, rings, and modules (LMS Lecture Note Series No. 336). Cambridge University Press.",
+          "url": ""
+        },
+        {
+          "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
+          "url": ""
+        },
+        {
+          "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv.",
+          "url": "https://arxiv.org/abs/2602.01782"
         }
       ]
     },
@@ -87,6 +189,10 @@
         {
           "citation": "Reid, L., Roberts, L. G., & Vitulli, M. A. (2003). Some results on normal homogeneous ideals. Communications in Algebra, 31(9), 4485\u20134506.",
           "url": ""
+        },
+        {
+          "citation": "Ataka, M., & Matsuoka, N. (2026). Normality of monomial ideals in three variables (arXiv:2602.01782). arXiv.",
+          "url": "https://arxiv.org/abs/2602.01782"
         }
       ]
     },
@@ -104,7 +210,7 @@
       ],
       "detail": null,
       "kernel": {
-        "lean": "namespace SO_cube\ndef a (k : \u2115) : \u2124 := (k:\u2124)^3\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- \u00ac self-ordered: at (m,n)=(3,2), D_2 \u2224 P_{3,2}. -/\ntheorem not_self_ordered : P 3 2 % D 2 \u2260 0 := by decide\nend SO_cube\n",
+        "lean": "namespace SO_cube\ndef a (k : \u2115) : \u2124 := (k:\u2124)^3\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- \u00ac self-ordered: at (m,n)=(3,2), D_2 \u2224 P_{3,2}. -/\ntheorem not_self_ordered : P 3 2 % D 2 \u2260 0 := by\n  set_option maxRecDepth 10000 in\n  decide\nend SO_cube\n",
         "imports": [
           "Mathlib.Algebra.BigOperators.Intervals",
           "Mathlib.Tactic"
@@ -134,7 +240,7 @@
       "witness": null,
       "detail": null,
       "kernel": {
-        "lean": "namespace SO_triangular\ndef a (k : \u2115) : \u2124 := ((k*(k+1)/2:\u2115):\u2124)\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by decide\nend SO_triangular\n",
+        "lean": "namespace SO_triangular\ndef a (k : \u2115) : \u2124 := ((k*(k+1)/2:\u2115):\u2124)\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by\n  set_option maxRecDepth 10000 in\n  decide\nend SO_triangular\n",
         "imports": [
           "Mathlib.Algebra.BigOperators.Intervals",
           "Mathlib.Tactic"
@@ -164,7 +270,7 @@
       "witness": null,
       "detail": null,
       "kernel": {
-        "lean": "namespace SO_pow2\ndef a (k : \u2115) : \u2124 := (2:\u2124)^k\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by decide\nend SO_pow2\n",
+        "lean": "namespace SO_pow2\ndef a (k : \u2115) : \u2124 := (2:\u2124)^k\ndef D (n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a n - a k)\ndef P (m n : \u2115) : \u2124 := (Finset.range n).prod (fun k => a m - a k)\n/-- self-ordered up to bound 6 (a base family). -/\ntheorem self_ordered_lt6 : \u2200 n < 6, \u2200 m < 6, P m n % D n = 0 := by\n  set_option maxRecDepth 10000 in\n  decide\nend SO_pow2\n",
         "imports": [
           "Mathlib.Algebra.BigOperators.Intervals",
           "Mathlib.Tactic"
@@ -195,10 +301,9 @@
       },
       "detail": null,
       "kernel": {
-        "lean": "namespace NAbs4\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 4, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 4) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by decide\nend NAbs4\n",
+        "lean": "namespace NAbs4\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 4, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 4) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by\n  set_option maxRecDepth 10000 in\n  decide\nend NAbs4\n",
         "imports": [
           "Mathlib.Data.ZMod.Basic",
-          "Mathlib.Algebra.BigOperators.Basic",
           "Mathlib.Tactic"
         ],
         "check": "decide",
@@ -227,10 +332,9 @@
       },
       "detail": null,
       "kernel": {
-        "lean": "namespace NAbs9\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 9, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 9) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by decide\nend NAbs9\n",
+        "lean": "namespace NAbs9\nabbrev isNAbs (r : \u2115) : Prop :=\n  \u2200 x : Fin (r+1) \u2192 ZMod 9, (\u220f i, x i) = 0 \u2192 \u2203 j, (\u220f i \u2208 Finset.univ.erase j, x i) = 0\n/-- absorbingNumber (\u22a5 : ZMod 9) = 2: \u22a5 is 2-absorbing but not 1-absorbing. -/\ntheorem absorbing_number_bot : isNAbs 2 \u2227 \u00ac isNAbs 1 := by\n  set_option maxRecDepth 10000 in\n  decide\nend NAbs9\n",
         "imports": [
           "Mathlib.Data.ZMod.Basic",
-          "Mathlib.Algebra.BigOperators.Basic",
           "Mathlib.Tactic"
         ],
         "check": "decide",
@@ -405,7 +509,37 @@
         "theorem": "Prob41_4_5_7.triple_4_5_7_not_normal",
         "errors": 0,
         "axioms": [],
-        "ok": true
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
+      },
+      {
+        "family": "monomial_normal",
+        "params": {
+          "a": 7,
+          "b": 3,
+          "c": 2
+        },
+        "theorem": "Prob41_7_3_2.triple_7_3_2_not_normal",
+        "errors": 0,
+        "axioms": [],
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
+      },
+      {
+        "family": "monomial_normal",
+        "params": {
+          "a": 3,
+          "b": 4,
+          "c": 5
+        },
+        "theorem": "Prob41_3_4_5.triple_3_4_5_not_normal",
+        "errors": 0,
+        "axioms": [],
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       },
       {
         "family": "self_ordered",
@@ -416,11 +550,13 @@
         "theorem": "SO_cube.not_self_ordered",
         "errors": 0,
         "axioms": [
+          "propext",
           "Classical.choice",
-          "Quot.sound",
-          "propext"
+          "Quot.sound"
         ],
-        "ok": true
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       },
       {
         "family": "self_ordered",
@@ -431,11 +567,13 @@
         "theorem": "SO_triangular.self_ordered_lt6",
         "errors": 0,
         "axioms": [
+          "propext",
           "Classical.choice",
-          "Quot.sound",
-          "propext"
+          "Quot.sound"
         ],
-        "ok": true
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       },
       {
         "family": "self_ordered",
@@ -446,11 +584,13 @@
         "theorem": "SO_pow2.self_ordered_lt6",
         "errors": 0,
         "axioms": [
+          "propext",
           "Classical.choice",
-          "Quot.sound",
-          "propext"
+          "Quot.sound"
         ],
-        "ok": true
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       },
       {
         "family": "n_absorbing",
@@ -459,8 +599,14 @@
         },
         "theorem": "NAbs4.absorbing_number_bot",
         "errors": 0,
-        "axioms": [],
-        "ok": true
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       },
       {
         "family": "n_absorbing",
@@ -469,11 +615,18 @@
         },
         "theorem": "NAbs9.absorbing_number_bot",
         "errors": 0,
-        "axioms": [],
-        "ok": true
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "ok": true,
+        "unanswered": false,
+        "saw_axiom_report": true
       }
     ],
-    "all_ok": true
+    "all_ok": true,
+    "n_unanswered": 0
   },
   "reading": "Counterexample-certificate domain: one certify(object) interface across two tiers. Tier 1 (self-certified) \u2014 the finite/exact-decidable counterexamples (monomial-normality / self-ordered sequences / n-absorbing ideals), each object certified by a kernel-`decide`-able Lean cert that names the fact. Tier 2 (attested) \u2014 the infinite-ring pipeline-math counterexamples (4b/20/27b/30c), re-verified by `lake build` (not `decide`), the certificate being the attestation + reproduction recipe against the public repo. A sibling of the process-complexity and code-bound domains; verification-AMPLIFICATION. GREEN = every Tier-1 emitted cert elaborates with only standard axioms."
 }

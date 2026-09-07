@@ -2,7 +2,8 @@
   Tier-1 counterexample-certificate domain — self-ordered (Problem 16) + n-absorbing (Problem 30) certs.
   Kernel-decided (`decide`); axioms = standard set or none. See scripts/counterexample_domain.py.
 -/
-import Mathlib.Algebra.BigOperators.Basic
+-- `Mathlib.Algebra.BigOperators.Basic` removed (ADR 0090): no such module in the pinned
+-- Mathlib, so this file's env build failed and every probe against it answered None.
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic

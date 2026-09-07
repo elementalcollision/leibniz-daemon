@@ -50,15 +50,32 @@ def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=ST
     body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
     decl = f"{theorem_src} {body}\n#print axioms {name}"
     src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
-    r = backend._run(src, tuple(imports))
-    if r is None:
+    return axiom_report(backend._run(src, tuple(imports)), name, allowed)
+
+
+def axiom_report(response, name: str, allowed=STD_AXIOMS) -> dict:
+    """Analyse ONE REPL response for the axiom footprint of declaration ``name``.
+
+    Split out of ``axiom_closure`` (ADR 0090) so a caller that assembles its OWN Lean source —
+    ``scripts/counterexample_domain.py`` emits whole namespaced certs, which cannot be split into
+    the ``theorem_src``/``proof_src`` shape without re-writing the Lean — shares the HARDENED
+    analysis instead of open-coding a fresh one. That script's open-coded scan was the third copy
+    of this logic and the only one to publish a false record: its ``(r or {})`` turned a dead-REPL
+    ``None`` into ``ok=True``, and ``docs/results/counterexample_domain.json`` recorded GREEN /
+    ``kernel.status: checked`` for certificates whose Mathlib import does not exist in the pinned
+    image and which therefore were never elaborated at all.
+
+    ``ok`` requires ALL of: a response at all; no error message; no ``sorry`` in ANY message
+    (Lean reports it as a WARNING); every axiom inside ``allowed``; and a ``#print axioms`` report
+    that NAMES this declaration — without that last clause an empty message list satisfies the
+    rest vacuously, which is the ADR 0089 fail-open."""
+    if response is None:
         return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name,
                 "saw_axiom_report": False}
-    msgs = r.get("messages", []) or []
+    msgs = response.get("messages", []) or []
     errors = [(mm.get("data") or "") for mm in msgs if mm.get("severity") == "error"]
-    # ADR 0089 review — read the footprint ONLY from the report about our own theorem. An
-    # ADR 0062 preamble may carry its own `#print axioms` (16 of the docs/crt/*.lean artifacts do,
-    # and `steiner`/`double_blocking` ride in as whole-artifact preambles), so a name-blind scan
+    # Read the footprint ONLY from the report about our own declaration. An ADR 0062 preamble may
+    # carry its own `#print axioms` (16 of the docs/crt/*.lean artifacts do), so a name-blind scan
     # could hand back the preamble's list for our theorem — including for an axiom-free one.
     rep = _report_re(name)
     axioms: list = []
