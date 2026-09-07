@@ -56,7 +56,14 @@ from __future__ import annotations
 import ast
 from typing import Optional
 
-MAX_NODES = 200    # bound the AST against adversarial input (matches smt_z3)
+# ADR 0090: IMPORT the guard rather than restate the cap. This line used to read
+# `MAX_NODES = 200  # ... (matches smt_z3)` -- a comment asserting a coupling that did not exist,
+# the same shape as the four drifting copies of the axiom check. It mattered: both consumers below
+# fail OPEN above their cap (`is_coefficient_degenerate` -> "not degenerate" = keep, and
+# `congruence_signature` -> None = stays NOVEL), so a cap that silently lagged smt_z3's would open
+# a band where the ADR 0061 vacuity kill and the novelty signature both go quiet. Measured: a
+# 213-node vacuous conjunction reports degenerate=False at 200 and True at 600.
+from leibniz.backends.smt_z3 import guard_source
 MAX_DEGREE = 64    # cap expanded-polynomial total degree (bounds dict size; over-degree -> NotPoly)
 MAX_EXP = 8        # constant-power cap (matches the DSL's ^ cap, ADR 0021)
 RESIDUE_BOUND = 64  # box [0, RESIDUE_BOUND] for residue enumeration (ADR 0021's default bound).
@@ -459,10 +466,8 @@ def congruence_signature(predicate: Optional[str]) -> Optional[tuple]:
     if not predicate:
         return None
     try:
-        tree = ast.parse(predicate.replace("^", "**"), mode="eval").body
-    except (SyntaxError, ValueError):
-        return None
-    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
+        tree = guard_source(predicate).body
+    except ValueError:
         return None
     # `or`-disjunction of `P % m == c` over ONE common P and m -> membership canonicalization
     # (computed residues; phrasing-independent). Anything richer -> the boolean-combination signature.
@@ -593,10 +598,8 @@ def is_coefficient_degenerate(predicate: Optional[str]) -> bool:
     if not predicate:
         return False
     try:
-        tree = ast.parse(predicate.replace("^", "**"), mode="eval").body
-    except (SyntaxError, ValueError):
-        return False
-    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
+        tree = guard_source(predicate).body
+    except ValueError:
         return False
     try:
         return _combo_all_degenerate(tree) is True

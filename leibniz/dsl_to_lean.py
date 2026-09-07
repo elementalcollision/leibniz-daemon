@@ -41,7 +41,7 @@ from __future__ import annotations
 import ast
 from typing import Optional
 
-from leibniz.backends.smt_z3 import MAX_NODES, MAX_POW, MAX_TABLE_BOUND
+from leibniz.backends.smt_z3 import MAX_POW, MAX_TABLE_BOUND, guard_source
 
 # The two load-bearing operator choices (pinned by the conformance suite). Euclidean, to match Z3.
 MOD_OP = "Int.emod"   # DSL `a % d`  (d>0)  — non-negative remainder, NOT Lean's truncating `%`
@@ -188,14 +188,13 @@ def _prop(node: ast.AST) -> str:
 
 
 def _parse(src: str) -> ast.AST:
-    src = src.replace("^", "**")  # `^` means power here (match smt_z3.compile_pred exactly)
+    # ADR 0090: ONE guard, shared with smt_z3, so the renderer keeps admitting exactly the
+    # Z3-admitted grammar. It carries the `^`->`**` rewrite, the source-length cap, the node cap
+    # and the composed-expansion cap together; three call sites had drifted apart on the first two.
     try:
-        tree = ast.parse(src, mode="eval")
-    except (SyntaxError, ValueError) as e:
+        return guard_source(src).body
+    except ValueError as e:
         raise RenderError(str(e)) from e
-    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
-        raise RenderError("predicate too large")
-    return tree.body
 
 
 def render_pred(src: str) -> str:

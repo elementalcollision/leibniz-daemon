@@ -45,6 +45,23 @@ except ImportError:  # pragma: no cover
 VAR = "n"
 MAX_POW = 8       # cap constant exponents (sound expansion to repeated multiplication)
 MAX_NODES = 200   # cap predicate AST size (bounds recursion on untrusted input)
+#: ADR 0090 — the node cap does NOT bound the cost of what it admits. `_conv` expands `a**k` into
+#: a literal product of k copies of `a`, and it validates `k <= MAX_POW` on each Pow node
+#: INDIVIDUALLY, so nesting composes multiplicatively: `((n**8)**8)**8...` is 3 AST nodes and 5
+#: characters per level and degree 8**L. MAX_NODES=200 admits ~65 levels — expanded size 1e68.
+#: Measured on the real code path: L=6 (24 nodes, 35 chars) costs 0.06 s / 76 MB, L=7 0.49 s /
+#: 262 MB, L=8 3.90 s / 1766 MB, and it reaches `SMTVerifier.cheap_refute` (the FIRST gate) and
+#: the ADR 0004 gaming spine. Past that the process dies on a SIGNAL, which no `except Exception`
+#: can catch and the nightly launchd beat has no KeepAlive to survive.
+#: The bound is on EXPANDED size, which is what actually costs. Measured over 545 predicates
+#: harvested from this repo: median 9, maximum 51. 4096 is ~80x the observed maximum and refuses
+#: the attack from L=4 (8778) upward.
+MAX_EXPANDED = 4096
+#: `ast.parse` itself raises MemoryError("Parser stack overflowed") on deeply-nested source BEFORE
+#: any node count exists to check — measured boundary: 5975 unary minuses parse, 5976 raises, and
+#: MemoryError is neither SyntaxError nor ValueError so it escaped every guard. Nothing else
+#: length-caps the LLM-authored predicate fields.
+MAX_SRC_CHARS = 4000
 MAX_TABLE_BOUND = 128  # ADR 0066: cap the bounded-definition tables (factorial/gcd If-chains)
 MAX_ORDER = 64    # ADR 0035 Stage A: cap the multiplicative-order If-chain length (and the box
 #   must cover a full period, so the order must also be <= the search bound — enforced per-call)
@@ -272,6 +289,76 @@ def _conv(node: ast.AST, env: dict, bound: Optional[int] = None):
     raise PredicateError(f"unsupported syntax: {type(node).__name__}")
 
 
+def expanded_size(node) -> int:
+    """Z3 term size `_conv` will build, upper-bounded statically. `a**k` expands to k copies of
+    `a` (`for _ in range(k): out = out * base`), so size is MULTIPLICATIVE through Pow — which is
+    exactly the growth the per-node `k <= MAX_POW` check cannot see. Saturates at MAX_EXPANDED so
+    a hostile input cannot make the CHECK expensive: 8**65 must never be computed exactly."""
+    if isinstance(node, ast.BinOp):
+        if isinstance(node.op, ast.Pow):
+            k = _const_int(node.right)
+            if k is None or k < 0:
+                return expanded_size(node.left) + 1
+            inner = expanded_size(node.left)
+            if k == 0:
+                return 1
+            if inner > MAX_EXPANDED // max(k, 1) + 1:      # saturate before multiplying
+                return MAX_EXPANDED + 1
+            return min(k * inner + k, MAX_EXPANDED + 1)
+        return min(expanded_size(node.left) + expanded_size(node.right) + 1, MAX_EXPANDED + 1)
+    if isinstance(node, ast.UnaryOp):
+        return min(expanded_size(node.operand) + 1, MAX_EXPANDED + 1)
+    if isinstance(node, ast.BoolOp):
+        t = 1
+        for v in node.values:
+            t += expanded_size(v)
+            if t > MAX_EXPANDED:
+                return MAX_EXPANDED + 1
+        return t
+    if isinstance(node, ast.Compare):
+        t = expanded_size(node.left) + 1
+        for c in node.comparators:
+            t += expanded_size(c)
+            if t > MAX_EXPANDED:
+                return MAX_EXPANDED + 1
+        return t
+    if isinstance(node, ast.Call):
+        t = 1
+        for a in node.args:
+            t += expanded_size(a)
+            if t > MAX_EXPANDED:
+                return MAX_EXPANDED + 1
+        return t
+    return 1
+
+
+def guard_source(src: str):
+    """Parse `src` under BOTH size bounds, or raise ValueError. Shared by the Z3 backend, the Lean
+    renderer and the structural signatures so all three admit exactly the same inputs — the ADR
+    0090 lesson from four drifting copies of one axiom check.
+
+    Order matters: the length cap runs BEFORE `ast.parse`, because parse is what dies first."""
+    src = src.replace("^", "**")
+    if len(src) > MAX_SRC_CHARS:
+        raise ValueError("predicate source too long")
+    try:
+        tree = ast.parse(src, mode="eval")
+    except (SyntaxError, ValueError) as e:
+        raise ValueError(str(e)) from e
+    except (MemoryError, RecursionError) as e:
+        # DEFENCE IN DEPTH, not the load-bearing guard: with MAX_SRC_CHARS in force no nesting
+        # shape tested reaches ast.parse's own limits (measured within 4000 chars: 3950 unary
+        # minuses parse, 950 `not`s parse, and nested parens hit Python's SyntaxError at 250).
+        # The length cap above is what actually closes the MemoryError. This clause covers the
+        # shapes not enumerated, since "I could not construct one" is not "none exists".
+        raise ValueError(f"predicate too deeply nested ({type(e).__name__})") from e
+    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
+        raise ValueError("predicate too large")
+    if expanded_size(tree.body) > MAX_EXPANDED:
+        raise ValueError("predicate expands too far (composed exponent blowup)")
+    return tree
+
+
 def compile_pred(src: str, env=None, bound: Optional[int] = None):
     """Compile a DSL predicate into a Z3 BOOLEAN over the integer vars in `env`. The
     result must be boolean (a bare term like ``n + 1`` is rejected). `env=None` starts
@@ -282,13 +369,10 @@ def compile_pred(src: str, env=None, bound: Optional[int] = None):
         env = {}
     elif not isinstance(env, dict):
         env = {VAR: env}  # legacy: compile_pred(src, z3.Int("n"))
-    src = src.replace("^", "**")  # `^` means power here; give it exponentiation precedence
     try:
-        tree = ast.parse(src, mode="eval")
-    except (SyntaxError, ValueError) as e:
+        tree = guard_source(src)          # ADR 0090: length, node count, expanded size
+    except ValueError as e:
         raise PredicateError(str(e)) from e
-    if sum(1 for _ in ast.walk(tree)) > MAX_NODES:
-        raise PredicateError("predicate too large")
     result = _conv(tree.body, env, bound)
     if not isinstance(result, z3.BoolRef):
         raise PredicateError("predicate is not a boolean expression")
