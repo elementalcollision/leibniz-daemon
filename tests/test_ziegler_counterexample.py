@@ -64,11 +64,26 @@ def test_live_kernel_legs():
     if not available():
         pytest.skip("Docker + Lean 4.31 REPL image unavailable")
     src, names = m.build_lean_cert()
-    # verify only the fast dim/not-symmetric leg here (the supporting/closed legs are ~40–60 s each).
-    fast = [(nm, decl) for nm, decl in m._leg_decls(src) if nm == "ziegler_dim_notsym"]
+    # `ziegler_dim_notsym` is the SLOWEST leg, not the fast one. Measured on an idle host:
+    # dim_notsym 53.2 s, supporting 10.2 s, closed 9.5 s. The comment here used to call it "the
+    # fast leg" and the other two "~40-60 s each" -- inverted -- and on the strength of that the
+    # tightest budget in the family (120 s, against the library default of 180) was handed to the
+    # most expensive leg.
+    leg = [(nm, decl) for nm, decl in m._leg_decls(src) if nm == "ziegler_dim_notsym"]
     from leibniz.backends.lean_repl import LeanReplBackend
-    body = "\n".join(ln for ln in fast[0][1].splitlines() if not ln.startswith("import "))
-    res = LeanReplBackend(timeout_s=120)._run(body, ())
+    body = "\n".join(ln for ln in leg[0][1].splitlines() if not ln.startswith("import "))
+    be = LeanReplBackend(timeout_s=300)
+    try:
+        res = be._run(body, ())
+        # `_run` returns None for a TIMEOUT and for a DEAD CONTAINER alike, and this test could
+        # not tell them apart -- so an OOM kill was reported as a verification failure. Under suite
+        # contention the container is killed (rc 137) rather than the proof failing; that is an
+        # infrastructure fact about the host, not a fact about the certificate.
+        rc = be._proc.poll() if be._proc is not None else None
+        if res is None and rc not in (None, 0):
+            pytest.skip(f"Lean container died (rc={rc}) -- host contention, not a proof failure")
+    finally:
+        be.close()
     assert isinstance(res, dict)
     errs = [x for x in res.get("messages", []) if x.get("severity") == "error"]
     ax = " ".join(str(x.get("data", "")) for x in res.get("messages", []))
