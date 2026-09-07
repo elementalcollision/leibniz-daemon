@@ -6,6 +6,7 @@ wiring. An opt-in real-kernel test (``LEIBNIZ_LEAN_E2E=1``) mirrors ``scratchpad
 """
 from __future__ import annotations
 
+import ast
 import os
 
 import pytest
@@ -275,28 +276,30 @@ def test_widened_caps_admit_a_real_covering_system():
     assert skel is not None and skel.M == 2520 and len(skel.atoms) == 18
 
 
-def test_covering_10080_is_blocked_at_the_dsl_parse_boundary():
-    """KNOWN BLOCKER, pinned so it is documented rather than mysterious.
+def test_covering_10080_now_reaches_the_fragment():
+    """ADR 0090 lifted the blocker this test used to pin.
 
-    The paper's 66-congruence system is 531 AST nodes against `smt_z3.MAX_NODES = 200`, so it is
-    refused by `dsl_to_lean._parse` before the classifier ever sees it. That cap is NOT one of
-    ADR 0088's compute budgets: it guards recursion on untrusted input and is imported by BOTH the
-    Z3 backend and the Lean renderer to keep their admitted grammars in lockstep. Raising it is a
-    separate decision with its own review, so it was deliberately left alone.
+    It previously asserted that the paper's 66-congruence system was REFUSED at the DSL parse
+    boundary (531 AST nodes against `MAX_NODES = 200`), and its own docstring said "Update this
+    test when that cap is decided." It is decided: 600.
 
-    Consequence: `MIXED_MAX_ATOMS = 72` is currently unreachable — MAX_NODES binds first, at 24
-    congruences. Update this test when that cap is decided."""
-    import ast as _ast
+    The arithmetic is exact -- a flat disjunction of k modular atoms is 8k+3 nodes -- so the old
+    cap admitted 24 congruences while the fragment's own semantic caps allowed 72
+    (`MIXED_MAX_ATOMS`), making that constant dead code. 600 admits 74."""
     from leibniz.backends.smt_z3 import MAX_NODES
-    from leibniz.dsl_to_lean import RenderError, _parse
+    from leibniz.dsl_to_lean import render_pred
     prop = _covering_property(COVERING_10080)
-    assert sum(1 for _ in _ast.walk(_ast.parse(prop, mode="eval"))) > MAX_NODES
-    with pytest.raises(RenderError, match="too large"):
-        _parse(prop)
-    assert mm.classify_mixed(prop) is None
-    # the effective ceiling today, so a later widening has a number to move
-    assert mm.classify_mixed(_covering_property(COVERING_10080[:24])) is not None
-    assert mm.classify_mixed(_covering_property(COVERING_10080[:25])) is None
+    assert sum(1 for _ in ast.parse(prop, mode="eval").body.values) == 66
+    assert MAX_NODES == 600
+
+    skel = mm.classify_mixed(prop)
+    assert skel is not None and skel.M == 10080 and len(skel.atoms) == 66
+    assert render_pred(prop)                      # and it renders
+
+    # the new boundary, so a later move has a number to shift: 8k+3 <= 600  <=>  k <= 74
+    assert mm.classify_mixed(_covering_property([(m, c) for m, c in COVERING_10080][:24])) is not None
+    over = " or ".join(f"(n % {7 + i} == 0)" for i in range(75))
+    assert mm.classify_mixed(over) is None
 
 
 def test_widening_did_not_touch_the_shared_budgets():
