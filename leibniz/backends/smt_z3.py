@@ -44,7 +44,14 @@ except ImportError:  # pragma: no cover
 
 VAR = "n"
 MAX_POW = 8       # cap constant exponents (sound expansion to repeated multiplication)
-MAX_NODES = 200   # cap predicate AST size (bounds recursion on untrusted input)
+#: ADR 0090 — 200 -> 600. A flat disjunction of k modular atoms is exactly 8k+3 nodes, so the old
+#: cap admitted 24 congruences: it bound the fragment more tightly than the fragment's own semantic
+#: caps (MAX_LCM = 20160, MIXED_MAX_ATOMS = 72, which needs 8*72+3 = 579) and made the latter dead
+#: code. 600 admits 74, clearing that floor with two congruences of slack, and admits the
+#: motivating target: arXiv 2607.19029 §7 is 531 nodes / 1247 chars.
+#: Safe to widen ONLY because MAX_EXPANDED now bounds cost separately — raising a size cap while
+#: cost rode on nesting depth would have widened the blowup surface, not just the fragment.
+MAX_NODES = 600   # cap predicate AST size; see MAX_EXPANDED for the COST bound
 #: ADR 0090 — the node cap does NOT bound the cost of what it admits. `_conv` expands `a**k` into
 #: a literal product of k copies of `a`, and it validates `k <= MAX_POW` on each Pow node
 #: INDIVIDUALLY, so nesting composes multiplicatively: `((n**8)**8)**8...` is 3 AST nodes and 5
