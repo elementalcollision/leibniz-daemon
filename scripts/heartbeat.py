@@ -152,6 +152,14 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
             entry["cycles"].append({"seeds": r.seeds, "conjectured": r.conjectured,
                                     "reached_proof": r.reached_proof, "promulgated": r.promulgated,
                                     "by_reason": dict(r.by_reason)})
+            # ADR 0092 soft budget: stop STARTING cycles past half the ceiling, so a beat that is
+            # merely slow finishes and journals normally instead of being killed mid-cycle by the
+            # watchdog. It cannot help a beat wedged INSIDE one cycle -- that is the watchdog's job.
+            if BEAT_MAX_S > 0 and (time.monotonic() - t0) > BEAT_MAX_S / 2:
+                entry["anomalies"].append(
+                    f"soft budget reached after {len(entry['cycles'])}/{cycles} cycles "
+                    f"({round(time.monotonic() - t0)}s of a {BEAT_MAX_S}s ceiling) - stopping early")
+                break
     except Exception as e:                                       # a broken run is an anomaly, not a crash
         entry["cycles"].append({"error": f"{type(e).__name__}: {e}"})
         entry["anomalies"].append(f"beat errored mid-run: {type(e).__name__}: {str(e)[:200]}")
@@ -231,6 +239,98 @@ def detect_equilibria(entry: dict, home: Path | None = None, look_back: int = 3)
     return out
 
 
+#: ADR 0092 — a beat may not run forever. The default was first set to 3600 s (~9x the 404 s
+#: production median) and that was WRONG: a beat running while this ADR was being written was
+#: measured at 1h51m and 96% CPU sustained (106 min of CPU in 111 min elapsed) — healthy, heavy,
+#: and it would have been killed. The two hangs, by contrast, sat at ~14% CPU for 6h57m and 7.5h.
+#: 4 h separates a heavy beat from a wedged one on the evidence available.
+#: The sharper discriminator is CPU RATE, not duration — a hung beat is idle, a slow beat is not —
+#: but that needs per-process accounting the beat does not currently collect.
+BEAT_MAX_S = int(os.environ.get("LEIBNIZ_BEAT_MAX_S", "14400"))
+#: The scheduled interval is daily; two missed nights is unambiguous.
+JOURNAL_MAX_AGE_H = int(os.environ.get("LEIBNIZ_JOURNAL_MAX_AGE_H", "48"))
+
+
+def stale_journal_alarm(home: Path | None = None, max_age_h: int | None = None) -> list[str]:
+    """ADR 0092 — alarm when the journal has gone quiet.
+
+    The failure this exists for: a beat that HANGS never reaches `write_journal`, because the
+    entry is written at the END of a beat. So a wedged beat produces no entry, no anomaly and no
+    alarm — it is indistinguishable from a night that has not happened yet. Observed live: the
+    01:30 beat on 2026-09-08 ran 6h57m with the last journal entry still dated 2026-09-06.
+
+    This is the OUTSIDE view, and it is deliberately separate from the watchdog: the watchdog
+    fixes future beats, this one notices that past beats went missing. Safe to call from anywhere
+    (a cron, a health check, the next beat's preflight) — it only reads.
+    """
+    home = home or _home()
+    max_age_h = JOURNAL_MAX_AGE_H if max_age_h is None else max_age_h
+    p = home / "journal.jsonl"
+    if not p.exists():
+        return []                       # a daemon that has never run is not a daemon that broke
+    last = None
+    try:
+        for line in p.read_text().splitlines():
+            try:
+                ts = json.loads(line).get("ts")
+            except ValueError:
+                continue
+            if ts:
+                last = ts
+    except OSError:
+        return []
+    if not last:
+        return []
+    try:
+        when = datetime.strptime(last, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return []
+    age_h = (datetime.now(timezone.utc) - when).total_seconds() / 3600.0
+    if age_h > max_age_h:
+        return [f"STALE JOURNAL: no beat has journalled in {age_h:.1f}h (limit {max_age_h}h; "
+                f"last entry {last}). A hung beat writes nothing — check for a live heartbeat "
+                f"process before assuming the schedule simply did not fire."]
+    return []
+
+
+def _arm_watchdog(home: Path, cycles: int, limit_s: int | None = None):
+    """ADR 0092 — a hard wall-clock ceiling that STILL JOURNALS.
+
+    A soft between-cycles budget cannot help a beat wedged inside ONE cycle, which is what a
+    seven-hour beat is. This arms a daemon thread that, at the deadline, closes the Lean backends,
+    writes a `timed_out` journal entry, alarms, and exits the process.
+
+    It journals BEFORE exiting on purpose: the whole defect is that a hung beat leaves no trace,
+    so a watchdog that killed silently would fix the resource leak and keep the blind spot.
+    """
+    limit_s = BEAT_MAX_S if limit_s is None else limit_s
+    if limit_s <= 0:                                   # 0 disables, for an operator-supervised run
+        return lambda: None
+    import threading
+    done = threading.Event()
+
+    def _watch() -> None:
+        if done.wait(limit_s):
+            return                                     # beat finished in time
+        try:
+            from leibniz.backends import lean_repl
+            closed = lean_repl.close_all()
+        except Exception:                              # pragma: no cover
+            closed = -1
+        entry = {"ts": _now(), "timed_out": True, "limit_s": limit_s, "cycles_requested": cycles,
+                 "cycles": [], "backends_closed": closed, "duration_s": limit_s,
+                 "anomalies": [f"BEAT TIMED OUT after {limit_s}s — killed by the ADR 0092 watchdog"]}
+        try:
+            write_journal(entry, home)
+            alarm(entry["anomalies"], home)
+        except Exception:                              # pragma: no cover
+            pass
+        os._exit(3)                                    # atexit already handled above
+
+    threading.Thread(target=_watch, daemon=True, name="adr0092-watchdog").start()
+    return done.set
+
+
 def detect_anomalies(entry: dict, containers_after: int) -> list[str]:
     """Kill-only anomaly scan of a journal entry — anything here is loud, nothing is fatal upstream."""
     out = list(entry.get("anomalies", []))
@@ -243,6 +343,14 @@ def detect_anomalies(entry: dict, containers_after: int) -> list[str]:
         out.append(f"{containers_after} Lean container(s) still running after the beat")
     if all(c.get("seeds", 0) == 0 for c in entry.get("cycles", []) if "seeds" in c) and entry.get("cycles"):
         out.append("0 seeds in every cycle — frontier misconfiguration? (see the 2026-07-09 finding)")
+    # ADR 0092: duration was never inspected here, so the 26931 s beat in the journal raised
+    # nothing at all. Warn well below the watchdog's hard ceiling, so a beat that is merely
+    # degrading is visible before one that is wedged gets killed.
+    dur = entry.get("duration_s")
+    if isinstance(dur, (int, float)) and BEAT_MAX_S > 0 and dur > BEAT_MAX_S / 2:
+        out.append(f"SLOW BEAT: {dur}s (over half the {BEAT_MAX_S}s ceiling)")
+    if entry.get("timed_out"):
+        out.append(f"beat hit the {entry.get('limit_s')}s ceiling and was killed")
     return out
 
 
@@ -336,6 +444,12 @@ def alarm(messages: list[str], home: Path | None = None) -> None:
 def main() -> int:
     cycles = int(os.environ.get("LEIBNIZ_HEARTBEAT_CYCLES", "2"))
     home = _home()
+    # ADR 0092: the OUTSIDE view, before anything else can hang. If previous beats went missing,
+    # say so now -- this beat may be about to go the same way.
+    stale = stale_journal_alarm(home)
+    if stale:
+        alarm(stale, home)
+        print(f"[heartbeat] {stale[0]}")
     hard, notes = preflight()
     if hard:
         entry = {"ts": _now(), "aborted": True, "preflight": hard, "notes": notes}
@@ -343,8 +457,14 @@ def main() -> int:
         alarm([f"beat ABORTED at preflight: {'; '.join(hard)}"], home)
         print(f"[heartbeat] ABORT — {hard}")
         return 2
-    entry = beat(cycles)
+    disarm = _arm_watchdog(home, cycles)     # ADR 0092: hard ceiling, journals before it kills
+    try:
+        entry = beat(cycles)
+    finally:
+        disarm()
     entry["preflight_notes"] = notes
+    if stale:
+        entry["stale_journal_on_entry"] = stale
     containers = wait_containers_drained()
     anomalies = detect_anomalies(entry, containers)
     entry["anomalies"] = anomalies
