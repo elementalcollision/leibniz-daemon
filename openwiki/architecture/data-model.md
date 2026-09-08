@@ -17,7 +17,7 @@ erDiagram
     Propositio ||--o| Expressio : has
     Propositio ||--o| Demonstratio : has
     Propositio ||--o| ClaimSignature : "signature"
-    Propositio }--|| EdgeEvidence : "edges (append-only)"
+    Propositio ||--o{ EdgeEvidence : "edges (append-only)"
     Enuntiatio ||--|| ClaimType : "claim_type"
     Expressio ||--o| Walnut : "walnut_predicate"
     Demonstratio ||--|| Qed : "seal"
