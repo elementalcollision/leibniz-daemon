@@ -102,7 +102,7 @@ def test_timed_out_entry_is_itself_an_anomaly():
 def test_watchdog_disarms_cleanly(tmp_path):
     """The common path: the beat finishes, the watchdog must not fire or leave a thread running."""
     m = _load()
-    disarm = m._arm_watchdog(tmp_path, cycles=2, limit_s=30)
+    disarm, _stall = m._arm_watchdog(tmp_path, cycles=2, limit_s=30)
     disarm()
     assert not (tmp_path / "journal.jsonl").exists()
 
@@ -110,7 +110,7 @@ def test_watchdog_disarms_cleanly(tmp_path):
 def test_watchdog_can_be_disabled(tmp_path):
     """limit_s <= 0 is the operator-supervised escape hatch."""
     m = _load()
-    disarm = m._arm_watchdog(tmp_path, cycles=2, limit_s=0)
+    disarm, _stall = m._arm_watchdog(tmp_path, cycles=2, limit_s=0)
     disarm()
     assert not (tmp_path / "journal.jsonl").exists()
 
@@ -135,3 +135,74 @@ time.sleep(30)          # simulate a wedged beat
     assert entry["timed_out"] is True and entry["limit_s"] == 1
     assert any("TIMED OUT" in a for a in entry["anomalies"])
     assert (tmp_path / "alarms.log").exists()
+
+
+# --- ADR 0094: the stall detector -----------------------------------------------------------------
+
+def _feed(w, n, cpu_per_s, mtime_step=0.0, step=60):
+    """n samples at `step` seconds apart, burning `cpu_per_s` CPU-seconds per wall-second."""
+    mt = 1000.0
+    for i in range(n):
+        w.sample(i * step, i * step * cpu_per_s, mt)
+        mt += mtime_step
+    return w
+
+
+def test_a_healthy_HEAVY_beat_is_alive_even_writing_nothing():
+    """The case that refutes 'no progress means wedged'. Measured 2026-09-08: a real beat ran
+    3h41m at 96.6% CPU and touched NOTHING in its state directory for the last 3.5h of it. A
+    progress-only check would have killed it."""
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=600, low_cpu=0.10), 11, 0.96, mtime_step=0.0)
+    assert w.verdict(660) == "alive"
+
+
+def test_a_beat_BLOCKED_ON_LEAN_is_alive_even_at_low_cpu():
+    """The case that refutes 'low CPU means wedged'. The kernel runs in a container, so a beat
+    waiting on a proof is idle BY DESIGN — but its state advances."""
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=600, low_cpu=0.10), 11, 0.02, mtime_step=1.0)
+    assert w.verdict(660) == "alive"
+
+
+def test_neither_cpu_nor_progress_is_WEDGED():
+    """The 7h production hang: ~14% CPU, no state advance. Only the CONJUNCTION is diagnostic."""
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=600, low_cpu=0.10), 11, 0.02, mtime_step=0.0)
+    assert w.verdict(660) == "wedged"
+
+
+def test_the_floor_suppresses_startup_noise():
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=3600, low_cpu=0.10), 11, 0.0, mtime_step=0.0)
+    assert w.verdict(660) == "unknown", "before the floor there is not enough evidence to kill"
+
+
+def test_a_partial_window_is_unknown_not_wedged():
+    """A guard that kills on thin evidence is worse than none."""
+    m = _load()
+    w = _feed(m._StallWatch(window_s=1800, floor_s=0, low_cpu=0.10), 3, 0.0, mtime_step=0.0)
+    assert w.verdict(9999) == "unknown"
+
+
+def test_cpu_rate_is_measured_not_guessed():
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=0, low_cpu=0.10), 11, 0.5, mtime_step=0.0)
+    assert abs(w.cpu_rate() - 0.5) < 0.01
+
+
+def test_telemetry_is_recorded_for_diagnosis():
+    """ADR 0092 admitted the hang was never diagnosed. Every beat now journals liveness telemetry."""
+    m = _load()
+    w = _feed(m._StallWatch(window_s=600, floor_s=0, low_cpu=0.10), 11, 0.42, mtime_step=0.0)
+    t = w.telemetry()
+    assert t["samples"] == 11 and abs(t["cpu_rate"] - 0.42) < 0.01
+    assert t["progressed_in_window"] is False and t["window_s"] == 600
+
+
+def test_the_ceiling_is_now_only_a_backstop():
+    """Duration was tuned twice and falsified twice by healthy beats. It must no longer be the
+    primary detector, and must be generous enough not to be reached first."""
+    m = _load()
+    assert m.BEAT_MAX_S >= 28800
+    assert m.STALL_WINDOW_S * 2 < m.BEAT_MAX_S, "the stall detector must fire long before the backstop"
