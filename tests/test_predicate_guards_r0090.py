@@ -31,6 +31,16 @@ from leibniz.backends.smt_z3 import (
 from leibniz.dsl_to_lean import RenderError, render_pred
 
 
+def _z3_available() -> bool:
+    """The core install is stdlib-only (CLAUDE.md); the verify extra adds z3. Without it
+    `Z3Backend.encodable` returns False for everything, so a lockstep assertion between z3 and the
+    renderer compares the renderer against a backend that is not there. The other tests in this
+    file are z3-independent and must keep running on the core install -- that is the whole point
+    of the BLOCKING invariants job."""
+    from leibniz.backends.smt_z3 import available
+    return available()
+
+
 def _nest(L: int) -> str:
     return "(" * L + "n" + ")**8" * L + " > 0"
 
@@ -120,6 +130,7 @@ def test_source_length_is_capped_before_parsing():
 
 # --- lockstep, which is the reason the guard is shared --------------------------------------------
 
+@pytest.mark.skipif(not _z3_available(), reason="lockstep is a claim ABOUT z3; core install has none")
 @pytest.mark.parametrize("src", [
     "max(a,b)**4 + min(a,b)**4 == a**4 + b**4",
     _nest(3), _nest(4), _nest(8), _nest(65),
