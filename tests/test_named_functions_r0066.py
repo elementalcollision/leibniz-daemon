@@ -11,8 +11,6 @@ from __future__ import annotations
 import itertools
 import math
 
-import z3
-
 import pytest
 
 from leibniz.backends.smt_z3 import MAX_TABLE_BOUND, PredicateError, Z3Backend, available, compile_pred
@@ -112,6 +110,9 @@ def test_renderer_and_z3_admit_the_same_named_function_fragment():
     Pinning lockstep is strictly stronger than the refusal it replaces: it catches the renderer
     drifting in EITHER direction, and admitting more than Z3 is the dangerous one — a claim the
     cheap Z3 refutation never saw would reach the kernel."""
+    import z3        # local: this module must import on the stdlib-only core install (CI
+                    # runs the BLOCKING invariants job without the verify extra), and the
+                    # module-level import broke collection before pytestmark could skip.
     env_vars = ("n", "a", "b", "c")
 
     def z3_admits(src: str) -> bool:

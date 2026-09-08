@@ -84,10 +84,6 @@ def test_signals_are_not_memorized_phrases():
     """Every pattern must be a family, not a paper. A pattern matching one specific abstract is
     tuning noise; the four proposals that scored 1.000 on the labelled sample all collapsed on
     held-out data (to 0.30 and 0.67), and carried the most single-paper patterns."""
-    corpusish = [TARGET_TITLE + "\n" + TARGET_ABSTRACT,
-                 "Classification of strongly regular graphs srg(1666,105,0,21)",
-                 "An exhaustive computer search over all Latin squares of order 9",
-                 "Asymptotic bounds for the number of primes in arithmetic progressions"]
     for pat, _w, label in af._SIGNALS:
         assert pat.pattern.strip(), label
         # a pattern with no alternation and no character class is a literal phrase -> suspicious
