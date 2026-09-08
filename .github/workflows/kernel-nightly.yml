@@ -3,8 +3,16 @@ name: kernel-nightly
 # Docker-gated render->kernel tests that the main `ci` lane CANNOT run: GitHub-hosted runners have no
 # Lean image, and there is no in-repo Dockerfile (the `leibniz-lean` image is operator-local). So this
 # lane targets a SELF-HOSTED runner labelled `lean` that has docker + the image. It runs nightly and on
-# demand. If no such runner is registered, the scheduled job simply does not run — it never reports a
-# false green. scripts/run_kernel_tests.sh fails loudly if the image is absent or a kernel test skips.
+# demand. If no such runner is registered, the kernel job never runs — it never reports a false green.
+# scripts/run_kernel_tests.sh fails loudly if the image is absent or a kernel test skips.
+#
+# ADR 0093 — "never a false green" was true and was not enough. Measured 2026-09-08: 60 scheduled runs
+# since 2026-07-11, 59 cancelled (GitHub expires an unclaimed job after 24h) and 1 still queued after
+# 3h. ZERO ever succeeded, and zero self-hosted runners are registered. A lane whose whole purpose is
+# "no silent skip" had been silently skipping every night for two months, because an expired queue and
+# a night that has not happened yet look exactly alike. The `runner-guard` job below is GitHub-hosted
+# and fails LOUDLY when nothing claims the kernel job, converting 60 invisible expirations into one
+# visible failure. It never reports the kernel lane as passing — absence is reported as absence.
 #
 # PUBLIC-REPO SAFETY (ADR 0049): this lane never uses the `pull_request`/`pull_request_target` trigger,
 # so a fork PR cannot cause code to run on the self-hosted runner — only `schedule` and an operator's
@@ -20,6 +28,37 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  # ADR 0093: a GitHub-hosted witness for the self-hosted job. It asserts only that SOMETHING claimed
+  # the kernel job; it makes no claim about the kernel results, so it cannot manufacture a false green.
+  runner-guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read          # to read THIS run's job list; still no write anywhere
+    steps:
+      - name: Fail loudly if no self-hosted `lean` runner claims the kernel job
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          deadline=$(( SECONDS + 600 ))          # 10 min; an online runner claims a job in seconds
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            state="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+                       --jq '.jobs[] | select(.name=="kernel") | .status' || true)"
+            case "$state" in
+              in_progress|completed)
+                echo "kernel job claimed by a runner (status=$state)"; exit 0 ;;
+            esac
+            sleep 20
+          done
+          echo "::error title=No self-hosted runner::Nothing claimed the kernel job in 10 minutes."
+          echo "The kernel lane requires a self-hosted runner labelled 'lean' with docker and the"
+          echo "leibniz-lean image. Register one (docs/runbooks/kernel-runner.md) or this lane is dead:"
+          echo "it will queue for 24h and be cancelled, which reads as 'not run yet', not as 'broken'."
+          exit 1
+
   kernel:
     runs-on: [self-hosted, lean]   # register a self-hosted runner (label `lean`) with docker + leibniz-lean
     steps:
