@@ -243,12 +243,108 @@ def detect_equilibria(entry: dict, home: Path | None = None, look_back: int = 3)
 #: production median) and that was WRONG: a beat running while this ADR was being written was
 #: measured at 1h51m and 96% CPU sustained (106 min of CPU in 111 min elapsed) — healthy, heavy,
 #: and it would have been killed. The two hangs, by contrast, sat at ~14% CPU for 6h57m and 7.5h.
-#: 4 h separates a heavy beat from a wedged one on the evidence available.
-#: The sharper discriminator is CPU RATE, not duration — a hung beat is idle, a slow beat is not —
-#: but that needs per-process accounting the beat does not currently collect.
-BEAT_MAX_S = int(os.environ.get("LEIBNIZ_BEAT_MAX_S", "14400"))
+#: ADR 0094 demoted this to a BACKSTOP. Duration was tuned twice (3600 -> 14400) and falsified
+#: both times by a healthy beat: the second one reached 3h41m at 96.6% CPU while this was being
+#: written. A number that needs re-tuning on every new observation is not measuring the thing that
+#: matters. `_StallWatch` is now the primary detector and catches the real case in ~30 min rather
+#: than hours; this ceiling only bounds whatever the stall detector fails to see. 8 h.
+BEAT_MAX_S = int(os.environ.get("LEIBNIZ_BEAT_MAX_S", "28800"))
 #: The scheduled interval is daily; two missed nights is unambiguous.
 JOURNAL_MAX_AGE_H = int(os.environ.get("LEIBNIZ_JOURNAL_MAX_AGE_H", "48"))
+
+
+#: ADR 0094 — the STALL detector's parameters. See `_StallWatch` for why neither signal alone works.
+STALL_WINDOW_S = int(os.environ.get("LEIBNIZ_BEAT_STALL_WINDOW_S", "1800"))   # 30 min of evidence
+STALL_FLOOR_S = int(os.environ.get("LEIBNIZ_BEAT_STALL_FLOOR_S", "1800"))     # ignore the first 30 min
+STALL_LOW_CPU = float(os.environ.get("LEIBNIZ_BEAT_STALL_LOW_CPU", "0.10"))   # 10% of one core
+
+
+def _cpu_seconds() -> float:
+    """Process CPU (user+sys) including REAPED children. stdlib only — psutil is not a core dep."""
+    t = os.times()
+    return t.user + t.system + t.children_user + t.children_system
+
+
+def _progress_mtime(home: Path) -> float:
+    """Newest mtime across the beat's own state. A beat that is advancing eventually writes."""
+    newest = 0.0
+    try:
+        for p in home.iterdir():
+            if p.is_file():
+                newest = max(newest, p.stat().st_mtime)
+    except OSError:
+        pass
+    return newest
+
+
+class _StallWatch:
+    """ADR 0094 — decide whether a beat is WEDGED, using two signals that are each unsound alone.
+
+    Measured on this machine, 2026-09-08:
+      - the 7h production hang sat at ~14% CPU;
+      - a healthy beat sat at 96.6% CPU for 3h41m -- and wrote NOTHING to its state directory for
+        the last 3.5 h of that.
+
+    So: low CPU means "wedged OR blocked on a Lean container" (the kernel runs in Docker, so a beat
+    waiting on a proof is idle BY DESIGN), and no-progress means "wedged OR computing hard". Either
+    signal alone kills healthy work. ADR 0092 claimed "CPU rate is the right discriminator"; that
+    was too strong, and this class is the correction.
+
+    Wedged := for a sustained window, CPU is low AND the state directory has not advanced. A beat
+    that is neither burning CPU nor writing anything for half an hour is not making progress in any
+    sense this daemon can observe.
+
+    Pure logic, no threads or clocks of its own, so the decision is unit-testable.
+    """
+
+    def __init__(self, window_s: int = None, floor_s: int = None, low_cpu: float = None):
+        self.window_s = STALL_WINDOW_S if window_s is None else window_s
+        self.floor_s = STALL_FLOOR_S if floor_s is None else floor_s
+        self.low_cpu = STALL_LOW_CPU if low_cpu is None else low_cpu
+        self.samples: list[tuple[float, float, float]] = []      # (wall, cpu_s, progress_mtime)
+
+    def sample(self, wall: float, cpu_s: float, progress_mtime: float) -> None:
+        self.samples.append((wall, cpu_s, progress_mtime))
+        cutoff = wall - self.window_s * 2                        # keep a little history for the journal
+        self.samples = [s for s in self.samples if s[0] >= cutoff]
+
+    def _window(self) -> list:
+        if not self.samples:
+            return []
+        now = self.samples[-1][0]
+        return [s for s in self.samples if s[0] >= now - self.window_s]
+
+    def cpu_rate(self) -> float | None:
+        w = self._window()
+        if len(w) < 2:
+            return None
+        dt = w[-1][0] - w[0][0]
+        return None if dt <= 0 else (w[-1][1] - w[0][1]) / dt
+
+    def verdict(self, elapsed_s: float) -> str:
+        """'alive' | 'wedged' | 'unknown' (not enough evidence yet)."""
+        if elapsed_s < self.floor_s:
+            return "unknown"                                     # startup noise
+        w = self._window()
+        if len(w) < 2 or (w[-1][0] - w[0][0]) < self.window_s * 0.9:
+            return "unknown"                                     # window not full
+        rate = self.cpu_rate()
+        if rate is None:
+            return "unknown"
+        progressed = w[-1][2] > w[0][2]
+        if rate >= self.low_cpu or progressed:
+            return "alive"
+        return "wedged"
+
+    def telemetry(self) -> dict:
+        """Recorded in EVERY journal entry, not just a kill. ADR 0092 admitted the hang was never
+        diagnosed; this is so the next one can be."""
+        rate = self.cpu_rate()
+        w = self._window()
+        return {"samples": len(self.samples),
+                "cpu_rate": None if rate is None else round(rate, 3),
+                "window_s": self.window_s,
+                "progressed_in_window": bool(w and w[-1][2] > w[0][2])}
 
 
 def stale_journal_alarm(home: Path | None = None, max_age_h: int | None = None) -> list[str]:
@@ -297,20 +393,39 @@ def _arm_watchdog(home: Path, cycles: int, limit_s: int | None = None):
     """ADR 0092 — a hard wall-clock ceiling that STILL JOURNALS.
 
     A soft between-cycles budget cannot help a beat wedged inside ONE cycle, which is what a
-    seven-hour beat is. This arms a daemon thread that, at the deadline, closes the Lean backends,
-    writes a `timed_out` journal entry, alarms, and exits the process.
+    seven-hour beat is. This arms a daemon thread that samples liveness every 60 s and kills on
+    EITHER signal: `_StallWatch` says wedged (ADR 0094 — the primary detector, typically within
+    ~30 min), or the `limit_s` backstop fires. Either way it closes the Lean backends, writes a
+    journal entry carrying the stall telemetry, alarms, and exits.
 
     It journals BEFORE exiting on purpose: the whole defect is that a hung beat leaves no trace,
     so a watchdog that killed silently would fix the resource leak and keep the blind spot.
     """
     limit_s = BEAT_MAX_S if limit_s is None else limit_s
+    stall = _StallWatch()
     if limit_s <= 0:                                   # 0 disables, for an operator-supervised run
-        return lambda: None
+        return (lambda: None), stall
     import threading
     done = threading.Event()
 
     def _watch() -> None:
-        if done.wait(limit_s):
+        t0 = time.monotonic()
+        reason = None
+        # Poll fast enough that a short ceiling still fires: production runs an 8 h backstop and a
+        # 30 min stall window, so 60 s is right there; a test with limit_s=1 needs sub-second.
+        poll = max(0.2, min(60.0, limit_s / 10.0))
+        while not done.wait(poll):
+            wall = time.monotonic()
+            elapsed = wall - t0
+            stall.sample(wall, _cpu_seconds(), _progress_mtime(home))
+            if stall.verdict(elapsed) == "wedged":
+                reason = (f"WEDGED: no CPU and no state progress for {stall.window_s}s "
+                          f"(cpu_rate={stall.cpu_rate():.3f}, elapsed={round(elapsed)}s)")
+                break
+            if elapsed >= limit_s:
+                reason = f"BEAT TIMED OUT after {limit_s}s — killed by the ADR 0092 watchdog backstop"
+                break
+        if reason is None:
             return                                     # beat finished in time
         try:
             from leibniz.backends import lean_repl
@@ -318,17 +433,18 @@ def _arm_watchdog(home: Path, cycles: int, limit_s: int | None = None):
         except Exception:                              # pragma: no cover
             closed = -1
         entry = {"ts": _now(), "timed_out": True, "limit_s": limit_s, "cycles_requested": cycles,
-                 "cycles": [], "backends_closed": closed, "duration_s": limit_s,
-                 "anomalies": [f"BEAT TIMED OUT after {limit_s}s — killed by the ADR 0092 watchdog"]}
+                 "cycles": [], "backends_closed": closed,
+                 "duration_s": round(time.monotonic() - t0, 1),
+                 "stall": stall.telemetry(), "anomalies": [reason]}
         try:
             write_journal(entry, home)
-            alarm(entry["anomalies"], home)
+            alarm([reason], home)
         except Exception:                              # pragma: no cover
             pass
         os._exit(3)                                    # atexit already handled above
 
     threading.Thread(target=_watch, daemon=True, name="adr0092-watchdog").start()
-    return done.set
+    return done.set, stall
 
 
 def detect_anomalies(entry: dict, containers_after: int) -> list[str]:
@@ -457,11 +573,14 @@ def main() -> int:
         alarm([f"beat ABORTED at preflight: {'; '.join(hard)}"], home)
         print(f"[heartbeat] ABORT — {hard}")
         return 2
-    disarm = _arm_watchdog(home, cycles)     # ADR 0092: hard ceiling, journals before it kills
+    disarm, stall = _arm_watchdog(home, cycles)   # ADR 0092/0094: stall detector + backstop
     try:
         entry = beat(cycles)
     finally:
         disarm()
+    # ADR 0094: journal liveness telemetry on EVERY beat, not only a kill. ADR 0092 admitted the
+    # 7h hang was never diagnosed; this is so the next one can be.
+    entry["stall"] = stall.telemetry()
     entry["preflight_notes"] = notes
     if stale:
         entry["stale_journal_on_entry"] = stale
