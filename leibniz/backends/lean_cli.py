@@ -50,8 +50,10 @@ from pathlib import Path
 from typing import Optional
 
 from leibniz.backends.lean_axioms import (
+    _report_re,
     axiom_report_text,
     declaration_name,
+    expected_report_names,
     mentions_sorry,
     smuggles_top_level,
 )
@@ -136,6 +138,10 @@ class LeanResult:
 
     @property
     def uses_sorry(self) -> bool:
+        # BROAD by design (ADR 0095 round 2). Narrowing this to Lean's warning wording made
+        # `check_source("theorem t : 2 + 2 = 5 := by sorry")` return True -- Lean writes the
+        # warning with BACKTICKS, so the narrow regex matched nothing, and this path (the
+        # "trusted re-check" ~20 audit scripts call) has no axiom-footprint backstop.
         return mentions_sorry(self.output)
 
     @property
@@ -186,9 +192,16 @@ class LeanCliBackend:
             return False
         src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
         res = self._run_lean(_with_imports(expr.imports, f"{src}\n#print axioms {name}"))
-        if res is None or not res.kernel_ok:
+        if res is None or res.has_errors:
             return False
-        return bool(axiom_report_text(res.output, name).get("ok"))
+        # `res.kernel_ok` cannot be used here: its `uses_sorry` is a BROAD scan (deliberately —
+        # see LeanResult.uses_sorry) and the `#print axioms <name>` this method appends echoes the
+        # declaration NAME back, so a theorem called `sorry_free_addition` would DEFER silently.
+        # Exclude exactly that echo, nothing else; `sorryAx` is still caught inside `mentions_sorry`.
+        if mentions_sorry(res.output, ignore=_report_re(name)):
+            return False
+        return bool(axiom_report_text(res.output, name, expected=
+                                      expected_report_names(name, expr.preamble)).get("ok"))
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already

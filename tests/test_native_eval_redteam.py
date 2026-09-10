@@ -16,9 +16,12 @@ import pytest
 
 from leibniz.backends.lean_axioms import (
     STD_AXIOMS,
+    _report_re,
+    _strip_comments,
     axiom_report,
     axiom_report_text,
     declaration_name,
+    expected_report_names,
     mentions_sorry,
     smuggles_top_level,
 )
@@ -194,13 +197,133 @@ def test_axiom_report_text_reads_OUR_report_not_the_first_one():
 
 
 def test_a_theorem_named_sorry_something_still_verifies():
-    """ADR 0095 decision 6. `#print axioms <name>` echoes the declaration's NAME into the message
-    stream, so a blind `"sorry" in message` scan started rejecting honest proofs whose name merely
-    contains the letters -- a silent, unexplained DEFER. Match what Lean actually reports."""
+    """ADR 0095 decision 6, as CORRECTED by decision 9.
+
+    `#print axioms <name>` echoes the declaration's NAME into the message stream, so a blind
+    `"sorry" in message` scan rejected honest proofs whose name merely contains the letters -- a
+    silent, unexplained DEFER. The first fix narrowed the scan to Lean's warning wording, and that
+    was a material regression (Lean uses BACKTICKS, so it matched nothing and `check_source`
+    started certifying `2 + 2 = 5`). The scan is broad; the ECHO is what gets excluded, via
+    `ignore`. This test pins the corrected contract, so that narrowing it again fails here.
+    """
+    assert mentions_sorry("declaration uses `sorry`")
     assert mentions_sorry("declaration uses 'sorry'")
     assert mentions_sorry("'t' depends on axioms: [sorryAx]")
-    assert not mentions_sorry("'sorry_free_addition' does not depend on any axioms")
-    assert not mentions_sorry("'no_sorry_here' depends on axioms: [propext]")
+    # broad WITHOUT the echo exclusion -- this is the property `check_source` depends on
+    assert mentions_sorry("'sorry_free_addition' does not depend on any axioms")
+    # ...and precise WITH it, which is what `check_proof` uses
+    rep = _report_re("sorry_free_addition")
+    assert not mentions_sorry("'sorry_free_addition' does not depend on any axioms", ignore=rep)
+    assert not mentions_sorry("'no_sorry_here' depends on axioms: [propext]",
+                              ignore=_report_re("no_sorry_here"))
+    # text with no hole and no echo is clean either way
+    assert not mentions_sorry("'plain' depends on axioms: [propext]")
+
+
+# --- round-2 adversarial review (ADR 0095 decisions 7-10) --------------------
+
+def test_indented_top_level_command_is_still_a_smuggle():
+    """Decision 7. The first guard was a COLUMN-0 scan, and its stated rationale ("a proof's own
+    continuation lines are indented, a new command is not") was simply wrong: Lean parses a
+    command at any column. One leading space walked past it and drove `catastrophe : False` to
+    `Q.E.D.` through the CLI backend."""
+    assert smuggles_top_level("by\n    native_decide\n\n namespace M\n theorem m : True := trivial")
+    assert smuggles_top_level("by decide\n theorem d : True := trivial")
+    assert smuggles_top_level("by decide\n\t@[simp] theorem d : True := trivial")
+    # `set_option ... in` / `open ... in` are TERM MODIFIERS, not declarations, and honest proofs
+    # use them -- gates/mixed_modulus_decided.py emits the first. They must NOT trip the guard.
+    assert not smuggles_top_level("by\n  set_option maxRecDepth 4000 in\n  decide")
+    assert not smuggles_top_level("open Nat in\nby decide")
+
+
+def test_string_literal_cannot_blind_the_comment_stripper():
+    """Decision 8. Lexing `/-` without tracking string literals is itself an attack surface: a
+    proof containing `have s : String := "/-"` opened a block comment that never closed, so the
+    stripper swallowed the rest and the guard saw nothing -- while Lean, which lexes the string
+    correctly, elaborated the `namespace` decoy that followed. Independent of decision 7."""
+    assert smuggles_top_level(
+        'by\n  have s : String := "/-"\n  native_decide\n\nnamespace M2\ntheorem m2 : True := trivial')
+    assert '"/-"' in _strip_comments('have s : String := "/-"\nnamespace M')
+    assert smuggles_top_level('by\n  have s := "a\\"/-"\n  decide\nnamespace M3')
+    # real comments are still stripped
+    assert not smuggles_top_level("-- namespace M\nby decide")
+    assert not smuggles_top_level("/- namespace M -/\nby decide")
+
+
+def test_sorry_scan_is_broad_and_matches_leans_backticks():
+    """Decision 9, and the most serious regression of the whole ADR. Narrowing this scan to
+    Lean's warning wording matched NOTHING -- Lean writes it with BACKTICKS on 4.31.0, 4.33.1 and
+    4.34.0-rc2 alike -- so `LeanCliBackend.check_source` began returning True for
+    `theorem t : 2 + 2 = 5 := by sorry`, on the path ~20 audit scripts call the trusted re-check
+    and which has NO axiom-footprint backstop. The scan stays broad; only the `#print axioms`
+    name echo is excluded, which was the sole cause of the false DEFER."""
+    assert mentions_sorry("declaration uses `sorry`")      # backticks -- Lean's actual wording
+    assert mentions_sorry("declaration uses 'sorry'")
+    assert mentions_sorry("'t' depends on axioms: [sorryAx]")
+    rep = _report_re("sorry_free_addition")
+    assert not mentions_sorry("'sorry_free_addition' does not depend on any axioms", ignore=rep)
+    # `sorryAx` is tested BEFORE the echo is removed, so a hole in the footprint still bites
+    assert mentions_sorry("'sorry_free_addition' depends on axioms: [sorryAx]", ignore=rep)
+
+
+def test_wrapped_axiom_list_is_read_correctly_by_both_transports():
+    """Decision 10. Lean's pretty-printer BREAKS a long axiom list across lines (measured: a
+    3-axiom footprint wraps once the name reaches 60 chars, a native-axiom footprint at 15), and
+    `set_option format.width` does not suppress it. Splitting the CLI blob per line therefore saw
+    a report with no list and a list with no report -- so an honest 62-char-named proof got
+    `Q.E.D.` from the REPL and `Q.E.I.` from the CLI, and a wrapped dirty footprint could lose to
+    an earlier one-line report about the same short name."""
+    n = "crt_amplification_of_a_recently_published_finite_core_lemma_v1"
+    exp = expected_report_names(n)
+    clean = f"'{n}' depends on axioms: [propext,\n Classical.choice,\n Quot.sound]"
+    dirty = (f"'{n}' depends on axioms: [propext,\n Classical.choice,\n Quot.sound,\n"
+             f" {n}._native.native_decide.ax_1]")
+    assert axiom_report_text(clean, n, expected=exp)["ok"] is True
+    assert axiom_report_text(dirty, n, expected=exp)["ok"] is False
+    # an earlier one-line report about the same name must not win over our wrapped one
+    assert axiom_report_text(f"'{n}' depends on axioms: [propext]\n" + dirty, n,
+                             expected=exp)["ok"] is False
+    # the two transports must agree on identical content
+    msgs = {"messages": [{"severity": "info", "data": dirty}]}
+    assert axiom_report(msgs, n, expected=exp)["ok"] is axiom_report_text(dirty, n, expected=exp)["ok"]
+
+
+def test_tagged_error_diagnostics_are_recognised():
+    """Lean 4.31 emits `error(lean.unknownIdentifier): ...` as well as plain `error: ...`; a
+    literal `"error:" in output` test missed the tagged form and passed a report that coexisted
+    with an error."""
+    exp = expected_report_names("t")
+    for diag in ("x.lean:2:14: error(lean.unknownIdentifier): boom",
+                 "x.lean:2:14: error: boom"):
+        assert axiom_report_text(f"{diag}\n't' does not depend on any axioms", "t",
+                                 expected=exp)["ok"] is False
+
+
+def test_only_the_preamble_may_qualify_our_name():
+    """Decisions 7-8 are keyword scans and cannot be complete. THIS is the structural check: a
+    report may qualify our name only with a namespace the OPERATOR-AUTHORED preamble opened.
+    `M.margin` declared by a proof is a different declaration wearing our name."""
+    decoy = {"messages": [{"severity": "info", "data": "'M.margin' does not depend on any axioms"}]}
+    assert axiom_report(decoy, "margin", expected=expected_report_names("margin"))[
+        "saw_axiom_report"] is False
+    # a namespace the preamble opened IS legitimate -- otherwise every ADR 0062 law would DEFER
+    ns = {"messages": [{"severity": "info", "data": "'Ns.margin' does not depend on any axioms"}]}
+    assert axiom_report(ns, "margin", expected=expected_report_names("margin", "namespace Ns"))["ok"]
+    # Lean's own `private` mangling is not user-controllable, so it is accepted
+    pv = {"messages": [{"severity": "info",
+                        "data": "'_private.Mod.0.margin' does not depend on any axioms"}]}
+    assert axiom_report(pv, "margin", expected=expected_report_names("margin"))["ok"]
+
+
+def test_declaration_name_handles_honest_lean_shapes():
+    """Round 2 found four silent false-rejects; a guard that refuses honest work is a defect."""
+    for src, want in (("set_option maxRecDepth 4000 in theorem foo : True", "foo"),
+                      ("open Nat in theorem foo2 : True", "foo2"),
+                      ("theorem\n  wrapped_name : True", "wrapped_name"),
+                      ("theorem «a weird name» : True", "«a weird name»"),
+                      ("theorem upoly.{u} (a : Sort u) : True", "upoly"),
+                      ("nonrec theorem nr : True", "nr")):
+        assert declaration_name(src) == want, src
 
 
 # --- the live exploit (docker-gated) ----------------------------------------
@@ -282,3 +405,71 @@ def test_sorry_named_theorem_verifies_against_the_real_kernel():
         assert demo.qed == "Q.E.D."
     finally:
         be.close()
+
+
+def test_check_source_still_refuses_a_sorry_proof():
+    """The live form of decision 9. `check_source` is what ~20 audit scripts call the trusted
+    re-check, and it has no axiom-footprint backstop -- if the sorry scan misses, it certifies
+    a false theorem outright."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    be = LeanCliBackend()
+    assert be.check_source("theorem audit_claim : (2:Nat) + 2 = 5 := by sorry") is False
+    assert be.check_source("theorem audit_ok : (2:Nat) + 2 = 4 := by decide") is True
+
+
+def test_indented_and_string_literal_decoys_fail_live():
+    """The two round-2 criticals, end-to-end through the sole writer."""
+    be = _repl()
+    try:
+        THM = "theorem margin : (1000000000000:Nat) % 7 = 1"
+        v = LeanVerifier(backend=be)
+        from leibniz.backends.lean_axioms import axiom_closure
+        for label, proof in (
+            ("indented", "by\n    native_decide\n\n namespace M\n theorem margin : True := trivial"),
+            ("string-literal",
+             'by\n  have s : String := "/-"\n  native_decide\n\nnamespace M2\ntheorem margin : True := trivial'),
+        ):
+            demo = Demonstratio(proof_obligation=label, proof_src=proof)
+            v.discharge(Expressio(theorem_src=THM, imports=("Mathlib",)), demo)
+            assert demo.kernel_verified is False, label
+            assert axiom_closure(be, THM, proof, ("Mathlib",))["ok"] is False, label
+    finally:
+        be.close()
+
+
+def test_sorry_in_the_preamble_is_still_caught():
+    """`axiom_closure`'s docstring promises a smuggled hole in the ADR 0062 preamble is caught."""
+    be = _repl()
+    try:
+        demo = Demonstratio(proof_obligation="preamble-hole", proof_src="by decide")
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src="theorem t_ok : (1:Nat)+1 = 2", imports=("Mathlib",),
+                      preamble="theorem helper_hole : False := by sorry"), demo)
+        assert demo.kernel_verified is False
+    finally:
+        be.close()
+
+
+def test_long_theorem_name_verifies_on_both_transports():
+    """Decision 10, live. A wrapped-but-clean footprint must give the SAME verdict either way."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    from leibniz.backends.lean_repl import LeanReplBackend
+    LONG = ("theorem crt_amplification_of_a_recently_published_finite_core_lemma_v1 "
+            "(p : Prop) : p ∨ ¬p")
+    repl = LeanReplBackend()
+    try:
+        verdicts = []
+        for backend in (repl, LeanCliBackend()):
+            demo = Demonstratio(proof_obligation="long", proof_src="Classical.em p")
+            LeanVerifier(backend=backend).discharge(
+                Expressio(theorem_src=LONG, imports=("Mathlib",)), demo)
+            verdicts.append(demo.kernel_verified)
+        assert verdicts == [True, True], f"transports disagree or false-DEFER: {verdicts}"
+    finally:
+        repl.close()

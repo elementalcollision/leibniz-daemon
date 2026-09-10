@@ -1,7 +1,7 @@
 # ADR 0095 — `kernel_verified` must mean kernel-decided: fold the axiom footprint into the writer
 
 - Status: **accepted — landed; forced by a working exploit against the pinned image, and
-  substantially rewritten after adversarial review broke the first fix**
+  rewritten TWICE after two rounds of adversarial review each broke the preceding fix**
 - Date: 2026-09-10
 - Depends on: ADR 0001 (trust hierarchy), ADR 0056/0062 (the axiom-closure contract),
   ADR 0089/0090 (the hardening of `axiom_report` this reuses), ADR 0048 (Lean is the only
@@ -148,6 +148,60 @@ trailing dot, and `#print axioms upoly.` is a syntax error). Both had failed clo
 proofs.
 
 The regression file is now part of `scripts/run_kernel_tests.sh`, which it was not before.
+
+### What a SECOND adversarial round found (decisions 7-11)
+
+Decisions 4-6 were attacked in turn. **They broke too** — two more end-to-end routes to
+`kernel_verified=True`, and decision 6 turned out to be a material *regression*. The pattern is
+worth naming: every round, the thing that failed was a **syntactic guess about Lean's surface
+syntax or output**, and the fix that held was a **structural check**.
+
+**7. The smuggle guard must allow leading whitespace.** Decision 4 was a column-0 scan whose
+stated rationale — "a proof's own continuation lines are indented, a new command is not" — is
+simply false: Lean parses a command at any column. One leading space walked past it and drove
+`theorem catastrophe : False` to `Q.E.D.` through `LeanCliBackend`. Whitespace is now allowed,
+and `set_option ... in` / `open ... in` are exempted as term modifiers (honest proofs use them —
+`gates/mixed_modulus_decided.py` emits the first).
+
+**8. The comment stripper must respect string literals.** Lexing `/-` without tracking strings is
+itself an attack surface: a proof containing `have s : String := "/-"` opened a block comment that
+never closed, so the stripper swallowed the rest and the guard saw nothing — while Lean, which
+lexes the string correctly, elaborated the `namespace` decoy that followed. Independent of
+decision 7, and it would have survived an indentation-only fix.
+
+**9. The `sorry` scan must stay BROAD — decision 6 was a regression.** Lean writes the warning
+with **backticks** (``declaration uses `sorry` ``, verified on 4.31.0, 4.33.1 and 4.34.0-rc2), so
+narrowing the scan to `uses 'sorry'` matched *nothing at all*. `LeanCliBackend.check_source`
+began returning `True` for `theorem t : 2 + 2 = 5 := by sorry` — the function ~20 audit scripts
+call "the trusted re-check", and the one path with **no axiom-footprint backstop**. A sorry-ed
+ADR 0062 preamble helper also stopped being caught, falsifying `axiom_closure`'s own docstring.
+The scan is broad again; the *echo* of `#print axioms <name>` is what gets excluded, which was
+the sole cause of the false DEFER decision 6 was reaching for. `sorryAx` is tested before the
+exclusion, so a hole named in the footprint still bites.
+
+**10. The text transport must not split per line — decision 5 over-corrected.** Lean's
+pretty-printer **wraps** a long axiom list across lines (measured: a 3-axiom footprint wraps once
+the theorem name reaches 60 characters, a native-axiom footprint at 15; `set_option format.width`
+does not suppress it). Per-line splitting therefore saw a report with no list and a list with no
+report, and the two transports disagreed on identical content *in both directions* — an honest
+62-character-named proof got `Q.E.D.` from the REPL and `Q.E.I.` from the CLI, and a wrapped dirty
+footprint could lose to an earlier one-line report about the same short name. The blob is kept
+intact; the atomic capture from decision 5 is what makes that safe, since `[^\]]*` spans newlines.
+Tagged diagnostics (`error(lean.unknownIdentifier):`) are now recognised alongside plain `error:`.
+
+**11. Only the preamble may qualify our name.** The structural check, and the one that does not
+depend on anticipating syntax. `_report_re` allows an optional qualifier because an ADR 0062
+preamble may open a namespace — without it every namespaced law would silently DEFER. But "any
+qualifier" also accepts `'M.margin'` for a decoy the *proof* declared, which is how both rounds'
+exploits stood up a clean report for a dirty theorem. The preamble is operator-authored and
+trusted; `proof_src` is not. So `expected_report_names` accepts exactly the qualifiers the
+preamble could have introduced, plus Lean's own non-spoofable `_private.<Module>.<n>.` mangling.
+**Decisions 7 and 8 are keyword scans and cannot be complete; this is what actually holds.**
+
+Four honest-proof false-rejects found in the same round are fixed: `set_option ... in theorem` on
+one line, `open ... in theorem` on one line, a name on the line after the keyword, and
+`«guillemet names»`. `python demo.py` — a documented command and a blocking CI step — had
+regressed from `promulgated: 1` to `0` because its `FakeLean` lacked the decision-2 attestation.
 
 ## Consequences
 

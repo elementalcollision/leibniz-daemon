@@ -36,8 +36,10 @@ from leibniz.backends.lean_cli import (
     _NAME_RE as _CLI_NAME_RE,
 )
 from leibniz.backends.lean_axioms import (
+    _report_re,
     axiom_report,
     declaration_name,
+    expected_report_names,
     mentions_sorry,
     smuggles_top_level,
 )
@@ -201,12 +203,14 @@ class LeanReplBackend:
             return self._send({"cmd": decl})
 
     @staticmethod
-    def _kernel_ok(resp: Optional[dict]) -> bool:
+    def _kernel_ok(resp: Optional[dict], ignore=None) -> bool:
+        """no error, no sorry. `ignore` (ADR 0095) drops the `#print axioms <name>` echo from
+        the sorry scan, which is BROAD on purpose -- see `lean_axioms.mentions_sorry`."""
         if resp is None:
             return False
         msgs = resp.get("messages", []) or []
         has_error = any(m.get("severity") == "error" for m in msgs)
-        has_sorry = any(mentions_sorry(m.get("data", "") or "") for m in msgs)
+        has_sorry = any(mentions_sorry(m.get("data", "") or "", ignore=ignore) for m in msgs)
         return (not has_error) and (not has_sorry)
 
     # --- LeanBackend Protocol -------------------------------------------------
@@ -237,7 +241,11 @@ class LeanReplBackend:
         if not name or smuggles_top_level(proof_src):
             return False
         resp = self._run(f"{src}\n#print axioms {name}", expr.imports)
-        return self._kernel_ok(resp) and bool(axiom_report(resp, name).get("ok"))
+        rep = _report_re(name)
+        return (self._kernel_ok(resp, ignore=rep)
+                and bool(axiom_report(resp, name,
+                                      expected=expected_report_names(name, expr.preamble)
+                                      ).get("ok")))
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).

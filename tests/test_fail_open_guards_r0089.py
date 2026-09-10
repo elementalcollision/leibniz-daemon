@@ -170,11 +170,25 @@ def test_full_block_cannot_be_evaded_by_appending_a_neq_atom():
 
 
 def test_namespaced_report_is_not_a_false_defer():
-    """DEFECT 4. Lean may print the FULLY QUALIFIED name while `_NAME_RE` reads the short one out
-    of the source (this repo's recorded output has both forms). An ADR 0062 preamble opening a
-    namespace would otherwise turn a clean footprint into a silent DEFER."""
-    r = axiom_closure(_Repl([_info("'Foo.t' depends on axioms: [propext]")]), "theorem t : 1 = 1", "rfl", ())
+    """DEFECT 4. Lean may print the FULLY QUALIFIED name while the source declares the short one
+    (this repo's recorded output has both forms: `docs/results/prob16_census.json` records
+    `'SO_cube.cube_not_self_ordered'` for a law whose preamble opens `namespace SO_cube`). An
+    ADR 0062 preamble opening a namespace must NOT turn a clean footprint into a silent DEFER.
+
+    ADR 0095 tightened WHICH qualifiers count, and this test is updated to match its own
+    docstring: it now supplies the preamble it always described. "Any qualifier" was the
+    looseness both adversarial rounds used to stand up a clean report for a dirty theorem — a
+    decoy `theorem t` declared inside a `namespace Foo` that the PROOF opened satisfied it. The
+    anti-false-DEFER property is unchanged for the case it exists to protect; the second
+    assertion is the new, stronger half.
+    """
+    r = axiom_closure(_Repl([_info("'Foo.t' depends on axioms: [propext]")]),
+                      "theorem t : 1 = 1", "rfl", (), preamble="namespace Foo")
     assert r["ok"] is True and r["axioms"] == ["propext"]
+    # ...but a qualifier the preamble never opened is a DIFFERENT declaration wearing our name.
+    decoy = axiom_closure(_Repl([_info("'Foo.t' depends on axioms: [propext]")]),
+                          "theorem t : 1 = 1", "rfl", ())
+    assert decoy["ok"] is False and decoy["saw_axiom_report"] is False
 
 
 def test_preamble_report_does_not_become_our_footprint():

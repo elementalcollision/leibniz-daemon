@@ -104,6 +104,33 @@ All fixed and frozen as regressions; the regression file is now in the kernel la
 ADR 0095 decisions 4-6. The lesson is the one CLAUDE.md already records: re-reading found none of
 this, and the most dangerous of the three was reachable by an *honest* input shape, not a crafted one.
 
+### A second adversarial round broke the fixes again
+
+Decisions 4-6 were attacked in turn and also fell — two more end-to-end routes, and one of the
+fixes was itself a regression:
+
+- **The smuggle guard was a column-0 scan.** Lean parses a command at any column, so one leading
+  space smuggled the namespace decoy and drove `catastrophe : False` to `Q.E.D.` again.
+- **The comment stripper mis-lexed string literals.** `have s : String := "/-"` opened a block
+  comment that never closed, blinding the guard to a plain column-0 smuggle. Independent of the
+  first, and would have survived an indentation-only fix.
+- **Narrowing the `sorry` scan was a regression.** Lean writes the warning with **backticks**, so
+  the narrowed regex matched nothing and `check_source("theorem t : 2 + 2 = 5 := by sorry")`
+  started returning `True` — the trusted re-check ~20 audit scripts call, and the one path with no
+  footprint backstop. A sorry-ed preamble helper also stopped being caught.
+- **Per-line splitting broke on Lean's wrapped output.** A long axiom list wraps across lines, so
+  the two transports disagreed on identical content in both directions — including a silent
+  `Q.E.I.` on an honest 62-character-named proof.
+
+Plus four honest-proof false-rejects and a regressed `python demo.py` (a blocking CI step).
+
+The pattern across both rounds is the useful finding: **every guard that failed was a syntactic
+guess about Lean's surface syntax or output format, and every fix that held was structural.** The
+check that now does the load-bearing work is `expected_report_names` — a report may qualify our
+name only with a namespace the *operator-authored* preamble opened, so a decoy declared by the
+*proposer-authored* proof is rejected regardless of what syntax introduced it. The keyword scans
+are kept as defence in depth and are explicitly documented as incomplete.
+
 ## A denylist could not have caught this
 
 Measured on the pin: the footprint of a `native_decide` proof is
