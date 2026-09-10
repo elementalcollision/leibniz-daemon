@@ -36,7 +36,7 @@
 
 The one property that justifies the whole project:
 
-> **LLMs propose; only mechanical checkers — the Lean 4.31 kernel, Z3, and exact
+> **LLMs propose; only mechanical checkers — the Lean 4.34 kernel, Z3, and exact
 > rational / finite‑field / exact‑enumeration decision procedures — decide.** No "the proof
 > looks right" ever reaches a promulgated law.
 
@@ -208,7 +208,7 @@ vacuously (it asserts ≥ 11 tests collected).
 3. **Verify from first principles** with an exact decider (Python: exact ℚ / GF(pᵏ) / exact
    enumeration / Berlekamp–Massey). Reproduce any statistic the paper reports (an f‑vector, a
    "272 of 5796", a Whitney number) — a match is a strong *faithfulness* check on your data.
-4. **Kernel‑attest** the finite core in Lean 4.31 via plain `decide` if it fits the budget
+4. **Kernel‑attest** the finite core in Lean 4.34 via plain `decide` if it fits the budget
    (§6). Add a **negative control** (a corrupted witness the kernel must *reject*).
 5. **Package** the standard five artifacts + branch off `origin/main`, commit, push, open a PR.
    Publish it as the next Calculemus cycle via the exporter.
@@ -275,7 +275,7 @@ The `cycle_payload(...)` / `downloadable_artifact(...)` helpers live in
   `bk._run(src, ("Mathlib...",))`; header `set_option maxHeartbeats 0` /
   `set_option maxRecDepth 1000000`; strip `import` lines. If it reports "unavailable",
   clear orphaned containers:
-  `docker ps -aq --filter ancestor=leibniz-lean-repl:v4.31.0 | xargs -r docker rm -f`.
+  `docker ps -aq --filter ancestor=leibniz-lean-repl:v4.34.0-rc2 | xargs -r docker rm -f`.
 - Cross‑kernel Coq: `rocq/rocq-prover:9.0`, `rocq compile` + `rocqchk -o` axiom audit,
   authenticated by an unforgeable nonce (`leibniz/backends/coq_docker.py`). Report‑only.
 - `docker`/OrbStack must be up for any kernel leg; `docker` unavailable → return `None`

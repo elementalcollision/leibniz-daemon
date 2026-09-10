@@ -28,7 +28,7 @@ and lets only mechanical checkers *decide*:
 
 | Edge | Who decides | Trust tier |
 |---|---|---|
-| proof ↔ formal statement | the Lean 4.31 kernel | **mechanical** (never an LLM) |
+| proof ↔ formal statement | the Lean 4.34 kernel | **mechanical** (never an LLM) |
 | novelty / non-triviality | retrieval + a decision procedure | **mechanical** |
 | **formal statement ↔ claim (Enuntiatio)** | gaming-witness → claim-probe (Z3 / kernel-decided / exact) → judge | **adversarial → mechanical → (bounded) judged** |
 
@@ -138,8 +138,8 @@ The real kernel runs in a pinned container — the host stays stdlib-only, Lean 
 container (ADR 0003; the REPL image amortizes Mathlib import cost per ADR 0011):
 
 ```bash
-docker build -f docker/lean.Dockerfile      -t leibniz-lean:v4.31.0      .
-docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.31.0 .
+docker build -f docker/lean.Dockerfile      -t leibniz-lean:v4.34.0-rc2      .
+docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.34.0-rc2 .
 pytest -q -m lean            # R1 kernel exit tests
 scripts/run_kernel_tests.sh  # kernel lane: an absent image or a silent skip is a FAILURE
 ```
@@ -264,7 +264,7 @@ demo.py                                       # one cycle, deterministic fakes
 scripts/                                      # heartbeat · run_live · amplify · verify_* · export_*
 docker/{lean,lean-repl}.Dockerfile · lean-project/          # the pinned kernel
 deploy/{heartbeat,profiles}/                  # launchd beat · dev/uat/prod profiles
-docs/adr/0001..0092 · docs/{architecture,capability-ladder,optimization-roadmap}.md
+docs/adr/0001..0096 · docs/{architecture,capability-ladder,optimization-roadmap}.md
 docs/{results,crt,runbooks,audits}/           # per-cycle findings · Lean certificates · runbooks
 tests/                                        # 11 byte-frozen invariants + ~1,870 more
 ```
@@ -291,7 +291,7 @@ optimization phase**, and the **four-phase autonomy plan is complete** (α heart
 β moving frontier · γ reach · δ Newton exchange; ADRs 0068–0081). The binding constraint
 is **novelty / discovery yield** — not prover reach and not the trust boundary.
 
-- **Trust boundary (R0–R3):** real Lean 4.31 kernel with an axiom audit · Z3
+- **Trust boundary (R0–R3):** real Lean 4.34 kernel with an axiom audit · Z3
   gaming-witness + unbounded claim probes · six kernel-decided faithfulness fragments ·
   cvc5 kill-only second opinion · enforced 0.15 judged budget · structural-hash novelty
   corpus, including novelty against the daemon's own ledger (ADR 0052/0077/0078).

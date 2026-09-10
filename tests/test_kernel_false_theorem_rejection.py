@@ -14,7 +14,7 @@ corrupted so the proposition reduces to `false = true`. The TRUE set (rendered b
 `render_*` functions) proves those exact templates compile and the kernel accepts them. So `False` here can
 only be the kernel disproving a false mathematical claim.
 
-RUNS WHERE: **operator machine with docker + `leibniz-lean:v4.31.0`** (or the self-hosted `lean` nightly
+RUNS WHERE: **operator machine with docker + `leibniz-lean:v4.34.0-rc2`** (or the self-hosted `lean` nightly
 runner). It is in `scripts/run_kernel_tests.sh`. On the GitHub `ci` lane (no Lean image) it COLLECTS and
 SKIPS cleanly. ~30 kernel invocations (~1-3 s each); budget a couple of minutes.
 """

@@ -175,7 +175,7 @@ def certify_n_absorbing(params: dict) -> dict:
     return {"verdict": f"absorbingNumber(⊥ : ℤ/{m}) = {k}", "witness": {"absorbing_number": k},
             "kernel": {"lean": lean,
                        # `Mathlib.Algebra.BigOperators.Basic` was listed here and does NOT exist in
-                       # the pinned Mathlib (no .olean in leibniz-lean:v4.31.0). The env build failed,
+                       # the pinned Mathlib (no .olean in leibniz-lean:v4.34.0-rc2). The env build failed,
                        # the REPL answered None, and the old fail-open scan below recorded ok=True --
                        # so this cert published as kernel-checked without ever being elaborated.
                        "imports": ["Mathlib.Data.ZMod.Basic", "Mathlib.Tactic"],

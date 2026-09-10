@@ -4,8 +4,8 @@
 # lives here in the container (where LeanDojo, later, needs Python <3.12). R1a is
 # core Lean only — Mathlib is added as a lake dependency in R1b.
 #
-# Build (from repo root):  docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .
-# Smoke:                   docker run --rm leibniz-lean:v4.31.0 lake env lean --version
+# Build (from repo root):  docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.34.0-rc2 .
+# Smoke:                   docker run --rm leibniz-lean:v4.34.0-rc2 lake env lean --version
 FROM debian:bookworm-slim
 
 RUN apt-get update -qq \
@@ -13,7 +13,7 @@ RUN apt-get update -qq \
  && rm -rf /var/lib/apt/lists/*
 
 # elan = Lean's toolchain manager. The exact Lean version is pinned by the
-# project's lean-toolchain file (leanprover/lean4:v4.31.0), not here.
+# project's lean-toolchain file (leanprover/lean4:v4.34.0-rc2), not here.
 RUN curl -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o /tmp/elan-init.sh \
  && sh /tmp/elan-init.sh -y --default-toolchain none \
  && rm /tmp/elan-init.sh

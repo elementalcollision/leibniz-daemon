@@ -155,7 +155,7 @@ def test_render_ldlt_lean_bogus_differs_only_in_d():
 
 # ---- docker-gated: real Lean 4.31 kernel checks both certificate forms ---------------------------------
 
-@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.31.0) unavailable")
+@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.34.0-rc2) unavailable")
 def test_kernel_verifies_bareiss_form_a_ldlt_and_rejects_bogus():
     bk = LeanCliBackend(timeout_s=120)
     N = sp.rounded_pd(0, 6, 10 ** 6)
@@ -164,7 +164,7 @@ def test_kernel_verifies_bareiss_form_a_ldlt_and_rejects_bogus():
     assert bk.check_source(bl.render_ldlt_lean_bogus(N, L_int, d_int, scale)) is False
 
 
-@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.31.0) unavailable")
+@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.34.0-rc2) unavailable")
 def test_kernel_verifies_bareiss_form_b_minors_and_rejects_bogus():
     bk = LeanCliBackend(timeout_s=120)
     N = sp.rounded_pd(0, 6, 10 ** 6)
@@ -172,7 +172,7 @@ def test_kernel_verifies_bareiss_form_b_minors_and_rejects_bogus():
     assert bk.check_source(bl.render_detsign_lean_bogus(N)) is False
 
 
-@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.31.0) unavailable")
+@pytest.mark.skipif(not _DOCKER, reason="Lean kernel (docker image leibniz-lean:v4.34.0-rc2) unavailable")
 def test_kernel_verifies_bareiss_form_a_at_n14_within_naive_kernel_budget():
     # psd_scaling_probe kernel-checks the naive route up to n=18 in-budget; confirm the (smaller) Bareiss
     # certificate also kernel-verifies at a comparable size.

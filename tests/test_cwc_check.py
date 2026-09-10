@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from leibniz.backends.lean_cli import KERNEL_VERSION
 
 _ROOT = Path(__file__).resolve().parent.parent
 
@@ -72,7 +73,7 @@ def test_committed_witness_lean_matches_renderer():
     assert rendered in committed, "committed CwcFanoWitness.lean drifted from render_cwc_lean output"
     assert "import Mathlib" not in committed              # core Lean only => minimal TCB
     assert committed.rstrip().endswith("decide")
-    assert "render_cwc_lean" in committed and "v4.31.0" in committed  # provenance header intact
+    assert "render_cwc_lean" in committed and KERNEL_VERSION in committed  # provenance header intact
 
 
 def test_beats_record_branch_flags_not_auto_promulgated(monkeypatch):

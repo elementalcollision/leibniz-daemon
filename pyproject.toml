@@ -37,7 +37,7 @@ packages = ["leibniz"]
 # 11 invariant tests; a "0 collected" run is a failure, not a vacuous pass.
 testpaths = ["tests"]
 markers = [
-    "lean: requires the pinned Lean container (leibniz-lean:v4.31.0); skipped where absent",
+    "lean: requires the pinned Lean container (leibniz-lean:v4.34.0-rc2); skipped where absent",
     "z3: requires the verify extra (z3-solver); skipped where absent",
 ]
 

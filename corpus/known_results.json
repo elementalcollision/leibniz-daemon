@@ -8,7 +8,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "06d010a4f059f931"
+    "formal_hash": "3f8a699a695d05bb"
   },
   {
     "name": "additive_identity",
@@ -162,7 +162,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "579a3b1c77ecbbfd"
+    "formal_hash": "7695c47c5836e6bb"
   },
   {
     "name": "pow_succ_nat",
@@ -173,7 +173,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "109ff4e21f6b9e67"
+    "formal_hash": "00b3020b61d82e98"
   },
   {
     "name": "add_comm_int",
@@ -327,7 +327,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "193a15c7cee01e81"
+    "formal_hash": "95c21d8c7e5c3d6e"
   },
   {
     "name": "factorial_pos",
@@ -360,7 +360,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "514125dc663e21f5"
+    "formal_hash": "b8054e64d835fc23"
   },
   {
     "name": "exists_succ",
@@ -382,7 +382,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "d297427c5e4b4eed",
+    "formal_hash": "ad147d5fbce94d3f",
     "claim_domain": "n >= 0",
     "claim_property": "n^2 % 2 == n % 2"
   },
@@ -395,7 +395,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "2fc93a519c558e6c",
+    "formal_hash": "79b0fff353230ce7",
     "claim_domain": "n >= 0",
     "claim_property": "n^3 % 3 == n % 3"
   },
@@ -408,7 +408,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "481f97bc10ad5ee7",
+    "formal_hash": "002111c8b473bc7b",
     "claim_domain": "n >= 0",
     "claim_property": "n^5 % 5 == n % 5"
   },
@@ -421,7 +421,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "a559a9d18c401b89",
+    "formal_hash": "e60bbc8fd2cf9d17",
     "claim_domain": "n >= 0",
     "claim_property": "n^7 % 7 == n % 7"
   },
@@ -434,7 +434,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "876fc5c91c9481b2",
+    "formal_hash": "c538a4b2bf5a0bd5",
     "claim_domain": "n >= 0",
     "claim_property": "n^11 % 11 == n % 11"
   },
@@ -447,7 +447,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "7fe9f624cd12e3b7",
+    "formal_hash": "0959ac31e70bd5ee",
     "claim_domain": "n >= 0",
     "claim_property": "n^13 % 13 == n % 13"
   },
@@ -460,7 +460,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "e1d9d53277a3378c",
+    "formal_hash": "e3f1fa96b9e3892c",
     "claim_domain": "n >= 0",
     "claim_property": "n^3 % 6 == n % 6"
   },
@@ -473,7 +473,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "00ccdea6d7e6aa80",
+    "formal_hash": "642147b00c6e1c99",
     "claim_domain": "n >= 0",
     "claim_property": "(n^3 - n) % 6 == 0"
   },
@@ -486,7 +486,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "4649467dc3bec5c8",
+    "formal_hash": "0c85d4ddf4346a9d",
     "claim_domain": "n >= 0",
     "claim_property": "(n^5 - n) % 30 == 0"
   },
@@ -499,7 +499,7 @@
     "imports": [
       "Mathlib.Tactic"
     ],
-    "formal_hash": "2a967c843d2dad10",
+    "formal_hash": "191c6bc588662533",
     "claim_domain": "n >= 0",
     "claim_property": "(n^7 - n) % 42 == 0"
   },

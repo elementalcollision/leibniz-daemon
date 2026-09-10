@@ -33,7 +33,7 @@ A memory file (CLAUDE.md) is *context, not enforcement*. `tests/test_invariants.
 
 `pyproject.toml` registers two pytest markers:
 
-- `lean` — requires the pinned Lean container (`leibniz-lean:v4.31.0`); skipped where absent (e.g. CI).
+- `lean` — requires the pinned Lean container (`leibniz-lean:v4.34.0-rc2`); skipped where absent (e.g. CI).
 - `z3` — requires the `verify` extra (`z3-solver`); skipped where absent.
 
 `testpaths = ["tests"]` pins discovery to `tests/` so `pytest -q` from the repo root always collects the invariant suite; a "0 collected" run is a failure, not a vacuous pass.
@@ -47,7 +47,7 @@ pytest -q                      # ~11 invariant tests must stay green
 ruff check .                   # lint
 
 # Real kernel (R1):
-docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .
+docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.34.0-rc2 .
 pytest -q -m lean             # R1 kernel exit tests (skipped where the image is absent)
 ```
 

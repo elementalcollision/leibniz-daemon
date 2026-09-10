@@ -75,7 +75,7 @@ theorem hankel_block_rank_le (init : Fin r -> Rat) (op : A -> Matrix (Fin r) (Fi
   refine rank_le_of_factor _ (fun i k => Matrix.vecMul init (Tprod op (u i)) k)
                              (fun k j => Matrix.mulVec (Tprod op (v j)) fin k) ?_
   ext i j
-  rw [Matrix.mul_apply, Pval_append]
+  simp only [Matrix.mul_apply, Pval_append]
   rfl
 
 /-- The even process ε-machine as a 2-dim OOM (defined in Lean, not asserted from Python). -/

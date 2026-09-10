@@ -2,12 +2,12 @@
 # REPL on top of the kernel image so Mathlib imports load ONCE per long-lived process
 # instead of per `lake env lean` invocation.
 #
-# Build (from repo root):  docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.31.0 .
+# Build (from repo root):  docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.34.0-rc2 .
 # The base provides the pinned toolchain + Mathlib oleans; this only adds the repl exe.
-FROM leibniz-lean:v4.31.0
+FROM leibniz-lean:v4.34.0-rc2
 
 RUN cd /work \
- && git clone --depth 1 --branch v4.31.0 https://github.com/leanprover-community/repl.git \
+ && git clone --depth 1 --branch v4.34.0-rc2 https://github.com/leanprover-community/repl.git \
  && cd repl && lake build
 
 # Run from the lean-project so `lake env` puts Mathlib on the repl's LEAN_PATH.

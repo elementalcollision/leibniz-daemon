@@ -3,7 +3,7 @@
 Newton (the sibling daemon of logic and discovery) is *classically designed to evaluate models*:
 its Propositiones carry a falsifiable claim plus executable verification its gates can run. This
 module exports each of Leibniz's promulgated, kernel-verified laws as a Newton-shaped Propositio
-folio — YAML frontmatter in Newton's own vocabulary, the Enuntiatio prose, the full Lean 4.31
+folio — YAML frontmatter in Newton's own vocabulary, the Enuntiatio prose, the full Lean
 Expressio (statement + proof, ready for Newton's future ``check_proof`` federation capability),
 and an **Auditio mechanica**: a self-contained, deterministic Python procedure that re-checks the
 claim over a bounded box, generated from the claim's own DSL text (which is already Python).
@@ -27,7 +27,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-from leibniz.backends.lean_cli import _join_proof
+from leibniz.backends.lean_cli import KERNEL_VERSION, _join_proof
 from leibniz.calculemus_site import _NAME_RE
 from leibniz.dsl_to_lean import RenderError, free_vars
 
@@ -91,6 +91,7 @@ def law_folio(row: dict) -> tuple[str, str] | None:
     # a naive split cuts at the BINDER colon and yields "foo (n". Reuse the site's own regex.
     _m = _NAME_RE.search(str(row["theorem_src"]))
     thm_name = _m.group(1) if _m else f"leibniz_{pid[:12]}"
+    kernel_v = KERNEL_VERSION.lstrip("v")   # ADR 0095: folios name the pin, never a literal
     front = f"""---
 propositio_id: leibniz_{pid[:12]}
 title: "A kernel-verified law of the Leibniz daemon: {thm_name}"
@@ -111,7 +112,7 @@ voice_exemplar: false
 language: en
 leibniz:
   pid: {pid}
-  kernel: "Lean 4.31 (Docker REPL)"
+  kernel: "Lean {kernel_v} (Docker REPL)"
   kernel_verified: true
   promulgated_at: "{when}"
   trust_charter: "LLMs propose; only mechanical checkers (the Lean kernel, Z3) decide."
@@ -122,7 +123,7 @@ leibniz:
 
 {(row.get('statement') or cp).strip()}
 
-## Expressio (Lean 4.31 — kernel-verified in the Leibniz pipeline)
+## Expressio (Lean {kernel_v} — kernel-verified in the Leibniz pipeline)
 
 ```lean
 {_join_proof(str(row["theorem_src"]), str(row.get("proof_src") or ""))}

@@ -7,7 +7,7 @@
 # SKIP COUNT: with the image present only a small, known number of tests should skip (e.g. a live-API test).
 # If the skip count jumps, a gate has silently turned into a no-op (the failure mode GATE-5 exists to catch).
 #
-# RUNS WHERE: operator machine with docker + leibniz-lean:v4.31.0 (or the self-hosted `lean` runner). On a
+# RUNS WHERE: operator machine with docker + leibniz-lean:v4.34.0-rc2 (or the self-hosted `lean` runner). On a
 # GitHub-hosted runner (no image) it refuses (exit 2) rather than reporting a false baseline.
 #
 # Usage: scripts/run_kernel_soak.sh [--max-skips N]   (default N=3; calibrate to your environment's baseline)

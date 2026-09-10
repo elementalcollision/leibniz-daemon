@@ -1,10 +1,10 @@
 """R1 exit tests: the real Lean kernel behind LeanBackend.
 
-These require the pinned Lean container (leibniz-lean:v4.31.0); they skip cleanly
+These require the pinned Lean container (leibniz-lean:v4.34.0-rc2); they skip cleanly
 where it is absent (e.g. CI), so the 11 stdlib invariant tests stay the universal
 gate. Build the image with:
 
-    docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .
+    docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.34.0-rc2 .
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from leibniz.verifiers import LeanVerifier
 pytestmark = [
     pytest.mark.lean,
     pytest.mark.skipif(
-        not available(), reason="Lean container leibniz-lean:v4.31.0 not available"
+        not available(), reason="Lean container leibniz-lean:v4.34.0-rc2 not available"
     ),
 ]
 

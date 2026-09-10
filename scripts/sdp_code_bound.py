@@ -50,7 +50,7 @@ cells are capped at n<=5 (N<=32 vertices) here, NOT n<=8/N<=256 as the full task
 SOLVE -- the SDP solve itself is fast up to n=8 (see solve_theta_dual/confusability_graph), but the
 KERNEL-CHECK leg is the one that does not reach n=8 with this checker. Reported honestly, not silently.
 
-Needs cvxpy (operator-local, like ortools/z3) + docker (leibniz-lean:v4.31.0) for the kernel leg. Free-CPU
+Needs cvxpy (operator-local, like ortools/z3) + docker (leibniz-lean:v4.34.0-rc2) for the kernel leg. Free-CPU
 solve for n<=8 (<=256 vertices; dual SDP has one variable per graph edge + t -- NOT one per non-edge, which
 is what makes even n=8's SDP SOLVE tractable; the primal Lovász-theta SDP with a 256x256 PSD variable and
 one equality constraint per NON-edge is intractable at this size for a generic SDP solver and was rejected

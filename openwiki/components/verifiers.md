@@ -49,7 +49,7 @@ The real implementations live in `leibniz/backends/`:
 
 | Backend | Module | What it does |
 |---|---|---|
-| `LeanCliBackend` | `leibniz/backends/lean_cli.py` | R1: shells out to `lake env lean <file>` inside `leibniz-lean:v4.31.0` (Docker). `check_proof` returns True iff the file elaborates with no error diagnostics AND uses no `sorry`/`sorryAx`. Provides the R1c elaborator-canonical `normalize_statement` and a `persistent=True` mode (one container, `docker exec` per check). |
+| `LeanCliBackend` | `leibniz/backends/lean_cli.py` | R1: shells out to `lake env lean <file>` inside `leibniz-lean:v4.34.0-rc2` (Docker). `check_proof` returns True iff the file elaborates with no error diagnostics AND uses no `sorry`/`sorryAx`. Provides the R1c elaborator-canonical `normalize_statement` and a `persistent=True` mode (one container, `docker exec` per check). |
 | `lean_repl` | `leibniz/backends/lean_repl.py` | The long-running Lean REPL (`check_proof_with_error`) used by the proof-repair loop to surface kernel errors. |
 | `Z3Backend` | `leibniz/backends/smt_z3.py` | Z3 over a sound arithmetic predicate DSL (ADR 0021/0035); `decide_unsat` is tri-state (True iff conclusively UNSAT). |
 | `WalnutBackend` | `leibniz/backends/walnut.py` | Walnut — FO over k-automatic sequences, sound over unbounded n (ADR 0037/0038). |

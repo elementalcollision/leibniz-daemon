@@ -91,7 +91,7 @@ theorem hankel_nonneg_factor {A : Type*} {r : Nat} (init : Fin r -> Rat)
   refine ⟨fun i k => Matrix.vecMul init (Tprod op (u i)) k, fun k j => Matrix.mulVec (Tprod op (v j)) fin k, ?_, ?_, ?_⟩
   · intro i k; exact Finset.sum_nonneg (fun s _ => mul_nonneg (hinit s) (Tprod_nonneg op hop (u i) s k))
   · intro k j; exact Finset.sum_nonneg (fun s _ => mul_nonneg (Tprod_nonneg op hop (v j) k s) (hfin s))
-  · ext i j; rw [Matrix.mul_apply, Pval_append]; rfl
+  · ext i j; simp only [Matrix.mul_apply, Pval_append]; rfl
 
 /-- The necklace 4-state chain as an OOM in Lean: init uniform, op = the labelled transition operators
 (row a = A a, else 0), fin = ones. Then `Pval nInit nOp nFin` is the Markov-chain word probability. -/

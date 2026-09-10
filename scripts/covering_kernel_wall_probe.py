@@ -11,7 +11,7 @@ an all-k-subsets fallback), render the real Lean theorem, and time the kernel ve
 timeout. A `None` verdict with docker present = the kernel did not finish in the budget = past the wall.
 Early-stops after two consecutive timeouts. Emits docs/results/covering_kernel_wall.json.
 
-RUNS WHERE: **operator machine with docker + `leibniz-lean:v4.31.0`** (the kernel is the whole point). It
+RUNS WHERE: **operator machine with docker + `leibniz-lean:v4.34.0-rc2`** (the kernel is the whole point). It
 refuses to run without the image (exit 2), mirroring scripts/run_kernel_tests.sh. The witness construction
 (CP-SAT) is free-CPU; only the per-cell verdict needs the kernel.
 """

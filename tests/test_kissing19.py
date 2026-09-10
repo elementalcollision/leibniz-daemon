@@ -79,7 +79,7 @@ def test_live_kernel_light_legs():
     except Exception:
         pytest.skip("lean_repl backend unavailable")
     if not available():
-        pytest.skip("Docker + Lean 4.31 REPL image unavailable")
+        pytest.skip("Docker + Lean 4.34 REPL image unavailable")
     src, _ = m.build_lean_cert()
     res = m.run_kernel(src, skip=("kissing_mindist",))     # the five light legs (< ~1 min total)
     assert res["status"] == "checked" and res["all_verified"] is True
@@ -98,7 +98,7 @@ def test_live_kernel_mindist_leg():
     except Exception:
         pytest.skip("lean_repl backend unavailable")
     if not available():
-        pytest.skip("Docker + Lean 4.31 REPL image unavailable")
+        pytest.skip("Docker + Lean 4.34 REPL image unavailable")
     src, _ = m.build_lean_cert()
     res = m.run_kernel(src)                                 # all six legs, including minimum distance
     assert res["status"] == "checked" and res["all_verified"] is True

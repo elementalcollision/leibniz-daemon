@@ -30,7 +30,7 @@ These modules are **PreToolUse-guarded** and byte-frozen against weakening (`tes
 
 | Module | Responsibility |
 |---|---|
-| `lean_cli.py` | `LeanCliBackend` — `lake env lean <file>` in the pinned `leibniz-lean:v4.31.0` container. `check_proof` rejects `sorry`/`sorryAx`. `normalize_statement` (R1c) — elaborator-canonical hash. `persistent` mode. |
+| `lean_cli.py` | `LeanCliBackend` — `lake env lean <file>` in the pinned `leibniz-lean:v4.34.0-rc2` container. `check_proof` rejects `sorry`/`sorryAx`. `normalize_statement` (R1c) — elaborator-canonical hash. `persistent` mode. |
 | `lean_repl.py` | `LeanReplBackend` — a long-running container with `docker exec` + `check_proof_with_error` (surfaces the kernel's complaint for ADR 0029 repair). |
 | `smt_z3.py` | `Z3Backend` — `find_counterexample`, `find_gaming_witness`, `decide_unsat` (tri-state). A sound arithmetic-predicate DSL (ADR 0021). Only kills. |
 | `walnut.py` | `WalnutBackend` — FO over k-automatic sequences; decides (Büchi–Bruyère) soundly over **unbounded** n. `recheck_walnut_certificate`. |
