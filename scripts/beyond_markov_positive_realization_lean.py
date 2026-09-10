@@ -127,7 +127,7 @@ theorem hankel_nonneg_factor {A : Type*} {r : Nat} (init : Fin r -> Rat)
           fun k j => Matrix.mulVec (Tprod op (v j)) fin k, ?_, ?_, ?_⟩
   · intro i k; exact Finset.sum_nonneg (fun s _ => mul_nonneg (hinit s) (Tprod_nonneg op hop (u i) s k))
   · intro k j; exact Finset.sum_nonneg (fun s _ => mul_nonneg (Tprod_nonneg op hop (v j) k s) (hfin s))
-  · ext i j; rw [Matrix.mul_apply, Pval_append]; rfl
+  · ext i j; simp only [Matrix.mul_apply, Pval_append]; rfl
 
 /-- **No ≤3-state positive HMM/OOM produces the necklace co-occurrence matrix NM.** Any positive realization
 whose Hankel block equals NM needs ≥ 4 states — the positive-realization gap, proven end-to-end. -/

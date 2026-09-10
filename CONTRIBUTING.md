@@ -3,7 +3,7 @@
 Leibniz is an agentic theorem daemon and its *Codex Calculemus* reading‑room. Its reason to
 exist is a single, non‑negotiable invariant:
 
-> **LLMs propose; only mechanical checkers — the Lean 4.31 kernel, Z3, and exact
+> **LLMs propose; only mechanical checkers — the Lean 4.34 kernel, Z3, and exact
 > rational / finite‑field decision procedures — decide.** No "the proof looks right"
 > shortcut ever reaches a promulgated law.
 

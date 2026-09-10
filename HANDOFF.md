@@ -16,7 +16,7 @@ assembly note is kept in §12 for history. Capsule of what is real now (all behi
 boundary):
 - **R1 — real kernel: DONE, but via Docker, NOT LeanDojo.** The `LeanBackend` is
   `backends/lean_cli.py` + `backends/lean_repl.py`, shelling out to a pinned Lean 4.31 +
-  Mathlib container (`leibniz-lean:v4.31.0` / `leibniz-lean-repl:v4.31.0`), per ADR 0003/0011.
+  Mathlib container (`leibniz-lean:v4.34.0-rc2` / `leibniz-lean-repl:v4.34.0-rc2`), per ADR 0003/0011.
   `lean-dojo` in `pyproject` is vestigial — the §6 table below said "via LeanDojo"; that plan
   was superseded. `LeanVerifier.discharge` is still the sole `kernel_verified` writer.
 - **R2 — faithfulness: DONE.** Z3 backend (`backends/smt_z3.py`) + the bounded, sound DSL

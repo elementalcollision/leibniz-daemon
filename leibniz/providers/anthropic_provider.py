@@ -110,7 +110,7 @@ class AnthropicProvider:
         Returns ONLY a corrected `by ...` tactic script. The reasoner may change only
         the PROOF — never the theorem statement (changing it would let a repair 'prove'
         a different, weaker claim). The kernel re-checks whatever this returns; this only
-        proposes. Toolchain is Lean 4.31 + current Mathlib."""
+        proposes. Toolchain is Lean 4.34 + current Mathlib."""
         # bare script, not JSON -> the proof system prompt (shared prompt: never drifts from
         # OpenRouterProvider.repair_proof, since both repair-capable providers use it)
         return self._chat(repair_proof_prompt(theorem_src, failed_proof, error), system=_PROOF_SYSTEM)

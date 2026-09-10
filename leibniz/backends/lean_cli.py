@@ -39,7 +39,12 @@ from typing import Optional
 
 from leibniz.propositio import Expressio
 
-DEFAULT_IMAGE = "leibniz-lean:v4.31.0"
+#: The pinned Lean toolchain, and the SINGLE source of truth for it. Must match
+#: `lean-project/lean-toolchain` and the Mathlib `rev` in `lean-project/lakefile.toml`.
+#: Everything that names a version -- image tags, Newton folios, tests -- derives from
+#: this, so a pin move cannot leave a stale literal behind (ADR 0095).
+KERNEL_VERSION = "v4.34.0-rc2"
+DEFAULT_IMAGE = f"leibniz-lean:{KERNEL_VERSION}"
 # Triviality tactics. A statement any of these closes ON ITS OWN is vacuous and must
 # NOT be promulgated. `ring`/`nlinarith` were added (ADR 0025) after a calibration
 # promulgated 32 polynomial identities (e.g. (m+3)(m+5)+1=(m+4)^2) that `ring` closes

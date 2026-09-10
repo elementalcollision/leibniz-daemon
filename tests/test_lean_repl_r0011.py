@@ -1,10 +1,10 @@
 """ADR 0011: the Lean REPL backend (import-caching for throughput).
 
-These require the REPL container (leibniz-lean-repl:v4.31.0); they skip cleanly
+These require the REPL container (leibniz-lean-repl:v4.34.0-rc2); they skip cleanly
 where it is absent (e.g. CI), so the stdlib invariant tests stay the universal
 gate. Build the image with:
 
-    docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.31.0 .
+    docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.34.0-rc2 .
 
 The REPL backend satisfies the same LeanBackend Protocol as the CLI backend and
 must agree with the kernel on the same true/false/sorry verdicts — only faster,
@@ -23,7 +23,7 @@ from leibniz.verifiers import LeanVerifier
 pytestmark = [
     pytest.mark.lean,
     pytest.mark.skipif(
-        not available(), reason="REPL container leibniz-lean-repl:v4.31.0 not available"
+        not available(), reason="REPL container leibniz-lean-repl:v4.34.0-rc2 not available"
     ),
 ]
 

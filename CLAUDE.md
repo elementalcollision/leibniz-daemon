@@ -1,6 +1,6 @@
 # CLAUDE.md — Leibniz · *Calculemus*
 
-Agentic theorem daemon. LLMs **propose**; only mechanical checkers — the Lean 4.31
+Agentic theorem daemon. LLMs **propose**; only mechanical checkers — the Lean 4.34
 kernel, Z3, and exact rational / finite-field / exact-enumeration decision
 procedures — **decide**. Full context in `README.md`, `docs/architecture.md`, and the
 ADRs under `docs/adr/`. **Start a fresh session from `HANDOFF-NEXT.md`** (self-contained
@@ -58,7 +58,7 @@ scripts/run_kernel_tests.sh               # Docker-gated kernel lane; a silent s
 PYTHONPATH=. python scripts/heartbeat.py  # one autonomous beat, by hand (ADR 0068)
 ```
 
-Kernel images: `leibniz-lean:v4.31.0` + `leibniz-lean-repl:v4.31.0`
+Kernel images: `leibniz-lean:v4.34.0-rc2` + `leibniz-lean-repl:v4.34.0-rc2`
 (`docker/{lean,lean-repl}.Dockerfile`). Lean-marked tests skip cleanly where absent.
 
 ## Layout
@@ -76,7 +76,7 @@ leibniz/
   observatory.py · runtime.py · instance_config.py · budget.py     # non-Q.E.D. tier · state · pins · caps
 scripts/       # heartbeat · run_live · amplify · verify_* · export_*   (see HANDOFF-NEXT §4)
 deploy/{heartbeat,profiles}/ · docker/ · lean-project/ · site/
-docs/adr/0001..0092 · docs/{architecture,capability-ladder,optimization-roadmap}.md
+docs/adr/0001..0096 · docs/{architecture,capability-ladder,optimization-roadmap}.md
 docs/{results,crt,audits,runbooks}/ · tests/   # 11 byte-frozen invariants + ~1,870 more
 ```
 
@@ -86,9 +86,9 @@ docs/{results,crt,audits,runbooks}/ · tests/   # 11 byte-frozen invariants + ~1
   Demonstratio (proof). Mirrors the sibling repo `newton-daemon`.
 - Every decision attaches an `EdgeEvidence` with an explicit `TrustTier`. Tag the
   tier honestly; the policy and tests read it.
-- New design decisions get an ADR (next number after **0092**). Don't bake a
+- New design decisions get an ADR (next number after **0096**). Don't bake a
   reversible architectural choice into code without one.
-- The rung climb **R1 → R6 is complete** (real Lean 4.31 kernel via Docker; faithfulness via
+- The rung climb **R1 → R6 is complete** (real Lean 4.34 kernel via Docker; faithfulness via
   Z3 *and* six kernel-decided fragments; novelty retrieval; proposal models + the ADR 0029 repair
   panel; KFM / MAP-Elites archive; the *Calculemus* reading-room + operator publish gate), all
   behind the unchanged trust boundary. The project is in the **post-R6 optimization phase**

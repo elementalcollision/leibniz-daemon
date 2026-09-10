@@ -25,13 +25,14 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from leibniz.backends.lean_cli import (
+    KERNEL_VERSION,
     _CANON_DEF as _CLI_CANON_DEF,
     _CANON_RUN as _CLI_CANON_RUN,
     _NAME_RE as _CLI_NAME_RE,
 )
 from leibniz.propositio import Expressio
 
-REPL_IMAGE = "leibniz-lean-repl:v4.31.0"
+REPL_IMAGE = f"leibniz-lean-repl:{KERNEL_VERSION}"
 # Kept in sync with lean_cli.DEFAULT_TRIVIAL_TACTICS (ADR 0025 added ring/nlinarith so
 # ring-decidable polynomial identities are quarantined as TRIVIAL, not promulgated).
 DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop", "ring", "nlinarith")

@@ -34,8 +34,8 @@ Dockerfile). Verify before registering:
 
 ```bash
 docker info >/dev/null && echo "docker: up"
-docker image inspect leibniz-lean:v4.31.0      >/dev/null && echo "kernel image: present"
-docker image inspect leibniz-lean-repl:v4.31.0 >/dev/null && echo "repl image:   present"
+docker image inspect leibniz-lean:v4.34.0-rc2      >/dev/null && echo "kernel image: present"
+docker image inspect leibniz-lean-repl:v4.34.0-rc2 >/dev/null && echo "repl image:   present"
 python3 --version                              # the lane installs 3.11 itself via setup-python
 ```
 

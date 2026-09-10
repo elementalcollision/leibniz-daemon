@@ -138,11 +138,22 @@ def beat(cycles: int, frontier_limit: int = 2, analogy_limit: int = 1) -> dict:
     from leibniz.assembly import build_daemon
     from leibniz.backends.smt_z3 import CROSS_STATS
     from leibniz.env import load_env
+    from leibniz.instance_config import resolve_instance_config, write_provenance
 
     load_env(_REPO / ".env")
     cross_before = dict(CROSS_STATS)
+    # ADR 0095: record WHICH kernel image and corpus version this beat ran against, before it
+    # turns a cycle. Without this the ledger is a mixed-version pile after a toolchain bump --
+    # `memory` carries no image or toolchain column, so wall-clock `ts` is the only separator
+    # and it fails the moment a rollback puts two toolchains on one day. ADR 0033 built the
+    # mechanism; until now only scripts/calibrate_discovery.py called it, so the nightly beat --
+    # the thing that actually promulgates -- recorded nothing.
+    _cfg = resolve_instance_config()
+    _prov = write_provenance(_cfg)
     entry: dict = {"ts": _now(), "cycles_requested": cycles, "cycles": [], "anomalies": [],
-                   "usd_cap": os.environ.get("LEIBNIZ_DAILY_USD_CAP")}
+                   "usd_cap": os.environ.get("LEIBNIZ_DAILY_USD_CAP"),
+                   "instance": _cfg.instance, "lean_image": _cfg.lean_image,
+                   "corpus_version": _cfg.corpus_version, "provenance": str(_prov)}
     t0 = time.monotonic()
     daemon = build_daemon(frontier_limit=frontier_limit, analogy_limit=analogy_limit)
     try:

@@ -12,7 +12,7 @@ from leibniz.propositio import Expressio
 pytestmark = [
     pytest.mark.lean,
     pytest.mark.skipif(
-        not available(), reason="Lean container leibniz-lean:v4.31.0 not available"
+        not available(), reason="Lean container leibniz-lean:v4.34.0-rc2 not available"
     ),
 ]
 

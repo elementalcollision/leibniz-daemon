@@ -13,7 +13,7 @@ reject a corrupted block. Audit tier (DUAL_CERTIFICATE_CHECKED); no trust surfac
 
 The HEAVY legs are all reused from the banked build — this module only supplies the constant-weight
 structure (multiplier columns, base residual, assembly). Needs cvxpy (+ sdpap preferred) for the solve;
-docker + leibniz-lean:v4.31.0 for the kernel; the exact leg is free-CPU.
+docker + leibniz-lean:v4.34.0-rc2 for the kernel; the exact leg is free-CPU.
 """
 from __future__ import annotations
 

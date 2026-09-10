@@ -55,8 +55,8 @@ These are **not** in `pyproject` extras on purpose — they are operator-local s
 
 ### 1.3 Lean kernel image (needed only for the docker/kernel legs, §4)
 ```bash
-docker image inspect leibniz-lean:v4.31.0 >/dev/null 2>&1 && echo "image present" || \
-  docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .     # OrbStack/Docker; builds Lean 4.31 + Mathlib cache
+docker image inspect leibniz-lean:v4.34.0-rc2 >/dev/null 2>&1 && echo "image present" || \
+  docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.34.0-rc2 .     # OrbStack/Docker; builds Lean 4.31 + Mathlib cache
 python3 -c "from leibniz.backends.lean_cli import available; print('kernel available:', available())"
 ```
 If `available()` is `False`, every script below still runs — it just **skips its kernel leg** and reports the

@@ -35,6 +35,6 @@ The tests construct `_passing_edges(proof_tier, novelty_tier, faith_tier)` — t
 
 ## The broader test suite
 
-Beyond the 11 invariants, the suite is ~120 tests covering the capability ladder rungs and every ADR. Tests tagged `lean` require the pinned container (`leibniz-lean:v4.31.0`) and skip where absent; tests tagged `z3` require the `verify` extra. The stdlib invariant suite stays the universal gate.
+Beyond the 11 invariants, the suite is ~120 tests covering the capability ladder rungs and every ADR. Tests tagged `lean` require the pinned container (`leibniz-lean:v4.34.0-rc2`) and skip where absent; tests tagged `z3` require the `verify` extra. The stdlib invariant suite stays the universal gate.
 
 See [Trust Boundary](../architecture/trust-boundary.md) for the policy mechanics and [Boundary Guards](../components/boundary-guards.md) for the structural AST guards that keep `kernel_verified` sole-sourced.

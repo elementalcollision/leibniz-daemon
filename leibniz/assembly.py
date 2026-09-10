@@ -1,7 +1,7 @@
 """Production assembly (R4 exit test) — wire the REAL backends into a live daemon.
 
 `demo.py` wires deterministic fakes; this wires the real stack:
-- Lean 4.31 kernel (OrbStack container) + Z3 gaming-witness,
+- Lean 4.34 kernel (OrbStack container) + Z3 gaming-witness,
 - structural-hash novelty corpus,
 - Anthropic (Claude) for CONJECTURE/FORMALIZE,
 - an OpenRouter prover ensemble with N+1 kernel-verified consensus (ADR 0006),

@@ -54,7 +54,7 @@ def test_live_kernel_axiom_free():
     except Exception:
         pytest.skip("lean_repl backend unavailable")
     if not available():
-        pytest.skip("Docker + Lean 4.31 REPL image unavailable")
+        pytest.skip("Docker + Lean 4.34 REPL image unavailable")
     src, name = m.build_lean_cert()
     res = m.run_kernel(src, name)
     assert res["status"] == "checked"

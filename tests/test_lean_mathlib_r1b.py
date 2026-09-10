@@ -5,7 +5,7 @@ the umbrella `import Mathlib` — the umbrella olean is not in the prebuilt cach
 loading all of Mathlib per check would wreck throughput. Real candidate statements
 declare the modules they need via Expressio.imports.
 
-Requires the Mathlib-enabled container (leibniz-lean:v4.31.0); skips where absent.
+Requires the Mathlib-enabled container (leibniz-lean:v4.34.0-rc2); skips where absent.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from leibniz.verifiers import LeanVerifier
 pytestmark = [
     pytest.mark.lean,
     pytest.mark.skipif(
-        not available(), reason="Lean container leibniz-lean:v4.31.0 not available"
+        not available(), reason="Lean container leibniz-lean:v4.34.0-rc2 not available"
     ),
 ]
 

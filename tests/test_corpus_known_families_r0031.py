@@ -21,6 +21,6 @@ def test_corpus_hashes_match_the_organic_run_canonical_promulgations():
     # the seeded canonical forms hash to exactly what the organic run promulgated, so a
     # re-conjecture now hits KNOWN by exact hash (sanity that build_corpus is consistent).
     by_name = {e.name: e.formal_hash for e in CorpusBackend.from_json().entries}
-    assert by_name["fermat_little_5"] == "481f97bc10ad5ee7"
-    assert by_name["fermat_little_7"] == "a559a9d18c401b89"
-    assert by_name["cube_residue_mod_six"] == "e1d9d53277a3378c"
+    assert by_name["fermat_little_5"] == "002111c8b473bc7b"
+    assert by_name["fermat_little_7"] == "e60bbc8fd2cf9d17"
+    assert by_name["cube_residue_mod_six"] == "e3f1fa96b9e3892c"

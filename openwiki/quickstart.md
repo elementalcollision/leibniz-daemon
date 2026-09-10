@@ -50,7 +50,7 @@ ruff check .
 The kernel runs in a pinned container; the host stays stdlib-only:
 
 ```bash
-docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.31.0 .   # OrbStack/Docker
+docker build -f docker/lean.Dockerfile -t leibniz-lean:v4.34.0-rc2 .   # OrbStack/Docker
 pytest -q -m lean                                                  # R1 kernel exit tests
 ```
 

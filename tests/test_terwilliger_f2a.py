@@ -10,12 +10,14 @@ from pathlib import Path
 
 import pytest
 
+from leibniz.backends.lean_repl import REPL_IMAGE
+
 _ROOT = Path(__file__).resolve().parent.parent
 
 
 def _repl_ok() -> bool:
     try:
-        r = subprocess.run(["docker", "image", "inspect", "leibniz-lean-repl:v4.31.0"],
+        r = subprocess.run(["docker", "image", "inspect", REPL_IMAGE],
                            capture_output=True, timeout=30)
         return r.returncode == 0
     except Exception:

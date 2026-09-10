@@ -62,7 +62,7 @@ def test_live_kernel_legs():
     except Exception:
         pytest.skip("lean_repl backend unavailable")
     if not available():
-        pytest.skip("Docker + Lean 4.31 REPL image unavailable")
+        pytest.skip("Docker + Lean 4.34 REPL image unavailable")
     src, names = m.build_lean_cert()
     # `ziegler_dim_notsym` is the SLOWEST leg, not the fast one. Measured on an idle host:
     # dim_notsym 53.2 s, supporting 10.2 s, closed 9.5 s. The comment here used to call it "the

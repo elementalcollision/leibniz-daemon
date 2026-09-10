@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from leibniz import newton_exchange as nx  # noqa: E402
+from leibniz.backends.lean_cli import KERNEL_VERSION
 
 _ROW = {
     "pid": "dab2022069c9", "born": 1784900000.0,
@@ -40,7 +41,9 @@ def test_law_folio_shape_and_honesty():
     assert "propositio_id: leibniz_dab2022069c9" in text
     assert "verified: false" in text                      # Newton's stamp is Newton's to make
     assert "source_mode: federated_leibniz" in text
-    assert "kernel_verified: true" in text and "Lean 4.31" in text
+    assert "kernel_verified: true" in text
+    # ADR 0095: the folio must name the PINNED kernel, never a literal that goes stale on a bump.
+    assert f"Lean {KERNEL_VERSION.lstrip(chr(118))}" in text
     assert "```lean" in text and "residue_law_8a475b40329d" in text and "omega_nat" in text
     assert "## Auditio mechanica" in text and "def audit(bound: int = 64)" in text
     assert "LLMs propose; only mechanical checkers" in text
