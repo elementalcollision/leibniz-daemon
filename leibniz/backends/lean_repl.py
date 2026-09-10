@@ -41,7 +41,9 @@ from leibniz.backends.lean_axioms import (
     axiom_report,
     closes_more_than_it_opens,
     declaration_name,
+    defeats_the_kernel,
     fresh_probe_name,
+    import_is_safe,
     mentions_sorry,
     probe_source,
     smuggles_top_level,
@@ -242,7 +244,11 @@ class LeanReplBackend:
         name = declaration_name(expr.theorem_src)
         if (not name or smuggles_top_level(proof_src)
                 or closes_more_than_it_opens(proof_src)
-                or not statement_is_single_declaration(expr.theorem_src)):
+                or not statement_is_single_declaration(expr.theorem_src)
+                or not all(import_is_safe(m) for m in expr.imports)
+                or defeats_the_kernel(expr.theorem_src)
+                or defeats_the_kernel(proof_src)
+                or defeats_the_kernel(expr.preamble)):
             return False
         # ADR 0097 round 3: read the footprint under an UNPREDICTABLE probe name. A proof can
         # print a clean report for its own name (`run_cmd IO.println`, or `dbg_trace` with no

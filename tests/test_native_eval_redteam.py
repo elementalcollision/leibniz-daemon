@@ -22,7 +22,10 @@ from leibniz.backends.lean_axioms import (
     axiom_report_text,
     closes_more_than_it_opens,
     declaration_name,
+    declaration_source,
+    defeats_the_kernel,
     fresh_probe_name,
+    import_is_safe,
     mentions_sorry,
     probe_source,
     smuggles_top_level,
@@ -476,6 +479,95 @@ def test_statement_head_cut_removes_a_mid_line_payload():
     assert "namespace" not in probe_source(T, "by decide", "margin", "PROBE")
 
 
+# --- round-6 adversarial review (ADR 0097 decisions 16-19) -------------------
+
+def test_statement_guard_rescans_past_a_modifier_like_the_proof_guard_does():
+    """Decision 16, and MY OWN ASYMMETRY -- it was a soundness break.
+
+    Round 4 taught `smuggles_top_level` to re-scan the text after a `set_option/open ... in`
+    prefix, because the exemption otherwise excuses the WHOLE line. I left
+    `statement_is_single_declaration` on the old blanket exemption, so
+    `set_option linter.all false in axiom cheat : 2 + 2 = 5` passed the statement guard while the
+    proof guard would have caught the identical text. With a smuggled `macro_rules` rebinding the
+    probe alias, `2 + 2 = 5` was stamped `Q.E.D.` on both transports."""
+    payload = ("set_option linter.all false in axiom cheat : 2 + 2 = 5\n"
+               "theorem forged_false : 2 + 2 = 5")
+    assert not statement_is_single_declaration(payload)
+    assert smuggles_top_level(payload), "the two guards must agree on the same text"
+    assert not statement_is_single_declaration(
+        "set_option linter.all false in macro_rules | x\ntheorem f : True")
+    # the LEGITIMATE form -- the declaration is what the modifier modifies -- must still pass
+    for good in ("set_option maxRecDepth 4000 in theorem t : True",
+                 "open Nat in theorem t : True", "@[simp] theorem t : True", "theorem t : True"):
+        assert statement_is_single_declaration(good), good
+
+
+def test_the_independent_module_has_no_rewritable_alias():
+    """Decision 17. `def <probe> := @<name>` is SURFACE SYNTAX, and a smuggled
+    `macro_rules | `(@$_:ident) => `(True.intro)` rewrites it -- so `Lean.collectAxioms` was asked,
+    perfectly honestly, about a constant with nothing to do with the theorem. The reporter was
+    never the weak part; the aim was. The declaration name now travels as ARGV."""
+    src = declaration_source("theorem t : True", "by trivial")
+    assert "@" not in src and "#print axioms" not in src, src
+    assert src == "theorem t : True :=\n(by trivial)"
+    # a `:=` tail on the statement is still cut (ADR 0096 build obligation 1)
+    assert declaration_source("theorem t : True := by sorry", "by trivial").startswith(
+        "theorem t : True :=\n(by trivial)")
+
+
+def test_imports_must_be_bare_module_names():
+    """Decision 18. `Expressio.imports` is written as `import {m}`, so ONE import string carrying
+    a newline injects arbitrary top-level Lean ahead of the declaration. `resolve_imports` would
+    strip it, but only runs when the first compile FAILS -- and the payload makes it succeed.
+    Measured: `2 + 2 = 4` stamped `Q.E.D.` by `native_decide` through that route."""
+    assert import_is_safe("Mathlib") and import_is_safe("Mathlib.Data.Nat.Basic")
+    for bad in ("Init\ntheorem x : True := trivial", "Init macro_rules | x", "Init ",
+                " Init", "Init\r\nx", "", "Init;x", "Init --", "Init\tx"):
+        assert not import_is_safe(bad), repr(bad)
+
+
+def test_statement_head_finds_the_proof_assignment_not_the_first_colon_eq():
+    """Decision 19. `find(":=")` takes the first one anywhere, which lands inside an autoParam or
+    default-valued binder, inside a `let` in the statement's TYPE, or inside a structure literal --
+    all valid Lean, all Mathlib-common. Each was truncated into a parse error and reported as a
+    proof FAILURE, which the ADR 0029 repair loop cannot fix because the defect is in assembly."""
+    assert statement_head("theorem hauto (h : 0 < 1 := by decide) : 0 < 1 := h") == \
+        "theorem hauto (h : 0 < 1 := by decide) : 0 < 1"
+    assert statement_head("theorem hdef (n : Nat := 0) : n = n := rfl") == \
+        "theorem hdef (n : Nat := 0) : n = n"
+    assert statement_head("theorem t : (let x := 5; x + x) = 10") == \
+        "theorem t : (let x := 5; x + x) = 10"
+    assert statement_head("theorem t : ({ x := 3 : P }).x = 3") == "theorem t : ({ x := 3 : P }).x = 3"
+    # and the ordinary proof tail is still cut
+    assert statement_head("theorem n : (2:Nat)+2 = 4 := by sorry") == "theorem n : (2:Nat)+2 = 4"
+
+
+def test_kernel_defeating_options_are_refused_everywhere():
+    """Decision 20, and a CORRECTION to decision 15's scoping.
+
+    This ADR scoped `debug.skipKernelTC` out as theoretical, on the evidence that two attempts to
+    exploit it failed at ELABORATION on the 4.31 pin. That evidence did not survive the pin move:
+    on 4.34, `unsafe def evil : False := evil` in the preamble plus
+    `set_option debug.skipKernelTC true in theorem oops : False := evil` elaborates cleanly, and
+    BOTH layers pass it honestly -- the reporter reports an EMPTY footprint, because a
+    self-referential `unsafe` def carries no axioms. `theorem oops : False` was stamped `Q.E.D.`
+
+    The reporter cannot catch this by design (it reads the environment, it does not re-run the
+    kernel), so the inputs that make the kernel step skippable are refused instead -- including in
+    the preamble, which is operator-authored but can carry a pasted third-party artifact."""
+    assert defeats_the_kernel("set_option debug.skipKernelTC true in\ntheorem t : False")
+    assert defeats_the_kernel("unsafe def evil : False := evil")
+    assert defeats_the_kernel("@[implemented_by foo] def bar : Nat := 0")
+    # RESOURCE limits are not kernel-defeating and the repo uses them -- these must NOT trip it
+    for ok in ("set_option maxRecDepth 4000 in theorem t : True",
+               "set_option maxHeartbeats 400000 in theorem t : True",
+               "set_option synthInstance.maxSize 128 in theorem t : True",
+               "theorem t : True", "by decide"):
+        assert not defeats_the_kernel(ok), ok
+    # and a mention inside a COMMENT is inert
+    assert not defeats_the_kernel("-- debug.skipKernelTC is forbidden here\ntheorem t : True")
+
+
 # --- the live exploit (docker-gated) ----------------------------------------
 
 def test_native_decide_cannot_set_kernel_verified():
@@ -708,3 +800,70 @@ def test_confinement_does_not_reject_honest_proof_shapes():
             assert demo.kernel_verified is True, f"confinement rejected an honest proof: {T}"
     finally:
         be.close()
+
+
+def test_macro_rules_cannot_rebind_the_probe_and_stamp_a_false_theorem():
+    """The round-6 critical, end-to-end: `theorem forged_false : 2 + 2 = 5` reached `Q.E.D.`."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    be = LeanCliBackend(timeout_s=600)
+    ATK = ("set_option linter.all false in axiom leibniz_cheat : 2 + 2 = 5\n"
+           "set_option linter.all false in macro_rules | `(@$_:ident) => `(True.intro)\n"
+           "theorem forged_false : 2 + 2 = 5")
+    demo = Demonstratio(proof_obligation="r6", proof_src="leibniz_cheat")
+    LeanVerifier(backend=be).discharge(Expressio(theorem_src=ATK, imports=("Init",)), demo)
+    assert demo.kernel_verified is False
+    assert demo.qed != "Q.E.D."
+
+
+def test_import_injection_cannot_stamp():
+    """The other round-6 critical: one import string with a newline injected top-level Lean."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    payload = ("Init\ntheorem leibniz_clean : True := trivial\n"
+               "macro_rules | `(@$_:ident) => `(leibniz_clean)")
+    demo = Demonstratio(proof_obligation="r6-imports", proof_src="by native_decide")
+    LeanVerifier(backend=LeanCliBackend(timeout_s=600)).discharge(
+        Expressio(theorem_src="theorem forged_nd : 2 + 2 = 4", imports=(payload,)), demo)
+    assert demo.kernel_verified is False
+
+
+def test_honest_shapes_round6_still_verify():
+    """The five honest shapes round 6 found silently refused. All fail CLOSED, so none was a
+    soundness break -- but a guard that drops real proofs is still a defect, and three of these
+    existed only because of the probe alias that decision 17 removed."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    be = LeanCliBackend(timeout_s=600)
+    cases = [
+        ("theorem hauto (h : 0 < 1 := by decide) : 0 < 1", "h", "", ("Mathlib",)),
+        ("theorem hdef (n : Nat := 0) : n = n", "rfl", "", ("Mathlib",)),
+        ("theorem hlet : (let x := 5; x + x) = 10", "by decide", "", ("Mathlib",)),
+        ("theorem wae : 1 + 1 = 2", "by decide", "set_option warningAsError true", ()),
+        ("theorem inns : 1 + 1 = 2", "by decide", "namespace LeibNS", ()),
+    ]
+    for T, P, pre, imps in cases:
+        demo = Demonstratio(proof_obligation="honest6", proof_src=P)
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src=T, imports=imps, preamble=pre), demo)
+        assert demo.kernel_verified is True, f"honest shape silently refused: {T}"
+
+
+def test_skip_kernel_tc_cannot_stamp_false():
+    """The live form: `theorem oops : False` reached Q.E.D. on the 4.34 pin before decision 20."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    demo = Demonstratio(proof_obligation="skiptc", proof_src="evil")
+    LeanVerifier(backend=LeanCliBackend(timeout_s=600)).discharge(
+        Expressio(theorem_src="set_option debug.skipKernelTC true in\ntheorem oops : False",
+                  imports=(), preamble="unsafe def evil : False := evil"), demo)
+    assert demo.kernel_verified is False
+    assert demo.qed != "Q.E.D."

@@ -215,6 +215,11 @@ _SMUGGLE_RE = re.compile(
 #: `set_option x in` / `open X in` are TERM MODIFIERS, not new declarations, and honest proofs
 #: use them (`gates/mixed_modulus_decided.py` emits `set_option ... in`). Recognised by the
 #: trailing `in` on the same line.
+#: What may legitimately follow a `set_option/open ... in` inside a STATEMENT: the declaration
+#: the modifier modifies, and nothing else.
+_DECL_OPENER_RE = re.compile(
+    r"^(?:@\[|(?:private|protected|noncomputable|scoped|local|nonrec|unsafe|partial)\b"
+    r"|(?:theorem|lemma)\b)")
 _MODIFIER_RE = re.compile(r"^[ \t]*(?:set_option|open)\b[^\n]*\bin\b", re.MULTILINE)
 
 
@@ -293,11 +298,23 @@ def statement_is_single_declaration(theorem_src: str) -> bool:
     out from under the name we asked about. One declaration, nothing else.
     """
     src = _strip_comments(theorem_src or "")
+    # ADR 0097 round 6 -- MY OWN ASYMMETRY, and it was a soundness break. Round 4 taught
+    # `smuggles_top_level` to re-scan the text after each `set_option/open ... in` prefix, because
+    # the exemption otherwise excuses the WHOLE line. This function was left with the old blanket
+    # exemption, so `set_option linter.all false in axiom cheat : 2 + 2 = 5` on one line passed
+    # here while `smuggles_top_level` would have caught it. Combined with a smuggled
+    # `macro_rules | `(@$_:ident) => ...` that rebinds the probe alias, `2 + 2 = 5` was stamped
+    # `Q.E.D.` on both transports. Same rule, one place, no drift.
+    for m in _MODIFIER_RE.finditer(src):
+        tail = src[m.end():].split("\n", 1)[0]
+        hit = _SMUGGLE_RE.search("\n" + tail)
+        # `set_option x in theorem t` is the LEGITIMATE form -- the declaration is what the
+        # modifier modifies. Anything else after the `in` is a second command.
+        if hit and not _DECL_OPENER_RE.match(hit.group(0).lstrip("\n").lstrip()):
+            return False
     modifiers = {m.start() for m in _MODIFIER_RE.finditer(src)}
     # <= 1, not == 1: `set_option x in theorem t` puts the declaration MID-line, where the
     # line-anchored scan cannot see it, so the only match is the modifier -- which is excluded.
-    # The property wanted is "no top-level command BESIDES the declaration", and
-    # `declaration_name` separately guarantees a declaration is actually there.
     return len([m for m in _SMUGGLE_RE.finditer(src) if m.start() not in modifiers]) <= 1
 
 
@@ -349,8 +366,88 @@ def statement_head(theorem_src: str) -> str:
     so the two assemblies cannot drift apart again.
     """
     head = (theorem_src or "").rstrip()
-    cut = head.find(":=")
-    return head[:cut].rstrip() if cut != -1 else head
+    src = _strip_comments(head)
+    # ADR 0097 round 6: `head.find(":=")` takes the FIRST `:=` anywhere, and that is not always
+    # the proof assignment. It lands inside an autoParam / default-valued binder
+    # (`theorem t (h : 0 < 1 := by decide) : ...`), inside a `let` in the statement's TYPE
+    # (`theorem t : (let x := 5; x + x) = 10`), or inside a structure literal (`{ x := 3 }`) --
+    # all valid Lean, all Mathlib-common, and all silently truncated into a parse error and
+    # reported as a proof FAILURE. Only a `:=` at bracket depth 0 can be the proof assignment.
+    depth, i, n = 0, 0, len(src)
+    while i < n:
+        end = _skip_string(src, i) if src[i] in '"r' else None
+        if end is not None:
+            i = end
+            continue
+        c = src[i]
+        if c in _OPEN:
+            depth += 1
+        elif c in _CLOSE:
+            depth -= 1
+        elif depth <= 0 and src.startswith(":=", i):
+            return head[:i].rstrip()
+        i += 1
+    return head
+
+
+_IMPORT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_'\u00C0-\uFFFF]*(?:\.[A-Za-z_][A-Za-z0-9_'\u00C0-\uFFFF]*)*$")
+
+
+#: Options and modifiers that defeat the kernel rather than merely bounding it. `maxRecDepth` /
+#: `maxHeartbeats` / `synthInstance.*` are resource limits and are NOT here -- the repo uses them.
+_KERNEL_DEFEATING_RE = re.compile(
+    r"\bdebug\.skipKernelTC\b|\bunsafe\b|\bimplemented_by\b|\bextern\b")
+
+
+def defeats_the_kernel(text: str) -> bool:
+    """True iff ``text`` disables the kernel check or admits a term the kernel never saw.
+
+    ADR 0097 round 6, and a correction to decision 15. This ADR scoped `debug.skipKernelTC` out as
+    theoretical, on the evidence that two attempts to exploit it failed at ELABORATION on the 4.31
+    pin. That evidence did not survive the move to 4.34: `unsafe def evil : False := evil` in the
+    preamble plus `set_option debug.skipKernelTC true in theorem oops : False := evil` elaborates
+    cleanly, and BOTH layers then pass it honestly -- the in-file check and the compiled reporter
+    alike report an EMPTY footprint, because `evil` is a self-referential `unsafe` def carrying no
+    axioms. Measured: `theorem oops : False` stamped `kernel_verified=True`, `Q.E.D.`.
+
+    The reporter cannot catch this by design: it reads the environment, it does not re-run the
+    kernel over it. That is `lean4checker`'s job and lean4checker is stuck at v4.29 against the
+    v4.34.0-rc2 pin. Until it catches up, the honest move is to refuse the inputs that make the
+    kernel step skippable -- including in the ADR 0062 preamble, which is operator-authored but
+    can carry a pasted third-party artifact. Scoping the gap out was the wrong call; this narrows
+    it to what the reporter can actually stand behind.
+    """
+    return bool(_KERNEL_DEFEATING_RE.search(_strip_comments(text or "")))
+
+
+def import_is_safe(module: str) -> bool:
+    """True iff ``module`` is a bare dotted Lean module name.
+
+    ADR 0097 round 6. `Expressio.imports` is written into the source as `import {m}` with no
+    validation, so ONE import string containing a newline injects arbitrary top-level Lean ahead
+    of the declaration -- including a `macro_rules` that rebinds the probe. `resolve_imports`
+    would strip it, but it only runs when the first compile FAILS, and the payload makes the
+    compile succeed. Measured: `2 + 2 = 4` stamped `Q.E.D.` by `native_decide` through this route.
+    """
+    return bool(module and _IMPORT_RE.match(module.strip()) and module == module.strip())
+
+
+def declaration_source(theorem_src: str, proof_src: str) -> str:
+    """The module for the INDEPENDENT check: the declaration and nothing else.
+
+    ADR 0097 round 6. `probe_source`'s `def <probe> := @<name>` is SURFACE SYNTAX, and a smuggled
+    `macro_rules | `(@$_:ident) => `(True.intro)` rewrites it -- so `Lean.collectAxioms` was asked,
+    perfectly honestly, about a constant with nothing to do with the theorem. The reporter was
+    never the weak part; the way the question was aimed at it was. The alias is gone: the reporter
+    is told the declaration NAME as a command-line argument, which no macro can reach. That also
+    retires two false-rejects the alias caused on the 4.34 pin -- the `linter.defProp` warning on
+    `def <probe>` (fatal under a preamble's `warningAsError`) and the bare-name lookup failing
+    under a namespace-opening preamble.
+    """
+    proof = proof_src.lstrip()
+    if proof.startswith(":="):
+        proof = proof[2:].lstrip()
+    return f"{statement_head(theorem_src)} :=\n({proof.rstrip()})"
 
 
 def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str:
@@ -379,8 +476,13 @@ def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str
     proof = proof_src.lstrip()
     if proof.startswith(":="):
         proof = proof[2:].lstrip()
+    # `linter.defProp` (new on the 4.34 pin) warns that `def <probe>` is a proposition. Harmless
+    # on its own, but an ADR 0062 preamble setting `warningAsError true` promotes it to a compile
+    # error and silently refuses an honest proof -- over scaffolding the proposer never wrote and
+    # cannot repair. Silence exactly that linter, nothing else.
     return (f"{statement_head(theorem_src)} :=\n({proof.rstrip()})\n"
-            f"def {probe} := @{name}\n#print axioms {probe}")
+            f"set_option linter.defProp false in\ndef {probe} := @{name}\n"
+            f"#print axioms {probe}")
 
 
 def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS,
@@ -399,6 +501,9 @@ def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=ST
     if not statement_is_single_declaration(theorem_src):
         return {"ok": False, "reason": "theorem_src opens more than one top-level declaration",
                 "axioms": [], "saw_axiom_report": False}
+    if any(defeats_the_kernel(t) for t in (theorem_src, proof_src, preamble)):
+        return {"ok": False, "reason": "input disables the kernel check", "axioms": [],
+                "saw_axiom_report": False}
     if smuggles_top_level(proof_src) or closes_more_than_it_opens(proof_src):
         return {"ok": False, "reason": "proof_src opens a top-level declaration", "axioms": [],
                 "saw_axiom_report": False}

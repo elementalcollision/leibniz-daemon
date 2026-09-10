@@ -56,7 +56,10 @@ from leibniz.backends.lean_axioms import (
     _parse_axcheck,
     closes_more_than_it_opens,
     declaration_name,
+    defeats_the_kernel,
+    declaration_source,
     fresh_probe_name,
+    import_is_safe,
     mentions_sorry,
     probe_source,
     smuggles_top_level,
@@ -195,7 +198,11 @@ class LeanCliBackend:
         name = declaration_name(expr.theorem_src)
         if (not name or smuggles_top_level(proof_src)
                 or closes_more_than_it_opens(proof_src)
-                or not statement_is_single_declaration(expr.theorem_src)):
+                or not statement_is_single_declaration(expr.theorem_src)
+                or not all(import_is_safe(m) for m in expr.imports)
+                or defeats_the_kernel(expr.theorem_src)
+                or defeats_the_kernel(proof_src)
+                or defeats_the_kernel(expr.preamble)):
             return False
         # ADR 0097 round 3 -- see LeanReplBackend.check_proof.
         probe = fresh_probe_name()
@@ -242,13 +249,16 @@ class LeanCliBackend:
                 or closes_more_than_it_opens(proof_src)
                 or not statement_is_single_declaration(expr.theorem_src)):
             return {"ok": False, "reason": "guard refused the source", "axioms": []}
-        probe = fresh_probe_name()
-        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        if not all(import_is_safe(m) for m in expr.imports):
+            return {"ok": False, "reason": "import is not a bare module name", "axioms": []}
+        # ADR 0097 round 6: NO probe alias. `def <probe> := @<name>` was surface syntax a smuggled
+        # `macro_rules | `(@$_:ident) => ...` could rewrite, so the reporter was asked -- honestly
+        # -- about the wrong constant. The declaration name now travels as ARGV instead, where no
+        # macro can reach it, and the module carries the declaration and nothing else.
+        decl = declaration_source(expr.theorem_src, proof_src)
         body = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
-        # The module must not carry the `#print axioms` line: the reporter answers that question,
-        # and leaving it in only gives a hijack something to print.
-        body = "\n".join(ln for ln in body.splitlines() if not ln.startswith("#print axioms "))
         source = _with_imports(expr.imports, body)
+        probe = name
         nonce = fresh_probe_name()
         try:
             with tempfile.TemporaryDirectory() as td:
