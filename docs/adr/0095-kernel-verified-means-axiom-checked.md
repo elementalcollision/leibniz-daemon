@@ -151,8 +151,13 @@ The regression file is now part of `scripts/run_kernel_tests.sh`, which it was n
 
 ## Consequences
 
-- `native_decide`, `sorry`, admitted lemmas and unaudited axioms can no longer produce
-  `kernel_verified=True` through *any* path, including one written next year.
+- `native_decide`, `sorry`, admitted lemmas and unaudited axioms no longer produce
+  `kernel_verified=True` on any route tested here, and the check is now structural rather than a
+  convention a future call site can forget. That is a weaker claim than "through any path", and
+  deliberately so: the first version of this ADR made the stronger claim and adversarial review
+  falsified it within the hour, three times over. What is warranted is that the footprint is read
+  by the writer, that a backend which does not read it cannot stamp, and that every route found
+  so far is frozen as a regression.
 - The by-convention `axiom_closure` call sites get decision 3 for free — they were reading the
   wrong declaration's footprint under exactly the same crafted input.
 - The by-convention `axiom_closure` calls in the providers and gates are now belt-and-braces
@@ -175,3 +180,11 @@ clean footprint would not prove the kernel ran. No exploit was constructed for i
 attempts failed at elaboration, before the option matters), and it appears nowhere in the repo.
 It is left as a known-unguarded surface rather than being fixed on speculation; a preamble
 option-denylist is the obvious remedy if it is ever wanted.
+
+**The preamble itself remains a trusted input.** `smuggles_top_level` guards `proof_src`, which is
+proposer-authored; the ADR 0062 preamble is operator-authored and its whole purpose is to carry
+top-level declarations, so it cannot be guarded the same way. Decision 5 means a preamble's own
+`#print axioms` can no longer be mistaken for our theorem's, but an operator who writes a hostile
+preamble is outside this ADR's threat model — as they always were. If that ever stops being an
+acceptable assumption, the remedy is to render the preamble from a checked source rather than to
+scan it.
