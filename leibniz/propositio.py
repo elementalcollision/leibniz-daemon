@@ -72,7 +72,7 @@ class Expressio:
     # the prover (as copy-pasteable `have` blocks) when re-proving a hard goal. This is
     # NEVER placed in the Lean source the kernel checks. Empty for ordinary proofs.
     #
-    # ADR 0095 CORRECTION. This used to claim the kernel "only ever sees one self-contained
+    # ADR 0097 CORRECTION. This used to claim the kernel "only ever sees one self-contained
     # declaration (`theorem_src := proof`), so a smuggled top-level command would be a parse
     # error inside the proof — there is no separate-declaration surface to poison." That is
     # FALSE, and it was load-bearing: it is the reason nothing guarded `proof_src`. Lean

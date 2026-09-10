@@ -61,7 +61,7 @@ class LeanVerifier:
     def discharge(self, expr: Expressio, demo: Demonstratio) -> EdgeEvidence:
         """Check the proof. This is the ONLY place kernel_verified is set.
 
-        ADR 0095 — `kernel_verified` means KERNEL-decided, so the backend must also have read the
+        ADR 0097 — `kernel_verified` means KERNEL-decided, so the backend must also have read the
         proof's axiom footprint. It was previously set from `check_proof` alone, and `check_proof`
         bottomed out in "no error and no sorry"; the axiom footprint was a separate call each
         provider and gate made BY CONVENTION. Measured on the pinned Lean 4.31 image, that gap is

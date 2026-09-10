@@ -27,7 +27,7 @@ class _FakeBackend:
         self._messages = messages
 
     def _run(self, src, imports):
-        # ADR 0095 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
+        # ADR 0097 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
         # retarget canned reports about OUR theorem onto it. Reports about OTHER declarations are
         # left alone: several tests assert a preamble's report must not become our footprint.
         import re

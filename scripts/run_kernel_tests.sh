@@ -14,7 +14,7 @@ fi
 
 # 2. run the kernel-exercising tests; -rs surfaces skip reasons so a silent skip is visible.
 #    These files are skip-FREE when the image is present (every test runs), so the zero-skip rule (step 3)
-#    holds. test_native_eval_redteam is the ADR 0095 gate — the published Lean native-evaluation
+#    holds. test_native_eval_redteam is the ADR 0097 gate — the published Lean native-evaluation
 #    exploit driven through the sole kernel writer. test_kernel_false_theorem_rejection is GATE-4: the audit-tier "nothing false is KERNEL-VERIFIED"
 #    backstop. (For BROAD coverage with a calibrated skip budget, use scripts/run_kernel_soak.sh instead.)
 #    test_novelty_corpus_r3 is here per ADR 0095 Decision 3: it is the ONLY test that recomputes a

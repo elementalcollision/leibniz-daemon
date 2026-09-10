@@ -17,7 +17,7 @@ from test_mixed_modulus_decided import COVERING_2520, COVERING_10080  # noqa: E4
 class _Repl:
     def __init__(self, messages): self.messages = messages
     def _run(self, src, imports):
-        # ADR 0095 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
+        # ADR 0097 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
         # retarget canned reports about OUR theorem onto it. Reports about OTHER declarations are
         # left alone: several tests assert a preamble's report must not become our footprint.
         import re
@@ -188,7 +188,7 @@ def test_namespaced_report_is_not_a_false_defer():
     preamble opens `namespace SO_cube`). An ADR 0062 preamble opening a namespace must NOT turn a
     clean footprint into a silent DEFER, so the qualifier is allowed.
 
-    ADR 0095 round 3 restored this to its original form. An intermediate version tried to police
+    ADR 0097 round 3 restored this to its original form. An intermediate version tried to police
     WHICH qualifiers were acceptable; that check turned out to be the last step of an exploit
     rather than a defence, because rejecting Lean's genuine namespaced report left a report the
     PROOF had printed as the only accepted one. Authentication now comes from asking about an

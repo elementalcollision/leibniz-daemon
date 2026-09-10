@@ -1,7 +1,7 @@
 # Lean native-evaluation exposure assessment — the Trail of Bits `String.Pos.Raw.extract` bug (2026-09-10)
 
 **Result: no published Leibniz law is invalidated. One real defect was found in the trust boundary,
-demonstrated with a working exploit, and fixed (ADR 0095). The toolchain pin is still inside the
+demonstrated with a working exploit, and fixed (ADR 0097). The toolchain pin is still inside the
 affected range and is tracked as separate work.**
 
 Prompted by Trail of Bits, *A proof of Fermat's Last Theorem that fits the margin* (2026-09-09).
@@ -58,7 +58,7 @@ theorem fermat_last (a b c n : Nat) (hn : n > 2) (ha : a > 0) (hb : b > 0) : a^n
   := (margin).elim
 ```
 
-| | before | after (ADR 0095) |
+| | before | after (ADR 0097) |
 |---|---|---|
 | `discharge` | `kernel_verified=True`, `MECHANICAL`, `PASS`, **`Q.E.D.`** | `kernel_verified=False`, `FAIL`, `Q.E.I.` |
 | `axiom_closure` on the same proof | `ok=False` | `ok=False` |
@@ -101,7 +101,7 @@ three further routes to `kernel_verified=True`, one driven to `theorem catastrop
   universe-annotated declaration names.
 
 All fixed and frozen as regressions; the regression file is now in the kernel lane. Details in
-ADR 0095 decisions 4-6. The lesson is the one CLAUDE.md already records: re-reading found none of
+ADR 0097 decisions 4-6. The lesson is the one CLAUDE.md already records: re-reading found none of
 this, and the most dangerous of the three was reachable by an *honest* input shape, not a crafted one.
 
 ### A second adversarial round broke the fixes again
@@ -192,7 +192,7 @@ Two test assertions were written as denylists and are corrected:
   `REPL_IMAGE` / `DEFAULT_IMAGE` constants point at 4.31.0. Verified viable target: **4.34.0-rc2** —
   `leanprover-community/repl` carries that tag and Mathlib master is on that toolchain. Deferred as
   its own unit of work because it needs two ~11 GB image rebuilds and carries Mathlib churn.
-  ADR 0095 removes *reachability* through the trust boundary; it does not patch the toolchain.
+  ADR 0097 removes *reachability* through the trust boundary; it does not patch the toolchain.
 - **`set_option debug.skipKernelTC true` in an ADR 0062 preamble is unguarded.** It produces no
   axiom at all, so a clean footprint would not prove the kernel ran. No exploit was constructed on
   4.31 (both attempts failed at elaboration, before the option matters) and it appears nowhere in

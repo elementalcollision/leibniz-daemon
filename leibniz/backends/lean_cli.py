@@ -12,9 +12,9 @@ Trust contract (CLAUDE.md invariants 1 & 7):
   writer.
 - ``check_proof`` returns True iff the candidate file elaborates with no
   error-level diagnostics, uses no ``sorry`` / ``sorryAx``, AND has an axiom
-  footprint inside ``STD_AXIOMS`` (ADR 0095). The footprint is not optional and
+  footprint inside ``STD_AXIOMS`` (ADR 0097). The footprint is not optional and
   not a caller's responsibility: ``#print axioms`` goes into the same file the
-  kernel checks. Before ADR 0095 this returned True for a ``native_decide``
+  kernel checks. Before ADR 0097 this returned True for a ``native_decide``
   proof — the compiled evaluator deciding, not the kernel — which on the pinned
   4.31 is enough to derive ``False`` from the Trail of Bits
   ``String.Pos.Raw.extract`` bug.
@@ -50,6 +50,7 @@ from pathlib import Path
 from typing import Optional
 
 from leibniz.backends.lean_axioms import (
+    _axiom_complaint,
     _report_re,
     axiom_report_text,
     closes_more_than_it_opens,
@@ -58,6 +59,7 @@ from leibniz.backends.lean_axioms import (
     mentions_sorry,
     probe_source,
     smuggles_top_level,
+    statement_head,
     statement_is_single_declaration,
 )
 from leibniz.propositio import Expressio
@@ -115,10 +117,7 @@ def _join_proof(theorem_src: str, proof_src: str, preamble: str = "") -> str:
     ADR 0062: an optional operator-authored ``preamble`` (top-level defs/set_options) is prepended
     BEFORE the declaration, so a legible multi-definition amplification law discharges as ONE source.
     Empty for the discovery path (byte-identical, single-declaration ADR 0027 shape)."""
-    head = theorem_src.rstrip()
-    cut = head.find(":=")
-    if cut != -1:
-        head = head[:cut].rstrip()
+    head = statement_head(theorem_src)
     proof = proof_src.strip()
     body = f"{head} := by sorry" if not proof else f"{head} := {proof}"
     return f"{preamble.rstrip()}\n{body}" if preamble.strip() else body
@@ -141,7 +140,7 @@ class LeanResult:
 
     @property
     def uses_sorry(self) -> bool:
-        # BROAD by design (ADR 0095 round 2). Narrowing this to Lean's warning wording made
+        # BROAD by design (ADR 0097 round 2). Narrowing this to Lean's warning wording made
         # `check_source("theorem t : 2 + 2 = 5 := by sorry")` return True -- Lean writes the
         # warning with BACKTICKS, so the narrow regex matched nothing, and this path (the
         # "trusted re-check" ~20 audit scripts call) has no axiom-footprint backstop.
@@ -179,11 +178,11 @@ class LeanCliBackend:
             return (False, "lean backend unavailable")
         return (not res.has_errors, res.output)
 
-    #: ADR 0095 — see LeanReplBackend.enforces_axiom_closure.
+    #: ADR 0097 — see LeanReplBackend.enforces_axiom_closure.
     enforces_axiom_closure = True
 
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        """True iff the kernel accepted the proof AND its axiom footprint is clean (ADR 0095).
+        """True iff the kernel accepted the proof AND its axiom footprint is clean (ADR 0097).
 
         `#print axioms` is appended to the SAME file the kernel checks, so the footprint cannot
         be skipped by a caller. `axiom_closure` cannot drive this backend at all (it needs the
@@ -195,7 +194,7 @@ class LeanCliBackend:
                 or closes_more_than_it_opens(proof_src)
                 or not statement_is_single_declaration(expr.theorem_src)):
             return False
-        # ADR 0095 round 3 -- see LeanReplBackend.check_proof.
+        # ADR 0097 round 3 -- see LeanReplBackend.check_proof.
         probe = fresh_probe_name()
         decl = probe_source(expr.theorem_src, proof_src, name, probe)
         src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
@@ -227,11 +226,35 @@ class LeanCliBackend:
         Powers the agentic repair loop, mirroring compile_with_error: a failed check
         hands the kernel's complaint back to the reasoner to repair. It only REPORTS;
         kernel_verified is still written solely by LeanVerifier.discharge, which
-        re-checks any ok candidate before stamping it."""
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src, expr.preamble)))
+        re-checks any ok candidate before stamping it.
+
+        ADR 0096 build obligation 2. This predicate must MATCH `check_proof`, not be weaker than
+        it. The panel gates on this and then discharges what it accepts; `proof_repair.py`'s
+        `"kernel rejected a proof the pre-check accepted"` branch is dead only while the two agree.
+        Tightening the mint alone would make it live, and the panel would burn rounds proposing
+        `native_decide` proofs it then discards -- with no diagnostic the reasoner can act on. So
+        the footprint is checked HERE too, and a dirty one is reported as an error the model can
+        actually repair.
+        """
+        name = declaration_name(expr.theorem_src)
+        if (not name or smuggles_top_level(proof_src)
+                or closes_more_than_it_opens(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)):
+            return (False, "proof or statement opens a top-level declaration; write a term or tactic proof only")
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        res = self._run_lean(_with_imports(expr.imports, src))
         if res is None:
             return (False, "lean backend unavailable")
-        return (res.kernel_ok, res.output)
+        if res.has_errors:
+            return (False, res.output)
+        if mentions_sorry(res.output, ignore=_report_re(probe)):
+            return (False, "proof still contains `sorry`")
+        report = axiom_report_text(res.output, probe)
+        if not report.get("ok"):
+            return (False, _axiom_complaint(report))
+        return (True, "")
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:

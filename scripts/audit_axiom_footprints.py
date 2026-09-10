@@ -7,7 +7,7 @@ per computation (leanprover/lean4#12216) -- on the pinned 4.31 it is spelled
 `ofReduceBool` / `trustCompiler` is therefore blind to native computation on our own toolchain,
 and stays blind as the naming changes again. Anything outside the canonical three is a finding.
 
-Read-only. Exits non-zero on any finding, so CI can gate on it. See ADR 0095.
+Read-only. Exits non-zero on any finding, so CI can gate on it. See ADR 0097.
 """
 from __future__ import annotations
 

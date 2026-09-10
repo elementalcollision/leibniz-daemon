@@ -76,7 +76,7 @@ def test_live_kernel_legs():
     body = "\n".join(ln for ln in leg[0][1].splitlines() if not ln.startswith("import "))
     be = LeanReplBackend(timeout_s=300)
     try:
-        # ADR 0095: ask for the axiom footprint explicitly. Without `#print axioms` the response
+        # ADR 0097: ask for the axiom footprint explicitly. Without `#print axioms` the response
         # carries only elaboration diagnostics, so scanning its text for "sorryAx"/"native_decide"
         # asserted almost nothing -- and on Lean >= 4.29 the native axiom is named after the
         # theorem (`<name>._native.native_decide.ax_1`), so a substring denylist is the wrong

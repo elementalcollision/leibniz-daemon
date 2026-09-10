@@ -1,11 +1,14 @@
-# ADR 0095 — `kernel_verified` must mean kernel-decided: fold the axiom footprint into the writer
+# ADR 0097 — Landing the axiom check: what four adversarial rounds did to ADR 0096's fix
 
-- Status: **accepted — landed; forced by a working exploit against the pinned image, and
-  rewritten four times, after four rounds of adversarial review each broke the preceding fix**
+- Status: **accepted — landed; forced by a working exploit, and rewritten four times after four
+  rounds of adversarial review each broke the preceding fix**
 - Date: 2026-09-10
-- Depends on: ADR 0001 (trust hierarchy), ADR 0056/0062 (the axiom-closure contract),
-  ADR 0089/0090 (the hardening of `axiom_report` this reuses), ADR 0048 (Lean is the only
-  kernel writer)
+- **Fulfils ADR 0096**, which reproduced and measured this gap but explicitly landed no fix. ADR
+  0096 is the diagnosis; this is the remedy, and the record of how hard the remedy was to get right.
+- Depends on: ADR 0096 (the gap, and its two build obligations — both discharged here),
+  ADR 0097 (the 4.34 pin this was re-verified against), ADR 0001 (trust hierarchy),
+  ADR 0056/0062 (the axiom-closure contract), ADR 0089/0090 (the hardening of `axiom_report`
+  this reuses), ADR 0048 (Lean is the only kernel writer)
 - Prompted by: Trail of Bits, *A proof of Fermat's Last Theorem that fits the margin*
   (2026-09-09) — `String.Pos.Raw.extract` disagrees between the logical definition and the
   compiled evaluator on all stable Lean ≤ 4.33.1; fixed in 4.34.0-rc1.
@@ -283,6 +286,43 @@ The corollary is uncomfortable and worth keeping: **decision 11 was more dangero
 at all.** It looked structural, it was described as load-bearing, and its rejection of a
 legitimate report is what made the forgery win. A guard that discards true evidence needs the
 same scrutiny as one that admits false evidence.
+
+### ADR 0096's two build obligations, discharged
+
+**Obligation 1 — unify the assembly.** ADR 0096 measured that tightening the mint alone regresses
+**24 of 63** promulgated rows: those whose stored `theorem_src` carries a `:= <proof>` tail. The
+backends' `_join_proof` has always cut that tail; this ADR's `probe_source` did not, and emitted a
+doubled `:=` that is a parse error. It would have failed those rows CLOSED and looked like a
+soundness win. Both now share one `statement_head`, so the two assemblies cannot drift apart again.
+
+Verified against the live ledger on the 4.34 pin: **28/28 promulgated laws re-discharge**, zero
+failures — including the census/Steiner/double-blocking laws that ride in as whole-artifact
+ADR 0062 preambles.
+
+**Obligation 2 — move the panel's pre-check with the mint.** `proof_repair.py` gates on
+`check_proof_with_error` and discharges what that accepts; its
+`"kernel rejected a proof the pre-check accepted"` branch is dead only while the two predicates
+agree. Tightening the mint alone makes it live, and the panel would burn rounds proposing
+`native_decide` proofs it then discards, with no diagnostic the reasoner could act on. Both
+backends' pre-checks now run the same probe assembly and the same footprint check, and a dirty
+footprint is reported as `_axiom_complaint` — an error naming `native_decide` and suggesting
+`decide` / `norm_num` / `omega`, which the repair loop can actually use.
+
+### The pin move made most of these tests vacuous — measured, not assumed
+
+ADR 0095 moved the pin to 4.34.0-rc2, where the compiled evaluator agrees with the kernel and the
+Trail of Bits contradiction cannot be built. Every regression that drives that specific exploit
+therefore passes on 4.34 **whether or not the axiom guard exists**. Mutation-checked by disabling
+the footprint check (`ok = True`) and re-running: 8 tests fail, and
+`test_trail_of_bits_exploit_cannot_be_promulgated`, `test_elab_rules_hijack_cannot_promulgate_false`
+and `test_forged_axiom_report_cannot_promulgate` are **not among them**.
+
+They are kept — they bite if the pin ever moves backwards — but they are no longer the evidence.
+`test_native_decide_is_refused_BY_THE_FOOTPRINT_not_by_an_error` is: a plain `native_decide` proof
+of a TRUE statement elaborates cleanly on every toolchain in scope and carries
+`<theorem>._native.native_decide.ax_1`, so the footprint check is the only thing that can refuse
+it. That test fails under the mutation. This is the ADR 0093 discipline applied to itself — a lane
+that cannot fail must say so.
 
 ## Consequences
 

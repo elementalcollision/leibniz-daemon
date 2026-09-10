@@ -1,9 +1,9 @@
-"""ADR 0095 red-team: `kernel_verified` must mean KERNEL-decided, not compiler-decided.
+"""ADR 0097 red-team: `kernel_verified` must mean KERNEL-decided, not compiler-decided.
 
 Frozen from the 2026-09-10 Trail of Bits audit. The exploit below is the real one
 (`String.Pos.Raw.extract`, CVE-adjacent, all stable Lean <= 4.33.1): on the pinned 4.31 the
 compiled evaluator and the kernel disagree about the same string slice, so `native_decide` and
-`decide` prove complementary propositions and `False` follows. Before ADR 0095 this returned
+`decide` prove complementary propositions and `False` follows. Before ADR 0097 this returned
 `kernel_verified=True` / `Q.E.D.` from `LeanVerifier.discharge`, the sole writer.
 
 These tests are kernel-gated. The DOCKER-FREE ones below them must always run: they pin the
@@ -54,14 +54,14 @@ def _repl():
 # --- structural guarantees (no docker) --------------------------------------
 
 class _PermissiveBackend:
-    """A backend of the shape that existed before ADR 0095: says yes, checks no axioms."""
+    """A backend of the shape that existed before ADR 0097: says yes, checks no axioms."""
     def compile_statement(self, expr): return True
     def check_proof(self, expr, proof_src): return True
     def closed_by_decision_procedure(self, expr): return False
 
 
 def test_backend_without_axiom_enforcement_cannot_mint_a_kernel_verdict():
-    """ADR 0095 decision 2. `discharge` fails CLOSED when the backend does not assert that its
+    """ADR 0097 decision 2. `discharge` fails CLOSED when the backend does not assert that its
     `check_proof` read the axiom footprint -- so a future backend cannot be wired in and silently
     stamp Q.E.D. This is the property that call-site convention could not provide."""
     demo = Demonstratio(proof_obligation="redteam", proof_src="by native_decide")
@@ -116,7 +116,7 @@ def test_unnamed_declaration_fails_closed():
 
 
 def test_comment_cannot_hijack_the_declaration_name():
-    """ADR 0095. The name handed to `#print axioms` must come from the real DECLARATION.
+    """ADR 0097. The name handed to `#print axioms` must come from the real DECLARATION.
 
     `_NAME_RE.search` took the first `theorem <name>` match anywhere in `theorem_src`, comments
     included -- so a proposer-authored statement opening with
@@ -152,7 +152,7 @@ def test_report_only_kernels_cannot_stamp():
 
 
 def test_proof_src_cannot_smuggle_a_top_level_declaration():
-    """ADR 0095 decision 4. `proof_src` is an EXPRESSION; it must not open new declarations.
+    """ADR 0097 decision 4. `proof_src` is an EXPRESSION; it must not open new declarations.
 
     `Expressio.proof_hints` used to assert that "a smuggled top-level command would be a parse
     error inside the proof — there is no separate-declaration surface to poison". False, and
@@ -176,7 +176,7 @@ def test_proof_src_cannot_smuggle_a_top_level_declaration():
 
 
 def test_axiom_report_text_reads_OUR_report_not_the_first_one():
-    """ADR 0095 decision 5. The CLI transport hands back the whole file as one blob.
+    """ADR 0097 decision 5. The CLI transport hands back the whole file as one blob.
 
     Flattening it into a single message defeated the ADR 0090 per-message name filter: the filter
     was satisfied by any report naming our theorem, while the axiom list came from a SEPARATE
@@ -200,7 +200,7 @@ def test_axiom_report_text_reads_OUR_report_not_the_first_one():
 
 
 def test_a_theorem_named_sorry_something_still_verifies():
-    """ADR 0095 decision 6, as CORRECTED by decision 9.
+    """ADR 0097 decision 6, as CORRECTED by decision 9.
 
     `#print axioms <name>` echoes the declaration's NAME into the message stream, so a blind
     `"sorry" in message` scan rejected honest proofs whose name merely contains the letters -- a
@@ -223,7 +223,7 @@ def test_a_theorem_named_sorry_something_still_verifies():
     assert not mentions_sorry("'plain' depends on axioms: [propext]")
 
 
-# --- round-2 adversarial review (ADR 0095 decisions 7-10) --------------------
+# --- round-2 adversarial review (ADR 0097 decisions 7-10) --------------------
 
 def test_indented_top_level_command_is_still_a_smuggle():
     """Decision 7. The first guard was a COLUMN-0 scan, and its stated rationale ("a proof's own
@@ -309,7 +309,7 @@ def test_declaration_name_handles_honest_lean_shapes():
         assert declaration_name(src) == want, src
 
 
-# --- round-3 adversarial review (ADR 0095 decisions 12-13) -------------------
+# --- round-3 adversarial review (ADR 0097 decisions 12-13) -------------------
 
 def test_footprint_is_read_under_an_unpredictable_probe_name():
     """Decision 12, and the defect that broke every previous version of this module.
@@ -346,7 +346,7 @@ def test_theorem_src_must_declare_exactly_one_thing():
     assert not statement_is_single_declaration("open Foo\ntheorem t : True")
 
 
-# --- round-4 adversarial review (ADR 0095 decision 14) -----------------------
+# --- round-4 adversarial review (ADR 0097 decision 14) -----------------------
 
 HIJACK = ('\n\nopen Lean Elab Command in elab_rules : command '
           '| `(#print axioms $i:ident) => logInfo s!"\'{i.getId}\' does not depend on any axioms"')
@@ -399,6 +399,44 @@ def test_proof_cannot_escape_the_wrapper_by_closing_it():
         assert not closes_more_than_it_opens(good), good
     # a close INSIDE a string or char literal is not an escape
     assert not closes_more_than_it_opens('by\n  have s : String := ")"\n  trivial')
+
+
+def test_native_decide_is_refused_BY_THE_FOOTPRINT_not_by_an_error():
+    """TOOLCHAIN-INDEPENDENT ANCHOR -- the guard against this whole file going vacuous.
+
+    ADR 0095 moved the pin to 4.34.0-rc2, where the Trail of Bits `String.Pos.Raw.extract`
+    disagreement no longer exists: the compiled evaluator now agrees with the kernel. Every test
+    below that drives that specific exploit therefore passes on 4.34 whether or not the axiom
+    guard is present -- the contradiction simply cannot be built any more. Those tests are kept
+    as historical regressions (they still bite if the pin ever moves backwards), but they are no
+    longer evidence that the guard works.
+
+    THIS test is. A plain `native_decide` proof of a TRUE statement elaborates cleanly on every
+    toolchain in scope (4.31, 4.33.1, 4.34) and carries a compiler-trust axiom
+    `<theorem>._native.native_decide.ax_1`. Measured on 4.34: no error, footprint
+    `[nd_true._native.native_decide.ax_1]`. So the ONLY thing that can refuse it is the footprint
+    check. If someone deletes that check, this test fails and the exploit tests do not.
+    """
+    be = _repl()
+    try:
+        T = "theorem nd_true : (1000000000000 : Nat) % 7 = 1"
+        probe = fresh_probe_name()
+        resp = be._run(probe_source(T, "by native_decide", "nd_true", probe), ("Mathlib",))
+        msgs = [(m.get("severity"), m.get("data") or "") for m in (resp or {}).get("messages", [])]
+        # 1. it ELABORATES -- so a rejection cannot be blamed on a Lean error
+        assert not any(sev == "error" for sev, _ in msgs), f"expected clean elaboration: {msgs}"
+        # 2. and its footprint is compiler-trust, which is the thing being detected
+        rep = axiom_report(resp, probe)
+        assert rep["saw_axiom_report"], "no footprint read -- the check would pass vacuously"
+        assert any("_native" in a for a in rep["axioms"]), rep["axioms"]
+        assert rep["ok"] is False
+        # 3. so the writer must refuse it, and only the footprint can be the reason
+        demo = Demonstratio(proof_obligation="anchor", proof_src="by native_decide")
+        LeanVerifier(backend=be).discharge(Expressio(theorem_src=T, imports=("Mathlib",)), demo)
+        assert demo.kernel_verified is False
+        assert demo.qed == "Q.E.I."
+    finally:
+        be.close()
 
 
 # --- the live exploit (docker-gated) ----------------------------------------

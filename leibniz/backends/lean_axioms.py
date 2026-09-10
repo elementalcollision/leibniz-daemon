@@ -8,7 +8,7 @@ A kernel-accepted declaration may still rest on `sorryAx` (a hole) or on native 
 axiom. `#print axioms <name>` reports the footprint; ``axiom_closure`` asserts it is a
 subset of the standard Lean/Mathlib set. Anything else ⇒ not a proof for our purposes.
 
-ADR 0095 rebuilt the plumbing here after two rounds of adversarial review. The reader must
+ADR 0097 rebuilt the plumbing here after two rounds of adversarial review. The reader must
 survive three things that all turned out to be live on the pinned 4.31: a name read from
 somewhere other than the real declaration, a report about some OTHER declaration standing in
 for ours, and a transport that re-shapes Lean's output badly enough to change the verdict.
@@ -31,7 +31,7 @@ _ERROR_RE = re.compile(r"\berror(?::|\()")
 
 # --- naming the declaration --------------------------------------------------
 
-#: ADR 0095 — the name must come from a real DECLARATION, not from anywhere in the text.
+#: ADR 0097 — the name must come from a real DECLARATION, not from anywhere in the text.
 #: The original `_NAME_RE.search` took the first `theorem <name>` match anywhere, comments
 #: included, and that name is what `#print axioms` is asked about. A `theorem_src` opening with
 #:     -- theorem Nat.add_comm
@@ -52,7 +52,7 @@ _DECL_RE = re.compile(
 def _strip_comments(src: str) -> str:
     """Remove Lean line (`--`) and block (`/- -/`, nesting) comments, respecting STRING LITERALS.
 
-    ADR 0095 round 2: lexing `/-` without tracking string literals is itself an attack surface.
+    ADR 0097 round 2: lexing `/-` without tracking string literals is itself an attack surface.
     A proof containing `have s : String := "/-"` opened a block comment that never closed, so the
     stripper swallowed the rest of the proof and `smuggles_top_level` saw nothing — while Lean,
     which lexes the string correctly, happily elaborated the `namespace M` / decoy that followed.
@@ -120,7 +120,7 @@ def declaration_name(theorem_src: str) -> Optional[str]:
 def _report_re(name: str):
     """Match a `#print axioms` report about ``name``, capturing the REPORTED NAME and its list.
 
-    ADR 0095: these used to be two independent searches — one found the report, a separate
+    ADR 0097: these used to be two independent searches — one found the report, a separate
     axiom-list regex then found "an" axiom list in the same message. That decoupling is only safe
     while one message holds exactly one report, and the CLI transport holds the WHOLE FILE, so
     the second search returned whichever list was printed FIRST: an ADR 0062 preamble carrying its
@@ -142,7 +142,7 @@ def _report_re(name: str):
 def mentions_sorry(text: str, ignore=None) -> bool:
     """True iff ``text`` looks like Lean reporting a hole. BROAD by design.
 
-    ADR 0095 round 2 — this was briefly narrowed to Lean's warning wording and that was a
+    ADR 0097 round 2 — this was briefly narrowed to Lean's warning wording and that was a
     material regression. Lean writes the warning with BACKTICKS (``declaration uses `sorry` ``,
     verified on 4.31.0, 4.33.1 and 4.34.0-rc2), so the narrowed regex matched nothing at all and
     `LeanCliBackend.check_source("theorem t : 2 + 2 = 5 := by sorry")` started returning **True**
@@ -173,7 +173,7 @@ _TOP_LEVEL_CMDS = (
     "deriving", "mutual", "universe", "variable", "variables", "private", "protected",
     "noncomputable", "nonrec", "scoped", "local", "partial", "unsafe", "builtin_initialize",
     "initialize", "register_simp_attr", "declare_syntax_cat",
-    # ADR 0095 rounds 3-4. NOT a claim to completeness -- `elab_rules` was missing because
+    # ADR 0097 rounds 3-4. NOT a claim to completeness -- `elab_rules` was missing because
     # `elab\\b` cannot match it (`_` is a word character), and that gap alone was a soundness
     # break. The list is defence in depth; `probe_source`'s confinement is the real guard.
     "elab_rules", "run_cmd", "run_elab", "alias", "recall", "export", "binder_predicate",
@@ -189,7 +189,7 @@ _MODIFIER_RE = re.compile(r"^[ \t]*(?:set_option|open)\b[^\n]*\bin\b", re.MULTIL
 
 
 def smuggles_top_level(proof_src: str) -> bool:
-    """True iff ``proof_src`` opens a new TOP-LEVEL declaration or command (ADR 0095).
+    """True iff ``proof_src`` opens a new TOP-LEVEL declaration or command (ADR 0097).
 
     `propositio.Expressio` claimed the kernel "only ever sees one self-contained declaration ...
     a smuggled top-level command would be a parse error inside the proof". That was false, and it
@@ -217,7 +217,7 @@ def smuggles_top_level(proof_src: str) -> bool:
     src = _strip_comments(proof_src or "")
     # Re-scan the text AFTER each `set_option/open ... in` prefix instead of exempting the whole
     # line: `open Lean Elab Command in elab_rules : command | ...` on ONE line slipped past the
-    # blanket exemption entirely (ADR 0095 round 4).
+    # blanket exemption entirely (ADR 0097 round 4).
     for m in _MODIFIER_RE.finditer(src):
         tail = src[m.end():]
         if _SMUGGLE_RE.search("\n" + tail.split("\n", 1)[0]):
@@ -231,7 +231,7 @@ def smuggles_top_level(proof_src: str) -> bool:
 def fresh_probe_name() -> str:
     """An unpredictable name to alias the theorem under before asking for its footprint.
 
-    ADR 0095 round 3, and the defect that broke every previous version of this module. The reader
+    ADR 0097 round 3, and the defect that broke every previous version of this module. The reader
     matched report-shaped TEXT anywhere in Lean's output and never bound it to the `#print axioms`
     command the checker itself issued. A proof can simply PRINT a clean report:
 
@@ -277,7 +277,7 @@ _OPEN, _CLOSE = "([{\u27e8", ")]}\u27e9"
 def closes_more_than_it_opens(proof_src: str) -> bool:
     """True iff ``proof_src`` ever closes a delimiter it did not open (comment/string aware).
 
-    ADR 0095 round 4. The proof is wrapped in parentheses so a top-level command inside it is a
+    ADR 0097 round 4. The proof is wrapped in parentheses so a top-level command inside it is a
     PARSE ERROR (see ``probe_source``). The way out of a wrapper is to close it early —
     ``by trivial)`` followed by commands and a re-opened ``(`` — so a proof whose delimiter depth
     ever goes negative is refused. Trailing UNCLOSED delimiters need no check: they are a parse
@@ -308,10 +308,26 @@ def closes_more_than_it_opens(proof_src: str) -> bool:
     return False
 
 
+def statement_head(theorem_src: str) -> str:
+    """The declaration header, with any `:= <proof>` tail cut off.
+
+    ADR 0096 build obligation 1 -- **unify the assembly**. The backends' `_join_proof` has always
+    cut this tail, because a stored `theorem_src` may carry one: 24 of the 63 promulgated rows do,
+    e.g. `theorem n_sq_add_n_add_two_div_two (n : Nat) : (n^2 + n + 2) % 2 = 0 := by sorry`. The
+    ADR 0097 trust path assembled its own source and did NOT cut it, emitting a doubled `:=` that
+    is a parse error -- so tightening the mint without this would have failed those 24 rows closed
+    and looked like a soundness win. `_join_proof` and `probe_source` now share this one function,
+    so the two assemblies cannot drift apart again.
+    """
+    head = (theorem_src or "").rstrip()
+    cut = head.find(":=")
+    return head[:cut].rstrip() if cut != -1 else head
+
+
 def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str:
     """The exact source the kernel is asked to check, footprint probe included.
 
-    ADR 0095 round 4. The proof is placed in a PARENTHESISED TERM POSITION. Rounds 1-3 all tried
+    ADR 0097 round 4. The proof is placed in a PARENTHESISED TERM POSITION. Rounds 1-3 all tried
     to *detect* proofs that smuggle top-level commands, and each keyword scan was bypassed by an
     input its author had not imagined — most sharply by
 
@@ -334,7 +350,7 @@ def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str
     proof = proof_src.lstrip()
     if proof.startswith(":="):
         proof = proof[2:].lstrip()
-    return (f"{theorem_src} :=\n({proof.rstrip()})\n"
+    return (f"{statement_head(theorem_src)} :=\n({proof.rstrip()})\n"
             f"def {probe} := @{name}\n#print axioms {probe}")
 
 
@@ -384,7 +400,7 @@ def axiom_report(response, name: str, allowed=STD_AXIOMS) -> dict:
     — without that last clause an empty message list satisfies the rest vacuously, which is the
     ADR 0089 fail-open.
 
-    ADR 0095 round 3: callers on the trust path pass a fresh unpredictable PROBE name here, not
+    ADR 0097 round 3: callers on the trust path pass a fresh unpredictable PROBE name here, not
     the theorem's own name — see ``fresh_probe_name``. An earlier version instead tried to police
     WHICH qualified forms of the theorem name were acceptable, and that check turned out to be the
     final step of an exploit rather than a defence: rejecting Lean's genuine (namespaced) report
@@ -434,7 +450,7 @@ def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS) -> d
     instead of open-coding a fresh scan — the open-coded third copy was the only one ever to
     publish a false record.
 
-    The text is passed as ONE message on purpose. Round 2 of the ADR 0095 review killed the
+    The text is passed as ONE message on purpose. Round 2 of the ADR 0097 review killed the
     obvious alternative: splitting per line looks safer, but Lean WRAPS a long axiom list across
     lines, so a per-line reader saw a report with no list and a list with no report. That made the
     two transports disagree on identical content in both directions — an honest 62-character-named
@@ -447,3 +463,19 @@ def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS) -> d
                 "saw_axiom_report": False}
     severity = "error" if _ERROR_RE.search(output) else "info"
     return axiom_report({"messages": [{"severity": severity, "data": output}]}, name, allowed)
+
+
+def _axiom_complaint(report: dict) -> str:
+    """A repair-loop diagnostic the reasoner can act on (ADR 0096 build obligation 2)."""
+    extra = report.get("extra_axioms") or []
+    if report.get("has_sorry"):
+        return "proof still contains `sorry`"
+    if any("native_decide" in a or "_native" in a for a in extra):
+        return ("proof rests on `native_decide` (the COMPILED evaluator, not the kernel): "
+                f"axiom footprint {extra}. Re-prove with `decide`, `norm_num`, `omega` or an "
+                "explicit term -- `native_decide` is never a kernel decision here.")
+    if extra:
+        return f"proof rests on axioms outside the standard set: {extra}"
+    if not report.get("saw_axiom_report"):
+        return "no `#print axioms` report was produced for the proof"
+    return "axiom footprint check failed"

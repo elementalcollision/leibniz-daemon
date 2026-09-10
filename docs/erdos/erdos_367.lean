@@ -31,7 +31,7 @@ def Erdos367_strong : Prop :=
   ∀ k : ℕ, 1 ≤ k → ∃ C : ℝ, ∀ n : ℕ,
     (∏ m ∈ Finset.Ico n (n + k), (B2 m : ℝ)) ≤ C * (n : ℝ) ^ (2 : ℝ)
 
--- B₂ on witnesses. ILLUSTRATIVE, NOT ANCHORS (ADR 0095): these are decided by the COMPILED
+-- B₂ on witnesses. ILLUSTRATIVE, NOT ANCHORS (ADR 0097): these are decided by the COMPILED
 -- evaluator, not the kernel, so they are evidence about Lean's compiler and nothing more.
 example : B2 9800 = 9800 := by native_decide   -- 2³·5²·7²  (a "powerful" number)
 example : B2 9802 = 169  := by native_decide   -- 2·13²·29  → 13²
@@ -39,7 +39,7 @@ example : B2 12   = 4    := by native_decide   -- 2²·3      → 2²
 example : B2 30   = 1    := by native_decide   -- 2·3·5 squarefree → 1
 
 /-
-  NOTE ON `native_decide` (revised 2026-09-10, ADR 0095).
+  NOTE ON `native_decide` (revised 2026-09-10, ADR 0097).
 
   These four `example`s are NOT anchors, and the word "anchor" previously used here overstated them. They are
   decided by Lean's COMPILED EVALUATOR, not by the kernel — and the Trail of Bits `String.Pos.Raw.extract` bug
@@ -50,7 +50,7 @@ example : B2 30   = 1    := by native_decide   -- 2·3·5 squarefree → 1
   They remain here as *illustration* of the B₂ definition, and they remain safe to keep for three reasons:
   they are anonymous `example`s, so nothing can reference them; the load-bearing content of this file is the
   *statement* (`Erdos367` / `Erdos367_strong`), which uses no `decide` of any kind and no proof at all; and the
-  daemon forbids `native_decide` in promulgated proofs — as of ADR 0095 that ban is enforced by the sole writer
+  daemon forbids `native_decide` in promulgated proofs — as of ADR 0097 that ban is enforced by the sole writer
   of `kernel_verified`, not by convention.
 
   Why they are not simply reproved by kernel means: `B2` is defined through `Nat.factorization`, which is a

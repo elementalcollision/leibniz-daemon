@@ -111,7 +111,7 @@ def test_real_kernel_discharges_with_a_clean_footprint():  # pragma: no cover
         be.close()
     assert de.kernel_verified is True and de.qed == "Q.E.D."
     assert ax["ok"] and ax["saw_axiom_report"]
-    # ADR 0095: the ALLOWLIST above (`ax["ok"]`) is what actually excludes native computation --
+    # ADR 0097: the ALLOWLIST above (`ax["ok"]`) is what actually excludes native computation --
     # since Lean 4.29 the native axiom is auto-generated per computation and named after the
     # theorem (measured on the pinned 4.31: `<name>._native.native_decide.ax_1`), so a denylist
     # naming `Lean.ofReduceBool` never matches and asserts nothing. State the real property.
