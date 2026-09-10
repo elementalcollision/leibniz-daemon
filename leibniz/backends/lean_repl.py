@@ -39,9 +39,11 @@ from leibniz.backends.lean_axioms import (
     _report_re,
     axiom_report,
     declaration_name,
-    expected_report_names,
+    fresh_probe_name,
     mentions_sorry,
+    probe_source,
     smuggles_top_level,
+    statement_is_single_declaration,
 )
 from leibniz.propositio import Expressio
 
@@ -236,16 +238,19 @@ class LeanReplBackend:
         slice. A missing/unparseable theorem name fails CLOSED — an unnamed declaration has no
         footprint to read, so there is nothing to certify.
         """
-        src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
         name = declaration_name(expr.theorem_src)
-        if not name or smuggles_top_level(proof_src):
+        if (not name or smuggles_top_level(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)):
             return False
-        resp = self._run(f"{src}\n#print axioms {name}", expr.imports)
-        rep = _report_re(name)
-        return (self._kernel_ok(resp, ignore=rep)
-                and bool(axiom_report(resp, name,
-                                      expected=expected_report_names(name, expr.preamble)
-                                      ).get("ok")))
+        # ADR 0095 round 3: read the footprint under an UNPREDICTABLE probe name. A proof can
+        # print a clean report for its own name (`run_cmd IO.println`, or `dbg_trace` with no
+        # imports at all); it cannot print one for a name chosen after it was written.
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        resp = self._run(src, expr.imports)
+        return (self._kernel_ok(resp, ignore=_report_re(probe))
+                and bool(axiom_report(resp, probe).get("ok")))
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).

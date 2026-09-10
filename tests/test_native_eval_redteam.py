@@ -21,9 +21,11 @@ from leibniz.backends.lean_axioms import (
     axiom_report,
     axiom_report_text,
     declaration_name,
-    expected_report_names,
+    fresh_probe_name,
     mentions_sorry,
+    probe_source,
     smuggles_top_level,
+    statement_is_single_declaration,
 )
 from leibniz.propositio import Demonstratio, Expressio
 from leibniz.verifiers import LeanVerifier
@@ -274,45 +276,25 @@ def test_wrapped_axiom_list_is_read_correctly_by_both_transports():
     `Q.E.D.` from the REPL and `Q.E.I.` from the CLI, and a wrapped dirty footprint could lose to
     an earlier one-line report about the same short name."""
     n = "crt_amplification_of_a_recently_published_finite_core_lemma_v1"
-    exp = expected_report_names(n)
     clean = f"'{n}' depends on axioms: [propext,\n Classical.choice,\n Quot.sound]"
     dirty = (f"'{n}' depends on axioms: [propext,\n Classical.choice,\n Quot.sound,\n"
              f" {n}._native.native_decide.ax_1]")
-    assert axiom_report_text(clean, n, expected=exp)["ok"] is True
-    assert axiom_report_text(dirty, n, expected=exp)["ok"] is False
+    assert axiom_report_text(clean, n)["ok"] is True
+    assert axiom_report_text(dirty, n)["ok"] is False
     # an earlier one-line report about the same name must not win over our wrapped one
-    assert axiom_report_text(f"'{n}' depends on axioms: [propext]\n" + dirty, n,
-                             expected=exp)["ok"] is False
+    assert axiom_report_text(f"'{n}' depends on axioms: [propext]\n" + dirty, n)["ok"] is False
     # the two transports must agree on identical content
     msgs = {"messages": [{"severity": "info", "data": dirty}]}
-    assert axiom_report(msgs, n, expected=exp)["ok"] is axiom_report_text(dirty, n, expected=exp)["ok"]
+    assert axiom_report(msgs, n)["ok"] is axiom_report_text(dirty, n)["ok"]
 
 
 def test_tagged_error_diagnostics_are_recognised():
     """Lean 4.31 emits `error(lean.unknownIdentifier): ...` as well as plain `error: ...`; a
     literal `"error:" in output` test missed the tagged form and passed a report that coexisted
     with an error."""
-    exp = expected_report_names("t")
     for diag in ("x.lean:2:14: error(lean.unknownIdentifier): boom",
                  "x.lean:2:14: error: boom"):
-        assert axiom_report_text(f"{diag}\n't' does not depend on any axioms", "t",
-                                 expected=exp)["ok"] is False
-
-
-def test_only_the_preamble_may_qualify_our_name():
-    """Decisions 7-8 are keyword scans and cannot be complete. THIS is the structural check: a
-    report may qualify our name only with a namespace the OPERATOR-AUTHORED preamble opened.
-    `M.margin` declared by a proof is a different declaration wearing our name."""
-    decoy = {"messages": [{"severity": "info", "data": "'M.margin' does not depend on any axioms"}]}
-    assert axiom_report(decoy, "margin", expected=expected_report_names("margin"))[
-        "saw_axiom_report"] is False
-    # a namespace the preamble opened IS legitimate -- otherwise every ADR 0062 law would DEFER
-    ns = {"messages": [{"severity": "info", "data": "'Ns.margin' does not depend on any axioms"}]}
-    assert axiom_report(ns, "margin", expected=expected_report_names("margin", "namespace Ns"))["ok"]
-    # Lean's own `private` mangling is not user-controllable, so it is accepted
-    pv = {"messages": [{"severity": "info",
-                        "data": "'_private.Mod.0.margin' does not depend on any axioms"}]}
-    assert axiom_report(pv, "margin", expected=expected_report_names("margin"))["ok"]
+        assert axiom_report_text(f"{diag}\n't' does not depend on any axioms", "t")["ok"] is False
 
 
 def test_declaration_name_handles_honest_lean_shapes():
@@ -324,6 +306,43 @@ def test_declaration_name_handles_honest_lean_shapes():
                       ("theorem upoly.{u} (a : Sort u) : True", "upoly"),
                       ("nonrec theorem nr : True", "nr")):
         assert declaration_name(src) == want, src
+
+
+# --- round-3 adversarial review (ADR 0095 decisions 12-13) -------------------
+
+def test_footprint_is_read_under_an_unpredictable_probe_name():
+    """Decision 12, and the defect that broke every previous version of this module.
+
+    The reader matched report-shaped TEXT anywhere in Lean's output and never bound it to the
+    `#print axioms` command the checker itself issued. A proof can simply PRINT a clean report --
+    `run_cmd IO.println "'t' depends on axioms: [propext]"`, or `dbg_trace` inside the proof term
+    with NO imports and NO top-level command, so no keyword scan can see it. Combined with a
+    `namespace` in the (previously unguarded) proposer-authored `theorem_src`, Lean's genuine
+    report read `'M.t'`, which the then-current qualifier check REJECTED -- leaving the forgery as
+    the only accepted report. Measured on the pinned 4.31: `kernel_verified=True`, `Q.E.D.` on a
+    proposition whose negation the kernel proves cleanly.
+
+    The probe makes the report unforgeable: it names a declaration chosen after the proof text was
+    fixed."""
+    a, b = fresh_probe_name(), fresh_probe_name()
+    assert a != b and a.startswith("leibniz_axiom_probe_")
+    assert len(a) > 32, "probe must be long enough not to be guessable"
+    src = probe_source("theorem t : True", "by trivial", "t", a)
+    # the probe aliases the theorem, and the footprint is asked of the ALIAS
+    assert f"def {a} := @t" in src
+    assert src.rstrip().endswith(f"#print axioms {a}")
+
+
+def test_theorem_src_must_declare_exactly_one_thing():
+    """Decision 13. `theorem_src` is proposer-authored and was entirely unguarded -- the smuggle
+    guard was only ever applied to `proof_src`. A leading `namespace M` there is what moved Lean's
+    genuine report out from under the name being asked about."""
+    assert statement_is_single_declaration("theorem t : True")
+    assert statement_is_single_declaration("set_option maxRecDepth 4000 in theorem t : True")
+    assert statement_is_single_declaration("@[simp] theorem t : True")
+    assert not statement_is_single_declaration("namespace M\ntheorem t : True")
+    assert not statement_is_single_declaration("theorem t : True\ntheorem u : True")
+    assert not statement_is_single_declaration("open Foo\ntheorem t : True")
 
 
 # --- the live exploit (docker-gated) ----------------------------------------
@@ -473,3 +492,40 @@ def test_long_theorem_name_verifies_on_both_transports():
         assert verdicts == [True, True], f"transports disagree or false-DEFER: {verdicts}"
     finally:
         repl.close()
+
+
+def test_forged_axiom_report_cannot_promulgate():
+    """The round-3 exploit, end-to-end through the sole writer. The proof prints its own clean
+    `#print axioms` line while being decided by the compiler."""
+    be = _repl()
+    try:
+        from leibniz.backends.lean_axioms import axiom_closure
+        T = ('namespace M\ntheorem catastrophe : '
+             'String.Pos.Raw.extract "a" ⟨2^63⟩ ⟨2^63+1⟩ ≠ ""')
+        P = ('by native_decide\n\nrun_cmd IO.println '
+             '"\'catastrophe\' depends on axioms: [propext]"')
+        demo = Demonstratio(proof_obligation="forged", proof_src=P)
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src=T, imports=("Mathlib",)), demo)
+        assert demo.kernel_verified is False
+        assert demo.qed != "Q.E.D."
+        assert axiom_closure(be, T, P, ("Mathlib",))["ok"] is False
+    finally:
+        be.close()
+
+
+def test_dbg_trace_forgery_without_imports_cannot_promulgate():
+    """The same attack with no imports and no top-level command at all -- `dbg_trace` fires when
+    native_decide's compiled evaluator runs, so no keyword scan can see it. This is why the probe,
+    not the scans, is the load-bearing check."""
+    be = _repl()
+    try:
+        T = "theorem evil : (12345678901 : Nat) % 7 = 3"
+        P = ('by\n  have hp : (dbg_trace "\'evil\' depends on axioms: [propext]"; (1:Nat)) = 1 '
+             ':= by native_decide\n  native_decide')
+        assert smuggles_top_level(P) is False      # nothing for a keyword scan to catch
+        demo = Demonstratio(proof_obligation="dbg", proof_src=P)
+        LeanVerifier(backend=be).discharge(Expressio(theorem_src=T, imports=()), demo)
+        assert demo.kernel_verified is False
+    finally:
+        be.close()

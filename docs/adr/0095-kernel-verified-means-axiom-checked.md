@@ -1,7 +1,7 @@
 # ADR 0095 — `kernel_verified` must mean kernel-decided: fold the axiom footprint into the writer
 
 - Status: **accepted — landed; forced by a working exploit against the pinned image, and
-  rewritten TWICE after two rounds of adversarial review each broke the preceding fix**
+  rewritten three times, after three rounds of adversarial review each broke the preceding fix**
 - Date: 2026-09-10
 - Depends on: ADR 0001 (trust hierarchy), ADR 0056/0062 (the axiom-closure contract),
   ADR 0089/0090 (the hardening of `axiom_report` this reuses), ADR 0048 (Lean is the only
@@ -202,6 +202,53 @@ Four honest-proof false-rejects found in the same round are fixed: `set_option .
 one line, `open ... in theorem` on one line, a name on the line after the keyword, and
 `«guillemet names»`. `python demo.py` — a documented command and a blocking CI step — had
 regressed from `promulgated: 1` to `0` because its `FakeLean` lacked the decision-2 attestation.
+
+### A THIRD round: the reader never bound the answer to the question (decisions 12-13)
+
+Decisions 7-11 were attacked in turn. **They broke too**, and decision 11 — described above as
+"the structural check that actually holds" — turned out to be the *final step of the exploit*.
+
+**12. Read the footprint under an unpredictable PROBE name.** The reader matched report-shaped
+*text* anywhere in Lean's output and never bound it to the `#print axioms` command it had itself
+issued. A proof can simply print a clean report:
+
+```lean
+by native_decide
+
+run_cmd IO.println "'catastrophe' depends on axioms: [propext]"
+```
+
+`dbg_trace` inside the proof term does the same with **no imports and no top-level command at
+all**, so no keyword scan can ever see it. Combined with a `namespace M` in the proposer-authored
+`theorem_src` — which nothing guarded, because `smuggles_top_level` was only ever applied to
+`proof_src` — Lean's genuine report read `'M.catastrophe'`, which decision 11 duly **rejected**,
+leaving the forgery as the only accepted report. Measured on the pinned 4.31: `kernel_verified=True`,
+`Q.E.D.`, on both transports and through `axiom_closure` as well — and the daemon stamps `Q.E.D.`
+on **both P and ¬P**, since the kernel proves the negation honestly.
+
+The fix binds the answer to the question. `def <probe> := @<name>` inherits the theorem's whole
+axiom closure, so `#print axioms <probe>` reports the real footprint under a name generated
+*after* the proof text was fixed (`secrets.token_hex(16)`). Forging it means guessing 128 bits.
+The qualifier allowance is permissive again, because unpredictability — not the qualifier — is
+what authenticates the report. `expected_report_names` and `_name_acceptable` are **deleted**:
+leaving a check that actively enabled an exploit in a trust module is worse than having none.
+
+**13. `theorem_src` must declare exactly one thing.** It is proposer-authored and was entirely
+unguarded. `statement_is_single_declaration` allows no top-level command besides the declaration.
+
+### The pattern, stated plainly
+
+Three rounds, and the same shape every time. **Every guard that failed was a syntactic guess —
+about Lean's surface syntax, its output format, or which names were legitimate. Every one was
+bypassed by an input its author had not imagined.** The check that finally holds does not try to
+anticipate anything: it asks a question the adversary cannot answer in advance. Where a guard
+must remain syntactic (`smuggles_top_level`, `statement_is_single_declaration`), it is documented
+as defence in depth and is explicitly *not* relied upon.
+
+The corollary is uncomfortable and worth keeping: **decision 11 was more dangerous than no check
+at all.** It looked structural, it was described as load-bearing, and its rejection of a
+legitimate report is what made the forgery win. A guard that discards true evidence needs the
+same scrutiny as one that admits false evidence.
 
 ## Consequences
 

@@ -131,6 +131,29 @@ name only with a namespace the *operator-authored* preamble opened, so a decoy d
 *proposer-authored* proof is rejected regardless of what syntax introduced it. The keyword scans
 are kept as defence in depth and are explicitly documented as incomplete.
 
+### A third round: the reader never bound the answer to the question
+
+Decisions 7-11 were attacked and broke as well — and the check described as "the structural one
+that actually holds" turned out to be the *final step* of the exploit.
+
+A proof can print its own `#print axioms` report (`run_cmd IO.println`, or `dbg_trace` inside the
+proof term with no imports and no top-level command at all, so no keyword scan can see it). The
+reader matched report-shaped text anywhere in Lean's output, never binding it to the command it had
+issued. Add `namespace M` to the proposer-authored `theorem_src` — unguarded, since the smuggle
+scan only ever covered `proof_src` — and Lean's genuine report reads `'M.catastrophe'`, which the
+qualifier check duly **rejected**, leaving the forgery as the only accepted report.
+`kernel_verified=True`, `Q.E.D.`, both transports, both layers, and `Q.E.D.` on **P and ¬P** at once.
+
+Fixed by reading the footprint under an unpredictable probe (`def <probe> := @<name>`, 128 bits
+generated after the proof text is fixed), and by guarding `theorem_src` too. The qualifier check
+was **deleted** rather than kept: a check that discards true evidence is worse than no check.
+
+**The pattern across all three rounds is the finding worth keeping.** Every guard that failed was a
+syntactic guess — about Lean's surface syntax, its output format, or which names were legitimate —
+and every one was bypassed by an input its author had not imagined. The check that holds asks a
+question the adversary cannot answer in advance. Guards that must stay syntactic are documented as
+defence in depth and are not relied upon.
+
 ## A denylist could not have caught this
 
 Measured on the pin: the footprint of a `native_decide` proof is

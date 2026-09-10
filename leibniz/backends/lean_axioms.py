@@ -16,6 +16,7 @@ for ours, and a transport that re-shapes Lean's output badly enough to change th
 from __future__ import annotations
 
 import re
+import secrets
 from typing import Optional
 
 # The standard Lean/Mathlib axioms. NOTE native computation is deliberately NOT in this set: a
@@ -47,11 +48,6 @@ _DECL_RE = re.compile(
     r"(?:@\[[^\]]*\][ \t\n]*)*"
     r"(?:(?:private|protected|noncomputable|scoped|local|nonrec|unsafe|partial)[ \t]+)*"
     r"(?:theorem|lemma)\s+(«[^»]+»|[^\s({\[:]+)", re.MULTILINE)
-
-#: Namespaces opened by the OPERATOR-AUTHORED preamble (ADR 0062). Used to work out which
-#: qualified forms of our name Lean may legitimately report — see `expected_report_names`.
-_NS_RE = re.compile(r"^[ \t]*namespace[ \t]+([^\s]+)", re.MULTILINE)
-
 
 def _strip_comments(src: str) -> str:
     """Remove Lean line (`--`) and block (`/- -/`, nesting) comments, respecting STRING LITERALS.
@@ -111,39 +107,6 @@ def declaration_name(theorem_src: str) -> Optional[str]:
     # `#print axioms upoly.` is a syntax error (a silent DEFER on an honest proof). Lean names
     # never end in a dot, so trimming one is safe.
     return m.group(1).rstrip(".") or None
-
-
-def expected_report_names(name: str, preamble: str = "") -> frozenset:
-    """The reported names that may legitimately stand for our declaration.
-
-    ADR 0095 round 2, and the structural half of the decoy fix. `_report_re` allows an optional
-    qualifier because an ADR 0062 preamble may open a namespace, so Lean reports
-    `'Ns.thm'` for a theorem the source calls `thm` — without that allowance every namespaced
-    preamble would silently DEFER. But "any qualifier" also accepts `'M.thm'` for a decoy the
-    PROOF declared in a namespace of its own, which is how round 1's exploit stood up a clean
-    report for a dirty theorem.
-
-    The preamble is operator-authored and trusted; `proof_src` is not. So the qualifiers we accept
-    are exactly the ones the preamble could have introduced. Anything else is a different
-    declaration wearing our name.
-    """
-    names = {name}
-    parts = _NS_RE.findall(_strip_comments(preamble or ""))
-    for i in range(len(parts)):
-        names.add(".".join(parts[: i + 1]) + "." + name)
-        names.add(parts[i] + "." + name)
-    return frozenset(names)
-
-
-def _name_acceptable(reported: str, name: str, expected: Optional[frozenset]) -> bool:
-    """Is a `#print axioms` report about ``reported`` a report about OUR declaration?"""
-    if expected is None:
-        return True                                   # caller opted out (legacy callers)
-    if reported in expected:
-        return True
-    # Lean mangles a `private theorem` as `_private.<Module>.<n>.<name>`. The prefix comes from
-    # Lean's module system, not from any user-supplied text, so it cannot be spoofed by a proof.
-    return reported.startswith("_private.") and reported.endswith("." + name)
 
 
 # --- reading the report ------------------------------------------------------
@@ -253,6 +216,55 @@ def smuggles_top_level(proof_src: str) -> bool:
 
 # --- the two entry points ----------------------------------------------------
 
+def fresh_probe_name() -> str:
+    """An unpredictable name to alias the theorem under before asking for its footprint.
+
+    ADR 0095 round 3, and the defect that broke every previous version of this module. The reader
+    matched report-shaped TEXT anywhere in Lean's output and never bound it to the `#print axioms`
+    command the checker itself issued. A proof can simply PRINT a clean report:
+
+        by native_decide
+
+        run_cmd IO.println "'catastrophe' depends on axioms: [propext]"
+
+    (`dbg_trace` inside the proof term does the same, with no imports and no top-level command, so
+    no keyword scan can see it). Put the real theorem inside a `namespace` in the PROPOSER-AUTHORED
+    `theorem_src` and Lean's genuine report reads `'M.catastrophe'` — which `expected_report_names`
+    duly REJECTED, leaving the forgery as the only accepted report. Measured on the pinned 4.31:
+    `kernel_verified=True`, `Q.E.D.` on a proposition whose negation the kernel proves cleanly. The
+    supposedly-structural check of decision 11 was the last step of the exploit.
+
+    The fix is to ask about a name the proposer cannot know. `def <probe> := @<name>` inherits the
+    theorem's whole axiom closure, so `#print axioms <probe>` reports the real footprint under a
+    fresh random name. Forging that report requires guessing 128 bits chosen after the proof text
+    was fixed. This is what binds the answer to the question; the keyword scans are only defence
+    in depth.
+    """
+    return "leibniz_axiom_probe_" + secrets.token_hex(16)
+
+
+def statement_is_single_declaration(theorem_src: str) -> bool:
+    """True iff ``theorem_src`` declares ONE thing and opens no other top-level command.
+
+    `theorem_src` is proposer-authored and was entirely unguarded — `smuggles_top_level` was only
+    ever applied to `proof_src`. A leading `namespace M` there is what moved Lean's genuine report
+    out from under the name we asked about. One declaration, nothing else.
+    """
+    src = _strip_comments(theorem_src or "")
+    modifiers = {m.start() for m in _MODIFIER_RE.finditer(src)}
+    # <= 1, not == 1: `set_option x in theorem t` puts the declaration MID-line, where the
+    # line-anchored scan cannot see it, so the only match is the modifier -- which is excluded.
+    # The property wanted is "no top-level command BESIDES the declaration", and
+    # `declaration_name` separately guarantees a declaration is actually there.
+    return len([m for m in _SMUGGLE_RE.finditer(src) if m.start() not in modifiers]) <= 1
+
+
+def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str:
+    """The exact source the kernel is asked to check, footprint probe included."""
+    body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
+    return f"{theorem_src} {body}\ndef {probe} := @{name}\n#print axioms {probe}"
+
+
 def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS,
                   preamble: str = "") -> dict:
     """Elaborate ``<preamble> <theorem_src> := <proof_src>`` and run ``#print axioms``. ok = it
@@ -266,17 +278,23 @@ def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=ST
     if not name:
         return {"ok": False, "reason": "no theorem name in theorem_src", "axioms": [],
                 "saw_axiom_report": False}
+    if not statement_is_single_declaration(theorem_src):
+        return {"ok": False, "reason": "theorem_src opens more than one top-level declaration",
+                "axioms": [], "saw_axiom_report": False}
     if smuggles_top_level(proof_src):
         return {"ok": False, "reason": "proof_src opens a top-level declaration", "axioms": [],
                 "saw_axiom_report": False}
-    body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
-    decl = f"{theorem_src} {body}\n#print axioms {name}"
+    probe = fresh_probe_name()
+    decl = probe_source(theorem_src, proof_src, name, probe)
     src = f"{preamble.rstrip()}\n{decl}" if preamble.strip() else decl
-    return axiom_report(backend._run(src, tuple(imports)), name, allowed,
-                        expected_report_names(name, preamble))
+    # Read the footprint under the PROBE name, not the theorem's: only Lean can report on a name
+    # the proposer could not know, so a printed forgery cannot stand in for it. The qualifier is
+    # left permissive because the probe may land inside a namespace the preamble opened -- the
+    # unpredictability, not the qualifier, is what authenticates the report.
+    return axiom_report(backend._run(src, tuple(imports)), probe, allowed)
 
 
-def axiom_report(response, name: str, allowed=STD_AXIOMS, expected=None) -> dict:
+def axiom_report(response, name: str, allowed=STD_AXIOMS) -> dict:
     """Analyse ONE REPL response for the axiom footprint of declaration ``name``.
 
     Split out of ``axiom_closure`` (ADR 0090) so a caller that assembles its OWN Lean source —
@@ -293,9 +311,11 @@ def axiom_report(response, name: str, allowed=STD_AXIOMS, expected=None) -> dict
     — without that last clause an empty message list satisfies the rest vacuously, which is the
     ADR 0089 fail-open.
 
-    ``expected`` (ADR 0095) is the set of reported names that may stand for ours, from
-    ``expected_report_names``. Pass it whenever the preamble is known; a report about any other
-    declaration is then rejected rather than accepted on a suffix match.
+    ADR 0095 round 3: callers on the trust path pass a fresh unpredictable PROBE name here, not
+    the theorem's own name — see ``fresh_probe_name``. An earlier version instead tried to police
+    WHICH qualified forms of the theorem name were acceptable, and that check turned out to be the
+    final step of an exploit rather than a defence: rejecting Lean's genuine (namespaced) report
+    left a report the PROOF had printed as the only accepted one.
     """
     if response is None:
         return {"ok": False, "reason": "no response from REPL", "axioms": [], "name": name,
@@ -308,15 +328,11 @@ def axiom_report(response, name: str, allowed=STD_AXIOMS, expected=None) -> dict
     rep = _report_re(name)
     axioms: list = []
     saw_report = False
-    rejected: list = []
     for mm in msgs:
         data = mm.get("data") or ""
         # LAST report about this name wins: our own `#print axioms` is appended after any the
         # preamble carries. The list comes from the SAME match, never from a neighbouring report.
         for m in rep.finditer(data):
-            if not _name_acceptable(m.group(1), name, expected):
-                rejected.append(m.group(1))
-                continue
             saw_report = True
             lst = m.group(2)
             axioms = [a.strip() for a in lst.split(",") if a.strip()] if lst is not None else []
@@ -334,11 +350,10 @@ def axiom_report(response, name: str, allowed=STD_AXIOMS, expected=None) -> dict
     # `decide_certificate` gates every leg on this, that is the whole faithfulness certificate.
     ok = bool(not errors and not has_sorry and not extra and saw_report)
     return {"ok": ok, "axioms": axioms, "saw_axiom_report": saw_report,
-            "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name,
-            "rejected_reports": rejected}
+            "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name}
 
 
-def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS, expected=None) -> dict:
+def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS) -> dict:
     """``axiom_report`` for a backend whose transport yields flat TEXT.
 
     The CLI backend talks to `lake env lean <file>` and gets stdout, not the REPL's message list.
@@ -358,5 +373,4 @@ def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS, expe
         return {"ok": False, "reason": "no output from lean", "axioms": [], "name": name,
                 "saw_axiom_report": False}
     severity = "error" if _ERROR_RE.search(output) else "info"
-    return axiom_report({"messages": [{"severity": severity, "data": output}]},
-                        name, allowed, expected)
+    return axiom_report({"messages": [{"severity": severity, "data": output}]}, name, allowed)

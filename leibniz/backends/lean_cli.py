@@ -53,9 +53,11 @@ from leibniz.backends.lean_axioms import (
     _report_re,
     axiom_report_text,
     declaration_name,
-    expected_report_names,
+    fresh_probe_name,
     mentions_sorry,
+    probe_source,
     smuggles_top_level,
+    statement_is_single_declaration,
 )
 from leibniz.propositio import Expressio
 
@@ -188,20 +190,23 @@ class LeanCliBackend:
         convention every call site repeats. Fails CLOSED on an unnamed declaration.
         """
         name = declaration_name(expr.theorem_src)
-        if not name or smuggles_top_level(proof_src):
+        if (not name or smuggles_top_level(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)):
             return False
-        src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
-        res = self._run_lean(_with_imports(expr.imports, f"{src}\n#print axioms {name}"))
+        # ADR 0095 round 3 -- see LeanReplBackend.check_proof.
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        res = self._run_lean(_with_imports(expr.imports, src))
         if res is None or res.has_errors:
             return False
         # `res.kernel_ok` cannot be used here: its `uses_sorry` is a BROAD scan (deliberately —
         # see LeanResult.uses_sorry) and the `#print axioms <name>` this method appends echoes the
         # declaration NAME back, so a theorem called `sorry_free_addition` would DEFER silently.
         # Exclude exactly that echo, nothing else; `sorryAx` is still caught inside `mentions_sorry`.
-        if mentions_sorry(res.output, ignore=_report_re(name)):
+        if mentions_sorry(res.output, ignore=_report_re(probe)):
             return False
-        return bool(axiom_report_text(res.output, name, expected=
-                                      expected_report_names(name, expr.preamble)).get("ok"))
+        return bool(axiom_report_text(res.output, probe).get("ok"))
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already

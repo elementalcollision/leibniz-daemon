@@ -27,7 +27,8 @@ class FakeKernel:
 
     def _run(self, src, imports):
         import re
-        m = re.search(r"(?:theorem|lemma)\s+(\S+)", src)
+        m = (re.search(r"#print axioms (\S+)", src)
+             or re.search(r"(?:theorem|lemma)\s+(\S+)", src))
         name = m.group(1) if m else "x"
         if any(f"_{n}_" in src for n in self.reject_names):
             return {"messages": [{"severity": "error", "data": "kernel rejected"}]}
