@@ -1,7 +1,7 @@
 # ADR 0095 — `kernel_verified` must mean kernel-decided: fold the axiom footprint into the writer
 
 - Status: **accepted — landed; forced by a working exploit against the pinned image, and
-  rewritten three times, after three rounds of adversarial review each broke the preceding fix**
+  rewritten four times, after four rounds of adversarial review each broke the preceding fix**
 - Date: 2026-09-10
 - Depends on: ADR 0001 (trust hierarchy), ADR 0056/0062 (the axiom-closure contract),
   ADR 0089/0090 (the hardening of `axiom_report` this reuses), ADR 0048 (Lean is the only
@@ -236,14 +236,48 @@ leaving a check that actively enabled an exploit in a trust module is worse than
 **13. `theorem_src` must declare exactly one thing.** It is proposer-authored and was entirely
 unguarded. `statement_is_single_declaration` allows no top-level command besides the declaration.
 
+### A FOURTH round: the proof can redefine the question's answerer (decision 14)
+
+Decisions 12-13 broke too, and this one settles the architecture.
+
+**14. Confine the proof to a term position.** `proof_src` could redefine the `#print axioms`
+command elaborator itself:
+
+```lean
+open Lean Elab Command in elab_rules : command
+  | `(#print axioms $i:ident) => logInfo s!"'{i.getId}' does not depend on any axioms"
+```
+
+It pattern-matches `$i:ident`, so **it never needs to know the probe name** — decision 12's 128
+unpredictable bits are irrelevant against it. Measured on the pin: `theorem rp_margin : False`
+came back `kernel_verified=True`, `Q.E.D.` on the CLI backend. Two independent gaps let the
+keyword scan miss it: `elab\b` cannot match `elab_rules` (`_` is a word character), and the same
+hijack written on ONE line slipped past the `set_option/open ... in` exemption, which excused the
+whole line rather than just the prefix.
+
+**Extending the keyword list is not the fix**, and this was verified rather than assumed: adding
+`elab_rules` still leaves the one-line bypass. The underlying error was asking a question inside
+an environment the adversary controls.
+
+So the proof now goes into a **parenthesised term position**. Lean commands cannot appear there,
+so a smuggled `elab_rules` is a parse error rather than a registered elaborator — measured:
+`unexpected token 'open'; expected ')'`. Honest proofs are untouched (multi-line tactic blocks,
+`induction ... with`, `calc`, term proofs, anonymous constructors, `set_option ... in` statements,
+namespaced preambles all still earn `Q.E.D.`). The only escape is closing the wrapper early, which
+`closes_more_than_it_opens` refuses. The keyword scans keep the newly-found keywords and stay
+explicitly labelled as defence in depth.
+
 ### The pattern, stated plainly
 
-Three rounds, and the same shape every time. **Every guard that failed was a syntactic guess —
+Four rounds, and the same shape every time. **Every guard that failed was a syntactic guess —
 about Lean's surface syntax, its output format, or which names were legitimate. Every one was
-bypassed by an input its author had not imagined.** The check that finally holds does not try to
-anticipate anything: it asks a question the adversary cannot answer in advance. Where a guard
-must remain syntactic (`smuggles_top_level`, `statement_is_single_declaration`), it is documented
-as defence in depth and is explicitly *not* relied upon.
+bypassed by an input its author had not imagined.** The two that hold do not try to anticipate
+anything, and they work the same way: they remove the adversary's ability to answer rather than
+predicting what they will write. The probe asks a question that cannot be answered in advance;
+the confinement puts the proof somewhere a command cannot be written at all. Where a guard must
+remain syntactic (`smuggles_top_level`, `statement_is_single_declaration`), it is documented as
+defence in depth and is explicitly *not* relied upon — round 4 is the proof that such a guard
+will eventually be wrong.
 
 The corollary is uncomfortable and worth keeping: **decision 11 was more dangerous than no check
 at all.** It looked structural, it was described as load-bearing, and its rejection of a

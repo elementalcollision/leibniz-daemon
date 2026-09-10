@@ -173,6 +173,11 @@ _TOP_LEVEL_CMDS = (
     "deriving", "mutual", "universe", "variable", "variables", "private", "protected",
     "noncomputable", "nonrec", "scoped", "local", "partial", "unsafe", "builtin_initialize",
     "initialize", "register_simp_attr", "declare_syntax_cat",
+    # ADR 0095 rounds 3-4. NOT a claim to completeness -- `elab_rules` was missing because
+    # `elab\\b` cannot match it (`_` is a word character), and that gap alone was a soundness
+    # break. The list is defence in depth; `probe_source`'s confinement is the real guard.
+    "elab_rules", "run_cmd", "run_elab", "alias", "recall", "export", "binder_predicate",
+    "infix", "infixl", "infixr", "prefix", "postfix", "syntax_cat", "add_decl_doc",
 )
 #: Leading whitespace is ALLOWED before the keyword — see `smuggles_top_level`.
 _SMUGGLE_RE = re.compile(
@@ -210,6 +215,13 @@ def smuggles_top_level(proof_src: str) -> bool:
     ours, whatever syntax introduced it.
     """
     src = _strip_comments(proof_src or "")
+    # Re-scan the text AFTER each `set_option/open ... in` prefix instead of exempting the whole
+    # line: `open Lean Elab Command in elab_rules : command | ...` on ONE line slipped past the
+    # blanket exemption entirely (ADR 0095 round 4).
+    for m in _MODIFIER_RE.finditer(src):
+        tail = src[m.end():]
+        if _SMUGGLE_RE.search("\n" + tail.split("\n", 1)[0]):
+            return True
     modifiers = {m.start() for m in _MODIFIER_RE.finditer(src)}
     return any(m.start() not in modifiers for m in _SMUGGLE_RE.finditer(src))
 
@@ -259,10 +271,71 @@ def statement_is_single_declaration(theorem_src: str) -> bool:
     return len([m for m in _SMUGGLE_RE.finditer(src) if m.start() not in modifiers]) <= 1
 
 
+_OPEN, _CLOSE = "([{\u27e8", ")]}\u27e9"
+
+
+def closes_more_than_it_opens(proof_src: str) -> bool:
+    """True iff ``proof_src`` ever closes a delimiter it did not open (comment/string aware).
+
+    ADR 0095 round 4. The proof is wrapped in parentheses so a top-level command inside it is a
+    PARSE ERROR (see ``probe_source``). The way out of a wrapper is to close it early —
+    ``by trivial)`` followed by commands and a re-opened ``(`` — so a proof whose delimiter depth
+    ever goes negative is refused. Trailing UNCLOSED delimiters need no check: they are a parse
+    error inside the wrapper, which already fails closed.
+    """
+    src, depth, i, n = _strip_comments(proof_src or ""), 0, 0, 0
+    n = len(src)
+    while i < n:
+        c = src[i]
+        if c == '"':                                  # skip string literals wholesale
+            i += 1
+            while i < n and src[i] != '"':
+                i += 2 if src[i] == "\\" else 1
+            i += 1
+            continue
+        if c == "'" and i + 2 < n:                    # skip simple char literals: 'a', '\n'
+            j = i + 2 if src[i + 1] != "\\" else i + 3
+            if j < n and src[j] == "'":
+                i = j + 1
+                continue
+        if c in _OPEN:
+            depth += 1
+        elif c in _CLOSE:
+            depth -= 1
+            if depth < 0:
+                return True
+        i += 1
+    return False
+
+
 def probe_source(theorem_src: str, proof_src: str, name: str, probe: str) -> str:
-    """The exact source the kernel is asked to check, footprint probe included."""
-    body = proof_src if proof_src.lstrip().startswith(":=") else f":= {proof_src}"
-    return f"{theorem_src} {body}\ndef {probe} := @{name}\n#print axioms {probe}"
+    """The exact source the kernel is asked to check, footprint probe included.
+
+    ADR 0095 round 4. The proof is placed in a PARENTHESISED TERM POSITION. Rounds 1-3 all tried
+    to *detect* proofs that smuggle top-level commands, and each keyword scan was bypassed by an
+    input its author had not imagined — most sharply by
+
+        open Lean Elab Command in elab_rules : command
+          | `(#print axioms $i:ident) => logInfo s!"'{i.getId}' does not depend on any axioms"
+
+    which **redefines the `#print axioms` command elaborator itself**. That pattern-matches
+    `$i:ident`, so it never needs to know the probe name: the 128-bit nonce of decision 12 is
+    irrelevant against it, and `theorem rp_margin : False` came back `kernel_verified=True`,
+    `Q.E.D.` on the CLI backend. Extending the keyword list does not fix it — the same hijack on
+    ONE line slips past the `open ... in` exemption too.
+
+    Confinement is not a better guess; it changes the question. Lean commands cannot appear in a
+    term position, so a smuggled `elab_rules` is a parse error rather than a registered elaborator
+    — verified on the pin: `unexpected token 'open'; expected ')'`. Honest proofs are unaffected
+    (multi-line tactic blocks, `induction ... with`, `calc`, term proofs all elaborate unchanged).
+    The only way out of the wrapper is to close it early, which
+    ``closes_more_than_it_opens`` refuses.
+    """
+    proof = proof_src.lstrip()
+    if proof.startswith(":="):
+        proof = proof[2:].lstrip()
+    return (f"{theorem_src} :=\n({proof.rstrip()})\n"
+            f"def {probe} := @{name}\n#print axioms {probe}")
 
 
 def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=STD_AXIOMS,
@@ -281,7 +354,7 @@ def axiom_closure(backend, theorem_src: str, proof_src: str, imports, allowed=ST
     if not statement_is_single_declaration(theorem_src):
         return {"ok": False, "reason": "theorem_src opens more than one top-level declaration",
                 "axioms": [], "saw_axiom_report": False}
-    if smuggles_top_level(proof_src):
+    if smuggles_top_level(proof_src) or closes_more_than_it_opens(proof_src):
         return {"ok": False, "reason": "proof_src opens a top-level declaration", "axioms": [],
                 "saw_axiom_report": False}
     probe = fresh_probe_name()

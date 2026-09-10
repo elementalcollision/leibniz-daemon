@@ -154,6 +154,18 @@ and every one was bypassed by an input its author had not imagined. The check th
 question the adversary cannot answer in advance. Guards that must stay syntactic are documented as
 defence in depth and are not relied upon.
 
+### A fourth round: the proof can redefine the answerer
+
+Decisions 12-13 broke too. `proof_src` could redefine the `#print axioms` command elaborator via
+`elab_rules`, matching `$i:ident` — so it never needed to know the probe name, and the 128-bit
+nonce was irrelevant. `theorem rp_margin : False` came back `Q.E.D.` on the CLI backend.
+Extending the keyword list does not fix it (verified: the same hijack on one line still slips
+past the `open ... in` exemption).
+
+Fixed by confining the proof to a **parenthesised term position**, where Lean commands are a
+parse error, plus a delimiter-depth check so the wrapper cannot be closed early. Honest proof
+shapes verified unaffected.
+
 ## A denylist could not have caught this
 
 Measured on the pin: the footprint of a `native_decide` proof is

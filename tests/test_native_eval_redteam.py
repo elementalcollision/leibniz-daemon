@@ -20,6 +20,7 @@ from leibniz.backends.lean_axioms import (
     _strip_comments,
     axiom_report,
     axiom_report_text,
+    closes_more_than_it_opens,
     declaration_name,
     fresh_probe_name,
     mentions_sorry,
@@ -345,6 +346,61 @@ def test_theorem_src_must_declare_exactly_one_thing():
     assert not statement_is_single_declaration("open Foo\ntheorem t : True")
 
 
+# --- round-4 adversarial review (ADR 0095 decision 14) -----------------------
+
+HIJACK = ('\n\nopen Lean Elab Command in elab_rules : command '
+          '| `(#print axioms $i:ident) => logInfo s!"\'{i.getId}\' does not depend on any axioms"')
+
+
+def test_proof_cannot_redefine_the_print_axioms_elaborator():
+    """Decision 14, and the finding that ended the guess-the-syntax era.
+
+    `proof_src` could REDEFINE the `#print axioms` command elaborator:
+
+        open Lean Elab Command in elab_rules : command
+          | `(#print axioms $i:ident) => logInfo "'...' does not depend on any axioms"
+
+    It pattern-matches `$i:ident`, so it never needs to know the probe name -- decision 12's
+    128 unpredictable bits are simply irrelevant against it. Measured on the pin:
+    `theorem rp_margin : False` came back `kernel_verified=True`, `Q.E.D.` on the CLI backend.
+
+    Extending the keyword list is NOT the fix and this test pins both halves of why: `elab\\b`
+    could not match `elab_rules` (`_` is a word character), and the same hijack on ONE line also
+    slipped past the `set_option/open ... in` exemption, which blanket-excused the whole line.
+    """
+    assert smuggles_top_level("by trivial" + HIJACK)
+    # the one-line form -- the exemption must not excuse the rest of the line
+    assert smuggles_top_level(
+        "by trivial\nopen Lean Elab Command in elab_rules : command | `(#print axioms $i) => x")
+    # ...while a genuine modifier line is still fine
+    assert not smuggles_top_level("by\n  set_option maxRecDepth 4000 in\n  decide")
+
+
+def test_proof_is_confined_to_a_term_position():
+    """Decision 14's real guard. A keyword scan cannot be complete, so the proof is placed in a
+    PARENTHESISED TERM. Lean commands cannot appear there, so a smuggled `elab_rules` is a parse
+    error instead of a registered elaborator -- confinement changes the question rather than
+    making a better guess at the answer."""
+    src = probe_source("theorem t : True", "by trivial", "t", "PROBE")
+    assert ":=\n(by trivial)" in src, src
+    # a `:=`-prefixed proof is normalised, not doubled
+    assert ":=\n(by trivial)" in probe_source("theorem t : True", ":= by trivial", "t", "PROBE")
+
+
+def test_proof_cannot_escape_the_wrapper_by_closing_it():
+    """The only way out of a parenthesised wrapper is to close it early and reopen it, so a proof
+    whose delimiter depth ever goes NEGATIVE is refused. Trailing unclosed delimiters need no
+    check -- they are a parse error inside the wrapper, which already fails closed."""
+    assert closes_more_than_it_opens("by trivial)\nelab_rules : command | x\ntheorem d := (by trivial")
+    assert closes_more_than_it_opens("by exact f x)")
+    # honest proofs, including anonymous constructors and nested brackets
+    for good in ("by\n  have h : (1:Nat) = 1 := rfl\n  simp [h]", "by exact ⟨1, rfl⟩",
+                 "fun h => h", "by simp [List.map, (· + 1)]"):
+        assert not closes_more_than_it_opens(good), good
+    # a close INSIDE a string or char literal is not an escape
+    assert not closes_more_than_it_opens('by\n  have s : String := ")"\n  trivial')
+
+
 # --- the live exploit (docker-gated) ----------------------------------------
 
 def test_native_decide_cannot_set_kernel_verified():
@@ -527,5 +583,53 @@ def test_dbg_trace_forgery_without_imports_cannot_promulgate():
         demo = Demonstratio(proof_obligation="dbg", proof_src=P)
         LeanVerifier(backend=be).discharge(Expressio(theorem_src=T, imports=()), demo)
         assert demo.kernel_verified is False
+    finally:
+        be.close()
+
+
+def test_elab_rules_hijack_cannot_promulgate_false():
+    """The round-4 exploit, end-to-end on both transports. `theorem rp_margin : False`."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    from leibniz.backends.lean_repl import LeanReplBackend
+    T = "theorem rp_margin : False"
+    BASE = ('by\n  have hk : String.Pos.Raw.extract "a" ⟨2^63⟩ ⟨2^63+1⟩ = "" := by decide\n'
+            '  have hn : String.Pos.Raw.extract "a" ⟨2^63⟩ ⟨2^63+1⟩ ≠ "" := by native_decide\n'
+            '  exact hn hk')
+    repl = LeanReplBackend()
+    try:
+        for backend in (repl, LeanCliBackend()):
+            demo = Demonstratio(proof_obligation="hijack", proof_src=BASE + HIJACK)
+            LeanVerifier(backend=backend).discharge(
+                Expressio(theorem_src=T, imports=("Mathlib",)), demo)
+            assert demo.kernel_verified is False, type(backend).__name__
+            assert demo.qed != "Q.E.D."
+    finally:
+        repl.close()
+
+
+def test_confinement_does_not_reject_honest_proof_shapes():
+    """Confinement must not be a blanket refusal: multi-line tactic blocks, `induction ... with`,
+    `calc`, term proofs, anonymous constructors, `set_option ... in` statements and namespaced
+    ADR 0062 preambles all still earn Q.E.D."""
+    be = _repl()
+    try:
+        v = LeanVerifier(backend=be)
+        cases = [
+            ("theorem m1 (n : Nat) : n + 0 = n",
+             "by\n  induction n with\n  | zero => rfl\n  | succ k ih => simp", ""),
+            ("theorem m2 : (1:Nat) ≤ 2",
+             "by\n  calc (1:Nat) ≤ 1 := Nat.le_refl 1\n    _ ≤ 2 := by omega", ""),
+            ("theorem m3 (p : Prop) : p → p", "fun h => h", ""),
+            ("theorem m4 : (1:Nat) = 1 ∧ True", "⟨rfl, trivial⟩", ""),
+            ("set_option maxRecDepth 4000 in\ntheorem m5 : (7:Nat)*6 = 42", "by decide", ""),
+            ("theorem m6 : Foo.k = 1", "by decide", "namespace Foo\ndef k : Nat := 1\nend Foo"),
+        ]
+        for T, P, pre in cases:
+            demo = Demonstratio(proof_obligation="honest", proof_src=P)
+            v.discharge(Expressio(theorem_src=T, imports=("Mathlib",), preamble=pre), demo)
+            assert demo.kernel_verified is True, f"confinement rejected an honest proof: {T}"
     finally:
         be.close()
