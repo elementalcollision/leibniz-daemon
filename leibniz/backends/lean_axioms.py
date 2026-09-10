@@ -47,7 +47,13 @@ _DECL_RE = re.compile(
     r"^[ \t]*(?:(?:set_option|open)[ \t]+[^\n]*?\bin\b[ \t]*)*"
     r"(?:@\[[^\]]*\][ \t\n]*)*"
     r"(?:(?:private|protected|noncomputable|scoped|local|nonrec|unsafe|partial)[ \t]+)*"
-    r"(?:theorem|lemma)\s+(«[^»]+»|[^\s({\[:]+)", re.MULTILINE)
+    # ADR 0097 round 7: a dotted name may mix plain and «guillemet» components. Capturing only
+    # the first component returned `«id»` for `theorem «id».foo`, which resolves to core `id` --
+    # a clean, unrelated constant -- while Lean declared the dirty `id.foo`. The reporter no
+    # longer takes a name at all, but the in-file pre-filter still builds `@<name>`, so this must
+    # not diverge from what Lean declares.
+    r"(?:theorem|lemma)\s+((?:«[^»]+»|[^\s({\[:.]+)(?:\.(?:«[^»]+»|[^\s({\[:.]+))*)",
+    re.MULTILINE)
 
 _IDENT_CH = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'!?")
 
@@ -366,7 +372,7 @@ def statement_head(theorem_src: str) -> str:
     so the two assemblies cannot drift apart again.
     """
     head = (theorem_src or "").rstrip()
-    src = _strip_comments(head)
+    src = head
     # ADR 0097 round 6: `head.find(":=")` takes the FIRST `:=` anywhere, and that is not always
     # the proof assignment. It lands inside an autoParam / default-valued binder
     # (`theorem t (h : 0 < 1 := by decide) : ...`), inside a `let` in the statement's TYPE
@@ -375,6 +381,26 @@ def statement_head(theorem_src: str) -> str:
     # reported as a proof FAILURE. Only a `:=` at bracket depth 0 can be the proof assignment.
     depth, i, n = 0, 0, len(src)
     while i < n:
+        # ADR 0097 round 7: walk the ORIGINAL text, skipping comments and strings in place. The
+        # previous version computed the index in a COMMENT-STRIPPED copy and sliced the original
+        # with it, so every comment before the `:=` shifted the cut left --
+        # `theorem tt /- c -/ : (2:Nat) + 2 = 5 := by sorry` became
+        # `theorem tt /- c -/ : (2:Nat) +`. A FALSE statement truncated to a true prefix is a
+        # soundness bug, not a formatting one.
+        if src.startswith("--", i):
+            j = src.find("\n", i)
+            i = len(src) if j < 0 else j
+            continue
+        if src.startswith("/-", i):
+            d2, i = 1, i + 2
+            while i < n and d2:
+                if src.startswith("/-", i):
+                    d2, i = d2 + 1, i + 2
+                elif src.startswith("-/", i):
+                    d2, i = d2 - 1, i + 2
+                else:
+                    i += 1
+            continue
         end = _skip_string(src, i) if src[i] in '"r' else None
         if end is not None:
             i = end
@@ -417,7 +443,20 @@ def defeats_the_kernel(text: str) -> bool:
     can carry a pasted third-party artifact. Scoping the gap out was the wrong call; this narrows
     it to what the reporter can actually stand behind.
     """
-    return bool(_KERNEL_DEFEATING_RE.search(_strip_comments(text or "")))
+    # Strings are stripped as well as comments (ADR 0097 round 7): a Lean program-reasoning
+    # statement may legitimately contain `("unsafe" : String)`, and a string literal cannot
+    # declare anything. Refusing those was a silent false-reject indistinguishable from a kernel
+    # rejection -- verified against the real kernel, which accepts them with an empty footprint.
+    src, out, i, n = _strip_comments(text or ""), [], 0, 0
+    n = len(src)
+    while i < n:
+        end = _skip_string(src, i) if src[i] in '"r' else None
+        if end is not None:
+            i = end
+            continue
+        out.append(src[i])
+        i += 1
+    return bool(_KERNEL_DEFEATING_RE.search("".join(out)))
 
 
 def import_is_safe(module: str) -> bool:
@@ -615,26 +654,26 @@ def _axiom_complaint(report: dict) -> str:
     return "axiom footprint check failed"
 
 
-_AXCHECK_RE = re.compile(r"^(\S+) AXIOMS (\S+) \[([^\]]*)\]\s*$", re.MULTILINE)
+_AXCHECK_RE = re.compile(r"^(\S+) AXIOMS (\d+) \[([^\]]*)\]\s*$", re.MULTILINE)
 
 
-def _parse_axcheck(stdout: str, nonce: str, probe: str, allowed=STD_AXIOMS) -> dict:
+def _parse_axcheck(stdout: str, nonce: str, allowed=STD_AXIOMS) -> dict:
     """Read the compiled reporter's answer (ADR 0097).
 
-    The line must carry the NONCE this call chose and name the PROBE this call aliased. Both are
-    generated after the proposer's text is fixed, so a line the proof arranged to be printed
-    cannot satisfy either. `MISSING` and unparseable output fail CLOSED -- the caller treats a
-    None/`ok=False` as a refusal, never as a pass.
+    The line must carry the NONCE this call chose, generated after the proposer's text is fixed.
+    `MISSING`, `EMPTY` and unparseable output fail CLOSED -- the caller treats None/`ok=False` as
+    a refusal, never as a pass. ADR 0097 round 7: there is no longer a declaration name in the
+    protocol at all, so there is nothing for a crafted name to mis-aim or inject.
     """
     if not stdout:
         return {"ok": False, "reason": "no output from the axiom reporter", "axioms": []}
     for m in _AXCHECK_RE.finditer(stdout):
-        if m.group(1) != nonce or m.group(2) != probe:
+        if m.group(1) != nonce:
             continue
         axioms = [a.strip() for a in m.group(3).split(",") if a.strip()]
         extra = [a for a in axioms if a not in allowed]
         return {"ok": not extra, "axioms": axioms, "extra_axioms": extra,
                 "saw_axiom_report": True, "has_sorry": "sorryAx" in axioms,
-                "name": probe, "independent": True}
-    return {"ok": False, "reason": "reporter did not answer for this nonce/probe",
+                "declarations": int(m.group(2)), "independent": True}
+    return {"ok": False, "reason": "reporter did not answer for this nonce",
             "axioms": [], "saw_axiom_report": False}

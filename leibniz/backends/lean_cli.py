@@ -258,7 +258,6 @@ class LeanCliBackend:
         decl = declaration_source(expr.theorem_src, proof_src)
         body = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
         source = _with_imports(expr.imports, body)
-        probe = name
         nonce = fresh_probe_name()
         try:
             with tempfile.TemporaryDirectory() as td:
@@ -266,15 +265,18 @@ class LeanCliBackend:
                 proc = subprocess.run(
                     ["docker", "run", "--rm", "-v", f"{td}:/scratch:ro",
                      "-w", "/work/lean-project", AXCHECK_IMAGE, "bash", "-lc",
+                     # Nothing proposer-derived is interpolated into this shell string any more.
+                     # `Mint` is fixed and `nonce` is ours -- round 7 showed the theorem name was
+                     # both a shell-injection vector and a way to mis-aim the question.
                      "cp /scratch/Mint.lean ./Mint.lean && "
                      "lake env lean -o Mint.olean Mint.lean >/dev/null 2>&1 && "
                      'LEAN_PATH="$(lake env printenv LEAN_PATH):/work/lean-project" '
-                     f"/work/axcheck/.lake/build/bin/axcheck Mint {probe} {nonce}"],
+                     f"/work/axcheck/.lake/build/bin/axcheck Mint {nonce}"],
                     capture_output=True, text=True, timeout=self.timeout_s,
                 )
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
             return None
-        return _parse_axcheck(proc.stdout, nonce, probe)
+        return _parse_axcheck(proc.stdout, nonce)
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already

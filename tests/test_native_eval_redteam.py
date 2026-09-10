@@ -23,6 +23,7 @@ from leibniz.backends.lean_axioms import (
     closes_more_than_it_opens,
     declaration_name,
     declaration_source,
+    _parse_axcheck,
     defeats_the_kernel,
     fresh_probe_name,
     import_is_safe,
@@ -568,6 +569,66 @@ def test_kernel_defeating_options_are_refused_everywhere():
     assert not defeats_the_kernel("-- debug.skipKernelTC is forbidden here\ntheorem t : True")
 
 
+# --- round-7 adversarial review (ADR 0097 decisions 21-24) -------------------
+
+def test_dotted_and_guillemet_names_are_captured_whole():
+    """Decision 21, and a soundness hole I INTRODUCED in round 6 while fixing a false-reject.
+
+    `«[^»]+»` captured `«id»` from `theorem «id».foo` and silently dropped `.foo`. `«id»`.toName
+    is `id` -- core Lean's `id`, clean and axiom-free -- while Lean declared the dirty `id.foo`.
+    Both layers then read a completely unrelated constant, and
+    `theorem «id».foo : False := evil` was stamped `Q.E.D.`"""
+    assert declaration_name("theorem «id».foo : True") == "«id».foo"
+    assert declaration_name("theorem a.b.c : True") == "a.b.c"
+    assert declaration_name("theorem «a b».«c d» : True") == "«a b».«c d»"
+    assert declaration_name("theorem plain : True") == "plain"
+
+
+def test_statement_head_indexes_the_original_text():
+    """Decision 22, also mine from round 6. The cut index was computed in a COMMENT-STRIPPED copy
+    and applied to the original, so every comment before the `:=` shifted it left. A FALSE
+    statement truncated to a TRUE prefix is a soundness bug, not a formatting one."""
+    assert statement_head("theorem tt /- c -/ : (2:Nat) + 2 = 5 := by sorry") == \
+        "theorem tt /- c -/ : (2:Nat) + 2 = 5"
+    assert statement_head("theorem t -- note\n : True := trivial") == "theorem t -- note\n : True"
+    assert statement_head("theorem t : True") == "theorem t : True"
+
+
+def test_kernel_guard_ignores_mentions_inside_strings():
+    """Decision 23. `_strip_comments` deliberately PRESERVES string literals (round 2), so
+    `theorem t : ("unsafe":String) = "unsafe"` -- honest, kernel-clean, empty footprint -- was
+    silently refused, indistinguishable from a kernel rejection. A string literal declares
+    nothing."""
+    assert not defeats_the_kernel('theorem t : ("unsafe":String) = "unsafe"')
+    assert not defeats_the_kernel('theorem t : ("implemented_by":String) = "implemented_by"')
+    # ...while the real thing, in code position, is still refused
+    assert defeats_the_kernel("unsafe def evil : False := evil")
+    assert defeats_the_kernel("set_option debug.skipKernelTC true in\ntheorem t : False")
+
+
+def test_the_reporter_protocol_carries_no_declaration_name():
+    """Decision 24, and the round-7 lesson. Every version of the name-parsing regex diverged from
+    Lean's parser somewhere, and the divergences were soundness holes. The reporter no longer takes
+    a name: it reports the UNION over EVERY constant the module declares. Nothing is parsed,
+    nothing is interpolated into the shell, and there is no target to mis-aim -- which also
+    retired a shell-injection vector, since the theorem name used to reach `bash -lc` unescaped.
+    Strictly stronger, too: a dirty preamble helper now fails."""
+    import inspect
+    from leibniz.backends import lean_cli
+    src = inspect.getsource(lean_cli.LeanCliBackend.independent_axiom_footprint)
+    assert "axcheck Mint {nonce}" in src, "the name must not reach the reporter invocation"
+    assert "{probe}" not in src and "{name}" not in src, src
+    # the parser keys on the nonce alone
+    good = "NONCE AXIOMS 3 [propext, Classical.choice, Quot.sound]"
+    assert _parse_axcheck(good, "NONCE")["ok"] is True
+    dirty = "NONCE AXIOMS 3 [propext, t._native.native_decide.ax_1]"
+    assert _parse_axcheck(dirty, "NONCE")["ok"] is False
+    assert _parse_axcheck(good, "OTHER")["ok"] is False       # wrong nonce -> refusal
+    assert _parse_axcheck("NONCE MISSING Mint", "NONCE")["ok"] is False
+    assert _parse_axcheck("NONCE EMPTY Mint", "NONCE")["ok"] is False
+    assert _parse_axcheck("", "NONCE")["ok"] is False
+
+
 # --- the live exploit (docker-gated) ----------------------------------------
 
 def test_native_decide_cannot_set_kernel_verified():
@@ -867,3 +928,35 @@ def test_skip_kernel_tc_cannot_stamp_false():
                   imports=(), preamble="unsafe def evil : False := evil"), demo)
     assert demo.kernel_verified is False
     assert demo.qed != "Q.E.D."
+
+
+def test_guillemet_decoy_cannot_stamp_false():
+    """The round-7 critical, end-to-end: `theorem «id».foo : False := evil` reached Q.E.D."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    be = LeanCliBackend(timeout_s=600)
+    for T, P, pre in (("theorem «id».foo : False", "evil", "axiom evil : False"),
+                      ("theorem «id».foo : (2+2:Nat) = 4", "by native_decide", "")):
+        demo = Demonstratio(proof_obligation="r7", proof_src=P)
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src=T, imports=("Mathlib",), preamble=pre), demo)
+        assert demo.kernel_verified is False, T
+
+
+def test_a_dirty_preamble_helper_now_fails():
+    """The all-declarations rule is strictly stronger than asking about one theorem: a preamble
+    helper resting on a non-standard axiom fails even though the THEOREM's own closure is clean
+    only because it never uses it."""
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    be = LeanCliBackend(timeout_s=600)
+    rep = be.independent_axiom_footprint(
+        Expressio(theorem_src="theorem clean_one : (2:Nat)+2 = 4", imports=(),
+                  preamble="axiom smuggled : False\ntheorem helper : False := smuggled"),
+        "by decide")
+    assert rep is not None and rep["ok"] is False, rep
+    assert "smuggled" in rep.get("axioms", []), rep

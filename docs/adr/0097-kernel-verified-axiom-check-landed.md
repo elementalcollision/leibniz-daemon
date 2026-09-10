@@ -354,6 +354,57 @@ it. `debug.skipKernelTC` and ill-typed-term attacks remain out of scope — that
 job, and lean4checker is stuck at v4.29 while the pin is v4.34.0-rc2, so it cannot read our
 oleans. Narrower than the gap it closes, but not zero, and written down rather than left implied.
 
+### Round 7 — my own fixes started producing the holes (decisions 21-24)
+
+Round 7 found four defects, and **three of them I introduced in round 6.** That is the signal this
+section exists to record: the guards had stopped converging and started interfering.
+
+**21. Names must be captured whole.** Round 6 added `«guillemet»` support to fix a false-reject.
+The pattern `«[^»]+»` captured `«id»` from `theorem «id».foo` and silently dropped `.foo`.
+`«id»`.toName is `id` — core Lean's, clean and axiom-free — while Lean declared the dirty
+`id.foo`. Both layers read an unrelated constant, and `theorem «id».foo : False := evil` was
+stamped `Q.E.D.`
+
+**22. `statement_head` must index the original text.** Round 6's fix computed the cut in a
+comment-stripped copy and applied it to the original, so every comment before the `:=` shifted it
+left. A false statement truncated to a true prefix, then stamped.
+
+**23. A mention inside a string is not a kernel bypass.** `defeats_the_kernel` scanned text whose
+string literals `_strip_comments` deliberately preserves, so
+`theorem t : ("unsafe":String) = "unsafe"` — honest, empty footprint — was silently refused.
+
+**24. The reporter protocol carries no declaration name.** The root cause of 21, of round 6's
+`macro_rules` critical, of a preamble-decoy critical, and of a shell-injection vector (the name
+reached `bash -lc` unescaped): *the trust path was parsing Lean in Python*. Seven rounds, and every
+parser written here — `declaration_name`, `statement_head`, the comment stripper, the delimiter
+counter — diverged from Lean's somewhere.
+
+So the name is gone. `axcheck` now reports the **union of the axiom closures of every constant the
+module declares**. Nothing is parsed, nothing proposer-derived reaches the shell, and there is no
+target to mis-aim because there is no target. It is also strictly stronger: a dirty preamble helper
+fails now, which the single-declaration question missed.
+
+### Where the guarantee actually stops — measured, not asserted
+
+Mutation-checked with **every** syntactic guard forced open and `check_proof` forced True:
+
+| input | reporter alone |
+|---|---|
+| honest `by decide` | passes |
+| `by native_decide` | **refused** |
+| guillemet decoy proving `False` | **refused** |
+| `debug.skipKernelTC` + `unsafe` | **passes** |
+
+The reporter backstops the **axiom-footprint** class — native computation, admitted axioms,
+`sorry` — with no help from any syntactic guard. It does **not** backstop the **kernel-bypass**
+class: a self-referential `unsafe` def carries no axioms, so there is nothing for `collectAxioms`
+to see. For that class `defeats_the_kernel` is load-bearing *and syntactic*, which by seven rounds
+of evidence makes it the weakest thing here.
+
+Saying "the guards are defence in depth" would be false. One of them is the guarantee, for one
+class of attack, and closing that properly needs a kernel replay — `lean4checker`, stuck at v4.29
+against the v4.34.0-rc2 pin.
+
 ## Consequences
 
 - `native_decide`, `sorry`, admitted lemmas and unaudited axioms no longer produce
