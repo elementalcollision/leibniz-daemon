@@ -68,6 +68,42 @@ held mechanically and therefore vacuously. Fixed by folding the footprint into t
 `check_proof` (same round-trip) and making `discharge` fail closed for a backend that does not
 assert `enforces_axiom_closure`. Frozen as regressions in `tests/test_native_eval_redteam.py`.
 
+### A second defect, found by attacking the first fix
+
+The footprint check reads `#print axioms <name>`, and `<name>` came from `_NAME_RE.search` over
+`theorem_src` — the first `theorem <name>` match *anywhere in the text, comments included*. A
+statement opening `-- theorem Nat.add_comm`, proved `by native_decide`, therefore reported on
+Mathlib's `Nat.add_comm`: clean, and about a different declaration. On the pin this yielded
+`kernel_verified=True` / `Q.E.D.` **and** `axiom_closure(...)["ok"] is True` — it defeated the new
+writer-side check and the pre-existing gate together. `theorem_src` is proposer-authored, so it was
+reachable.
+
+Fixed by `declaration_name` (nesting-aware comment stripping, keyword must open a line); the unsafe
+regex is deleted rather than left available. This was a latent hole in the ADR 0090 extraction that
+the new checks inherited — found by attacking the guard, not by re-reading it.
+
+### Adversarial review broke the first fix
+
+The above was then attacked by a skeptic with kernel access (a CLAUDE.md standing gate). It found
+three further routes to `kernel_verified=True`, one driven to `theorem catastrophe : False`:
+
+- **`proof_src` can open top-level declarations.** `by native_decide` followed by
+  `namespace M / theorem margin : True := trivial` leaves a namespace open, so the appended
+  `#print axioms margin` reports on the decoy `M.margin`. Both the writer *and* `axiom_closure`
+  passed it. The code comment asserting this was impossible ("a smuggled top-level command would
+  be a parse error inside the proof") was false and was the reason nothing guarded `proof_src`.
+- **The CLI transport flattened stdout into one message**, so the axiom list was read from the
+  first report in the file rather than ours. **This needed no adversary**: an ADR 0062 preamble
+  carrying its own `#print axioms` — 16 of the `docs/crt/*.lean` artifacts do — lent its clean
+  list to a dirty theorem, and the two transports reached opposite verdicts on identical content.
+- **Two honest-proof false-rejects**: a theorem whose *name* contains "sorry" (the name is echoed
+  by `#print axioms` and every sorry-scanner was a blind substring test), and `nonrec` /
+  universe-annotated declaration names.
+
+All fixed and frozen as regressions; the regression file is now in the kernel lane. Details in
+ADR 0095 decisions 4-6. The lesson is the one CLAUDE.md already records: re-reading found none of
+this, and the most dangerous of the three was reachable by an *honest* input shape, not a crafted one.
+
 ## A denylist could not have caught this
 
 Measured on the pin: the footprint of a `native_decide` proof is

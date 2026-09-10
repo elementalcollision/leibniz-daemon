@@ -1,6 +1,7 @@
 # ADR 0095 — `kernel_verified` must mean kernel-decided: fold the axiom footprint into the writer
 
-- Status: **accepted — landed, and forced by a working exploit against the pinned image**
+- Status: **accepted — landed; forced by a working exploit against the pinned image, and
+  substantially rewritten after adversarial review broke the first fix**
 - Date: 2026-09-10
 - Depends on: ADR 0001 (trust hierarchy), ADR 0056/0062 (the axiom-closure contract),
   ADR 0089/0090 (the hardening of `axiom_report` this reuses), ADR 0048 (Lean is the only
@@ -76,10 +77,84 @@ instead of being invisible.
 An unnamed declaration fails **closed** in both backends: there is no footprint to read, so there
 is nothing to certify.
 
+**3. The name must come from a real declaration.** Found while attacking decisions 1-2, and it
+defeated both them and the *pre-existing* gate. `_NAME_RE.search` took the first `theorem <name>`
+match anywhere in `theorem_src`, comments included — and that name is what `#print axioms` is asked
+about. A statement opening with
+
+```lean
+-- theorem Nat.add_comm
+theorem evil : (1000000000000 : Nat) % 7 = 1
+```
+
+proved `by native_decide` reported the footprint of **Mathlib's `Nat.add_comm`** — clean, and a
+different declaration entirely. Measured on the pin before the fix: `discharge` gave
+`kernel_verified=True` / `Q.E.D.` *and* `axiom_closure(...)["ok"]` was `True`. `theorem_src` is
+proposer-authored (unlike the operator-only preamble), so this was reachable.
+
+`declaration_name` now strips Lean comments — **nesting-aware**, because Lean's block comments
+nest and a non-nesting stripper leaks the inner text back out — and requires the keyword to open a
+line, so only an actual declaration can name the thing being certified. It replaces `_NAME_RE` in
+`axiom_closure` as well; the old regex is **deleted** rather than left in place, so it cannot be
+reused. This was a latent hole in the ADR 0090 extraction that the new checks inherited, not a
+regression introduced by them — which is the argument for attacking a guard rather than reading it.
+
+### What adversarial review found (decisions 4-6)
+
+Decisions 1-3 were then attacked by a skeptic with kernel access, per CLAUDE.md. **It broke them.**
+Three more routes to `kernel_verified=True` on a compiler-trusted proof survived, one driven all
+the way to `theorem catastrophe : False`. All three are fixed here; all are frozen as regressions.
+
+**4. `proof_src` must not open a top-level declaration.** The root cause. `Expressio.proof_hints`
+asserted that "a smuggled top-level command would be a parse error inside the proof — there is no
+separate-declaration surface to poison". **That was false, and it was load-bearing** — it is why
+nothing guarded `proof_src`. Lean elaborates
+
+```lean
+by native_decide
+
+namespace M
+theorem margin : True := trivial
+```
+
+as a proof *followed by two more commands*, and the appended `#print axioms margin` then lands
+inside the still-open namespace and reports on the decoy `M.margin` — clean, and a different
+declaration. `_report_re`'s optional-qualifier allowance (added for ADR 0062 namespaced preambles)
+makes `'M.margin'` satisfy "the report names our theorem". Measured: `kernel_verified=True`,
+`Q.E.D.`, **and** `axiom_closure(...)["ok"] is True`. One input, both layers.
+`smuggles_top_level` rejects a command keyword at column 0; the comment stripper runs first so a
+commented example is inert. The `propositio.py` claim is corrected in place.
+
+**5. The CLI transport must not flatten stdout into one message.** `axiom_report_text` wrapped the
+whole file as a single message, which defeated ADR 0090's per-message name filter: the filter was
+satisfied by *any* report naming our theorem, while the axiom list came from a separate search that
+returned the **first** list in the file. **This needed no adversary** — an ADR 0062 preamble
+carrying its own `#print axioms` (16 of the `docs/crt/*.lean` artifacts do) lent its clean list to
+a dirty theorem, and the two transports the ADR promised were "one hardened reader" reached
+*opposite verdicts on identical content*. Fixed twice over: `axiom_report_text` splits per line,
+and `_report_re` now captures the name and its axiom list **in a single match**, so the two can no
+longer be prised apart by anything.
+
+**6. `sorry` detection must match what Lean reports, not the letters.** Appending
+`#print axioms <name>` echoes the declaration's *name* into the message stream, and every
+sorry-scanner was a blind substring test — so `theorem sorry_free_addition ... := by decide`
+became a silent, unexplained DEFER. `mentions_sorry` matches `sorryAx` and Lean's actual
+`uses 'sorry'` warning. The footprint check is the real backstop: a proof using `sorry` carries
+`sorryAx`, which no allowlist admits.
+
+Two false-rejects in decision 3 were also caught and fixed: `nonrec theorem` (missing from the
+modifier alternation) and `theorem upoly.{u}` (the character class stopped at `{`, leaving a
+trailing dot, and `#print axioms upoly.` is a syntax error). Both had failed closed on honest
+proofs.
+
+The regression file is now part of `scripts/run_kernel_tests.sh`, which it was not before.
+
 ## Consequences
 
 - `native_decide`, `sorry`, admitted lemmas and unaudited axioms can no longer produce
   `kernel_verified=True` through *any* path, including one written next year.
+- The by-convention `axiom_closure` call sites get decision 3 for free — they were reading the
+  wrong declaration's footprint under exactly the same crafted input.
 - The by-convention `axiom_closure` calls in the providers and gates are now belt-and-braces
   rather than load-bearing. They are kept: they run against the promoted `theorem_src` and cost
   nothing to keep.

@@ -50,8 +50,10 @@ from pathlib import Path
 from typing import Optional
 
 from leibniz.backends.lean_axioms import (
-    _NAME_RE as _AX_NAME_RE,
     axiom_report_text,
+    declaration_name,
+    mentions_sorry,
+    smuggles_top_level,
 )
 from leibniz.propositio import Expressio
 
@@ -134,7 +136,7 @@ class LeanResult:
 
     @property
     def uses_sorry(self) -> bool:
-        return "sorry" in self.output or "sorryAx" in self.output
+        return mentions_sorry(self.output)
 
     @property
     def kernel_ok(self) -> bool:
@@ -179,10 +181,9 @@ class LeanCliBackend:
         REPL's `_run`), which is exactly why the check has to live here rather than in a
         convention every call site repeats. Fails CLOSED on an unnamed declaration.
         """
-        m = _AX_NAME_RE.search(expr.theorem_src)
-        if not m:
+        name = declaration_name(expr.theorem_src)
+        if not name or smuggles_top_level(proof_src):
             return False
-        name = m.group(1)
         src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
         res = self._run_lean(_with_imports(expr.imports, f"{src}\n#print axioms {name}"))
         if res is None or not res.kernel_ok:

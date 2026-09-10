@@ -36,8 +36,10 @@ from leibniz.backends.lean_cli import (
     _NAME_RE as _CLI_NAME_RE,
 )
 from leibniz.backends.lean_axioms import (
-    _NAME_RE as _AX_NAME_RE,
     axiom_report,
+    declaration_name,
+    mentions_sorry,
+    smuggles_top_level,
 )
 from leibniz.propositio import Expressio
 
@@ -204,7 +206,7 @@ class LeanReplBackend:
             return False
         msgs = resp.get("messages", []) or []
         has_error = any(m.get("severity") == "error" for m in msgs)
-        has_sorry = any("sorry" in (m.get("data", "") or "") for m in msgs)
+        has_sorry = any(mentions_sorry(m.get("data", "") or "") for m in msgs)
         return (not has_error) and (not has_sorry)
 
     # --- LeanBackend Protocol -------------------------------------------------
@@ -231,10 +233,9 @@ class LeanReplBackend:
         footprint to read, so there is nothing to certify.
         """
         src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
-        m = _AX_NAME_RE.search(expr.theorem_src)
-        if not m:
+        name = declaration_name(expr.theorem_src)
+        if not name or smuggles_top_level(proof_src):
             return False
-        name = m.group(1)
         resp = self._run(f"{src}\n#print axioms {name}", expr.imports)
         return self._kernel_ok(resp) and bool(axiom_report(resp, name).get("ok"))
 

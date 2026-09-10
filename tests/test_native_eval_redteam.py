@@ -14,7 +14,14 @@ from __future__ import annotations
 
 import pytest
 
-from leibniz.backends.lean_axioms import STD_AXIOMS, axiom_report, axiom_report_text
+from leibniz.backends.lean_axioms import (
+    STD_AXIOMS,
+    axiom_report,
+    axiom_report_text,
+    declaration_name,
+    mentions_sorry,
+    smuggles_top_level,
+)
 from leibniz.propositio import Demonstratio, Expressio
 from leibniz.verifiers import LeanVerifier
 
@@ -102,6 +109,100 @@ def test_unnamed_declaration_fails_closed():
     assert be.check_proof(Expressio(theorem_src="example : True"), "by trivial") is False
 
 
+def test_comment_cannot_hijack_the_declaration_name():
+    """ADR 0095. The name handed to `#print axioms` must come from the real DECLARATION.
+
+    `_NAME_RE.search` took the first `theorem <name>` match anywhere in `theorem_src`, comments
+    included -- so a proposer-authored statement opening with
+
+        -- theorem Nat.add_comm
+
+    made the footprint check report on MATHLIB's `Nat.add_comm` (clean, and a different
+    declaration entirely) while the real theorem was proved by `native_decide`. Measured on the
+    pinned 4.31 before the fix: `discharge` gave `kernel_verified=True` / `Q.E.D.` AND
+    `axiom_closure(...)["ok"]` was True -- it defeated the new writer-side check and the
+    pre-existing gate at once."""
+    assert declaration_name("-- theorem Nat.add_comm\ntheorem evil : True") == "evil"
+    assert declaration_name("/-- mentions theorem Nat.add_comm -/\ntheorem ok1 : True") == "ok1"
+    # Lean block comments NEST; a non-nesting stripper would leak the inner text back out.
+    assert declaration_name("/- /- theorem Fake.name -/ -/\ntheorem ok2 : True") == "ok2"
+    # ordinary shapes still resolve
+    assert declaration_name("@[simp] theorem attr1 : True") == "attr1"
+    assert declaration_name("private theorem priv1 : True") == "priv1"
+    assert declaration_name("open Nat in\ntheorem opened : True") == "opened"
+    assert declaration_name("lemma lem1 : True") == "lem1"
+    # a name that exists ONLY in a comment must fail closed, not resolve to something else
+    assert declaration_name("-- theorem Only.InComment") is None
+
+
+def test_report_only_kernels_cannot_stamp():
+    """ADR 0048 says Coq/Rocq and Isabelle may observe a kernel but never set `kernel_verified`.
+    They cannot assert `enforces_axiom_closure`, so a `LeanVerifier` mistakenly built around one
+    now fails closed at the writer instead of relying on nobody ever wiring it up."""
+    from leibniz.backends.coq_docker import CoqDockerBackend
+    from leibniz.backends.isabelle_docker import IsabelleDockerBackend
+    for cls in (CoqDockerBackend, IsabelleDockerBackend):
+        assert getattr(cls, "enforces_axiom_closure", False) is False, cls.__name__
+
+
+def test_proof_src_cannot_smuggle_a_top_level_declaration():
+    """ADR 0095 decision 4. `proof_src` is an EXPRESSION; it must not open new declarations.
+
+    `Expressio.proof_hints` used to assert that "a smuggled top-level command would be a parse
+    error inside the proof — there is no separate-declaration surface to poison". False, and
+    load-bearing: nothing guarded `proof_src`. Lean elaborates a proof followed by more commands
+    quite happily, and a still-open `namespace` makes the appended `#print axioms <name>` report
+    on a DECOY of the same short name. Measured on the pinned 4.31 before this guard:
+    `kernel_verified=True`, `Q.E.D.`, `axiom_closure(...)["ok"] is True`, and driven to `False`.
+    """
+    assert smuggles_top_level("by native_decide\n\nnamespace M\ntheorem margin : True := trivial")
+    for bad in ("by decide\nend M", "by decide\nopen Foo", "by decide\n#print axioms other",
+                "by decide\ndef d := 1", "by decide\n@[simp] theorem t : True := trivial",
+                "by decide\nsection", "by decide\naxiom bad : False",
+                "by decide\nset_option debug.skipKernelTC true"):
+        assert smuggles_top_level(bad), bad
+    # honest proofs -- including indented multi-line tactic blocks -- must pass
+    for good in ("by decide", "by native_decide", "(margin).elim",
+                 "by\n  have h : 1 = 1 := rfl\n  simp",
+                 "by\n  induction n with\n  | zero => rfl\n  | succ k ih => simp [ih]",
+                 "-- namespace in a comment is inert\nby decide"):
+        assert not smuggles_top_level(good), good
+
+
+def test_axiom_report_text_reads_OUR_report_not_the_first_one():
+    """ADR 0095 decision 5. The CLI transport hands back the whole file as one blob.
+
+    Flattening it into a single message defeated the ADR 0090 per-message name filter: the filter
+    was satisfied by any report naming our theorem, while the axiom list came from a SEPARATE
+    search that returned the FIRST list in the file. An ADR 0062 preamble carrying its own
+    `#print axioms` (16 of the `docs/crt/*.lean` artifacts do) therefore lent its clean list to
+    our dirty theorem -- no adversary required. Both transports must now agree on identical
+    content."""
+    blob = ("'decoy_ok' depends on axioms: [propext]\n"
+            "'margin' depends on axioms: [propext, margin._native.native_decide.ax_1]")
+    rep_text = axiom_report_text(blob, "margin")
+    assert rep_text["ok"] is False
+    assert "margin._native.native_decide.ax_1" in rep_text["axioms"]
+    # the REPL reader, given the same content as separate messages, must agree
+    rep_repl = axiom_report(
+        {"messages": [{"severity": "info", "data": ln} for ln in blob.split("\n")]}, "margin")
+    assert rep_repl["ok"] is rep_text["ok"]
+    assert set(rep_repl["axioms"]) == set(rep_text["axioms"])
+    # and the clean case still passes on both
+    ok_blob = "'other' depends on axioms: [propext]\n'margin' does not depend on any axioms"
+    assert axiom_report_text(ok_blob, "margin")["ok"] is True
+
+
+def test_a_theorem_named_sorry_something_still_verifies():
+    """ADR 0095 decision 6. `#print axioms <name>` echoes the declaration's NAME into the message
+    stream, so a blind `"sorry" in message` scan started rejecting honest proofs whose name merely
+    contains the letters -- a silent, unexplained DEFER. Match what Lean actually reports."""
+    assert mentions_sorry("declaration uses 'sorry'")
+    assert mentions_sorry("'t' depends on axioms: [sorryAx]")
+    assert not mentions_sorry("'sorry_free_addition' does not depend on any axioms")
+    assert not mentions_sorry("'no_sorry_here' depends on axioms: [propext]")
+
+
 # --- the live exploit (docker-gated) ----------------------------------------
 
 def test_native_decide_cannot_set_kernel_verified():
@@ -148,5 +249,36 @@ def test_honest_kernel_proofs_still_pass():
             v.discharge(Expressio(theorem_src=src, imports=("Mathlib",)), demo)
             assert demo.kernel_verified is True, f"regression: {src} no longer verifies"
             assert demo.qed == "Q.E.D."
+    finally:
+        be.close()
+
+
+def test_namespace_decoy_cannot_promulgate_a_native_proof():
+    """The live form of the smuggling attack, end-to-end through the sole writer."""
+    be = _repl()
+    try:
+        THM = "theorem margin : (2:Nat)+2 = 4"
+        PROOF = "by native_decide\n\nnamespace M\ntheorem margin : True := trivial"
+        demo = Demonstratio(proof_obligation="decoy", proof_src=PROOF)
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src=THM, imports=()), demo)
+        assert demo.kernel_verified is False
+        assert demo.qed != "Q.E.D."
+        # the by-convention gate must refuse it too
+        from leibniz.backends.lean_axioms import axiom_closure
+        assert axiom_closure(be, THM, PROOF, ())["ok"] is False
+    finally:
+        be.close()
+
+
+def test_sorry_named_theorem_verifies_against_the_real_kernel():
+    """The live counterpart of the `mentions_sorry` unit test -- an honest proof must not DEFER."""
+    be = _repl()
+    try:
+        demo = Demonstratio(proof_obligation="named", proof_src="by decide")
+        LeanVerifier(backend=be).discharge(
+            Expressio(theorem_src="theorem sorry_free_addition : (1:Nat)+1 = 2", imports=()), demo)
+        assert demo.kernel_verified is True, "honest proof rejected because of its NAME"
+        assert demo.qed == "Q.E.D."
     finally:
         be.close()
