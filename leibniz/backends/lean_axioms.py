@@ -11,6 +11,7 @@ subset of the standard Lean/Mathlib set. Anything else ⇒ not a proof for our p
 from __future__ import annotations
 
 import re
+from typing import Optional
 
 # The standard Lean/Mathlib axioms. NOTE `Lean.ofReduceBool` (native_decide) is deliberately
 # NOT in this set: a "proof" by compiled evaluation is trusted-compiler, not kernel-decided.
@@ -103,3 +104,20 @@ def axiom_report(response, name: str, allowed=STD_AXIOMS) -> dict:
     ok = bool(not errors and not has_sorry and not extra and saw_report)
     return {"ok": ok, "axioms": axioms, "saw_axiom_report": saw_report,
             "extra_axioms": extra, "has_sorry": has_sorry, "errors": errors[:2], "name": name}
+
+
+def axiom_report_text(output: Optional[str], name: str, allowed=STD_AXIOMS) -> dict:
+    """``axiom_report`` for a backend whose transport yields flat TEXT.
+
+    The CLI backend talks to `lake env lean <file>` and gets stdout, not the REPL's message
+    list. ADR 0090 split the analysis out precisely so a second transport reuses the HARDENED
+    reader instead of open-coding a fresh scan — the open-coded third copy was the only one
+    ever to publish a false record. This wraps the text as a single message so that one reader
+    serves both, and marks it error-severity when Lean printed a diagnostic, so a report that
+    coexists with an error cannot pass.
+    """
+    if output is None:
+        return {"ok": False, "reason": "no output from lean", "axioms": [], "name": name,
+                "saw_axiom_report": False}
+    severity = "error" if "error:" in output else "info"
+    return axiom_report({"messages": [{"severity": severity, "data": output}]}, name, allowed)

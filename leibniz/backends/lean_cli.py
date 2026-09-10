@@ -11,7 +11,19 @@ Trust contract (CLAUDE.md invariants 1 & 7):
   ``Demonstratio.kernel_verified`` — ``LeanVerifier.discharge`` remains the sole
   writer.
 - ``check_proof`` returns True iff the candidate file elaborates with no
-  error-level diagnostics AND uses no ``sorry`` / ``sorryAx``.
+  error-level diagnostics, uses no ``sorry`` / ``sorryAx``, AND has an axiom
+  footprint inside ``STD_AXIOMS`` (ADR 0095). The footprint is not optional and
+  not a caller's responsibility: ``#print axioms`` goes into the same file the
+  kernel checks. Before ADR 0095 this returned True for a ``native_decide``
+  proof — the compiled evaluator deciding, not the kernel — which on the pinned
+  4.31 is enough to derive ``False`` from the Trail of Bits
+  ``String.Pos.Raw.extract`` bug.
+- Why an allowlist and not a ``_FORBIDDEN`` keyword scan like the Coq/Isabelle
+  backends: those scan the SOURCE for laundering keywords because they have no
+  cheap footprint to read. Lean prints the real closure, so the allowlist is
+  strictly stronger — it catches an axiom no keyword list anticipated, including
+  the auto-generated per-computation native axioms Lean has emitted since 4.29,
+  whose names are derived from the theorem and match no fixed denylist.
 - The result cache is keyed on the exact source hash and is populated only by a
   real kernel run — a cache hit replays a genuine kernel verdict, never a bare bool.
 
@@ -37,6 +49,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from leibniz.backends.lean_axioms import (
+    _NAME_RE as _AX_NAME_RE,
+    axiom_report_text,
+)
 from leibniz.propositio import Expressio
 
 #: The pinned Lean toolchain, and the SINGLE source of truth for it. Must match
@@ -152,9 +168,26 @@ class LeanCliBackend:
             return (False, "lean backend unavailable")
         return (not res.has_errors, res.output)
 
+    #: ADR 0095 — see LeanReplBackend.enforces_axiom_closure.
+    enforces_axiom_closure = True
+
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        res = self._run_lean(_with_imports(expr.imports, _join_proof(expr.theorem_src, proof_src, expr.preamble)))
-        return res is not None and res.kernel_ok
+        """True iff the kernel accepted the proof AND its axiom footprint is clean (ADR 0095).
+
+        `#print axioms` is appended to the SAME file the kernel checks, so the footprint cannot
+        be skipped by a caller. `axiom_closure` cannot drive this backend at all (it needs the
+        REPL's `_run`), which is exactly why the check has to live here rather than in a
+        convention every call site repeats. Fails CLOSED on an unnamed declaration.
+        """
+        m = _AX_NAME_RE.search(expr.theorem_src)
+        if not m:
+            return False
+        name = m.group(1)
+        src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
+        res = self._run_lean(_with_imports(expr.imports, f"{src}\n#print axioms {name}"))
+        if res is None or not res.kernel_ok:
+            return False
+        return bool(axiom_report_text(res.output, name).get("ok"))
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already

@@ -12,6 +12,11 @@ proposals concurrently — only the (now fast) kernel checks serialize. If the R
 process is unavailable it degrades to conservative results (False/None), and the
 assembly falls back to the CLI backend. It does NOT write kernel_verified —
 `LeanVerifier.discharge` remains the sole writer.
+
+ADR 0095: `check_proof` also requires a clean `#print axioms` footprint, sent in the
+SAME round-trip as the proof. `kernel_verified` is supposed to mean kernel-DECIDED,
+and "no error, no sorry" does not: `native_decide` satisfies it while the compiler,
+not the kernel, decided the goal.
 """
 from __future__ import annotations
 
@@ -29,6 +34,10 @@ from leibniz.backends.lean_cli import (
     _CANON_DEF as _CLI_CANON_DEF,
     _CANON_RUN as _CLI_CANON_RUN,
     _NAME_RE as _CLI_NAME_RE,
+)
+from leibniz.backends.lean_axioms import (
+    _NAME_RE as _AX_NAME_RE,
+    axiom_report,
 )
 from leibniz.propositio import Expressio
 
@@ -205,8 +214,29 @@ class LeanReplBackend:
             return False
         return not any(m.get("severity") == "error" for m in resp.get("messages", []) or [])
 
+    #: ADR 0095 — this backend enforces the axiom footprint INSIDE `check_proof`, so a caller
+    #: cannot obtain a True kernel verdict for a compiler-trusted proof. `LeanVerifier.discharge`
+    #: refuses to stamp `kernel_verified` for a backend that does not assert this.
+    enforces_axiom_closure = True
+
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        return self._kernel_ok(self._run(_join_proof(expr.theorem_src, proof_src, expr.preamble), expr.imports))
+        """True iff the kernel accepted the proof AND its axiom footprint is clean.
+
+        ADR 0095: the footprint is not an extra call a caller may forget — `#print axioms` rides
+        along in the SAME REPL round-trip as the proof, and both must pass. Before this, a proof
+        by `native_decide` returned True here (the compiled evaluator, not the kernel, decided it),
+        and on the pinned 4.31 that is enough to promulgate `False`: the Trail of Bits
+        `String.Pos.Raw.extract` bug makes the compiler and the kernel disagree about the same
+        slice. A missing/unparseable theorem name fails CLOSED — an unnamed declaration has no
+        footprint to read, so there is nothing to certify.
+        """
+        src = _join_proof(expr.theorem_src, proof_src, expr.preamble)
+        m = _AX_NAME_RE.search(expr.theorem_src)
+        if not m:
+            return False
+        name = m.group(1)
+        resp = self._run(f"{src}\n#print axioms {name}", expr.imports)
+        return self._kernel_ok(resp) and bool(axiom_report(resp, name).get("ok"))
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).

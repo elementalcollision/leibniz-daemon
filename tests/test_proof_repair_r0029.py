@@ -35,6 +35,11 @@ class _FakeBackend:
     check_proof_with_error agree (same script), so the real discharge stays consistent
     with the loop's advisory pre-check."""
 
+    #: ADR 0095 — TEST DOUBLE. Real backends earn this by reading `#print axioms` inside
+    #: `check_proof`; this fake asserts it so `discharge` will exercise the path under test.
+    #: Grep this name to find every place that mints a kernel verdict without a kernel.
+    enforces_axiom_closure = True
+
     def __init__(self, script: dict):
         self.script = script
         self.checks: list[str] = []
@@ -55,6 +60,11 @@ class _FakeBackend:
 
 class _NoErrorBackend:
     """A backend WITHOUT check_proof_with_error — the loop must safely no-op."""
+
+    #: ADR 0095 — TEST DOUBLE. Real backends earn this by reading `#print axioms` inside
+    #: `check_proof`; this fake asserts it so `discharge` will exercise the path under test.
+    #: Grep this name to find every place that mints a kernel verdict without a kernel.
+    enforces_axiom_closure = True
 
     def check_proof(self, expr, proof_src) -> bool:
         return True

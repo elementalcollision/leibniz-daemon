@@ -59,8 +59,25 @@ class LeanVerifier:
         return bool(expr.compiles)
 
     def discharge(self, expr: Expressio, demo: Demonstratio) -> EdgeEvidence:
-        """Check the proof. This is the ONLY place kernel_verified is set."""
-        ok = bool(demo.proof_src) and self.backend.check_proof(expr, demo.proof_src)
+        """Check the proof. This is the ONLY place kernel_verified is set.
+
+        ADR 0095 — `kernel_verified` means KERNEL-decided, so the backend must also have read the
+        proof's axiom footprint. It was previously set from `check_proof` alone, and `check_proof`
+        bottomed out in "no error and no sorry"; the axiom footprint was a separate call each
+        provider and gate made BY CONVENTION. Measured on the pinned Lean 4.31 image, that gap is
+        not theoretical: a proof of Fermat's Last Theorem built on the Trail of Bits
+        `String.Pos.Raw.extract` compiler/kernel disagreement came back from this method with
+        `kernel_verified=True`, `MECHANICAL`, `PASS`, sealed `Q.E.D.` — while `axiom_closure`
+        rejected the very same proof. The writer was permissive and only the gate was strict.
+
+        A backend must now assert `enforces_axiom_closure`, i.e. that its `check_proof` returns
+        True only for a clean `#print axioms` footprint. Absent that assertion this FAILS CLOSED:
+        a future backend cannot be wired in and silently mint kernel verdicts, and the places that
+        opt out are greppable by that one name rather than invisible.
+        """
+        ok = (bool(demo.proof_src)
+              and bool(getattr(self.backend, "enforces_axiom_closure", False))
+              and self.backend.check_proof(expr, demo.proof_src))
         demo.kernel_verified = ok
         demo.seal()
         return EdgeEvidence(
