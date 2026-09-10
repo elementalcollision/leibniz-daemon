@@ -166,6 +166,19 @@ Fixed by confining the proof to a **parenthesised term position**, where Lean co
 parse error, plus a delimiter-depth check so the wrapper cannot be closed early. Honest proof
 shapes verified unaffected.
 
+### Where eight rounds left it
+
+| class | status |
+|---|---|
+| axiom footprint (`native_decide`, admitted axioms, `sorry`) | **CLOSED**, measured with every syntactic guard disabled |
+| kernel bypass (`debug.skipKernelTC` + an `unsafe` self-loop) | **OPEN** — not closable by inspecting text |
+| statement meaning (`notation "False" => True` in a preamble) | **OPEN** — a preamble-trust decision |
+
+The kernel-bypass class is open *in principle*, not by oversight: a `run_cmd` can assemble the
+option name from fragments at elaboration time, so there is no string for any scan to match. It
+needs `lean4checker` (stuck at v4.29 against the v4.34.0-rc2 pin) or a confined preamble. Both open
+classes are pinned as strict-xfail regressions so a future fix cannot land unnoticed.
+
 ## A denylist could not have caught this
 
 Measured on the pin: the footprint of a `native_decide` proof is

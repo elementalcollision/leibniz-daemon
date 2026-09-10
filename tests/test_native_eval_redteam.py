@@ -48,6 +48,14 @@ FLT = ("theorem fermat_last (a b c n : Nat) (hn : n > 2) (ha : a > 0) (hb : b > 
        "a^n + b^n ≠ c^n")
 
 
+def _cli():
+    from leibniz.backends.lean_cli import available
+    if not available():
+        pytest.skip("kernel lane: docker + leibniz-lean image not present")
+    from leibniz.backends.lean_cli import LeanCliBackend
+    return LeanCliBackend(timeout_s=900)
+
+
 def _repl():
     from leibniz.backends.lean_cli import available
     if not available():
@@ -960,3 +968,62 @@ def test_a_dirty_preamble_helper_now_fails():
         "by decide")
     assert rep is not None and rep["ok"] is False, rep
     assert "smuggled" in rep.get("axioms", []), rep
+
+
+# --- KNOWN-OPEN, round 8 ------------------------------------------------------
+#
+# These assert what SHOULD happen and currently do not. `strict=True` means that if any of them
+# starts passing, pytest FAILS the run and tells us -- so a future fix cannot land silently, and
+# a green suite is never mistaken for a closed boundary. They are the honest encoding of ADR 0097's
+# "What is still open"; deleting them to make the suite look clean would be the defect, not the fix.
+
+_R8_REASON = ("ADR 0097: the kernel-bypass and statement-meaning classes are OPEN. Closing them "
+              "needs a kernel replay (lean4checker, stuck at v4.29 vs the v4.34.0-rc2 pin) or a "
+              "confined preamble -- not another text scan.")
+
+
+@pytest.mark.xfail(strict=True, reason=_R8_REASON)
+def test_KNOWN_OPEN_programmatic_skip_kernel_tc():
+    """`debug.skipKernelTC` set from a meta-program, with the option name assembled from fragments.
+
+    There is no string for `defeats_the_kernel` to match -- not obfuscated, absent. This is why
+    that guard cannot work in principle: Lean is a metaprogramming language, so any text scan over
+    this class is defeatable. Measured: `theorem t : False` -> kernel_verified=True, Q.E.D."""
+    be = _cli()
+    pre = ('open Lean Elab Command\n'
+           'run_cmd do\n'
+           '  let optName : Name := (Name.mkStr (Name.mkStr .anonymous "debug") "skipKernelTC")\n'
+           '  liftCoreM <| withOptions (fun o => o.setBool optName true) do\n'
+           '    addDecl <| Declaration.defnDecl { name := `evilConst, levelParams := [], '
+           'type := .const ``False [], value := .const `evilConst [], hints := .opaque, '
+           'safety := .safe }')
+    demo = Demonstratio(proof_obligation="r8", proof_src="evilConst")
+    LeanVerifier(backend=be).discharge(
+        Expressio(theorem_src="theorem t : False", imports=("Mathlib",), preamble=pre), demo)
+    assert demo.kernel_verified is False, "False was sealed Q.E.D."
+
+
+@pytest.mark.xfail(strict=True, reason=_R8_REASON)
+def test_KNOWN_OPEN_notation_redefines_the_statement():
+    """`notation "False" => True` in the ADR 0062 preamble -- no smuggling at all -- stamps
+    `theorem oops : False`. Every layer is honest here: the kernel really did prove the statement
+    as written, and the footprint really is clean. What changed is what the statement MEANS.
+
+    This falsifies ADR 0062's standing claim that a smuggled hole in the preamble is caught, and
+    it is a preamble-trust question rather than a parsing one."""
+    be = _cli()
+    demo = Demonstratio(proof_obligation="r8", proof_src="trivial")
+    LeanVerifier(backend=be).discharge(
+        Expressio(theorem_src="theorem oops2 : False", imports=(),
+                  preamble='notation "False" => True'), demo)
+    assert demo.kernel_verified is False, "False was sealed Q.E.D."
+
+
+@pytest.mark.xfail(strict=True, reason=_R8_REASON)
+def test_KNOWN_OPEN_guillemet_option_spelling():
+    """`set_option debug.«skipKernelTC» true` -- Lean resolves the option, the regex does not.
+    Paired with a `run_cmd` that parses `unsafe def evil` out of a STRING LITERAL, which the
+    round-7 fix (strip strings before scanning) is precisely what allows."""
+    from leibniz.backends.lean_axioms import defeats_the_kernel
+    assert defeats_the_kernel("set_option debug.«skipKernelTC» true in\ntheorem t : False"), \
+        "the guillemet spelling evades the scan"

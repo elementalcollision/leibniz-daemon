@@ -405,6 +405,62 @@ Saying "the guards are defence in depth" would be false. One of them is the guar
 class of attack, and closing that properly needs a kernel replay — `lean4checker`, stuck at v4.29
 against the v4.34.0-rc2 pin.
 
+### Round 8 — where this approach stops, and why it is a limit rather than a gap
+
+Round 8 stamped `theorem : False` with `Q.E.D.` three ways. All three are recorded as
+**strict-xfail** regressions in `tests/test_native_eval_redteam.py`: they assert what *should*
+happen, they currently fail, and `strict=True` means a future fix cannot land silently.
+
+**1. `debug.skipKernelTC` set programmatically.** A `run_cmd` block assembles the option name from
+the fragments `"debug"` and `"skipKernelTC"` at elaboration time and calls `addDecl` with the
+kernel check suppressed. `defeats_the_kernel(preamble)` returns False because **there is no string
+to match** — not obfuscated, absent.
+
+This is the finding that settles the question. Lean is a metaprogramming language, so a text scan
+over the kernel-bypass class is defeatable *in principle*, not merely in this implementation. Round
+8 also showed the round-7 fix (strip strings before scanning, decision 23) is precisely what lets a
+`run_cmd` parse `"unsafe def evil : False := evil"` out of a string literal and elaborate it. That
+fix was correct for its own false-reject and it opened this door; there is no version of the scan
+that closes both.
+
+**2. `notation "False" => True` in the preamble.** No smuggling: an ordinary ADR 0062 preamble
+stamps `theorem oops2 : False`. Every layer is *honest* here — the kernel really did prove the
+statement as written, and the footprint really is clean. What changed is what the statement MEANS.
+This falsifies ADR 0062's standing claim that a smuggled hole in the preamble is caught, and it is
+a preamble-trust question, not a parsing one.
+
+**3. `set_option debug.«skipKernelTC» true`.** Lean resolves the guillemet spelling to the option;
+the regex does not. Fixable, and deliberately left unfixed: patching it would shrink the visible
+surface while leaving finding 1 intact, which is how six of these rounds went.
+
+### What this ADR does and does not establish
+
+| class | example | status |
+|---|---|---|
+| axiom footprint | `native_decide`, admitted axioms, `sorry` | **CLOSED** — the reporter refuses these with every syntactic guard disabled |
+| kernel bypass | `debug.skipKernelTC` + a self-loop `unsafe` def | **OPEN** — needs a kernel replay; not closable by inspecting text |
+| statement meaning | `notation "False" => True` | **OPEN** — a preamble-trust decision, not a checker one |
+
+The first row is the one worth having, and it is measured rather than argued: with `check_proof`
+forced True and `smuggles_top_level`, `closes_more_than_it_opens` and
+`statement_is_single_declaration` all forced open, the reporter alone still refuses `native_decide`
+and a decoy proving `False`, and still passes an honest `by decide`.
+
+The other two rows are open and stay open. Closing them needs one of:
+
+- **A kernel replay.** `lean4checker` replays a compiled environment through a bare kernel and is
+  the right tool. It is stuck at `v4.29.0-rc8` against the `v4.34.0-rc2` pin, and olean formats are
+  not forward-compatible, so it cannot read our artifacts today.
+- **A confined preamble.** Both open findings enter through arbitrary Lean in `theorem_src` or the
+  ADR 0062 preamble. Restricting promotion to the DSL-rendered provider paths — where the six
+  `*_decided` gates already re-render `theorem_src` and the proof from a checked contract, so the
+  proposer authors neither — removes the vector rather than guarding it.
+
+**Eight rounds, and the durable result is the map, not the fixes.** Every guard that failed was a
+syntactic guess; the one layer that holds works by removing the adversary's ability to answer. The
+last two rounds of guard-writing produced defects faster than they closed them, which is why this
+ADR stops there and says what is open instead.
+
 ## Consequences
 
 - `native_decide`, `sorry`, admitted lemmas and unaudited axioms no longer produce
