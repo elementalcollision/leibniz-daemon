@@ -78,6 +78,21 @@ class LeanVerifier:
         ok = (bool(demo.proof_src)
               and bool(getattr(self.backend, "enforces_axiom_closure", False))
               and self.backend.check_proof(expr, demo.proof_src))
+        # ADR 0097 — the INDEPENDENT footprint, and the last word on the stamp.
+        #
+        # `check_proof` reads `#print axioms` from the same file the proof lives in, and five
+        # rounds of adversarial review showed that file is not a trustworthy place to ask: a proof
+        # can print a report-shaped line, or redefine the `#print axioms` elaborator outright
+        # (`elab_rules : command | `(#print axioms $i:ident) => ...`), which defeats even an
+        # unpredictable probe name because it matches `$i:ident`. Every one of those ended in
+        # `kernel_verified=True`. So a backend that CAN answer without elaborating proposer syntax
+        # must do so here, and its answer binds. A missing or unreadable answer is a REFUSAL:
+        # `independent_axiom_footprint` returns None when the reporter is unavailable, and None is
+        # not a pass. Costs ~5 s, paid once per stamp rather than once per candidate.
+        if ok and getattr(self.backend, "mint_requires_independent_check", False):
+            probe = getattr(self.backend, "independent_axiom_footprint", None)
+            report = probe(expr, demo.proof_src) if callable(probe) else None
+            ok = bool(report and report.get("ok"))
         demo.kernel_verified = ok
         demo.seal()
         return EdgeEvidence(

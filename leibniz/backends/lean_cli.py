@@ -53,6 +53,7 @@ from leibniz.backends.lean_axioms import (
     _axiom_complaint,
     _report_re,
     axiom_report_text,
+    _parse_axcheck,
     closes_more_than_it_opens,
     declaration_name,
     fresh_probe_name,
@@ -70,6 +71,8 @@ from leibniz.propositio import Expressio
 #: this, so a pin move cannot leave a stale literal behind (ADR 0095).
 KERNEL_VERSION = "v4.34.0-rc2"
 DEFAULT_IMAGE = f"leibniz-lean:{KERNEL_VERSION}"
+#: ADR 0097 — the kernel image plus the compiled axiom reporter (docker/lean-axcheck.Dockerfile).
+AXCHECK_IMAGE = f"leibniz-lean-axcheck:{KERNEL_VERSION}"
 # Triviality tactics. A statement any of these closes ON ITS OWN is vacuous and must
 # NOT be promulgated. `ring`/`nlinarith` were added (ADR 0025) after a calibration
 # promulgated 32 polynomial identities (e.g. (m+3)(m+5)+1=(m+4)^2) that `ring` closes
@@ -208,6 +211,60 @@ class LeanCliBackend:
         if mentions_sorry(res.output, ignore=_report_re(probe)):
             return False
         return bool(axiom_report_text(res.output, probe).get("ok"))
+
+    #: ADR 0097 — this backend can answer the footprint question WITHOUT elaborating proposer
+    #: syntax, so `LeanVerifier.discharge` must consult it before stamping. See
+    #: `independent_axiom_footprint`.
+    mint_requires_independent_check = True
+
+    def independent_axiom_footprint(self, expr: Expressio, proof_src: str) -> Optional[dict]:
+        """Read the axiom closure with the COMPILED reporter, outside the proposer's reach.
+
+        `#print axioms` is a command, and a proof sharing its file can redefine that command's
+        elaborator (`elab_rules : command | `(#print axioms $i:ident) => ...`) or simply print a
+        report-shaped line. Both were demonstrated end-to-end against the pinned kernel, and both
+        returned `kernel_verified=True` for a compiler-trusted proof — the second of them defeating
+        a 128-bit unpredictable probe, because the hijack matches `$i:ident` and never needs to know
+        the name. No amount of lexing the proof fixes that: five rounds of adversarial review each
+        broke a syntactic guard.
+
+        So this asks a different way. `lean-axcheck` is built into the image BEFORE any proposer
+        text exists; it imports the compiled module and reads `Lean.collectAxioms` out of
+        `ConstantInfo` data. It elaborates none of the proof's syntax, so `elab_rules` has nothing
+        to hook, and it prints on a channel tagged with a nonce chosen per call.
+
+        Returns the footprint dict, or None when the reporter is unavailable — the caller treats
+        None as FAIL, never as a pass. Costs ~5 s (compile + query), which is why it gates the
+        MINT and not every `check_proof`.
+        """
+        name = declaration_name(expr.theorem_src)
+        if (not name or smuggles_top_level(proof_src)
+                or closes_more_than_it_opens(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)):
+            return {"ok": False, "reason": "guard refused the source", "axioms": []}
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        body = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        # The module must not carry the `#print axioms` line: the reporter answers that question,
+        # and leaving it in only gives a hijack something to print.
+        body = "\n".join(ln for ln in body.splitlines() if not ln.startswith("#print axioms "))
+        source = _with_imports(expr.imports, body)
+        nonce = fresh_probe_name()
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                (Path(td) / "Mint.lean").write_text(source)
+                proc = subprocess.run(
+                    ["docker", "run", "--rm", "-v", f"{td}:/scratch:ro",
+                     "-w", "/work/lean-project", AXCHECK_IMAGE, "bash", "-lc",
+                     "cp /scratch/Mint.lean ./Mint.lean && "
+                     "lake env lean -o Mint.olean Mint.lean >/dev/null 2>&1 && "
+                     'LEAN_PATH="$(lake env printenv LEAN_PATH):/work/lean-project" '
+                     f"/work/axcheck/.lake/build/bin/axcheck Mint {probe} {nonce}"],
+                    capture_output=True, text=True, timeout=self.timeout_s,
+                )
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            return None
+        return _parse_axcheck(proc.stdout, nonce, probe)
 
     def check_source(self, source: str) -> Optional[bool]:
         """Report the kernel verdict on a COMPLETE Lean source (helpers + theorem + proof already

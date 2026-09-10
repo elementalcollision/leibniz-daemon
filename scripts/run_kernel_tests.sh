@@ -12,6 +12,15 @@ if ! python3 -c "import sys; sys.path.insert(0,'.'); from leibniz.backends.lean_
   exit 2
 fi
 
+# 1b. ADR 0097: the MINT now consults the compiled axiom reporter, which lives in its own layered
+#     image. Without it every honest discharge fails CLOSED and the lane goes red for a reason
+#     that looks nothing like its cause -- exactly the ADR 0093 shape. Say so instead.
+if ! docker image inspect "leibniz-lean-axcheck:${LEIBNIZ_KERNEL_VERSION:-v4.34.0-rc2}" >/dev/null 2>&1; then
+  echo "FAIL: leibniz-lean-axcheck image missing; the ADR 0097 mint check cannot run." >&2
+  echo "  build it:  docker build -f docker/lean-axcheck.Dockerfile -t leibniz-lean-axcheck:v4.34.0-rc2 ." >&2
+  exit 2
+fi
+
 # 2. run the kernel-exercising tests; -rs surfaces skip reasons so a silent skip is visible.
 #    These files are skip-FREE when the image is present (every test runs), so the zero-skip rule (step 3)
 #    holds. test_native_eval_redteam is the ADR 0097 gate — the published Lean native-evaluation

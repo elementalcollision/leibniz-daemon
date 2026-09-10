@@ -94,6 +94,7 @@ class LeanReplBackend:
     trivial_tactics: tuple[str, ...] = DEFAULT_TRIVIAL_TACTICS
     _proc: Optional[subprocess.Popen] = field(default=None, repr=False)
     _envs: dict[tuple, int] = field(default_factory=dict, repr=False)
+    _axcheck: object = field(default=None, repr=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     # --- process + protocol ---------------------------------------------------
@@ -252,6 +253,22 @@ class LeanReplBackend:
         resp = self._run(src, expr.imports)
         return (self._kernel_ok(resp, ignore=_report_re(probe))
                 and bool(axiom_report(resp, probe).get("ok")))
+
+    #: ADR 0097 — see LeanCliBackend.mint_requires_independent_check.
+    mint_requires_independent_check = True
+
+    def independent_axiom_footprint(self, expr: Expressio, proof_src: str) -> Optional[dict]:
+        """Delegate to the compiled reporter (ADR 0097).
+
+        The reporter is built into the CLI kernel image, not the REPL one, and it needs a compiled
+        olean rather than a REPL environment — so this hands off rather than duplicating the
+        plumbing. The REPL keeps the fast in-file check for `check_proof`; this is only consulted
+        at the MINT, where ~5 s is affordable and being wrong is not.
+        """
+        from leibniz.backends.lean_cli import LeanCliBackend
+        if self._axcheck is None:
+            self._axcheck = LeanCliBackend(timeout_s=max(self.timeout_s, 300))
+        return self._axcheck.independent_axiom_footprint(expr, proof_src)
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).

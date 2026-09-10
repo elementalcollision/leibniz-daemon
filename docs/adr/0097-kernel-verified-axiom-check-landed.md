@@ -324,6 +324,36 @@ of a TRUE statement elaborates cleanly on every toolchain in scope and carries
 it. That test fails under the mutation. This is the ADR 0093 discipline applied to itself — a lane
 that cannot fail must say so.
 
+### Decision 15 — the mint consults a reporter the proposer cannot reach
+
+Five rounds established that reading `#print axioms` out of the file the proof lives in is not a
+trustworthy way to ask. The proof can print a report-shaped line (round 3), or redefine the
+`#print axioms` command elaborator outright (round 4) — and that hijack matches `$i:ident`, so
+decision 12's 128 unpredictable bits bought nothing against it. Round 5 then escaped the
+term-position wrapper through a Lean raw string. **Every syntactic guard that has been written
+here has been broken by an input its author did not imagine, five times out of five.**
+
+`lean-axcheck` (`docker/lean-axcheck.Dockerfile`) is compiled into the kernel image *before any
+proposer text exists*. It imports the compiled module and reads the axiom closure out of
+`ConstantInfo` via `Lean.collectAxioms`. It elaborates none of the proof's syntax, so `elab_rules`
+has nothing to hook; it answers on a channel tagged with a nonce and a probe name chosen per call,
+so a printed line cannot impersonate it; and `None`/unparseable output is a refusal, never a pass.
+
+`LeanVerifier.discharge` consults it before stamping, and its answer binds. `check_proof` keeps the
+fast in-file path as a cheap pre-filter — the ~5 s cost (compile + query) is paid once per stamp,
+not once per candidate.
+
+**Mutation-checked, which is the only evidence worth anything here.** With `check_proof` forced to
+return True *and* `smuggles_top_level`, `closes_more_than_it_opens` and
+`statement_is_single_declaration` all forced open, the reporter alone still refuses both a
+`native_decide` proof and the `elab_rules` hijack, and still passes an honest `by decide` proof.
+That is the first guarantee in this ADR that survives its own guards being switched off.
+
+**What it does not cover.** The reporter reads the environment; it does not re-run the kernel over
+it. `debug.skipKernelTC` and ill-typed-term attacks remain out of scope — that is `lean4checker`'s
+job, and lean4checker is stuck at v4.29 while the pin is v4.34.0-rc2, so it cannot read our
+oleans. Narrower than the gap it closes, but not zero, and written down rather than left implied.
+
 ## Consequences
 
 - `native_decide`, `sorry`, admitted lemmas and unaudited axioms no longer produce

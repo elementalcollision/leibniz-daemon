@@ -49,6 +49,44 @@ _DECL_RE = re.compile(
     r"(?:(?:private|protected|noncomputable|scoped|local|nonrec|unsafe|partial)[ \t]+)*"
     r"(?:theorem|lemma)\s+(«[^»]+»|[^\s({\[:]+)", re.MULTILINE)
 
+_IDENT_CH = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'!?")
+
+
+def _skip_string(src: str, i: int) -> Optional[int]:
+    """If a string literal starts at ``i``, return the index just past it, else None.
+
+    Handles Lean RAW strings (`r"..."`, `r#"..."#`, `r##"..."##`) as well as ordinary ones.
+    ADR 0097 round 5: treating `r"\\"` as an escaped quote is a soundness bug, not a nicety. Lean
+    does no escape processing inside a raw string, so `r"\\")` is a COMPLETE raw string followed by
+    a live `)` — which closes `probe_source`'s wrapper and reaches command position, while a lexer
+    that thinks the string is still open never sees the paren and reports a non-negative depth.
+    Measured on both the 4.31 and 4.34 pins: that reopened the round-4 `elab_rules` hijack and
+    returned `kernel_verified=True`, `Q.E.D.` for a `native_decide` proof on both transports.
+    """
+    n = len(src)
+    if src[i] == '"':                                     # ordinary string: escapes apply
+        j = i + 1
+        while j < n:
+            if src[j] == "\\":
+                j += 2
+                continue
+            if src[j] == '"':
+                return j + 1
+            j += 1
+        return n                                          # unterminated -> consume the rest
+    if src[i] == "r" and (i == 0 or src[i - 1] not in _IDENT_CH):
+        j = i + 1
+        hashes = 0
+        while j < n and src[j] == "#":
+            hashes += 1
+            j += 1
+        if j < n and src[j] == '"':                       # raw string: NO escape processing
+            close = '"' + "#" * hashes
+            end = src.find(close, j + 1)
+            return n if end < 0 else end + len(close)
+    return None
+
+
 def _strip_comments(src: str) -> str:
     """Remove Lean line (`--`) and block (`/- -/`, nesting) comments, respecting STRING LITERALS.
 
@@ -61,19 +99,15 @@ def _strip_comments(src: str) -> str:
     """
     out: list[str] = []
     i, depth, n = 0, 0, len(src)
-    in_str = False
     while i < n:
         c = src[i]
-        if in_str:
-            out.append(c)
-            if c == "\\" and i + 1 < n:      # escaped char: copy both, never re-examine
-                out.append(src[i + 1])
-                i += 2
+        if not depth and (c == '"' or c == "r"):
+            end = _skip_string(src, i)
+            if end is not None:
+                out.append(src[i:end])
+                i = end
                 continue
-            if c == '"':
-                in_str = False
-            i += 1
-        elif depth:
+        if depth:
             if src.startswith("/-", i):
                 depth += 1
                 i += 2
@@ -88,10 +122,6 @@ def _strip_comments(src: str) -> str:
         elif src.startswith("--", i):
             j = src.find("\n", i)
             i = n if j < 0 else j
-        elif c == '"':
-            in_str = True
-            out.append(c)
-            i += 1
         else:
             out.append(c)
             i += 1
@@ -287,12 +317,11 @@ def closes_more_than_it_opens(proof_src: str) -> bool:
     n = len(src)
     while i < n:
         c = src[i]
-        if c == '"':                                  # skip string literals wholesale
-            i += 1
-            while i < n and src[i] != '"':
-                i += 2 if src[i] == "\\" else 1
-            i += 1
-            continue
+        if c == '"' or c == "r":                      # skip string literals wholesale (raw too)
+            end = _skip_string(src, i)
+            if end is not None:
+                i = end
+                continue
         if c == "'" and i + 2 < n:                    # skip simple char literals: 'a', '\n'
             j = i + 2 if src[i + 1] != "\\" else i + 3
             if j < n and src[j] == "'":
@@ -479,3 +508,28 @@ def _axiom_complaint(report: dict) -> str:
     if not report.get("saw_axiom_report"):
         return "no `#print axioms` report was produced for the proof"
     return "axiom footprint check failed"
+
+
+_AXCHECK_RE = re.compile(r"^(\S+) AXIOMS (\S+) \[([^\]]*)\]\s*$", re.MULTILINE)
+
+
+def _parse_axcheck(stdout: str, nonce: str, probe: str, allowed=STD_AXIOMS) -> dict:
+    """Read the compiled reporter's answer (ADR 0097).
+
+    The line must carry the NONCE this call chose and name the PROBE this call aliased. Both are
+    generated after the proposer's text is fixed, so a line the proof arranged to be printed
+    cannot satisfy either. `MISSING` and unparseable output fail CLOSED -- the caller treats a
+    None/`ok=False` as a refusal, never as a pass.
+    """
+    if not stdout:
+        return {"ok": False, "reason": "no output from the axiom reporter", "axioms": []}
+    for m in _AXCHECK_RE.finditer(stdout):
+        if m.group(1) != nonce or m.group(2) != probe:
+            continue
+        axioms = [a.strip() for a in m.group(3).split(",") if a.strip()]
+        extra = [a for a in axioms if a not in allowed]
+        return {"ok": not extra, "axioms": axioms, "extra_axioms": extra,
+                "saw_axiom_report": True, "has_sorry": "sorryAx" in axioms,
+                "name": probe, "independent": True}
+    return {"ok": False, "reason": "reporter did not answer for this nonce/probe",
+            "axioms": [], "saw_axiom_report": False}

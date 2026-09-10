@@ -26,6 +26,7 @@ from leibniz.backends.lean_axioms import (
     mentions_sorry,
     probe_source,
     smuggles_top_level,
+    statement_head,
     statement_is_single_declaration,
 )
 from leibniz.propositio import Demonstratio, Expressio
@@ -437,6 +438,42 @@ def test_native_decide_is_refused_BY_THE_FOOTPRINT_not_by_an_error():
         assert demo.qed == "Q.E.I."
     finally:
         be.close()
+
+
+def test_lean_raw_strings_cannot_escape_the_wrapper():
+    """ADR 0097 round 5, re-measured on the 4.34 pin and STILL LIVE there until this fix.
+
+    Lean raw strings do no escape processing, so `r"\\"` is a COMPLETE raw string and the `)` that
+    follows is live -- it closes `probe_source`'s parenthesised wrapper and reaches command
+    position, reviving the round-4 `elab_rules` hijack. A lexer that reads `\\"` as an escaped
+    quote never sees that paren, so the depth check reported non-negative and both transports
+    returned `kernel_verified=True`, `Q.E.D.` for a `native_decide` proof.
+
+    This is the fifth distinct lexer disagreement across five rounds, which is why the module
+    documents these scans as defence in depth rather than as the guarantee.
+    """
+    escape = r'(fun _ : String => by native_decide) r"\") open Lean Elab Command in elab_rules'
+    assert closes_more_than_it_opens(escape)
+    # raw strings with hash delimiters, and their contents, are still inert
+    assert not closes_more_than_it_opens('by exact r#"a")b"#')
+    assert not closes_more_than_it_opens(r'by exact "a\"b"')
+    assert not closes_more_than_it_opens("by exact r\")\"")
+    # an ordinary honest proof is untouched
+    for good in ("by decide", "by exact ⟨1, rfl⟩", "by\n  simp [h]"):
+        assert not closes_more_than_it_opens(good), good
+    # and a raw string must not be mistaken for a comment opener either
+    assert 'r"/-"' in _strip_comments('have s := r"/-"')
+
+
+def test_statement_head_cut_removes_a_mid_line_payload():
+    """Round 5 hid `namespace M theorem margin : True` after a `:=` in `theorem_src`, re-pointing
+    the probe's `@<name>` at a decoy. ADR 0096's build obligation 1 cuts `theorem_src` at the first
+    `:=` -- which incidentally removes that payload. Recorded as a SIDE EFFECT, not as the guard:
+    it was done for the 24 `:=`-tailed ledger rows, and a variant that avoids `:=` fails closed on
+    a parse error instead. Neither is a reason to trust the line-anchored scan."""
+    T = "theorem margin : (2:Nat)+2 = 4 := (by native_decide) namespace M theorem margin : True"
+    assert statement_head(T) == "theorem margin : (2:Nat)+2 = 4"
+    assert "namespace" not in probe_source(T, "by decide", "margin", "PROBE")
 
 
 # --- the live exploit (docker-gated) ----------------------------------------

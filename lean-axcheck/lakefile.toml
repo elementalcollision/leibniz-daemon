@@ -1,0 +1,7 @@
+name = "axcheck"
+defaultTargets = ["axcheck"]
+
+[[lean_exe]]
+name = "axcheck"
+root = "Axcheck"
+supportInterpreter = true
