@@ -977,18 +977,23 @@ def test_a_dirty_preamble_helper_now_fails():
 # a green suite is never mistaken for a closed boundary. They are the honest encoding of ADR 0097's
 # "What is still open"; deleting them to make the suite look clean would be the defect, not the fix.
 
-_R8_REASON = ("ADR 0097: the kernel-bypass and statement-meaning classes are OPEN. Closing them "
-              "needs a kernel replay (lean4checker, stuck at v4.29 vs the v4.34.0-rc2 pin) or a "
-              "confined preamble -- not another text scan.")
+_R8_REASON = ("ADR 0098 closed the kernel-bypass class with a kernel replay. The STATEMENT-MEANING "
+              "class stays open: it is a preamble-trust decision, not a checker gap -- every layer "
+              "behaves honestly and only what the statement MEANS has changed.")
 
 
-@pytest.mark.xfail(strict=True, reason=_R8_REASON)
-def test_KNOWN_OPEN_programmatic_skip_kernel_tc():
-    """`debug.skipKernelTC` set from a meta-program, with the option name assembled from fragments.
+def test_programmatic_skip_kernel_tc_is_refused_by_the_kernel_replay():
+    """ADR 0098. `debug.skipKernelTC` set from a meta-program, the option name assembled from
+    fragments, so there is NO STRING for `defeats_the_kernel` to match -- not obfuscated, absent.
 
-    There is no string for `defeats_the_kernel` to match -- not obfuscated, absent. This is why
-    that guard cannot work in principle: Lean is a metaprogramming language, so any text scan over
-    this class is defeatable. Measured: `theorem t : False` -> kernel_verified=True, Q.E.D."""
+    ADR 0097 recorded this as open in principle, on the reasoning that Lean is a metaprogramming
+    language and no text scan can see it. That reasoning was right and the conclusion was wrong:
+    the answer was never to scan harder but to REPLAY THE KERNEL, which is the one question
+    neither existing layer asks. `lean4checker` rejects this environment outright
+    (`unknown constant 'evilConst'`) because a self-loop cannot be re-added by a kernel that is
+    actually running. Verified with every syntactic guard disabled AND the pre-filter subverted:
+    still refused, so `defeats_the_kernel` is now genuinely defence in depth rather than the
+    guarantee."""
     be = _cli()
     pre = ('open Lean Elab Command\n'
            'run_cmd do\n'
@@ -1019,11 +1024,15 @@ def test_KNOWN_OPEN_notation_redefines_the_statement():
     assert demo.kernel_verified is False, "False was sealed Q.E.D."
 
 
-@pytest.mark.xfail(strict=True, reason=_R8_REASON)
-def test_KNOWN_OPEN_guillemet_option_spelling():
+def test_guillemet_option_spelling_is_refused_by_the_kernel_replay():
     """`set_option debug.«skipKernelTC» true` -- Lean resolves the option, the regex does not.
-    Paired with a `run_cmd` that parses `unsafe def evil` out of a STRING LITERAL, which the
-    round-7 fix (strip strings before scanning) is precisely what allows."""
-    from leibniz.backends.lean_axioms import defeats_the_kernel
-    assert defeats_the_kernel("set_option debug.«skipKernelTC» true in\ntheorem t : False"), \
-        "the guillemet spelling evades the scan"
+    ADR 0098 makes the regex's blindness harmless: whatever spelling gets the kernel check
+    skipped, the replay re-runs it. This asserts the OUTCOME, not the scan, which is the whole
+    point -- the scan is allowed to be wrong now."""
+    be = _cli()
+    demo = Demonstratio(proof_obligation="r8-guillemet", proof_src="evil")
+    LeanVerifier(backend=be).discharge(
+        Expressio(theorem_src="set_option debug.«skipKernelTC» true in\ntheorem gt : False",
+                  imports=(), preamble="unsafe def evil : False := evil"), demo)
+    assert demo.kernel_verified is False
+    assert demo.qed != "Q.E.D."

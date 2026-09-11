@@ -15,9 +15,10 @@ fi
 # 1b. ADR 0097: the MINT now consults the compiled axiom reporter, which lives in its own layered
 #     image. Without it every honest discharge fails CLOSED and the lane goes red for a reason
 #     that looks nothing like its cause -- exactly the ADR 0093 shape. Say so instead.
-if ! docker image inspect "leibniz-lean-axcheck:${LEIBNIZ_KERNEL_VERSION:-v4.34.0-rc2}" >/dev/null 2>&1; then
-  echo "FAIL: leibniz-lean-axcheck image missing; the ADR 0097 mint check cannot run." >&2
-  echo "  build it:  docker build -f docker/lean-axcheck.Dockerfile -t leibniz-lean-axcheck:v4.34.0-rc2 ." >&2
+if ! docker image inspect "leibniz-lean-verify:${LEIBNIZ_KERNEL_VERSION:-v4.34.0-rc2}" >/dev/null 2>&1; then
+  echo "FAIL: leibniz-lean-verify image missing; the ADR 0097/0098 mint checks cannot run." >&2
+  echo "  build it:  docker build -f docker/lean-axcheck.Dockerfile -t leibniz-lean-axcheck:v4.34.0-rc2 . \\" >&2
+  echo "         &&  docker build -f docker/lean4checker.Dockerfile -t leibniz-lean-verify:v4.34.0-rc2 ." >&2
   exit 2
 fi
 

@@ -75,7 +75,9 @@ from leibniz.propositio import Expressio
 KERNEL_VERSION = "v4.34.0-rc2"
 DEFAULT_IMAGE = f"leibniz-lean:{KERNEL_VERSION}"
 #: ADR 0097 — the kernel image plus the compiled axiom reporter (docker/lean-axcheck.Dockerfile).
-AXCHECK_IMAGE = f"leibniz-lean-axcheck:{KERNEL_VERSION}"
+#: ADR 0098 — the kernel image plus BOTH verifiers: the axiom reporter and the kernel replay
+#: (docker/lean-axcheck.Dockerfile, then docker/lean4checker.Dockerfile).
+VERIFY_IMAGE = f"leibniz-lean-verify:{KERNEL_VERSION}"
 # Triviality tactics. A statement any of these closes ON ITS OWN is vacuous and must
 # NOT be promulgated. `ring`/`nlinarith` were added (ADR 0025) after a calibration
 # promulgated 32 polynomial identities (e.g. (m+3)(m+5)+1=(m+4)^2) that `ring` closes
@@ -240,9 +242,19 @@ class LeanCliBackend:
         `ConstantInfo` data. It elaborates none of the proof's syntax, so `elab_rules` has nothing
         to hook, and it prints on a channel tagged with a nonce chosen per call.
 
-        Returns the footprint dict, or None when the reporter is unavailable — the caller treats
-        None as FAIL, never as a pass. Costs ~5 s (compile + query), which is why it gates the
-        MINT and not every `check_proof`.
+        ADR 0098 adds a second, independent question in the same round-trip. The reporter reads
+        what the environment SAYS; `lean4checker` replays that environment through a bare kernel
+        and answers whether the kernel would accept it at all. Round 8 measured why both are
+        needed: a `run_cmd` assembling `debug.skipKernelTC` from string fragments and `addDecl`-ing
+        a self-referential `unsafe` constant of type `False` produces a genuinely EMPTY footprint,
+        so the reporter passes it honestly — and no text scan can see it, because there is no
+        string to match. The replay rejects it (`unknown constant 'evilConst'`, exit 1). It runs
+        FIRST and short-circuits, so a footprint is never read from an environment the kernel
+        would refuse.
+
+        Returns the footprint dict, or None when either tool is unavailable — the caller treats
+        None as FAIL, never as a pass. Costs ~5 s (compile + replay + query), which is why it
+        gates the MINT and not every `check_proof`.
         """
         name = declaration_name(expr.theorem_src)
         if (not name or smuggles_top_level(proof_src)
@@ -264,13 +276,16 @@ class LeanCliBackend:
                 (Path(td) / "Mint.lean").write_text(source)
                 proc = subprocess.run(
                     ["docker", "run", "--rm", "-v", f"{td}:/scratch:ro",
-                     "-w", "/work/lean-project", AXCHECK_IMAGE, "bash", "-lc",
+                     "-w", "/work/lean-project", VERIFY_IMAGE, "bash", "-lc",
                      # Nothing proposer-derived is interpolated into this shell string any more.
                      # `Mint` is fixed and `nonce` is ours -- round 7 showed the theorem name was
                      # both a shell-injection vector and a way to mis-aim the question.
                      "cp /scratch/Mint.lean ./Mint.lean && "
                      "lake env lean -o Mint.olean Mint.lean >/dev/null 2>&1 && "
-                     'LEAN_PATH="$(lake env printenv LEAN_PATH):/work/lean-project" '
+                     'export LEAN_PATH="$(lake env printenv LEAN_PATH):/work/lean-project" && '
+                     # ADR 0098: the KERNEL REPLAY runs first and its failure short-circuits, so
+                     # a footprint is never even read from an environment the kernel would reject.
+                     "/work/lean4checker/.lake/build/bin/lean4checker Mint && "
                      f"/work/axcheck/.lake/build/bin/axcheck Mint {nonce}"],
                     capture_output=True, text=True, timeout=self.timeout_s,
                 )
