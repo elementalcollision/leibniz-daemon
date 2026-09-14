@@ -1,0 +1,33 @@
+diff --git a/Lean4Checker/Replay.lean b/Lean4Checker/Replay.lean
+index 683aa50..8d68ba0 100644
+--- a/Lean4Checker/Replay.lean
++++ b/Lean4Checker/Replay.lean
+@@ -62,7 +62,7 @@ def throwKernelException (ex : Kernel.Exception) : M Unit := do
+ 
+ /-- Add a declaration, possibly throwing a `Kernel.Exception`. -/
+ def addDecl (d : Declaration) : M Unit := do
+-  match (← get).env.addDeclCore 0 d (cancelTk? := none) with
++  match (← get).env.addDeclCore 0 0 d (cancelTk? := none) with
+   | .ok env => modify fun s => { s with env := env }
+   | .error ex => throwKernelException ex
+ 
+diff --git a/Lean4CheckerTests/AddFalse.lean b/Lean4CheckerTests/AddFalse.lean
+index 6092c4e..1587222 100644
+--- a/Lean4CheckerTests/AddFalse.lean
++++ b/Lean4CheckerTests/AddFalse.lean
+@@ -4,7 +4,7 @@ open Lean in
+ run_elab
+   modifyEnv fun env => Id.run do
+     let decl := .thmDecl { name := `false, levelParams := [], type := .const ``False [], value := .const ``False [] }
+-    let .ok env := env.addDeclCore (doCheck := false) 0 decl none |
++    let .ok env := env.addDeclCore (doCheck := false) 0 0 decl none |
+       let _ : Inhabited Environment := ⟨env⟩
+       unreachable!
+     env
+diff --git a/lean-toolchain b/lean-toolchain
+index ccec351..b814d98 100644
+--- a/lean-toolchain
++++ b/lean-toolchain
+@@ -1 +1 @@
+-leanprover/lean4:v4.29.0-rc8
++leanprover/lean4:v4.34.0-rc2
