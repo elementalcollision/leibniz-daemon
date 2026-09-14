@@ -192,6 +192,39 @@ def _strip_comments(src: str) -> str:
     return _lex(src)[0]
 
 
+_INTERPOLATION = re.compile(r'(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]*!"')
+
+
+def uses_string_interpolation(src: str) -> bool:
+    """True iff `src` contains an INTERPOLATED string (`s!"..."`, `m!"..."`, ...).
+
+    ADR 0097 round 9c. `_skip_string` reads `s!"{f "a--b"}"` as the string `"{f "` followed by live
+    code, because the `{...}` of an interpolation may contain its own string literals and this lexer
+    does not recurse. Measured: the `--` inside the nested string then opened a line comment that
+    swallowed a wrapper-closing `)` AND a smuggled `macro_rules` on the same line, and every guard
+    passed -- the round-4 confinement escape, reached through a third lexical construct.
+
+    Parsing interpolation properly means recursing into Lean's term grammar, which is the losing
+    half of this game (rounds 9, 9b and 9c are the same lesson three times). Instead this REMOVES
+    the adversary's ability to answer: no theorem statement or proof in the corpus uses
+    interpolation -- measured, 0 of 45 recorded `theorem_src` / `proof_src` / `preamble` fields --
+    because these are mathematical statements, not IO. So the guards refuse it outright.
+
+    If an honest proof ever needs one, it fails CLOSED and loudly, and an operator can look at it.
+    """
+    return _INTERPOLATION.search(src or "") is not None
+
+
+def lexer_must_refuse(src: str) -> bool:
+    """True iff our lexer cannot be trusted on `src`, for ANY known reason.
+
+    The guards key off this rather than off a list of constructs. Enumerating what can desync a
+    hand-written Lean lexer has failed three rounds running; what those rounds share is that the
+    text a guard scans stops matching the text Lean elaborates, and each has a cheap symptom.
+    """
+    return unterminated_block_comment(src) or uses_string_interpolation(src)
+
+
 def unterminated_block_comment(src: str) -> bool:
     """True iff `src` leaves a `/-` open — i.e. our lexer and Lean's have disagreed somewhere.
 
@@ -206,7 +239,7 @@ def unterminated_block_comment(src: str) -> bool:
 def declaration_name(theorem_src: str) -> Optional[str]:
     """The name of the declaration ``theorem_src`` actually declares, or None (fail closed)."""
     # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
-    if unterminated_block_comment(theorem_src or ""):
+    if lexer_must_refuse(theorem_src or ""):
         return None
     m = _DECL_RE.search(_strip_comments(theorem_src))
     if not m:
@@ -328,7 +361,7 @@ def smuggles_top_level(proof_src: str) -> bool:
     ours, whatever syntax introduced it.
     """
     # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
-    if unterminated_block_comment(proof_src or ""):
+    if lexer_must_refuse(proof_src or ""):
         return True
     src = _strip_comments(proof_src or "")
     # Re-scan the text AFTER each `set_option/open ... in` prefix instead of exempting the whole
@@ -379,7 +412,7 @@ def statement_is_single_declaration(theorem_src: str) -> bool:
     out from under the name we asked about. One declaration, nothing else.
     """
     # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
-    if unterminated_block_comment(theorem_src or ""):
+    if lexer_must_refuse(theorem_src or ""):
         return False
     src = _strip_comments(theorem_src or "")
     # ADR 0097 round 6 -- MY OWN ASYMMETRY, and it was a soundness break. Round 4 taught
@@ -415,7 +448,7 @@ def closes_more_than_it_opens(proof_src: str) -> bool:
     error inside the wrapper, which already fails closed.
     """
     # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
-    if unterminated_block_comment(proof_src or ""):
+    if lexer_must_refuse(proof_src or ""):
         return True
     src, depth, i, n = _strip_comments(proof_src or ""), 0, 0, 0
     n = len(src)
@@ -529,7 +562,7 @@ def defeats_the_kernel(text: str) -> bool:
     # declare anything. Refusing those was a silent false-reject indistinguishable from a kernel
     # rejection -- verified against the real kernel, which accepts them with an empty footprint.
     # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
-    if unterminated_block_comment(text or ""):
+    if lexer_must_refuse(text or ""):
         return True
     src, out, i, n = _strip_comments(text or ""), [], 0, 0
     n = len(src)
