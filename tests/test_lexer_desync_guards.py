@@ -27,6 +27,7 @@ from leibniz.backends.lean_axioms import (
     smuggles_top_level,
     statement_is_single_declaration,
     unterminated_block_comment,
+    uses_string_interpolation,
 )
 
 WHY = "a guard must not scan text the lexer already swallowed"
@@ -152,3 +153,58 @@ def test_9b_primes_are_not_char_literals():
     assert declaration_name("theorem foo' : True := trivial") == "foo'"
     assert smuggles_top_level("by simpa using h'.mp h''") is False
     assert unterminated_block_comment("theorem t (h' : True) : True := h'") is False
+
+
+# --- round 9c: string interpolation, the third construct in three rounds ---------------------
+#
+# `_skip_string` reads `s!"{f "a--b"}"` as the string `"{f "` followed by live code, because an
+# interpolation's `{...}` may contain its own string literals and this lexer does not recurse. The
+# `--` inside the nested string then opened a line comment that swallowed a wrapper-closing `)` AND
+# a smuggled `macro_rules` on the same line.
+#
+# Measured on the pin: the assembled declaration elaborates, `macro_rules` becomes a top-level
+# command, and `#print axioms oops` reports `oops._native.native_decide.ax_1_1`. The MINT still
+# refused it (kernel_verified=False, Q.E.I.; the ADR 0097 reporter named the native axiom), so the
+# trust boundary held -- but the confinement layer contributed nothing, for the third round running.
+
+_9C_THEOREM = "theorem oops : (2:Nat)^20 = 1048576"
+_9C_PROOF = ('(fun (_ : String) => by native_decide) s!"{id "x--"}" ) '
+             'macro_rules | `(@$_:ident) => `(True.intro')
+
+
+def test_9c_interpolation_is_refused_rather_than_parsed():
+    """Recursing into Lean's term grammar is the losing half of this game. Refuse instead."""
+    assert uses_string_interpolation('def m := s!"{f "a--b"}"') is True
+    assert uses_string_interpolation('theorem t : True := trivial') is False
+    assert uses_string_interpolation('have s : String := "plain"') is False, "a plain string is not one"
+
+
+def test_9c_confinement_escape_behind_an_interpolation_is_refused():
+    """Asserts the GATE the backends evaluate, which is what actually decides."""
+    refused = (not declaration_name(_9C_THEOREM)
+               or smuggles_top_level(_9C_PROOF)
+               or closes_more_than_it_opens(_9C_PROOF)
+               or defeats_the_kernel(_9C_PROOF)
+               or defeats_the_kernel(_9C_THEOREM)
+               or not statement_is_single_declaration(_9C_THEOREM))
+    assert refused is True, "the backend gate admitted the round-9c confinement escape"
+
+
+def test_9c_every_guard_fails_closed_on_interpolation():
+    src = 'by exact (s!"{f "x--y"}" ▸ rfl)'
+    assert smuggles_top_level(src) is True
+    assert closes_more_than_it_opens(src) is True
+    assert defeats_the_kernel(src) is True
+    assert declaration_name('theorem t : s!"{x}" = "" := rfl') is None
+    assert statement_is_single_declaration('theorem t : s!"{x}" = "" := rfl') is False
+
+
+def test_9c_no_published_law_uses_interpolation():
+    """The refusal is only free because nothing honest needs it. If this ever fails, the decision
+    to refuse rather than parse has to be revisited -- do not just widen the regex."""
+    import glob
+    import json
+    for p in sorted(glob.glob("site/src/content/laws/*.json")):
+        d = json.load(open(p))
+        for k in ("theorem_src", "proof_src", "preamble"):
+            assert not uses_string_interpolation(d.get(k) or ""), f"{p} {k} uses interpolation"

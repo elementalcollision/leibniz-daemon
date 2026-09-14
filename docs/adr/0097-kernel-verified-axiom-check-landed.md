@@ -569,3 +569,50 @@ a disjunction of several weak checks rather than one clever one, and for neither
 Two rounds, two lexical constructs, same root cause: **this module keeps re-learning that it is
 writing a Lean lexer in Python.** Everything here is defence in depth. The checks that actually decide
 are ADR 0097's compiled reporter and ADR 0098's kernel replay, and both held throughout.
+
+### Round 9c — string interpolation, the third construct in three rounds
+
+`_skip_string` reads `s!"{f "a--b"}"` as the string `"{f "` followed by live code: an
+interpolation's `{…}` may contain its own string literals, and this lexer does not recurse. The `--`
+inside the nested string then opened a line comment that swallowed both a wrapper-closing `)` and a
+smuggled `macro_rules` on the same line. Every guard passed:
+
+```
+declaration_name                   oops
+statement_is_single_declaration    True
+smuggles_top_level                 False
+closes_more_than_it_opens          False
+unterminated_block_comment         False      <- round 9's symptom check does not fire
+```
+
+Verified on the pin: the assembled declaration elaborates, `macro_rules` becomes a top-level command,
+and `#print axioms oops` reports `oops._native.native_decide.ax_1_1`. This is round 4's confinement
+escape, reached through a third lexical construct.
+
+**The mint refused it** — `kernel_verified=False`, `Q.E.I.`, the reporter naming the native axiom.
+The trust boundary held, as in rounds 9 and 9b. The confinement layer contributed nothing, as in
+rounds 9 and 9b.
+
+Fixed by **refusing** interpolation rather than parsing it. Recursing into Lean's term grammar to
+lex `{…}` correctly is the losing half of this game, and three rounds have now made that concrete.
+No theorem statement or proof needs interpolation — measured, **0 of 45** recorded `theorem_src` /
+`proof_src` / `preamble` fields use one, because these are mathematical statements, not IO. So the
+guards refuse it outright and fail closed, loudly, if an honest proof ever needs one. A test asserts
+the corpus stays free of it, so the premise cannot rot silently.
+
+The five guards now key off `lexer_must_refuse`, which ORs every known reason this lexer cannot be
+trusted, rather than off a list of constructs.
+
+### What three rounds of this actually establish
+
+Rounds 9, 9b and 9c are one finding restated: **a hand-written Lean lexer in Python will keep being
+wrong, and each time it is wrong every guard built on it is wrong at once.** Guillemets, character
+literals, string interpolation — three constructs, three rounds, same shape, found by three separate
+attacks on code that had just been declared fixed.
+
+What this does *not* establish is that the trust boundary is fragile. In all three rounds the mint
+refused the exploit, because ADR 0097's compiled reporter and ADR 0098's replay do not read
+proposer syntax at all. The correct reading is that the confinement layer is worth roughly what this
+ADR always said it was worth — defence in depth — and that its failures should be priced as such
+rather than as near-misses. If it ever becomes load-bearing again, it should be replaced by
+something that does not parse Lean, not hardened further.
