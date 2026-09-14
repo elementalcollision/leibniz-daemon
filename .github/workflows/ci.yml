@@ -49,3 +49,10 @@ jobs:
       # Read-only and kernel-free, so it runs on the GitHub-hosted lane.
       - name: Audit recorded axiom footprints (BLOCKING)
         run: python scripts/audit_axiom_footprints.py
+
+      # ADR 0099 -- a clean axiom closure does not mean the statement says what it appears to say.
+      # `notation "False" => True` introduces no axiom, so the check above is blind to it. The HASH
+      # PIN is the enforcement here (a changed preamble fails until an operator re-pins it); the
+      # construct lint is a best-effort authoring aid and is not sound. Neither closes the class.
+      - name: Audit recorded preamble constructs and pins (BLOCKING)
+        run: python scripts/audit_preamble_constructs.py

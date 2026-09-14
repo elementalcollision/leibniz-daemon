@@ -1,0 +1,16 @@
+{
+  "_comment": "ADR 0099. sha256 of each recorded Expressio.preamble. A change here is a change to what a published law MEANS -- review the diff, do not rubber-stamp.",
+  "pins": {
+    "site/src/content/laws/cabello_ks_uncolorable.json::$.preamble": "9e83fd933b85bf889c994020d5fa108455a4b812590329facbf7cb3e911c4515",
+    "site/src/content/laws/capset_subgroup_caps.json::$.preamble": "1286293ccffaa05f6730d46b805029cbd3ef048a1fbfaa9def086902e0874bc1",
+    "site/src/content/laws/double_blocking_3qm1.json::$.preamble": "3fd195d7e39bfd5bf15edcf8c027e8d606c9fc79d6c2fcf246d377b962462c92",
+    "site/src/content/laws/erdos707_am_witness.json::$.preamble": "fc4322955c25b4e95eb6d4fcb9e72140b50940920c23bb3f2db10b7bc3567a49",
+    "site/src/content/laws/gk_divisibilities.json::$.preamble": "a02c0eb89ec11d7e5c39a2455e9e091ed1b77d3293f27f57f128640aba358723",
+    "site/src/content/laws/hadamard94_witness1.json::$.preamble": "4935ca96b41ad50eb09de91d15c1962abf1caf94b1156e821a2f5c8c0dbba917",
+    "site/src/content/laws/mafi_naderi_t2.json::$.preamble": "0facd3c11d63b9ff9090d165426038b9084616275fdec3df8b300bccae04012e",
+    "site/src/content/laws/markoff_cage_core.json::$.preamble": "162f7a3f7dfb8a7d76eecf39c4517272b07a8306924d53fd4802eb6344cfa60c",
+    "site/src/content/laws/prob16_census_refutations.json::$.preamble": "09734c98b6bc103a90640a7620fc35e5ac3c9f848431e713a488f5329ba1ed2a",
+    "site/src/content/laws/prob41_census_non_normal.json::$.preamble": "b2bb44938db8f87bddf65482e6777747ffd925b5a38284eb2b173a56f83715be",
+    "site/src/content/laws/steiner_s8_225_s9_289.json::$.preamble": "d3e0502b3f0f5ad6af341b1c7df026fc9b447bc7f5a5531cafb2c28b3f3dbc67"
+  }
+}
