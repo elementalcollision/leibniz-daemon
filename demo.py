@@ -35,6 +35,11 @@ class FakeLean:
     """Compiles everything; closes only statements marked AutoClosable; proves
     only the sorting-bound statement."""
 
+    #: ADR 0097 — TEST DOUBLE. Real backends earn this by reading `#print axioms` inside
+    #: `check_proof`; this fake asserts it so `discharge` will stamp in the demo. Grep this
+    #: name to find every place that mints a kernel verdict without a kernel.
+    enforces_axiom_closure = True
+
     def compile_statement(self, expr):
         return "malformed" not in expr.theorem_src
 

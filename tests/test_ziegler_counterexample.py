@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from leibniz.backends.lean_axioms import axiom_report
+
 _ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -74,7 +76,12 @@ def test_live_kernel_legs():
     body = "\n".join(ln for ln in leg[0][1].splitlines() if not ln.startswith("import "))
     be = LeanReplBackend(timeout_s=300)
     try:
-        res = be._run(body, ())
+        # ADR 0097: ask for the axiom footprint explicitly. Without `#print axioms` the response
+        # carries only elaboration diagnostics, so scanning its text for "sorryAx"/"native_decide"
+        # asserted almost nothing -- and on Lean >= 4.29 the native axiom is named after the
+        # theorem (`<name>._native.native_decide.ax_1`), so a substring denylist is the wrong
+        # instrument regardless. Read the footprint and hold it to the allowlist.
+        res = be._run(f"{body}\n#print axioms ziegler_dim_notsym", ())
         # `_run` returns None for a TIMEOUT and for a DEAD CONTAINER alike, and this test could
         # not tell them apart -- so an OOM kill was reported as a verification failure. Under suite
         # contention the container is killed (rc 137) rather than the proof failing; that is an
@@ -86,5 +93,7 @@ def test_live_kernel_legs():
         be.close()
     assert isinstance(res, dict)
     errs = [x for x in res.get("messages", []) if x.get("severity") == "error"]
-    ax = " ".join(str(x.get("data", "")) for x in res.get("messages", []))
-    assert not errs and "sorryAx" not in ax and "native_decide" not in ax
+    assert not errs
+    rep = axiom_report(res, "ziegler_dim_notsym")
+    assert rep["saw_axiom_report"], "no #print axioms report -- the check would pass vacuously"
+    assert rep["ok"], f"axiom footprint outside the allowlist: {rep['extra_axioms']}"

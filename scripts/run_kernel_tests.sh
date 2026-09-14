@@ -12,9 +12,19 @@ if ! python3 -c "import sys; sys.path.insert(0,'.'); from leibniz.backends.lean_
   exit 2
 fi
 
+# 1b. ADR 0097: the MINT now consults the compiled axiom reporter, which lives in its own layered
+#     image. Without it every honest discharge fails CLOSED and the lane goes red for a reason
+#     that looks nothing like its cause -- exactly the ADR 0093 shape. Say so instead.
+if ! docker image inspect "leibniz-lean-axcheck:${LEIBNIZ_KERNEL_VERSION:-v4.34.0-rc2}" >/dev/null 2>&1; then
+  echo "FAIL: leibniz-lean-axcheck image missing; the ADR 0097 mint check cannot run." >&2
+  echo "  build it:  docker build -f docker/lean-axcheck.Dockerfile -t leibniz-lean-axcheck:v4.34.0-rc2 ." >&2
+  exit 2
+fi
+
 # 2. run the kernel-exercising tests; -rs surfaces skip reasons so a silent skip is visible.
 #    These files are skip-FREE when the image is present (every test runs), so the zero-skip rule (step 3)
-#    holds. test_kernel_false_theorem_rejection is GATE-4: the audit-tier "nothing false is KERNEL-VERIFIED"
+#    holds. test_native_eval_redteam is the ADR 0097 gate — the published Lean native-evaluation
+#    exploit driven through the sole kernel writer. test_kernel_false_theorem_rejection is GATE-4: the audit-tier "nothing false is KERNEL-VERIFIED"
 #    backstop. (For BROAD coverage with a calibrated skip budget, use scripts/run_kernel_soak.sh instead.)
 #    test_novelty_corpus_r3 is here per ADR 0095 Decision 3: it is the ONLY test that recomputes a
 #    corpus hash against the live kernel, so it is the only thing that catches a corpus gone stale
@@ -22,6 +32,7 @@ fi
 #    GitHub-hosted `ci`, absent from this list), which is the ADR 0093 shape one layer in.
 out="$(python3 -m pytest tests/test_kernel_smoke.py tests/test_covering_decider.py \
        tests/test_kernel_false_theorem_rejection.py tests/test_novelty_corpus_r3.py \
+       tests/test_native_eval_redteam.py \
        -q -rs -p no:cacheprovider 2>&1)"
 echo "$out"
 

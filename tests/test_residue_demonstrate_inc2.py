@@ -34,7 +34,9 @@ class FakeBackend:
     def _run(self, src, imports):
         if not self.clean:
             return {"messages": [{"severity": "error", "data": "unclean"}]}
-        name = (re.search(r"theorem\s+(\S+)", src) or [None, "x"])[1]
+        # ADR 0097 round 3: the footprint is asked of an unpredictable PROBE alias.
+        name = (re.search(r"#print axioms (\S+)", src)
+                or re.search(r"theorem\s+(\S+)", src) or [None, "x"])[1]
         return {"messages": [{"severity": "info", "data": f"'{name}' depends on axioms: [propext]"}]}
 
 

@@ -14,6 +14,11 @@ from leibniz.verifiers import LeanVerifier
 
 
 class _FakeLeanBackend:
+    #: ADR 0097 — TEST DOUBLE. Real backends earn this by reading `#print axioms` inside
+    #: `check_proof`; this fake asserts it so `discharge` will exercise the path under test.
+    #: Grep this name to find every place that mints a kernel verdict without a kernel.
+    enforces_axiom_closure = True
+
     def compile_statement(self, expr):
         return True
 

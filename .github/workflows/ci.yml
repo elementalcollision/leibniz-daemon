@@ -42,3 +42,10 @@ jobs:
 
       - name: Lint (BLOCKING — repo is ruff-clean as of R0 cleanup)
         run: ruff check .
+
+      # ADR 0097 — every RECORDED Lean axiom footprint must sit inside the allowlist.
+      # Allowlist, not denylist: since Lean 4.29 native computation emits one auto-generated
+      # axiom per computation, so a denylist naming ofReduceBool/trustCompiler is blind to it.
+      # Read-only and kernel-free, so it runs on the GitHub-hosted lane.
+      - name: Audit recorded axiom footprints (BLOCKING)
+        run: python scripts/audit_axiom_footprints.py

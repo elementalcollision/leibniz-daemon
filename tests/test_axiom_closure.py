@@ -27,7 +27,19 @@ class _FakeBackend:
         self._messages = messages
 
     def _run(self, src, imports):
-        return {"messages": self._messages}
+        # ADR 0097 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
+        # retarget canned reports about OUR theorem onto it. Reports about OTHER declarations are
+        # left alone: several tests assert a preamble's report must not become our footprint.
+        import re
+        mm = re.search(r"def (\S+) := @(\S+)", src or "")
+        msgs = self._messages
+        if not mm:
+            return {"messages": msgs}
+        probe, nm = mm.group(1), mm.group(2)
+        pat = re.compile(r"'(?:[^']*\.)?" + re.escape(nm)
+                         + r"'(\s*(?:depends on axioms:|does not depend on any axioms))")
+        return {"messages": [{**x, "data": pat.sub(lambda g: f"'{probe}'" + g.group(1),
+                                                   x.get("data") or "")} for x in msgs]}
 
 
 def _info(data):

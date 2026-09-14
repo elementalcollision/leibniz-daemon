@@ -70,10 +70,17 @@ class Expressio:
     established_domain: Optional[str] = None
     # ADR 0027: PROVER-CONTEXT-ONLY hints — independently-proven helper lemmas offered to
     # the prover (as copy-pasteable `have` blocks) when re-proving a hard goal. This is
-    # NEVER placed in the Lean source the kernel checks: the kernel only ever sees one
-    # self-contained declaration (`theorem_src := proof`), so a smuggled top-level command
-    # would be a parse error inside the proof — there is no separate-declaration surface to
-    # poison. Empty for ordinary proofs.
+    # NEVER placed in the Lean source the kernel checks. Empty for ordinary proofs.
+    #
+    # ADR 0097 CORRECTION. This used to claim the kernel "only ever sees one self-contained
+    # declaration (`theorem_src := proof`), so a smuggled top-level command would be a parse
+    # error inside the proof — there is no separate-declaration surface to poison." That is
+    # FALSE, and it was load-bearing: it is the reason nothing guarded `proof_src`. Lean
+    # elaborates `by native_decide\n\nnamespace M\ntheorem margin : True := trivial` as a proof
+    # FOLLOWED BY two more top-level commands, and that decoy defeated both the axiom footprint
+    # check and `axiom_closure` on the pinned 4.31 (measured: `kernel_verified=True`, `Q.E.D.`,
+    # driven to `False` via the Trail of Bits bug). The separate-declaration surface is real;
+    # `lean_axioms.smuggles_top_level` is what actually closes it.
     proof_hints: str = ""
     # ADR 0037 backend #1 (Walnut): the automatic-sequence FO rendering whose TRUTH (decided
     # soundly over unbounded n) establishes faithfulness, plus its numeration (e.g. "msd_2",

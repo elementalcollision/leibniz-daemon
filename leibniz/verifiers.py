@@ -59,8 +59,40 @@ class LeanVerifier:
         return bool(expr.compiles)
 
     def discharge(self, expr: Expressio, demo: Demonstratio) -> EdgeEvidence:
-        """Check the proof. This is the ONLY place kernel_verified is set."""
-        ok = bool(demo.proof_src) and self.backend.check_proof(expr, demo.proof_src)
+        """Check the proof. This is the ONLY place kernel_verified is set.
+
+        ADR 0097 — `kernel_verified` means KERNEL-decided, so the backend must also have read the
+        proof's axiom footprint. It was previously set from `check_proof` alone, and `check_proof`
+        bottomed out in "no error and no sorry"; the axiom footprint was a separate call each
+        provider and gate made BY CONVENTION. Measured on the pinned Lean 4.31 image, that gap is
+        not theoretical: a proof of Fermat's Last Theorem built on the Trail of Bits
+        `String.Pos.Raw.extract` compiler/kernel disagreement came back from this method with
+        `kernel_verified=True`, `MECHANICAL`, `PASS`, sealed `Q.E.D.` — while `axiom_closure`
+        rejected the very same proof. The writer was permissive and only the gate was strict.
+
+        A backend must now assert `enforces_axiom_closure`, i.e. that its `check_proof` returns
+        True only for a clean `#print axioms` footprint. Absent that assertion this FAILS CLOSED:
+        a future backend cannot be wired in and silently mint kernel verdicts, and the places that
+        opt out are greppable by that one name rather than invisible.
+        """
+        ok = (bool(demo.proof_src)
+              and bool(getattr(self.backend, "enforces_axiom_closure", False))
+              and self.backend.check_proof(expr, demo.proof_src))
+        # ADR 0097 — the INDEPENDENT footprint, and the last word on the stamp.
+        #
+        # `check_proof` reads `#print axioms` from the same file the proof lives in, and five
+        # rounds of adversarial review showed that file is not a trustworthy place to ask: a proof
+        # can print a report-shaped line, or redefine the `#print axioms` elaborator outright
+        # (`elab_rules : command | `(#print axioms $i:ident) => ...`), which defeats even an
+        # unpredictable probe name because it matches `$i:ident`. Every one of those ended in
+        # `kernel_verified=True`. So a backend that CAN answer without elaborating proposer syntax
+        # must do so here, and its answer binds. A missing or unreadable answer is a REFUSAL:
+        # `independent_axiom_footprint` returns None when the reporter is unavailable, and None is
+        # not a pass. Costs ~5 s, paid once per stamp rather than once per candidate.
+        if ok and getattr(self.backend, "mint_requires_independent_check", False):
+            probe = getattr(self.backend, "independent_axiom_footprint", None)
+            report = probe(expr, demo.proof_src) if callable(probe) else None
+            ok = bool(report and report.get("ok"))
         demo.kernel_verified = ok
         demo.seal()
         return EdgeEvidence(

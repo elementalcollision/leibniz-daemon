@@ -12,6 +12,11 @@ proposals concurrently — only the (now fast) kernel checks serialize. If the R
 process is unavailable it degrades to conservative results (False/None), and the
 assembly falls back to the CLI backend. It does NOT write kernel_verified —
 `LeanVerifier.discharge` remains the sole writer.
+
+ADR 0097: `check_proof` also requires a clean `#print axioms` footprint, sent in the
+SAME round-trip as the proof. `kernel_verified` is supposed to mean kernel-DECIDED,
+and "no error, no sorry" does not: `native_decide` satisfies it while the compiler,
+not the kernel, decided the goal.
 """
 from __future__ import annotations
 
@@ -30,6 +35,21 @@ from leibniz.backends.lean_cli import (
     _CANON_RUN as _CLI_CANON_RUN,
     _NAME_RE as _CLI_NAME_RE,
 )
+from leibniz.backends.lean_axioms import (
+    _axiom_complaint,
+    _report_re,
+    axiom_report,
+    closes_more_than_it_opens,
+    declaration_name,
+    defeats_the_kernel,
+    fresh_probe_name,
+    import_is_safe,
+    mentions_sorry,
+    probe_source,
+    smuggles_top_level,
+    statement_head,
+    statement_is_single_declaration,
+)
 from leibniz.propositio import Expressio
 
 REPL_IMAGE = f"leibniz-lean-repl:{KERNEL_VERSION}"
@@ -39,10 +59,7 @@ DEFAULT_TRIVIAL_TACTICS = ("decide", "simp", "omega", "trivial", "aesop", "ring"
 
 
 def _join_proof(theorem_src: str, proof_src: str, preamble: str = "") -> str:
-    head = theorem_src.rstrip()
-    cut = head.find(":=")
-    if cut != -1:
-        head = head[:cut].rstrip()
+    head = statement_head(theorem_src)
     proof = proof_src.strip()
     body = f"{head} := {proof}" if proof else f"{head} := by sorry"
     # ADR 0062: prepend operator-authored top-level declarations (defs/set_options) so a legible
@@ -79,6 +96,7 @@ class LeanReplBackend:
     trivial_tactics: tuple[str, ...] = DEFAULT_TRIVIAL_TACTICS
     _proc: Optional[subprocess.Popen] = field(default=None, repr=False)
     _envs: dict[tuple, int] = field(default_factory=dict, repr=False)
+    _axcheck: object = field(default=None, repr=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     # --- process + protocol ---------------------------------------------------
@@ -190,12 +208,14 @@ class LeanReplBackend:
             return self._send({"cmd": decl})
 
     @staticmethod
-    def _kernel_ok(resp: Optional[dict]) -> bool:
+    def _kernel_ok(resp: Optional[dict], ignore=None) -> bool:
+        """no error, no sorry. `ignore` (ADR 0097) drops the `#print axioms <name>` echo from
+        the sorry scan, which is BROAD on purpose -- see `lean_axioms.mentions_sorry`."""
         if resp is None:
             return False
         msgs = resp.get("messages", []) or []
         has_error = any(m.get("severity") == "error" for m in msgs)
-        has_sorry = any("sorry" in (m.get("data", "") or "") for m in msgs)
+        has_sorry = any(mentions_sorry(m.get("data", "") or "", ignore=ignore) for m in msgs)
         return (not has_error) and (not has_sorry)
 
     # --- LeanBackend Protocol -------------------------------------------------
@@ -205,8 +225,56 @@ class LeanReplBackend:
             return False
         return not any(m.get("severity") == "error" for m in resp.get("messages", []) or [])
 
+    #: ADR 0097 — this backend enforces the axiom footprint INSIDE `check_proof`, so a caller
+    #: cannot obtain a True kernel verdict for a compiler-trusted proof. `LeanVerifier.discharge`
+    #: refuses to stamp `kernel_verified` for a backend that does not assert this.
+    enforces_axiom_closure = True
+
     def check_proof(self, expr: Expressio, proof_src: str) -> bool:
-        return self._kernel_ok(self._run(_join_proof(expr.theorem_src, proof_src, expr.preamble), expr.imports))
+        """True iff the kernel accepted the proof AND its axiom footprint is clean.
+
+        ADR 0097: the footprint is not an extra call a caller may forget — `#print axioms` rides
+        along in the SAME REPL round-trip as the proof, and both must pass. Before this, a proof
+        by `native_decide` returned True here (the compiled evaluator, not the kernel, decided it),
+        and on the pinned 4.31 that is enough to promulgate `False`: the Trail of Bits
+        `String.Pos.Raw.extract` bug makes the compiler and the kernel disagree about the same
+        slice. A missing/unparseable theorem name fails CLOSED — an unnamed declaration has no
+        footprint to read, so there is nothing to certify.
+        """
+        name = declaration_name(expr.theorem_src)
+        if (not name or smuggles_top_level(proof_src)
+                or closes_more_than_it_opens(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)
+                or not all(import_is_safe(m) for m in expr.imports)
+                or defeats_the_kernel(expr.theorem_src)
+                or defeats_the_kernel(proof_src)
+                or defeats_the_kernel(expr.preamble)):
+            return False
+        # ADR 0097 round 3: read the footprint under an UNPREDICTABLE probe name. A proof can
+        # print a clean report for its own name (`run_cmd IO.println`, or `dbg_trace` with no
+        # imports at all); it cannot print one for a name chosen after it was written.
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        resp = self._run(src, expr.imports)
+        return (self._kernel_ok(resp, ignore=_report_re(probe))
+                and bool(axiom_report(resp, probe).get("ok")))
+
+    #: ADR 0097 — see LeanCliBackend.mint_requires_independent_check.
+    mint_requires_independent_check = True
+
+    def independent_axiom_footprint(self, expr: Expressio, proof_src: str) -> Optional[dict]:
+        """Delegate to the compiled reporter (ADR 0097).
+
+        The reporter is built into the CLI kernel image, not the REPL one, and it needs a compiled
+        olean rather than a REPL environment — so this hands off rather than duplicating the
+        plumbing. The REPL keeps the fast in-file check for `check_proof`; this is only consulted
+        at the MINT, where ~5 s is affordable and being wrong is not.
+        """
+        from leibniz.backends.lean_cli import LeanCliBackend
+        if self._axcheck is None:
+            self._axcheck = LeanCliBackend(timeout_s=max(self.timeout_s, 300))
+        return self._axcheck.independent_axiom_footprint(expr, proof_src)
 
     def check_proof_with_error(self, expr: Expressio, proof_src: str):
         """Like check_proof, but also surface the kernel diagnostics (ADR 0029).
@@ -214,15 +282,38 @@ class LeanReplBackend:
         Returns (ok, error_text). This is an OPTIONAL backend method used only by the
         agentic repair loop to feed the kernel's complaint back to the reasoner; it does
         NOT write kernel_verified — that stays solely with LeanVerifier.discharge, which
-        re-checks any candidate this surfaces as ok before stamping it."""
-        resp = self._run(_join_proof(expr.theorem_src, proof_src, expr.preamble), expr.imports)
+        re-checks any candidate this surfaces as ok before stamping it.
+
+        ADR 0096 build obligation 2. This predicate must MATCH `check_proof`, not be weaker than
+        it. The panel gates on this and then discharges what it accepts; `proof_repair.py`'s
+        `"kernel rejected a proof the pre-check accepted"` branch is dead only while the two agree.
+        Tightening the mint alone would make it live, and the panel would burn rounds proposing
+        `native_decide` proofs it then discards -- with no diagnostic the reasoner can act on. So
+        the footprint is checked HERE too, and a dirty one is reported as an error the model can
+        actually repair.
+        """
+        name = declaration_name(expr.theorem_src)
+        if (not name or smuggles_top_level(proof_src)
+                or closes_more_than_it_opens(proof_src)
+                or not statement_is_single_declaration(expr.theorem_src)):
+            return (False, "proof or statement opens a top-level declaration; write a term or tactic proof only")
+        probe = fresh_probe_name()
+        decl = probe_source(expr.theorem_src, proof_src, name, probe)
+        src = f"{expr.preamble.rstrip()}\n{decl}" if expr.preamble.strip() else decl
+        resp = self._run(src, expr.imports)
         if resp is None:
             return (False, "lean backend unavailable")
+        rep = _report_re(probe)
         msgs = resp.get("messages", []) or []
         errors = [str(m.get("data", "") or "") for m in msgs if m.get("severity") == "error"]
-        sorry = [str(m.get("data", "") or "") for m in msgs if "sorry" in (m.get("data", "") or "")]
-        ok = (not errors) and (not sorry)
-        return (ok, "\n".join(errors) or ("proof still contains `sorry`" if sorry else ""))
+        if errors:
+            return (False, "\n".join(errors))
+        if any(mentions_sorry(str(m.get("data", "") or ""), ignore=rep) for m in msgs):
+            return (False, "proof still contains `sorry`")
+        report = axiom_report(resp, probe)
+        if not report.get("ok"):
+            return (False, _axiom_complaint(report))
+        return (True, "")
 
     def closed_by_decision_procedure(self, expr: Expressio) -> bool:
         for tac in self.trivial_tactics:

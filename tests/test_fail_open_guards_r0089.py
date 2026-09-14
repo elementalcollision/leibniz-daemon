@@ -16,7 +16,20 @@ from test_mixed_modulus_decided import COVERING_2520, COVERING_10080  # noqa: E4
 
 class _Repl:
     def __init__(self, messages): self.messages = messages
-    def _run(self, src, imports): return {"messages": self.messages}
+    def _run(self, src, imports):
+        # ADR 0097 round 3: the caller asks about an unpredictable PROBE, not the theorem name --
+        # retarget canned reports about OUR theorem onto it. Reports about OTHER declarations are
+        # left alone: several tests assert a preamble's report must not become our footprint.
+        import re
+        mm = re.search(r"def (\S+) := @(\S+)", src or "")
+        msgs = self.messages
+        if not mm:
+            return {"messages": msgs}
+        probe, nm = mm.group(1), mm.group(2)
+        pat = re.compile(r"'(?:[^']*\.)?" + re.escape(nm)
+                         + r"'(\s*(?:depends on axioms:|does not depend on any axioms))")
+        return {"messages": [{**x, "data": pat.sub(lambda g: f"'{probe}'" + g.group(1),
+                                                   x.get("data") or "")} for x in msgs]}
 
 
 def _info(data): return {"severity": "info", "data": data}
@@ -170,10 +183,19 @@ def test_full_block_cannot_be_evaded_by_appending_a_neq_atom():
 
 
 def test_namespaced_report_is_not_a_false_defer():
-    """DEFECT 4. Lean may print the FULLY QUALIFIED name while `_NAME_RE` reads the short one out
-    of the source (this repo's recorded output has both forms). An ADR 0062 preamble opening a
-    namespace would otherwise turn a clean footprint into a silent DEFER."""
-    r = axiom_closure(_Repl([_info("'Foo.t' depends on axioms: [propext]")]), "theorem t : 1 = 1", "rfl", ())
+    """DEFECT 4. Lean may print the FULLY QUALIFIED name while the source declares the short one
+    (`docs/results/prob16_census.json` records `'SO_cube.cube_not_self_ordered'` for a law whose
+    preamble opens `namespace SO_cube`). An ADR 0062 preamble opening a namespace must NOT turn a
+    clean footprint into a silent DEFER, so the qualifier is allowed.
+
+    ADR 0097 round 3 restored this to its original form. An intermediate version tried to police
+    WHICH qualifiers were acceptable; that check turned out to be the last step of an exploit
+    rather than a defence, because rejecting Lean's genuine namespaced report left a report the
+    PROOF had printed as the only accepted one. Authentication now comes from asking about an
+    unpredictable probe name instead, which makes the qualifier irrelevant.
+    """
+    r = axiom_closure(_Repl([_info("'Foo.t' depends on axioms: [propext]")]),
+                      "theorem t : 1 = 1", "rfl", ())
     assert r["ok"] is True and r["axioms"] == ["propext"]
 
 

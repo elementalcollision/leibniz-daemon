@@ -96,7 +96,7 @@ def test_redundant_congruence_is_recorded_accurately():
 
 @pytest.mark.skipif(not os.environ.get("LEIBNIZ_LEAN_E2E"), reason="set LEIBNIZ_LEAN_E2E=1 for the Lean e2e")
 def test_real_kernel_discharges_with_a_clean_footprint():  # pragma: no cover
-    from leibniz.backends.lean_axioms import axiom_closure
+    from leibniz.backends.lean_axioms import STD_AXIOMS, axiom_closure
     from leibniz.backends.lean_repl import LeanReplBackend, available
     from leibniz.verifiers import LeanVerifier
     if not available():
@@ -111,4 +111,8 @@ def test_real_kernel_discharges_with_a_clean_footprint():  # pragma: no cover
         be.close()
     assert de.kernel_verified is True and de.qed == "Q.E.D."
     assert ax["ok"] and ax["saw_axiom_report"]
-    assert "sorryAx" not in ax["axioms"] and "Lean.ofReduceBool" not in ax["axioms"]
+    # ADR 0097: the ALLOWLIST above (`ax["ok"]`) is what actually excludes native computation --
+    # since Lean 4.29 the native axiom is auto-generated per computation and named after the
+    # theorem (measured on the pinned 4.31: `<name>._native.native_decide.ax_1`), so a denylist
+    # naming `Lean.ofReduceBool` never matches and asserts nothing. State the real property.
+    assert set(ax["axioms"]) <= STD_AXIOMS, f"footprint outside the allowlist: {ax['axioms']}"

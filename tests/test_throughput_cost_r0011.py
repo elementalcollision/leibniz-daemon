@@ -38,6 +38,11 @@ def test_cost_budget_from_env(monkeypatch):
 # --- concurrent consensus ----------------------------------------------------
 
 class _FakeLeanBackend:
+    #: ADR 0097 — TEST DOUBLE. Real backends earn this by reading `#print axioms` inside
+    #: `check_proof`; this fake asserts it so `discharge` will exercise the path under test.
+    #: Grep this name to find every place that mints a kernel verdict without a kernel.
+    enforces_axiom_closure = True
+
     def check_proof(self, expr, proof_src):
         return "good" in (proof_src or "")
 
