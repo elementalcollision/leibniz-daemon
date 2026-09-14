@@ -274,6 +274,13 @@ class LeanCliBackend:
         try:
             with tempfile.TemporaryDirectory() as td:
                 (Path(td) / "Mint.lean").write_text(source)
+                # ADR 0100: the expected declaration name travels as a FILE. It is
+                # proposer-derived, so it must never reach `bash -lc` as a shell word
+                # (round 7 found exactly that injection), and the reporter ASSERTS it
+                # rather than being aimed by it -- a wrong name reads as "declaration
+                # missing" and REFUSES, where round 7's mis-aimable probe read as a
+                # clean pass on a decoy.
+                (Path(td) / "expected.txt").write_text(name)
                 proc = subprocess.run(
                     ["docker", "run", "--rm", "-v", f"{td}:/scratch:ro",
                      "-w", "/work/lean-project", VERIFY_IMAGE, "bash", "-lc",
@@ -286,7 +293,7 @@ class LeanCliBackend:
                      # ADR 0098: the KERNEL REPLAY runs first and its failure short-circuits, so
                      # a footprint is never even read from an environment the kernel would reject.
                      "/work/lean4checker/.lake/build/bin/lean4checker Mint && "
-                     f"/work/axcheck/.lake/build/bin/axcheck Mint {nonce}"],
+                     f"/work/axcheck/.lake/build/bin/axcheck Mint {nonce} /scratch/expected.txt"],
                     capture_output=True, text=True, timeout=self.timeout_s,
                 )
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
