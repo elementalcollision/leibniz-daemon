@@ -93,8 +93,8 @@ def _skip_string(src: str, i: int) -> Optional[int]:
     return None
 
 
-def _strip_comments(src: str) -> str:
-    """Remove Lean line (`--`) and block (`/- -/`, nesting) comments, respecting STRING LITERALS.
+def _lex(src: str) -> tuple[str, int]:
+    """Strip Lean comments; return the stripped text AND the block-comment depth left open.
 
     ADR 0097 round 2: lexing `/-` without tracking string literals is itself an attack surface.
     A proof containing `have s : String := "/-"` opened a block comment that never closed, so the
@@ -102,11 +102,37 @@ def _strip_comments(src: str) -> str:
     which lexes the string correctly, happily elaborated the `namespace M` / decoy that followed.
     Over-stripping is otherwise the safe direction (a lost name fails CLOSED), but silently
     discarding the text a GUARD is about to scan is not.
+
+    ADR 0099 found the same defect in a construct nobody had considered: `«…»`. Lean lexes
+    `def «z/-» := 1` as one identifier, while this stripper saw `«` as ordinary punctuation, let
+    the `/-` inside the name open a comment, and returned just `def «z` — blinding every guard
+    below. Measured: `statement_is_single_declaration('theorem «a/-» : True := trivial\n
+    namespace M\ntheorem catastrophe : False := lie')` returned True. Guillemet identifiers are
+    now skipped whole, exactly as string literals are.
+
+    The returned DEPTH is the general defence. Chasing each lexical construct that can hide a `/-`
+    is the losing half of this game; an unterminated block comment is the *symptom* of any such
+    desync, whatever caused it, and no honest declaration has one. Callers fail closed on it.
     """
     out: list[str] = []
     i, depth, n = 0, 0, len(src)
     while i < n:
         c = src[i]
+        if not depth and c == "«":                        # a guillemet identifier is ONE token
+            end = src.find("»", i + 1)
+            if end < 0:                                   # unmatched: do NOT swallow to EOF, or a
+                out.append(c)                             # stray `«` hides a real `/-` behind it
+                i += 1                                    # and the depth check never fires
+                continue
+            out.append(src[i:end + 1])
+            i = end + 1
+            continue
+        if not depth and c == "'":                        # a CHARACTER literal is ONE token
+            end = _skip_char(src, i)
+            if end is not None:
+                out.append(src[i:end])
+                i = end
+                continue
         if not depth and (c == '"' or c == "r"):
             end = _skip_string(src, i)
             if end is not None:
@@ -131,11 +157,57 @@ def _strip_comments(src: str) -> str:
         else:
             out.append(c)
             i += 1
-    return "".join(out)
+    return "".join(out), depth
+
+
+def _skip_char(src: str, i: int) -> Optional[int]:
+    """If a Lean CHARACTER literal starts at ``i``, return the index just past it, else None.
+
+    ADR 0099 round 9b. `_lex` skipped strings and guillemets but not `'c'`, so the `"` inside
+    `'"'` opened a phantom string. Measured: it hid a smuggled `macro_rules` from BOTH
+    `smuggles_top_level` and `closes_more_than_it_opens` (the round-4 hijack shape, with
+    `check_proof` returning True for a `native_decide` proof), and in the other direction it made
+    `unterminated_block_comment` REFUSE the honest theorem
+    `theorem honest (c : Char := '"') : "/-".length = 2 := by decide`. One defect, both directions.
+
+    `'` is ambiguous in Lean: it also ends an identifier (`h'`, `foo'`). A quote preceded by an
+    identifier character is a prime, never a literal; and anything that does not close as a literal
+    is left alone, so this only ever skips what is unambiguously one.
+    """
+    if src[i] != "'" or (i > 0 and src[i - 1] in _IDENT_CH):
+        return None                                       # `h'` -- a prime, not a literal
+    n, j = len(src), i + 1
+    if j >= n:
+        return None
+    if src[j] == "\\":                                    # escape: \n, \\, \', \", \u{...}, \xNN
+        j += 2
+        while j < n and src[j] != "'" and j - i <= 12:
+            j += 1
+        return j + 1 if j < n and src[j] == "'" else None
+    return j + 2 if j + 1 < n and src[j + 1] == "'" else None
+
+
+def _strip_comments(src: str) -> str:
+    """Comment-stripped text only. Use `unterminated_block_comment` to fail closed on a desync."""
+    return _lex(src)[0]
+
+
+def unterminated_block_comment(src: str) -> bool:
+    """True iff `src` leaves a `/-` open — i.e. our lexer and Lean's have disagreed somewhere.
+
+    No honest declaration leaves a block comment open. When one appears, the text a guard is about
+    to scan is not the text Lean will elaborate, so the guard's answer is meaningless and every
+    caller must refuse rather than report clean. This is what makes the desync class fail closed
+    without having to enumerate the constructs that can cause it (ADR 0099).
+    """
+    return _lex(src)[1] > 0
 
 
 def declaration_name(theorem_src: str) -> Optional[str]:
     """The name of the declaration ``theorem_src`` actually declares, or None (fail closed)."""
+    # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
+    if unterminated_block_comment(theorem_src or ""):
+        return None
     m = _DECL_RE.search(_strip_comments(theorem_src))
     if not m:
         return None
@@ -255,6 +327,9 @@ def smuggles_top_level(proof_src: str) -> bool:
     `expected_report_names` is what structurally prevents a decoy report from standing in for
     ours, whatever syntax introduced it.
     """
+    # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
+    if unterminated_block_comment(proof_src or ""):
+        return True
     src = _strip_comments(proof_src or "")
     # Re-scan the text AFTER each `set_option/open ... in` prefix instead of exempting the whole
     # line: `open Lean Elab Command in elab_rules : command | ...` on ONE line slipped past the
@@ -303,6 +378,9 @@ def statement_is_single_declaration(theorem_src: str) -> bool:
     ever applied to `proof_src`. A leading `namespace M` there is what moved Lean's genuine report
     out from under the name we asked about. One declaration, nothing else.
     """
+    # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
+    if unterminated_block_comment(theorem_src or ""):
+        return False
     src = _strip_comments(theorem_src or "")
     # ADR 0097 round 6 -- MY OWN ASYMMETRY, and it was a soundness break. Round 4 taught
     # `smuggles_top_level` to re-scan the text after each `set_option/open ... in` prefix, because
@@ -336,6 +414,9 @@ def closes_more_than_it_opens(proof_src: str) -> bool:
     ever goes negative is refused. Trailing UNCLOSED delimiters need no check: they are a parse
     error inside the wrapper, which already fails closed.
     """
+    # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
+    if unterminated_block_comment(proof_src or ""):
+        return True
     src, depth, i, n = _strip_comments(proof_src or ""), 0, 0, 0
     n = len(src)
     while i < n:
@@ -447,6 +528,9 @@ def defeats_the_kernel(text: str) -> bool:
     # statement may legitimately contain `("unsafe" : String)`, and a string literal cannot
     # declare anything. Refusing those was a silent false-reject indistinguishable from a kernel
     # rejection -- verified against the real kernel, which accepts them with an empty footprint.
+    # A desync between our lexer and Lean's makes any verdict below meaningless (ADR 0099).
+    if unterminated_block_comment(text or ""):
+        return True
     src, out, i, n = _strip_comments(text or ""), [], 0, 0
     n = len(src)
     while i < n:
