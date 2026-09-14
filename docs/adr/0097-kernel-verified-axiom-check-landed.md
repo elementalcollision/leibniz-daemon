@@ -500,3 +500,72 @@ top-level declarations, so it cannot be guarded the same way. Decision 5 means a
 preamble is outside this ADR's threat model — as they always were. If that ever stops being an
 acceptable assumption, the remedy is to render the preamble from a checked source rather than to
 scan it.
+
+## Round 9 — the shared lexer desynced, and five guards scanned text that was not there
+
+Found later, by adversarial review of the ADR 0099 preamble audit. The defect was not in that audit;
+it was here, in `_strip_comments`, which five guards share — `declaration_name`,
+`smuggles_top_level`, `statement_is_single_declaration`, `closes_more_than_it_opens` and
+`defeats_the_kernel`. Two of them scan **proposer-authored** text, so this is the real trust surface
+rather than the operator-trust one above.
+
+Lean lexes `def «z/-» := 1` as **one identifier**. The stripper treated `«` as ordinary punctuation,
+let the `/-` inside the name open a block comment, and returned `def «z` — swallowing everything a
+guard was about to scan. Measured on the pinned 4.34, before the fix:
+
+```
+statement_is_single_declaration('theorem «a/-» : True := trivial\nnamespace M\ntheorem catastrophe : False := lie')  -> True
+smuggles_top_level('by «q/-»\nrun_cmd IO.println "hi"')                                                             -> False
+```
+
+That is round 3's namespace-move shape passing the guard built to stop it. It was **not** driven to
+`Q.E.D.` — the fresh probe name (decision 12) and ADR 0098's kernel replay both held, which is
+exactly the argument for not relying on syntactic guards. But a guard that returns a *confidently
+wrong* answer is still a defect: its entire value is being right when the layers above it are not.
+
+This is the round-2 lesson recurring in a construct nobody had considered. That ADR already said
+*"silently discarding the text a GUARD is about to scan"* is the unsafe direction; it just did not
+know `«…»` could cause it.
+
+**Fixed twice over.** Guillemet identifiers are skipped whole, exactly as string literals are — so
+`theorem «t/-» : True` is now lexed *correctly*, not merely refused. More durably,
+`unterminated_block_comment` exposes the **symptom** of any such desync and all five guards fail
+closed on it. Enumerating the constructs that can hide a `/-` is the losing half of this game; an
+unterminated block comment is what they all have in common, and no honest declaration has one. That
+catches `s!"{"/-"}"` too, which guillemet handling alone would have missed.
+
+Evidence: `tests/test_lexer_desync_guards.py` — the two measured wrong answers, the interpolation
+variant, all five guards failing closed on a genuine desync, and a regression set asserting honest
+sources are unaffected (a fail-closed check that fires on legitimate input is a new outage, not a fix).
+
+### Round 9b — the same lexer did not know character literals
+
+A second adversarial round, run against the round-9 fix, broke it. `_lex` skipped strings and
+guillemets but not `'c'`, so the `"` inside `'"'` opened a phantom string. One defect, cutting both
+ways, and the second direction is the worse one:
+
+- **It hid a smuggled command.** `(fun (_ : Char) => by native_decide) '"' -- "` followed mid-line by
+  `) macro_rules | ...` passed every guard, and `check_proof` returned **True** for a `native_decide`
+  proof. The mint still refused it — ADR 0098's reporter reads every constant, and reported
+  `oops._native.native_decide.ax_1_1` — so `kernel_verified` never became True. But the confinement
+  layer contributed **nothing**, and `check_proof` / `check_proof_with_error`, which the ADR 0029
+  repair panel uses with no independent backstop, were fully fooled.
+- **It refused an honest law.** `theorem honest (c : Char := '"') : "/-".length = 2 := by decide`
+  elaborates cleanly on the pin, and round 9's new fail-closed check **rejected** it. A fail-closed
+  check that fires on legitimate input is an outage introduced by a fix, and is worth saying plainly:
+  the round-9 change made the system strictly worse for honest laws until this was found.
+
+Fixed by skipping character literals as one token. `'` is ambiguous in Lean — it also ends an
+identifier (`h'`) — so a quote preceded by an identifier character is a prime and never a literal,
+and anything that does not close as a literal is left alone. An unmatched `«` also no longer consumes
+to end-of-input, which had hidden a genuinely open `/-` from the depth check.
+
+**Known limitation, stated rather than papered over.** `smuggles_top_level` remains blind to a command
+that follows another on the *same line*; finding command position without parsing is what a keyword
+scan cannot do, and widening the scan trades a silent miss for refusing honest proofs.
+`closes_more_than_it_opens` is what refuses the shape above — which is the argument for the gate being
+a disjunction of several weak checks rather than one clever one, and for neither being load-bearing.
+
+Two rounds, two lexical constructs, same root cause: **this module keeps re-learning that it is
+writing a Lean lexer in Python.** Everything here is defence in depth. The checks that actually decide
+are ADR 0097's compiled reporter and ADR 0098's kernel replay, and both held throughout.
