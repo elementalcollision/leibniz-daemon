@@ -774,6 +774,12 @@ def _axiom_complaint(report: dict) -> str:
 _AXCHECK_RE = re.compile(r"^(\S+) AXIOMS (\d+) \[([^\]]*)\]\s*$", re.MULTILINE)
 
 
+_AXCHECK_ROOT_RE = re.compile(r"^(\S+) ROOT (OK|NESTED|MISSING) (\S+)\s*$", re.M)
+_AXCHECK_SHADOW_RE = re.compile(r"^(\S+) SHADOW \[([^\]]*)\]\s*$", re.M)
+_AXCHECK_DENOTE_RE = re.compile(r"^(\S+) DENOTE \[([^\]]*)\]\s*$", re.M)
+_AXCHECK_VACUOUS_RE = re.compile(r"^(\S+) VACUOUS (yes|no)\s*$", re.M)
+
+
 def _parse_axcheck(stdout: str, nonce: str, allowed=STD_AXIOMS) -> dict:
     """Read the compiled reporter's answer (ADR 0097).
 
@@ -789,8 +795,50 @@ def _parse_axcheck(stdout: str, nonce: str, allowed=STD_AXIOMS) -> dict:
             continue
         axioms = [a.strip() for a in m.group(3).split(",") if a.strip()]
         extra = [a for a in axioms if a not in allowed]
-        return {"ok": not extra, "axioms": axioms, "extra_axioms": extra,
-                "saw_axiom_report": True, "has_sorry": "sorryAx" in axioms,
-                "declarations": int(m.group(2)), "independent": True}
+        out = {"ok": not extra, "axioms": axioms, "extra_axioms": extra,
+               "saw_axiom_report": True, "has_sorry": "sorryAx" in axioms,
+               "declarations": int(m.group(2)), "independent": True}
+
+        # ADR 0100 -- the DENOTATION half. A clean closure does not mean the statement says what
+        # it appears to say: the notation attack's closure is EMPTY, cleaner than an honest proof.
+        # These lines must be PRESENT -- their absence fails closed, so a reporter image built
+        # before ADR 0100 cannot read as a pass (the ADR 0093 "a lane that cannot run must say so"
+        # shape, applied to a check).
+        root = _AXCHECK_ROOT_RE.search(stdout)
+        if not root or root.group(1) != nonce:
+            return {**out, "ok": False, "reason": "reporter gave no ROOT line (stale image?)"}
+        if root.group(2) == "MISSING":
+            # A wrong expected name reads as "absent" and REFUSES. That is why reintroducing the
+            # name is safe where round 7's mis-aimable probe was not: this fails closed.
+            return {**out, "ok": False, "root_ok": False,
+                    "reason": f"the minted declaration is absent under {root.group(3)}"}
+        out["root_ok"] = True
+        out["nested"] = root.group(2) == "NESTED"
+
+        shadow = _AXCHECK_SHADOW_RE.search(stdout)
+        if not shadow or shadow.group(1) != nonce:
+            return {**out, "ok": False, "reason": "reporter gave no SHADOW line (stale image?)"}
+        shadowed = [c.strip() for c in shadow.group(2).split(",") if c.strip()]
+        if shadowed:
+            # Inside an open `namespace Foo`, a preamble `def False` resolves ahead of core
+            # `False`. A NESTED landing alone is honest (round 6 pinned it); a nested landing
+            # whose statement names a preamble constant shadowing an existing one is not.
+            return {**out, "ok": False, "shadowed": shadowed,
+                    "reason": f"statement names shadowing constant(s) {shadowed} -- the preamble "
+                              f"redefined what an existing name means"}
+        out["shadowed"] = []
+
+        den = _AXCHECK_DENOTE_RE.search(stdout)
+        if den and den.group(1) == nonce:
+            out["denotation"] = den.group(2)
+        vac = _AXCHECK_VACUOUS_RE.search(stdout)
+        if not vac or vac.group(1) != nonce:
+            return {**out, "ok": False, "reason": "reporter gave no VACUOUS line (stale image?)"}
+        if vac.group(2) == "yes":
+            return {**out, "ok": False, "vacuous": True,
+                    "reason": "statement elaborates to `True` -- the preamble redefined what it "
+                              "means"}
+        out["vacuous"] = False
+        return out
     return {"ok": False, "reason": "reporter did not answer for this nonce",
             "axioms": [], "saw_axiom_report": False}

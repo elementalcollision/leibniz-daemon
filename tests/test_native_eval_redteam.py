@@ -614,27 +614,49 @@ def test_kernel_guard_ignores_mentions_inside_strings():
     assert defeats_the_kernel("set_option debug.skipKernelTC true in\ntheorem t : False")
 
 
-def test_the_reporter_protocol_carries_no_declaration_name():
-    """Decision 24, and the round-7 lesson. Every version of the name-parsing regex diverged from
-    Lean's parser somewhere, and the divergences were soundness holes. The reporter no longer takes
-    a name: it reports the UNION over EVERY constant the module declares. Nothing is parsed,
-    nothing is interpolated into the shell, and there is no target to mis-aim -- which also
-    retired a shell-injection vector, since the theorem name used to reach `bash -lc` unescaped.
-    Strictly stronger, too: a dirty preamble helper now fails."""
+def test_the_reporter_protocol_never_lets_a_name_AIM_it():
+    """Decision 24 and the round-7 lesson, restated for ADR 0100.
+
+    Round 7 removed the declaration name from the reporter protocol entirely, because every
+    version of the name-parsing regex diverged from Lean's parser somewhere and the divergences
+    were soundness holes: `theorem «id».foo` parsed as `«id»`, which resolves to core `id` --
+    clean and axiom-free -- while Lean declared the dirty `id.foo`. The name also reached
+    `bash -lc` unescaped, which was a shell-injection vector.
+
+    ADR 0100 brings a name BACK, and this test is the record of why that is not a regression.
+    The round-7 defect was that the name AIMED the question: a wrong name made the reporter
+    answer honestly about the wrong constant, so the failure mode was a clean PASS on a decoy --
+    fail-open. The name is now an ASSERTION instead: the reporter is told which declaration must
+    be present, and a wrong name reads as "absent" and REFUSES -- fail-closed. It also travels as
+    a FILE, so it never becomes a shell word.
+
+    The two properties that actually matter, and that this test pins:
+      1. the name is never interpolated into the command string, and
+      2. a name that does not match refuses rather than passes.
+    """
     import inspect
     from leibniz.backends import lean_cli
     src = inspect.getsource(lean_cli.LeanCliBackend.independent_axiom_footprint)
-    assert "axcheck Mint {nonce}" in src, "the name must not reach the reporter invocation"
+    # 1. nothing proposer-derived is interpolated into the shell string.
+    assert "axcheck Mint {nonce} /scratch/expected.txt" in src
     assert "{probe}" not in src and "{name}" not in src, src
-    # the parser keys on the nonce alone
-    good = "NONCE AXIOMS 3 [propext, Classical.choice, Quot.sound]"
-    assert _parse_axcheck(good, "NONCE")["ok"] is True
-    dirty = "NONCE AXIOMS 3 [propext, t._native.native_decide.ax_1]"
-    assert _parse_axcheck(dirty, "NONCE")["ok"] is False
-    assert _parse_axcheck(good, "OTHER")["ok"] is False       # wrong nonce -> refusal
-    assert _parse_axcheck("NONCE MISSING Mint", "NONCE")["ok"] is False
-    assert _parse_axcheck("NONCE EMPTY Mint", "NONCE")["ok"] is False
-    assert _parse_axcheck("", "NONCE")["ok"] is False
+    assert 'write_text(name)' in src, "the name must travel as a file, not a shell word"
+
+    # 2. the full protocol is required; an axioms-only answer is a STALE image, not a pass.
+    N = "NONCE"
+    full = (f"{N} AXIOMS 3 [propext, Classical.choice, Quot.sound]\n"
+            f"{N} ROOT OK t\n{N} SHADOW []\n{N} DENOTE [Eq, Nat]\n{N} VACUOUS no")
+    assert _parse_axcheck(full, N)["ok"] is True
+    assert _parse_axcheck(f"{N} AXIOMS 3 [propext]", N)["ok"] is False   # stale reporter
+    dirty = (f"{N} AXIOMS 3 [propext, t._native.native_decide.ax_1]\n"
+             f"{N} ROOT OK t\n{N} SHADOW []\n{N} VACUOUS no")
+    assert _parse_axcheck(dirty, N)["ok"] is False
+    # a name that does not match the minted declaration REFUSES -- the fail-closed property.
+    assert _parse_axcheck(f"{N} AXIOMS 1 []\n{N} ROOT MISSING t", N)["ok"] is False
+    assert _parse_axcheck(full, "OTHER")["ok"] is False        # wrong nonce -> refusal
+    assert _parse_axcheck("NONCE MISSING Mint", N)["ok"] is False
+    assert _parse_axcheck("NONCE EMPTY Mint", N)["ok"] is False
+    assert _parse_axcheck("", N)["ok"] is False
 
 
 # --- the live exploit (docker-gated) ----------------------------------------
@@ -977,9 +999,13 @@ def test_a_dirty_preamble_helper_now_fails():
 # a green suite is never mistaken for a closed boundary. They are the honest encoding of ADR 0097's
 # "What is still open"; deleting them to make the suite look clean would be the defect, not the fix.
 
-_R8_REASON = ("ADR 0098 closed the kernel-bypass class with a kernel replay. The STATEMENT-MEANING "
-              "class stays open: it is a preamble-trust decision, not a checker gap -- every layer "
-              "behaves honestly and only what the statement MEANS has changed.")
+# Round 8 marked the STATEMENT-MEANING class open with a strict xfail, on the reasoning that it was
+# "a preamble-trust decision, not a checker gap -- every layer behaves honestly and only what the
+# statement MEANS has changed". The first half was right and the conclusion was wrong, for the
+# second time in this file: ADR 0100 closed it by asking the compiled environment what the
+# statement DENOTES instead of what it costs. The xfail below is now a passing assertion. Left
+# recorded rather than deleted -- "this cannot be checked" has been wrong twice here, and the
+# pattern is worth more than the tidiness.
 
 
 def test_programmatic_skip_kernel_tc_is_refused_by_the_kernel_replay():
@@ -1008,14 +1034,16 @@ def test_programmatic_skip_kernel_tc_is_refused_by_the_kernel_replay():
     assert demo.kernel_verified is False, "False was sealed Q.E.D."
 
 
-@pytest.mark.xfail(strict=True, reason=_R8_REASON)
-def test_KNOWN_OPEN_notation_redefines_the_statement():
-    """`notation "False" => True` in the ADR 0062 preamble -- no smuggling at all -- stamps
-    `theorem oops : False`. Every layer is honest here: the kernel really did prove the statement
-    as written, and the footprint really is clean. What changed is what the statement MEANS.
+def test_notation_redefining_the_statement_is_refused():
+    """CLOSED by ADR 0100. Was a strict xfail from round 8 until the mint learned to read the
+    DENOTATION as well as the footprint.
 
-    This falsifies ADR 0062's standing claim that a smuggled hole in the preamble is caught, and
-    it is a preamble-trust question rather than a parsing one."""
+    `notation "False" => True` needs no smuggling: every layer is honest, the kernel really did
+    prove the statement as written, and the footprint is not merely clean but EMPTY -- no axioms
+    at all, cleaner than a legitimate proof. What changed is which proposition the statement was.
+
+    The compiled `Expr` has already resolved every notation, so the mint now reads the elaborated
+    type off the olean at `loadExts := false` and refuses a statement whose type is `True`."""
     be = _cli()
     demo = Demonstratio(proof_obligation="r8", proof_src="trivial")
     LeanVerifier(backend=be).discharge(
