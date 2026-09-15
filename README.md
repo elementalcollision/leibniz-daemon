@@ -119,7 +119,7 @@ that lever is measured and closed.
 ```bash
 pip install -e ".[dev]"    # core is stdlib-only by design; dev adds pytest + ruff
 python demo.py             # turn one circadian cycle (deterministic fakes)
-pytest -q                  # 1,885 tests; the 11 byte-frozen trust invariants are the gate
+pytest -q                  # 2,064 tests; the 11 byte-frozen trust invariants are the gate
 ruff check .               # lint (rule set pinned in pyproject; CI is blocking)
 ```
 
@@ -135,21 +135,46 @@ those are absent, so the stdlib invariant suite stays the universal gate. Extras
 ## The Lean kernel
 
 The real kernel runs in a pinned container — the host stays stdlib-only, Lean lives in the
-container (ADR 0003; the REPL image amortizes Mathlib import cost per ADR 0011):
+container (ADR 0003; the REPL image amortizes Mathlib import cost per ADR 0011). The mint
+needs **four** images: the kernel, the REPL, the compiled axiom reporter, and the verify
+image that layers `lean4checker` on top of the reporter.
 
 ```bash
-docker build -f docker/lean.Dockerfile      -t leibniz-lean:v4.34.0-rc2      .
-docker build -f docker/lean-repl.Dockerfile -t leibniz-lean-repl:v4.34.0-rc2 .
+docker build -f docker/lean.Dockerfile         -t leibniz-lean:v4.34.0-rc2         .
+docker build -f docker/lean-repl.Dockerfile    -t leibniz-lean-repl:v4.34.0-rc2    .
+docker build -f docker/lean-axcheck.Dockerfile -t leibniz-lean-axcheck:v4.34.0-rc2 .
+docker build -f docker/lean4checker.Dockerfile -t leibniz-lean-verify:v4.34.0-rc2  .
 pytest -q -m lean            # R1 kernel exit tests
 scripts/run_kernel_tests.sh  # kernel lane: an absent image or a silent skip is a FAILURE
 ```
 
-`LeanVerifier.discharge` is the **sole** writer of `kernel_verified`. `native_decide` is
-forbidden; `sorry`, admitted lemmas and unaudited axioms are never accepted. Every kernel
-theorem is `#print axioms`-audited — Lean's canonical trusted axioms at most (`propext`,
-`Classical.choice`, `Quot.sound`), **never `sorryAx`** (`leibniz.backends.lean_axioms`).
-A self-hosted `kernel-nightly` CI lane runs the Docker-gated tests that GitHub-hosted
-runners cannot; it never reports a false green when no runner is registered.
+`LeanVerifier.discharge` is the **sole** writer of `kernel_verified` — and since ADR 0097 it
+is also the sole *checker*. It was not: the axiom reader existed and nothing called it, and a
+proof of FLT derived from `False` came back `kernel_verified=True`, `MECHANICAL`, `PASS`,
+`Q.E.D.` Three questions are now asked of the **compiled artifact**, never of the proposer's
+source text, and all three must pass:
+
+1. **Kernel replay** (ADR 0098) — `lean4checker` re-runs the minted environment through a
+   bare kernel, closing `skipKernelTC` and `unsafe` self-loops. It runs first, so a footprint
+   is never read from an environment the kernel would reject.
+2. **Axiom closure** (ADR 0097) — a separately compiled reporter imports the object file and
+   reads the closure out of `ConstantInfo` via `Lean.collectAxioms`. **Allowlist, not
+   denylist:** `propext`, at most `Classical.choice` / `Quot.sound`, never `sorryAx`, never a
+   native-computation axiom. Since Lean 4.29 native evaluation emits a *generated* axiom named
+   after the theorem, so a denylist naming `ofReduceBool` is already blind on this very pin.
+3. **Denotation** (ADR 0100) — the compiled type says what the statement *means* once every
+   notation and name is resolved, which no axiom check can: `notation "False" => True` makes
+   `theorem oops : False := trivial` elaborate with an **empty** closure — cleaner than an
+   honest proof.
+
+None of the three parses Lean in Python, and none reads a printed `#print axioms` line: that
+line is a *command* a proof in the same file can redefine or simply forge, which was
+demonstrated. Nine adversarial rounds against these guards are recorded in ADR 0097–0100 and
+pinned as regressions in `tests/test_native_eval_redteam.py` and
+`tests/test_lexer_desync_guards.py`.
+
+A self-hosted `kernel-nightly` CI lane runs the Docker-gated tests that GitHub-hosted runners
+cannot; it never reports a false green when no runner is registered.
 
 ## The faithfulness gate
 
@@ -184,8 +209,16 @@ Demonstratio, and never passes through `TrustPolicy.validate_path`.
 agent runs it nightly from a worktree hard-synced to `origin/main`, so unattended runs
 execute only **operator-merged** code, never a working tree.
 
+That was an intention until ADR 0101 made it a check. A failed sync used to print a warning
+and carry on with whatever code was already there; on 2026-09-15 a beat ran pinned four
+trust-boundary ADRs behind `origin/main` — missing every check above — and promulgated a law
+while returning exit 0. Nothing was published, because publication is a separate human act,
+but nothing said so either. The launcher now **verifies** the worktree is at `origin/main`
+and **aborts** if it is not, alarms on a failed fetch instead of only warning, and records
+`beat code: <sha>` so every beat is attributable to a commit.
+
 ```
-PREFLIGHT (Docker up, Lean image present, Z3 importable)
+PREFLIGHT (Docker up, Lean + verify images present, Z3 importable)
    → N capped cycles through the full steering loop (run_cycles)
    → a JSONL journal entry (funnel, dispositions, cross-solver delta, steering, duration)
    → a regenerated review queue of promulgated-but-held laws
@@ -277,6 +310,7 @@ tests/                                        # 11 byte-frozen invariants + ~1,8
 | **to start a fresh session** | `HANDOFF-NEXT.md` — self-contained launchpad, current state, playbook |
 | why the trust tiers exist | `docs/adr/0001-charter-and-trust-hierarchy.md` |
 | the crux design | `docs/adr/0002-faithfulness-gate.md` |
+| **what `kernel_verified` actually means** | `docs/adr/0097`–`0101` — the axiom check, the kernel replay, the denotation check, and the delivery path |
 | the organ map + per-cycle data flow | `docs/architecture.md` |
 | the build order (R0–R6) | `docs/capability-ladder.md` |
 | **the live work plan** | `docs/optimization-roadmap.md` |
@@ -284,14 +318,15 @@ tests/                                        # 11 byte-frozen invariants + ~1,8
 | why autonomous novelty is a closed question | `docs/autonomous-discovery-arc-capstone.md` |
 | how to contribute | `CONTRIBUTING.md`, `SECURITY.md` |
 
-## Status (2026-09-08)
+## Status (2026-09-15)
 
 The capability ladder **R0–R6 is built and merged**; the project is in the **post-R6
 optimization phase**, and the **four-phase autonomy plan is complete** (α heartbeat ·
 β moving frontier · γ reach · δ Newton exchange; ADRs 0068–0081). The binding constraint
 is **novelty / discovery yield** — not prover reach and not the trust boundary.
 
-- **Trust boundary (R0–R3):** real Lean 4.34 kernel with an axiom audit · Z3
+- **Trust boundary (R0–R3):** real Lean 4.34 kernel behind a three-check mint — kernel
+  replay, axiom closure, denotation (ADR 0097/0098/0100) · Z3
   gaming-witness + unbounded claim probes · six kernel-decided faithfulness fragments ·
   cvc5 kill-only second opinion · enforced 0.15 judged budget · structural-hash novelty
   corpus, including novelty against the daemon's own ledger (ADR 0052/0077/0078).
@@ -315,6 +350,29 @@ retracted an unearned GREEN whose record was never kernel-checked, closed two mo
 fail-open guards (ADR 0089), bounded what the predicate guard *admits* rather than only
 how large it is (ADR 0090), and stopped a review-queue feature from blanking the
 operator's primary artifact on a pre-migration database (ADR 0087).
+
+**The 2026-09 trust-boundary arc (ADR 0096–0101)** is the largest instance to date, and it
+started outside the repo: Trail of Bits published a Lean 4 defect where
+`String.Pos.Raw.extract` disagreed between its logical definition and its compiled native
+code — a **correct kernel and an incorrect compiler**, reachable only through
+`native_decide` / `#eval`, affecting all stable releases through `v4.33.1`. An initial
+review concluded the exposure was handled. It could not execute anything.
+
+Executing it found the axiom check was not enforced by the sole kernel writer, and that a
+proof of FLT derived from `False` was stamped `Q.E.D.` Nine adversarial rounds followed,
+each against the fix the round before produced, and **every one landed**. Three classes are
+now closed at the mint (axiom footprint, kernel bypass, statement meaning); a fourth —
+whether a formal statement *says what the claim says* — is open by construction and belongs
+to the ADR 0002 gate, marked in the suite rather than omitted from it. All **65** held laws
+were re-discharged under the current guards (`scripts/audit_held_laws.py`), and ADR 0101
+closed the delivery path that had been quietly running the daemon on stale code.
+
+Two lessons generalized past Lean. **"This cannot be checked" needs the same scrutiny as
+"this is secure"** — twice an ADR declared a class unclosable and was wrong, both times by
+ruling out *scanning* and concluding nothing could *check*. And **the dangerous failures
+return success**: the beat that aborted was noticed; the beat that ran four ADRs behind
+exited 0 and looked healthy. A narrative account is published at
+[theelementalcodices.com/artifacts/calculemus-audit](https://theelementalcodices.com/artifacts/calculemus-audit/).
 
 Tracked at `github.com/elementalcollision/leibniz-daemon` — public and hardened (ADR 0049),
 with branch protection on `main`, `CODEOWNERS` review on every trust file, a PreToolUse
