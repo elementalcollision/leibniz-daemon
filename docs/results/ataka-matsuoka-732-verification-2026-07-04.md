@@ -33,8 +33,8 @@ computation, we reproduce **both** load-bearing facts directly from the Newton p
 All three theorems are kernel-decided by `decide` and **depend on no axioms at all** (`#print axioms` →
 "does not depend on any axioms" ×3). A built-in erratum guard (`build_certificate`) refuses to emit the
 certificate unless the generator count, the generator set, the non-normality verdict, the witness monomial,
-and the weight vector *all* match the transcribed paper data — the same discipline that caught a real erratum
-in the SS-RS-GD COLT refutation.
+and the weight vector *all* match the transcribed paper data — a guard against transcription slips like the one
+behind our SS-RS-GD (1.7) "erratum", which was retracted on 2026-10-13 as our own transcription error.
 
 - Certificate (downloadable): `docs/crt/ataka_matsuoka_732_certificate.lean`
 - Producer: `scripts/verify_ataka_matsuoka.py` · Instrument: `scripts/prob41_normality_lean.py::min_generators`

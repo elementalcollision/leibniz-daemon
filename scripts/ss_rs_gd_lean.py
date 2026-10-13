@@ -11,21 +11,26 @@ each with `#print axioms` = {propext, Classical.choice, Quot.sound}:
 
   * gap_identity          — Lemma 1.6 eq (1.8): λ_SS − λ_RS = (1−q)⁶(q+1)²·g(q)/2048   [`ring`]
   * dominance_q6          — Lemma 1.5 eq (1.6)                                          [`ring`]
+  * dominance_mu_1_7      — Lemma 1.5 eq (1.7), exactly as printed                       [`ring`]
   * sos_cofactor, sos_sextic — the two SOS positivity certificates                      [`ring`]
   * gg_pos                — g(q) > 0 on [1/4, 1] ⊂ (q*, 1], q* = 0.212036…              [`nlinarith`]
   * ss_exceeds_rs         — λ_RS < λ_SS on [1/4, 1): THE REFUTATION (Conjecture 1.1 is false)
   * violation_at_half     — a fully concrete witness at q = 1/2
 
-Two honest by-products of running it through the kernel:
+By-product of running it through the kernel:
   * `sos_cofactor` VINDICATES the paper: an LLM scout flagged it as off by 2q²; the kernel confirms the paper is
     right (the scout dropped the +2q² cross-term of (q²−4q+1)²). LLMs propose; the kernel decides.
-  * `paper_eq_1_7_false_at_half` is a kernel-attested ERRATUM: the paper's *printed* identity (1.7) does not
-    hold (Lean `ring` and an independent exact-rational check agree; degree/leading-coefficient mismatch). It is
-    a supporting identity only — the inequality it targets (λ_RS ≥ μ_RS) still holds
-    (`lamRS_ge_muRS_at_half`), and the main refutation (via 1.8) is unaffected.
+
+CORRECTION (2026-10-13). An earlier version of this module claimed a "kernel-attested erratum" in (1.7). That
+was our transcription error, not the paper's: we wrote μ_RS = (q+1)⁴(q⁴+4q³−42q²+4q+1)/16384 and dropped the
+square the paper prints on the quartic factor. With μ_RS as printed, (1.7) holds identically
+(`dominance_mu_1_7`). The kernel was right about the formula we gave it; the formula was wrong. The
+mis-transcribed statement is kept as a negative control (`mistranscribed_1_7_false_at_half`), and
+`tests/test_ss_rs_gd.py` re-checks (1.7) in exact rational arithmetic against an independent transcription.
+The upstream issue was retracted: https://github.com/Pengbinghui/pipeline-math/issues/4
 
 Tier: audit, verification-AMPLIFICATION (the mathematics is the paper's; the value is an independent, replayable
-kernel attestation + the erratum). No trust surface touched; read-only; mints nothing.
+kernel attestation). No trust surface touched; read-only; mints nothing.
 
 Run:  python scripts/ss_rs_gd_lean.py   (needs the Lean REPL image; skips cleanly otherwise)
 """
@@ -49,6 +54,10 @@ noncomputable def lamSS (q : ℝ) : ℝ :=
   (q^12 - 24*q^11 + 186*q^10 - 504*q^9 + 399*q^8 + 528*q^7 + 876*q^6
     + 528*q^5 + 399*q^4 - 504*q^3 + 186*q^2 - 24*q + 1)/2048
 noncomputable def muRS (q : ℝ) : ℝ :=
+  (q+1)^4 * (q^4 + 4*q^3 - 42*q^2 + 4*q + 1)^2/16384
+/-- Our earlier mis-transcription of μ_RS (the square on the quartic factor dropped). Kept only as the
+    subject of a negative control; it is NOT the paper's μ_RS. -/
+noncomputable def muRS_unsquared (q : ℝ) : ℝ :=
   (q+1)^4 * (q^4 + 4*q^3 - 42*q^2 + 4*q + 1)/16384
 def gg (q : ℝ) : ℝ := 42*q^2 - q^4 - 4*q^3 - 4*q - 1
 
@@ -94,17 +103,24 @@ theorem ss_exceeds_rs (q : ℝ) (h1 : (1:ℝ)/4 ≤ q) (h2 : q < 1) : lamRS q < 
 theorem violation_at_half : lamRS (1/2) < lamSS (1/2) := by
   unfold lamRS lamSS; norm_num
 
-/-- **Erratum, kernel-attested.** The paper's *printed* dominance identity (1.7) does NOT hold: at q = 1/2,
-    λ_RS − μ_RS differs from the displayed right-hand side. (Degree mismatch: the printed RHS is degree 12 with
-    leading 15q¹²/16384, but λ_RS − μ_RS has leading 16q¹²/16384.) -/
-theorem paper_eq_1_7_false_at_half :
-    lamRS (1/2) - muRS (1/2)
+/-- Lemma 1.5 dominance eq (1.7), exactly as printed. (Corrects an earlier version of this artifact,
+    which mis-transcribed μ_RS and reported (1.7) false; see `mistranscribed_1_7_false_at_half`.) -/
+theorem dominance_mu_1_7 (q : ℝ) :
+    lamRS q - muRS q
+      = (1 - q)^4 * (5*q^2 + 2*q + 5)
+        * (3*q^6 - 30*q^5 + 93*q^4 + 124*q^3 + 93*q^2 - 30*q + 3) / 16384 := by
+  unfold lamRS muRS; ring
+
+/-- NEGATIVE CONTROL, not an erratum. With the square on μ_RS's quartic factor dropped (our former
+    transcription), the right-hand side of (1.7) no longer matches at q = 1/2. The kernel decides what it is
+    given; this records what we gave it. -/
+theorem mistranscribed_1_7_false_at_half :
+    lamRS (1/2) - muRS_unsquared (1/2)
       ≠ (1 - (1:ℝ)/2)^4 * (5*(1/2)^2 + 2*(1/2) + 5)
         * (3*(1/2)^6 - 30*(1/2)^5 + 93*(1/2)^4 + 124*(1/2)^3 + 93*(1/2)^2 - 30*(1/2) + 3) / 16384 := by
-  unfold lamRS muRS; norm_num
+  unfold lamRS muRS_unsquared; norm_num
 
-/-- The inequality (1.7) is *meant* to establish, λ_RS ≥ μ_RS, still holds at the witness point —
-    so the erratum is in the displayed factorization only, not the underlying claim. -/
+/-- The inequality (1.7) establishes, λ_RS ≥ μ_RS, at the witness point. -/
 theorem lamRS_ge_muRS_at_half : muRS (1/2) ≤ lamRS (1/2) := by
   unfold lamRS muRS; norm_num
 
@@ -113,7 +129,8 @@ end SSRSGD
 
 # Theorems whose axiom footprint we assert is exactly the standard set.
 HEADLINE = ["SSRSGD.gap_identity", "SSRSGD.ss_exceeds_rs", "SSRSGD.violation_at_half",
-            "SSRSGD.sos_cofactor", "SSRSGD.paper_eq_1_7_false_at_half", "SSRSGD.lamRS_ge_muRS_at_half"]
+            "SSRSGD.sos_cofactor", "SSRSGD.dominance_mu_1_7", "SSRSGD.mistranscribed_1_7_false_at_half",
+            "SSRSGD.lamRS_ge_muRS_at_half"]
 _STD = {"propext", "Classical.choice", "Quot.sound"}
 _AX = re.compile(r"depends on axioms:\s*\[([^\]]*)\]")
 
@@ -174,16 +191,19 @@ def main() -> int:
            "findings": {
                "refutation_verified": "Conjecture 1.1 (SS-RS) kernel-refuted: lamSS > lamRS on [1/4,1); concrete witness q=1/2",
                "scout_false_alarm": "an LLM scout flagged sos_cofactor as wrong; the kernel confirms the PAPER is correct",
-               "paper_erratum_1_7": ("the paper's printed identity (1.7) does NOT hold (kernel + independent "
-                                     "exact-rational check agree); supporting-lemma only, main result unaffected; "
-                                     "the intended inequality lamRS >= muRS still holds"),
+               "identity_1_7": "the paper's identity (1.7) holds exactly as printed (kernel, ring)",
+               "retracted_erratum_1_7": ("an earlier version of this artifact reported (1.7) false; that was our "
+                                         "transcription error (the square on muRS's quartic factor was dropped). "
+                                         "Retracted upstream 2026-10-13: "
+                                         "https://github.com/Pengbinghui/pipeline-math/issues/4. The "
+                                         "mis-transcribed statement is kept as a negative control."),
            },
            "reading": ("Independent kernel attestation of the SS-RS-GD refutation core (COLT-2021 open problem): "
                        "the gap identity, positivity, the violation lamSS > lamRS, and a concrete witness are "
                        "kernel-verified with only the standard axioms. Verification-AMPLIFICATION (the maths is "
-                       "the paper's). Two by-products: the kernel vindicates the paper against an LLM scout's "
-                       "false-alarm, and attests an erratum in the paper's supporting identity (1.7) that does "
-                       "not affect the main result.")}
+                       "the paper's). The kernel vindicates the paper against an LLM scout's false alarm on sos_cofactor, "
+                       "and verifies the supporting identity (1.7) as printed. A former 'erratum' on (1.7) was our "
+                       "own transcription error and has been retracted.")}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, default=str) + "\n")
     print(f"\ngate={gate}  tier=audit  ev=AMPLIFICATION\n-> {OUT}\n-> {ARTIFACT}")

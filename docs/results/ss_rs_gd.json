@@ -27,7 +27,12 @@
         "Classical.choice",
         "Quot.sound"
       ],
-      "SSRSGD.paper_eq_1_7_false_at_half": [
+      "SSRSGD.dominance_mu_1_7": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "SSRSGD.mistranscribed_1_7_false_at_half": [
         "propext",
         "Classical.choice",
         "Quot.sound"
@@ -44,7 +49,8 @@
   "findings": {
     "refutation_verified": "Conjecture 1.1 (SS-RS) kernel-refuted: lamSS > lamRS on [1/4,1); concrete witness q=1/2",
     "scout_false_alarm": "an LLM scout flagged sos_cofactor as wrong; the kernel confirms the PAPER is correct",
-    "paper_erratum_1_7": "the paper's printed identity (1.7) does NOT hold (kernel + independent exact-rational check agree); supporting-lemma only, main result unaffected; the intended inequality lamRS >= muRS still holds"
+    "identity_1_7": "the paper's identity (1.7) holds exactly as printed (kernel, ring)",
+    "retracted_erratum_1_7": "an earlier version of this artifact reported (1.7) false; that was our transcription error (the square on muRS's quartic factor was dropped). Retracted upstream 2026-10-13: https://github.com/Pengbinghui/pipeline-math/issues/4. The mis-transcribed statement is kept as a negative control."
   },
-  "reading": "Independent kernel attestation of the SS-RS-GD refutation core (COLT-2021 open problem): the gap identity, positivity, the violation lamSS > lamRS, and a concrete witness are kernel-verified with only the standard axioms. Verification-AMPLIFICATION (the maths is the paper's). Two by-products: the kernel vindicates the paper against an LLM scout's false-alarm, and attests an erratum in the paper's supporting identity (1.7) that does not affect the main result."
+  "reading": "Independent kernel attestation of the SS-RS-GD refutation core (COLT-2021 open problem): the gap identity, positivity, the violation lamSS > lamRS, and a concrete witness are kernel-verified with only the standard axioms. Verification-AMPLIFICATION (the maths is the paper's). The kernel vindicates the paper against an LLM scout's false alarm on sos_cofactor, and verifies the supporting identity (1.7) as printed. A former 'erratum' on (1.7) was our own transcription error and has been retracted."
 }
