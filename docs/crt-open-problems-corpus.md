@@ -195,7 +195,7 @@ This is an **audit / verification-amplification** track, consistent with the pos
 *autonomously* resolving an open problem is low (the binding constraint is the mathematics, not the kernel), but
 the **amplification** EV is real and measured — independent kernel attestation of published resolutions, a
 reusable counterexample-certificate domain, faithful statement formalizations, and the faithfulness/erratum
-instrument (which already caught a real erratum in a COLT paper). The literature-status check matters: **3 of the
+instrument (whose one COLT-paper "erratum" was retracted on 2026-10-13 as our own transcription error). The literature-status check matters: **3 of the
 8** commutative-ring candidates were already resolved after 2013, and the Erdős headline (367) is asymptotic and
 *not finitely resolvable* — surfacing those honestly is itself part of the value (we don't flail at problems the
 kernel can't decide). No trust surface is touched; every artifact is read-only and kernel-decided.
