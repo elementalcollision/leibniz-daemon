@@ -150,7 +150,8 @@ These must stay green before any F2b scaffold lands.
   True`; `tests/test_mcr_audit.py` (z3-gated) locks the verdicts.
 - **Trust.** No boundary contact; promulgates nothing (an audit is a record, not a law — ADR 0017).
 - **Measured EV.** **Measured-positive, now n=2** (MCR whitepaper + the SS-RS-GD COLT refutation). Positive
-  precisely because it is verification-amplification — and the second target even yielded a kernel-caught erratum.
+  precisely because it is verification-amplification — and the second target even yielded a kernel-caught erratum
+  (**retracted 2026-10-13**: it was our transcription error; see the correction under (c)).
 - **Next increments.** (a) ✅ **GREEN (2026-07-03)** — audit-runner harness + regression pack
   (`scripts/audit_runner.py`, `tests/test_audit_runner.py`, `docs/results/audit-runner-t5-2026-07-03.md`): the
   MCR audit is now a re-runnable, CI-guarded instrument (an audit = a spec of `(verdict, artifact)`; the runner
@@ -164,7 +165,13 @@ These must stay green before any F2b scaffold lands.
   axioms), so **Conjecture 1.1 is machine-refuted**. Two by-products vindicate the audit stance: the kernel
   **corrected an LLM scout** (which had falsely flagged a correct SOS identity), and **attested an erratum** in the
   paper's supporting identity (1.7) — which does not affect the main result (the intended inequality λ_RS ≥ μ_RS
-  still holds). n=1 EV is now n=2, and *positive* — verification-amplification with a found erratum. (d) also
+  still holds). n=1 EV is now n=2, and *positive* — verification-amplification with a found erratum.
+  > **Correction (2026-10-13).** The (1.7) "erratum" was ours, not the paper's: our transcription of μ_RS dropped
+  > the square the paper prints on its quartic factor. With μ_RS as printed, (1.7) holds and is now kernel-verified
+  > (`SSRSGD.dominance_mu_1_7`); the mis-transcription is kept as a labelled negative control. The upstream issue
+  > (Pengbinghui/pipeline-math#4) was retracted the same day. The kernel decided correctly on the statement it was
+  > given; the statement was wrong, which is the faithfulness gap this project exists to close. The EV reading
+  > above stands for the refutation core and the scout correction, and no longer includes an erratum. (d) also
   GREEN — the F2b discharge validator applied the instrument to an *internal* claim (T2).
   (d) ✅ **GREEN (2026-07-03)** — the same audit instrument applied to an *internal* formal claim: the **F2b
   discharge validator** (`scripts/f2b_validate.py`, T2 above) classifies any F2b discharge attempt via the H0

@@ -14,6 +14,10 @@ noncomputable def lamSS (q : ℝ) : ℝ :=
   (q^12 - 24*q^11 + 186*q^10 - 504*q^9 + 399*q^8 + 528*q^7 + 876*q^6
     + 528*q^5 + 399*q^4 - 504*q^3 + 186*q^2 - 24*q + 1)/2048
 noncomputable def muRS (q : ℝ) : ℝ :=
+  (q+1)^4 * (q^4 + 4*q^3 - 42*q^2 + 4*q + 1)^2/16384
+/-- Our earlier mis-transcription of μ_RS (the square on the quartic factor dropped). Kept only as the
+    subject of a negative control; it is NOT the paper's μ_RS. -/
+noncomputable def muRS_unsquared (q : ℝ) : ℝ :=
   (q+1)^4 * (q^4 + 4*q^3 - 42*q^2 + 4*q + 1)/16384
 def gg (q : ℝ) : ℝ := 42*q^2 - q^4 - 4*q^3 - 4*q - 1
 
@@ -59,17 +63,24 @@ theorem ss_exceeds_rs (q : ℝ) (h1 : (1:ℝ)/4 ≤ q) (h2 : q < 1) : lamRS q < 
 theorem violation_at_half : lamRS (1/2) < lamSS (1/2) := by
   unfold lamRS lamSS; norm_num
 
-/-- **Erratum, kernel-attested.** The paper's *printed* dominance identity (1.7) does NOT hold: at q = 1/2,
-    λ_RS − μ_RS differs from the displayed right-hand side. (Degree mismatch: the printed RHS is degree 12 with
-    leading 15q¹²/16384, but λ_RS − μ_RS has leading 16q¹²/16384.) -/
-theorem paper_eq_1_7_false_at_half :
-    lamRS (1/2) - muRS (1/2)
+/-- Lemma 1.5 dominance eq (1.7), exactly as printed. (Corrects an earlier version of this artifact,
+    which mis-transcribed μ_RS and reported (1.7) false; see `mistranscribed_1_7_false_at_half`.) -/
+theorem dominance_mu_1_7 (q : ℝ) :
+    lamRS q - muRS q
+      = (1 - q)^4 * (5*q^2 + 2*q + 5)
+        * (3*q^6 - 30*q^5 + 93*q^4 + 124*q^3 + 93*q^2 - 30*q + 3) / 16384 := by
+  unfold lamRS muRS; ring
+
+/-- NEGATIVE CONTROL, not an erratum. With the square on μ_RS's quartic factor dropped (our former
+    transcription), the right-hand side of (1.7) no longer matches at q = 1/2. The kernel decides what it is
+    given; this records what we gave it. -/
+theorem mistranscribed_1_7_false_at_half :
+    lamRS (1/2) - muRS_unsquared (1/2)
       ≠ (1 - (1:ℝ)/2)^4 * (5*(1/2)^2 + 2*(1/2) + 5)
         * (3*(1/2)^6 - 30*(1/2)^5 + 93*(1/2)^4 + 124*(1/2)^3 + 93*(1/2)^2 - 30*(1/2) + 3) / 16384 := by
-  unfold lamRS muRS; norm_num
+  unfold lamRS muRS_unsquared; norm_num
 
-/-- The inequality (1.7) is *meant* to establish, λ_RS ≥ μ_RS, still holds at the witness point —
-    so the erratum is in the displayed factorization only, not the underlying claim. -/
+/-- The inequality (1.7) establishes, λ_RS ≥ μ_RS, at the witness point. -/
 theorem lamRS_ge_muRS_at_half : muRS (1/2) ≤ lamRS (1/2) := by
   unfold lamRS muRS; norm_num
 
@@ -79,5 +90,6 @@ end SSRSGD
 #print axioms SSRSGD.ss_exceeds_rs
 #print axioms SSRSGD.violation_at_half
 #print axioms SSRSGD.sos_cofactor
-#print axioms SSRSGD.paper_eq_1_7_false_at_half
+#print axioms SSRSGD.dominance_mu_1_7
+#print axioms SSRSGD.mistranscribed_1_7_false_at_half
 #print axioms SSRSGD.lamRS_ge_muRS_at_half
